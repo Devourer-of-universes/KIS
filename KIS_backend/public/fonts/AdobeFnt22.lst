@@ -1,0 +1,264 @@
+%!Adobe-FontList 1.22
+%Locale:0x409
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/AdobeFnt22.lst
+FileLength:5711
+FileModTime:709572192
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Arial-BoldMT
+FamilyName:Arial
+StyleName:Bold
+MenuName:Arial
+StyleBits:2
+WeightClass:700
+WidthClass:5
+AngleClass:0
+FullName:Arial Bold
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Arial Bold.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:750984
+FileModTime:708976592
+NameArray:0,Mac,4,Arial Bold
+NameArray:0,Win,1,Arial
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:ArialMT
+FamilyName:Arial
+StyleName:Regular
+MenuName:Arial
+StyleBits:0
+WeightClass:400
+WidthClass:5
+AngleClass:0
+FullName:Arial
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Arial.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:773236
+FileModTime:708976592
+NameArray:0,Mac,4,Arial
+NameArray:0,Win,1,Arial
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Montserrat-Bold
+FamilyName:Montserrat
+StyleName:Bold
+MenuName:Montserrat
+StyleBits:2
+WeightClass:700
+WidthClass:5
+AngleClass:0
+FullName:Montserrat Bold
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Montserrat-Bold.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:198072
+FileModTime:708976592
+NameArray:0,Win,1,Montserrat
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Montserrat-Italic
+FamilyName:Montserrat
+StyleName:Italic
+MenuName:Montserrat
+StyleBits:1
+WeightClass:400
+WidthClass:5
+AngleClass:1
+FullName:Montserrat Italic
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Montserrat-Italic.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:202380
+FileModTime:708976592
+NameArray:0,Win,1,Montserrat
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Montserrat-Light
+FamilyName:Montserrat
+StyleName:Light
+MenuName:Montserrat Light
+StyleBits:0
+WeightClass:300
+WidthClass:5
+AngleClass:0
+FullName:Montserrat Light
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Montserrat-Light.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:198072
+FileModTime:708976592
+NameArray:0,Win,1,Montserrat Light
+NameArray:0,Win,16,Montserrat
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Montserrat-Medium
+FamilyName:Montserrat
+StyleName:Medium
+MenuName:Montserrat Medium
+StyleBits:0
+WeightClass:500
+WidthClass:5
+AngleClass:0
+FullName:Montserrat Medium
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Montserrat-Medium.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:198104
+FileModTime:708976592
+NameArray:0,Win,1,Montserrat Medium
+NameArray:0,Win,16,Montserrat
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Montserrat-Regular
+FamilyName:Montserrat
+StyleName:Regular
+MenuName:Montserrat
+StyleBits:0
+WeightClass:400
+WidthClass:5
+AngleClass:0
+FullName:Montserrat Regular
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Montserrat-Regular.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:197976
+FileModTime:708976592
+NameArray:0,Win,1,Montserrat
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Montserrat-SemiBold
+FamilyName:Montserrat
+StyleName:SemiBold
+MenuName:Montserrat SemiBold
+StyleBits:0
+WeightClass:600
+WidthClass:5
+AngleClass:0
+FullName:Montserrat SemiBold
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Montserrat-SemiBold.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:198204
+FileModTime:708976592
+NameArray:0,Win,1,Montserrat SemiBold
+NameArray:0,Win,16,Montserrat
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Marion-Bold
+FamilyName:Marion
+StyleName:Bold
+MenuName:Marion
+StyleBits:2
+WeightClass:700
+WidthClass:5
+AngleClass:0
+FullName:Marion Bold
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Marion.ttc
+TTCOffset:636
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:928940
+FileModTime:708976592
+NameArray:0,Mac,4,Marion Bold
+NameArray:0,Win,1,Marion
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Marion-Italic
+FamilyName:Marion
+StyleName:Italic
+MenuName:Marion
+StyleBits:1
+WeightClass:400
+WidthClass:5
+AngleClass:1
+FullName:Marion Italic
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Marion.ttc
+TTCOffset:336
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:928940
+FileModTime:708976592
+NameArray:0,Mac,4,Marion Italic
+NameArray:0,Win,1,Marion
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Marion-Regular
+FamilyName:Marion
+StyleName:Regular
+MenuName:Marion
+StyleBits:0
+WeightClass:400
+WidthClass:5
+AngleClass:0
+FullName:Marion Regular
+WritingScript:Roman
+OutlineFileName:/Volumes/MAX 32/BB Social Fund of Russia3 Folder/Document fonts/Marion.ttc
+TTCOffset:36
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:928940
+FileModTime:708976592
+NameArray:0,Mac,4,Marion Regular
+NameArray:0,Win,1,Marion
+%EndFont
+

@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора - ИС</title>
+    <link rel="stylesheet" type="text/css" href="../styles/main.css">
+    <link rel="stylesheet" type="text/css" href="../styles/admin_base.css">
+</head>
+<body>
+    <div class="left-menu">
+        <div class="menu-item">
+            <button class="toggle-btn" title="Закрепить меню">
+                <img src="../materials/menu_stay.png" alt="Закрепить" class="toggle-btn-img menu-icon ">
+            </button>
+        </div>
+              
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/base.html">
+                <img src="../materials/icons8-рабочее-пространство-80.png" alt="Рабочее пространство" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Рабочее пространство</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/chat.html">
+                <img src="..//materials/icons8-чат-80.png" alt="Чаты" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Чаты</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/settings.html">
+                <img src="../materials/icons8-сервисы-80.png" alt="Настройки" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Настройки</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/admin_base.html">
+                <img src="../materials/icons8-конфигурация-данных-80.png" alt="Панель администратора" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Панель администратора</h3>
+            </a> 
+        </div>
+        <div class="menu-item logout-item">
+            <a class="left_menu_pagelink" href="../html/login.html">
+                <img src="../materials/icons8-выход-48.png" alt="Выход" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Выход</h3>
+            </a> 
+        </div>
+
+        
+        
+    </div>
+
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>⚙️ Панель администратора</h1>
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <span class="stat-number">24</span>
+                    <span class="stat-label">Пользователя</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">15</span>
+                    <span class="stat-label">Шаблонов</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">8</span>
+                    <span class="stat-label">Маршрутов</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <nav class="admin-nav">
+                <button class="nav-btn active" data-section="users" id="nav-btn-users">👥 Пользователи</button>
+                <button class="nav-btn" data-section="templates" id="nav-btn-templates">📝 Шаблоны</button>
+                <button class="nav-btn" data-section="system" id="nav-btn-system">⚙️ Система</button>
+                <button class="nav-btn" data-section="reports" id="nav-btn-reports">📊 Отчёты</button>
+                <button class="nav-btn" data-section="structure" id="nav-btn-structure"> Структура</button>
+                <button class="nav-btn" data-section="roles" id="nav-btn-roles"> Роли</button>
+            </nav>
+            <div class="admin-content">
+                <section id="users-section" class="admin-section active">
+                    <div class="section-header">
+                        <h2>Управление пользователями</h2>
+                        <button class="buttonbase" id="addUserBtn" onclick="openUserModal()">+ Добавить пользователя</button>
+                    </div>
+
+                    <div class="users-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>ФИО</th>
+                                    <th>Должность</th>
+                                    <th>Отдел</th>
+                                    <th>Роль</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>U001</td>
+                                    <td>Иванов Иван Иванович</td>
+                                    <td>Системный администратор</td>
+                                    <td>ИТ отдел</td>
+                                    <td>
+                                        <select class="role-select">
+                                            <option value="user">Пользователь</option>
+                                            <option value="admin" selected>Администратор</option>
+                                        </select>
+                                    </td>
+                                    <td><span class="status-badge status-active">Активен</span></td>
+                                    <td>
+                                        <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal()">✎</button>
+                                        <button class="btn-icon buttonbase" title="Заблокировать" onclick="openModal('blockUserModal')">🔒</button>
+                                        <button class="btn-icon buttonbase" title="Инфо" onclick="openUserInfo('U001')">ℹ️</button>
+                                    </td>
+                                </tr>
+                                <!-- другие пользователи -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <section id="templates-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>Управление шаблонами документов</h2>
+                        <button class="buttonbase" id="addTemplateBtn">+ Создать шаблон</button>
+                    </div>
+
+                    <div class="templates-grid">
+                        <div class="template-card admin">
+                            <div class="template-header">
+                                <h3>Договор оказания услуг</h3>
+                                <span class="template-version">v2.1</span>
+                            </div>
+                            <p class="template-desc">Стандартный шаблон договора с контрагентами</p>
+                            <div class="template-meta">
+                                <span>Используется: 45 раз</span>
+                                <span>Обновлён: 15.01.2024</span>
+                            </div>
+                            <div class="template-actions">
+                                <button class="buttonbase" onclick="openModal('templateEditorModal')">Редактировать</button>
+                                <button class="buttonbase">Дублировать</button>
+                                <button class="buttonbase">🗑️</button>
+                            </div>
+                        </div>
+                        <!-- другие шаблоны -->
+                    </div>
+                </section>
+                <section id="system-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>⚙️ Системные настройки</h2>
+                        <button class="buttonbase" id="saveSystemSettings">💾 Сохранить настройки</button>
+                    </div>
+
+                    <div class="settings-cards-grid">
+                        <!-- Карточка документооборота -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">📄</div>
+                                <div>
+                                    <h3 class="settings-card-title">Документооборот</h3>
+                                    <p class="settings-card-description">Настройки работы с документами и файлами</p>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card-content">
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Автоархивация документов</span>
+                                        <span class="settings-card-hint">Документы автоматически архивируются через указанное количество дней</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="number" value="365" min="30" max="3650" class="setting-input">
+                                        <span class="setting-unit">дней</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Максимальный размер файла</span>
+                                        <span class="settings-card-hint">Ограничение размера загружаемых файлов</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="number" value="50" min="1" max="500" class="setting-input">
+                                        <span class="setting-unit">МБ</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Разрешенные типы файлов</span>
+                                        <span class="settings-card-hint">Форматы файлов, разрешенные для загрузки</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <select class="setting-select" multiple>
+                                            <option value="pdf" selected>PDF</option>
+                                            <option value="doc" selected>Word</option>
+                                            <option value="xls" selected>Excel</option>
+                                            <option value="jpg" selected>Изображения</option>
+                                            <option value="txt">Текстовые файлы</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Хранилище</span>
+                                        <span class="settings-card-hint">Путь к хранилищу файлов</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="text" 
+                                            id="storagePath" 
+                                            name="storagePath" 
+                                            placeholder="Например: \\server\documents\ или /mnt/storage/docs/"
+                                            class="setting-input"
+                                            spellcheck="false">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Карточка резервного копирования -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">💾</div>
+                                <div>
+                                    <h3 class="settings-card-title">Резервное копирование</h3>
+                                    <p class="settings-card-description">Настройки автоматического резервного копирования данных</p>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card-content">
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Автоматическое копирование</span>
+                                        <span class="settings-card-hint">Периодичность создания резервных копий</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <select class="setting-select">
+                                            <option value="disabled">Отключено</option>
+                                            <option value="daily" selected>Ежедневно</option>
+                                            <option value="weekly">Еженедельно</option>
+                                            <option value="monthly">Ежемесячно</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Время создания бэкапа</span>
+                                        <span class="settings-card-hint">Время для автоматического создания копий</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="time" value="02:00" class="setting-input">
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Хранить бэкапы</span>
+                                        <span class="settings-card-hint">Срок хранения резервных копий</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="number" value="30" min="7" max="365" class="setting-input">
+                                        <span class="setting-unit">дней</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-actions">
+                                    <button class="buttonbase">🔄 Создать бэкап сейчас</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Карточка системных уведомлений -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">🔔</div>
+                                <div>
+                                    <h3 class="settings-card-title">Системные уведомления</h3>
+                                    <p class="settings-card-description">Настройки оповещений о системных событиях</p>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card-content">
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Email для уведомлений</span>
+                                        <span class="settings-card-hint">Адрес для получения системных оповещений</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="email" value="admin@company.ru" class="setting-input">
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Критические ошибки</span>
+                                        <span class="settings-card-hint">Уведомлять о критических сбоях системы</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Подозрительная активность</span>
+                                        <span class="settings-card-hint">Оповещения о необычных действиях пользователей</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <label class="switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Карточка логов и мониторинга -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">📊</div>
+                                <div>
+                                    <h3 class="settings-card-title">Логи и мониторинг</h3>
+                                    <p class="settings-card-description">Настройки логирования и отслеживания системы</p>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card-content">
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Уровень логирования</span>
+                                        <span class="settings-card-hint">Детализация информации в системных логах</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <select class="setting-select">
+                                            <option value="error">Только ошибки</option>
+                                            <option value="warn">Предупреждения и ошибки</option>
+                                            <option value="info" selected>Вся информация</option>
+                                            <option value="debug">Отладочная информация</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Хранить логи</span>
+                                        <span class="settings-card-hint">Срок хранения системных логов</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="number" value="90" min="7" max="365" class="setting-input">
+                                        <span class="setting-unit">дней</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Статус мониторинга</span>
+                                        <span class="settings-card-hint">Текущее состояние системы мониторинга</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <span class="settings-status status-active">Активен</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-actions">
+                                    <button class="buttonbase">📋 Просмотр логов</button>
+                                    <button class="buttonbase">📈 Статистика</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Карточка существующих настроек (переносим старые) -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">🏢</div>
+                                <div>
+                                    <h3 class="settings-card-title">Общие настройки</h3>
+                                    <p class="settings-card-description">Основные параметры системы</p>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card-content">
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Название организации</span>
+                                        <span class="settings-card-hint">Отображается в системе и документах</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="text" value="ООО 'ТехноПрогресс'" class="setting-input">
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Автонумерация документов</span>
+                                        <span class="settings-card-hint">Автоматическая генерация номеров документов</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <select class="setting-select">
+                                            <option value="auto">Автоматическая</option>
+                                            <option value="manual">Ручная</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Карточка безопасности -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <div class="settings-card-icon">🔒</div>
+                                <div>
+                                    <h3 class="settings-card-title">Безопасность</h3>
+                                    <p class="settings-card-description">Настройки безопасности и доступа</p>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card-content">
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Срок действия сессии</span>
+                                        <span class="settings-card-hint">Время бездействия до автоматического выхода</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <input type="number" value="8" min="1" max="24" class="setting-input">
+                                        <span class="setting-unit">часов</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="settings-card-item">
+                                    <div class="settings-card-info">
+                                        <span class="settings-card-label">Сложность пароля</span>
+                                        <span class="settings-card-hint">Требования к сложности паролей пользователей</span>
+                                    </div>
+                                    <div class="settings-card-control">
+                                        <select class="setting-select">
+                                            <option value="low">Низкая</option>
+                                            <option value="medium" selected>Средняя</option>
+                                            <option value="high">Высокая</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="reports-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>Аналитика и отчёты</h2>
+                    </div>
+
+                    <div class="reports-dashboard">
+                        <div class="metric-cards">
+                            <div class="metric-card">
+                                <span class="metric-value">156</span>
+                                <span class="metric-label">Документов за месяц</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-value">3.2д</span>
+                                <span class="metric-label">Среднее время согласования</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-value">87%</span>
+                                <span class="metric-label">Эффективность workflow</span>
+                            </div>
+                        </div>
+
+                        <div class="report-actions">
+                            <button class="buttonbase">📊 Отчёт по документам</button>
+                            <button class="buttonbase">👥 Отчёт по пользователям</button>
+                            <button class="buttonbase">🔄 Анализ процессов</button>
+                        </div>
+                    </div>
+                </section>
+                <section id="structure-section" class="admin-section">
+                    <div class="structure-container">
+                        <header class="structure-header">
+                            <h2>🏢 Структура организации</h2>
+                            <div class="structure-main-buttons">
+                                <button class="buttonbase" onclick="openModal('addDepartmentModal')">+ Добавить подразделение</button>
+                                <button class="buttonbase" onclick="openModal('addEmployeeModal')">+ Добавить сотрудника</button>
+                                <button class="buttonbase" id="collapseAllBtn">Свернуть все</button>
+                                <button class="buttonbase" id="expandAllBtn">Развернуть все</button>
+                            </div>
+                        </header>
+
+                        <div class="structure-content">
+                            <!-- Главная организация -->
+                            <ul class="structure-group root-group">
+                                <li class="structure-group-item">
+                                    <div class="group-header">
+                                        <button class="toggle-btn expanded" title="Свернуть/развернуть">
+                                            <span class="toggle-icon">▼</span>
+                                        </button>
+                                        <div class="group-info">
+                                            <h3 class="structure-group-name">ООО "ТехноПрогресс"</h3>
+                                            <span class="structure-group-number-employe">24 сотрудника</span>
+                                        </div>
+                                        <div class="group-manager">
+                                            <h4 class="structure-employe-post manager-post">Генеральный директор</h4>
+                                            <h5 class="structure-employe-role manager-role">Руководитель</h5>
+                                            <h5 class="structure-employe-person manager-name">Смирнов Петр Константинович</h5>
+                                            <span class="structure-employe-status manager-status status-active">Активен</span>
+                                        </div>
+                                        <div class="structure-group-actionbuttons">
+                                            <!-- <button class="structure-group-actionbutton buttonbase">+ Подразделение</button>
+                                            <button class="structure-group-actionbutton buttonbase">+ Сотрудник</button> -->
+                                            <button class="structure-group-actionbutton buttonbase"  onclick="openModal('addDepartmentModal')">✎</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Подразделения -->
+                                    <ul class="structure-subgroups">
+                                        <!-- Отдел разработки -->
+                                        <li class="structure-group-item">
+                                            <div class="group-header">
+                                                <button class="toggle-btn expanded" title="Свернуть/развернуть">
+                                                    <span class="toggle-icon">▼</span>
+                                                </button>
+                                                <div class="group-info">
+                                                    <h3 class="structure-group-name">Отдел разработки</h3>
+                                                    <span class="structure-group-number-employe">8 сотрудников</span>
+                                                </div>
+                                                <div class="group-manager employee-card">
+                                                    <h4 class="structure-employe-post manager-post">Руководитель отдела</h4>
+                                                    <h5 class="structure-employe-role manager-role">Менеджер</h5>
+                                                    <h5 class="structure-employe-person manager-name">Козлова Елена Владимировна</h5>
+                                                    <span class="structure-employe-status manager-status status-active">Активен</span>
+                                                </div>
+                                                <div class="structure-group-actionbuttons">
+                                                    <!-- <button class="structure-group-actionbutton buttonbase">+ Подразделение</button>
+                                                    <button class="structure-group-actionbutton buttonbase">+ Сотрудник</button> -->
+                                                    <button class="structure-group-actionbutton buttonbase" onclick="openModal('addDepartmentModal')">✎</button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Сотрудники отдела разработки -->
+                                            <ul class="structure-employees">
+                                                <li class="structure-employee-item">
+                                                    <div class="employee-card">
+                                                        <div class="employee-avatar">
+                                                            <img src="../materials/avatar_for_profile.png" alt="Аватар">
+                                                        </div>
+                                                        <div class="employee-info">
+                                                            <h4 class="structure-employe-post">Старший разработчик</h4>
+                                                            <h5 class="structure-employe-role">Разработчик</h5>
+                                                            <h5 class="structure-employe-person">Иванов Иван Иванович</h5>
+                                                            <span class="structure-employe-status status-active">Неактивен</span>
+                                                        </div>
+                                                        <div class="employee-actions">
+                                                            <button class="buttonbase" title="Редактировать" onclick="openModal('addEmployeeModal')">✎</button>
+                                                            <button class="buttonbase" title="Переместить">↷</button>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                
+                                                <li class="structure-employee-item">
+                                                    <div class="employee-card">
+                                                        <div class="employee-avatar">
+                                                            <img src="../materials/avatar_for_profile.png" alt="Аватар">
+                                                        </div>
+                                                        <div class="employee-info">
+                                                            <h4 class="structure-employe-post">Frontend разработчик</h4>
+                                                            <h5 class="structure-employe-role">Разработчик</h5>
+                                                            <h5 class="structure-employe-person">Петрова Мария Сергеевна</h5>
+                                                            <span class="structure-employe-status status-active">Активен</span>
+                                                        </div>
+                                                        <div class="employee-actions">
+                                                            <button class="buttonbase" title="Редактировать">✎</button>
+                                                            <button class="buttonbase" title="Переместить">↷</button>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                <section id="roles-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>👑 Управление ролями</h2>
+                        <button class="buttonbase" id="addRoleBtn" onclick="openModal('roleEditorModal')">+ Создать роль</button>
+                    </div>
+                    
+                    <div class="roles-grid">
+                        <div class="role-card">
+                            <div class="role-header">
+                                <h4>Администратор</h4>
+                                <button class="buttonbase">Редактировать</button>
+                            </div>
+                            <p class="role-desc">Полный доступ ко всем функциям системы</p>
+                            <div class="role-users">
+                                <span>Пользователей: 2</span>
+                            </div>
+                        </div>
+                        
+                        <div class="role-card">
+                            <div class="role-header">
+                                <h4>Менеджер</h4>
+                                <button class="buttonbase">Редактировать</button>
+                            </div>
+                            <p class="role-desc">Управление документами и задачами отдела</p>
+                            <div class="role-users">
+                                <span>Пользователей: 5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="role-card">
+                            <div class="role-header">
+                                <h4>Сотрудник</h4>
+                                <button class="buttonbase">Редактировать</button>
+                            </div>
+                            <p class="role-desc">Базовый доступ к рабочим функциям</p>
+                            <div class="role-users">
+                                <span>Пользователей: 17</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+    <div id="addUserModal" class="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👤 Добавление сотрудника</h2>
+                <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="addUserForm" class="modal-form">
+                    <!-- Личная информация -->
+                    <div class="form-section">
+                        <h3>Личная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userLastName">Фамилия </label>
+                                <input type="text" id="userLastName" name="lastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userFirstName">Имя </label>
+                                <input type="text" id="userFirstName" name="firstName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userMiddleName">Отчество</label>
+                                <input type="text" id="userMiddleName" name="middleName">
+                            </div>
+                            <div class="form-group">
+                                <label for="userBirthDate">Дата рождения</label>
+                                <input type="date" id="userBirthDate" name="birthDate">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Контактная информация -->
+                    <div class="form-section">
+                        <h3>Контактная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userPhone">Номер телефона </label>
+                                <input type="tel" id="userPhone" name="phone" placeholder="+7 XXX XXX-XX-XX" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userEmail">Email </label>
+                                <input type="email" id="userEmail" name="email" placeholder="user@company.ru" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Рабочая информация -->
+                    <div class="form-section">
+                        <h3>Рабочая информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userPosition">Должность </label>
+                                <input type="text" id="userPosition" name="position" placeholder="Например, Менеджер проектов" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userDepartment">Подразделение </label>
+                                <select id="userDepartment" name="department" required>
+                                    <option value="">Выберите подразделение</option>
+                                    <option value="dev">Отдел разработки</option>
+                                    <option value="finance">Финансовый отдел</option>
+                                    <option value="marketing">Отдел маркетинга</option>
+                                    <option value="hr">HR отдел</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userStartDate">Дата приёма *</label>
+                                <input type="date" id="userStartDate" name="startDate" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Учётные данные -->
+                    <div class="form-section">
+                        <h3>Учётные данные</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userLogin">Логин </label>
+                                <input type="text" id="userLogin" name="login" placeholder="Будет сгенерирован автоматически" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="userPassword">Пароль </label>
+                                <div class="password-field">
+                                    <input type="password" id="userPassword" name="password" placeholder="Будет сгенерирован автоматически" readonly>
+                                    <button type="button" class="generate-password-btn" onclick="generatePassword()">🎲</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-checkbox">
+                            <label>
+                                <input type="checkbox" name="sendCredentials" checked> 
+                                Отправить учётные данные на email
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="buttonbase" onclick="closeModal('addUserModal')">Отмена</button>
+                <button type="submit" form="addUserForm" class="buttonbase">Добавить сотрудника</button>
+            </div>
+        </div>
+    </div>
+    <div id="userInfoModal" class="admin-modal">
+        <div class="modal-content user-info-modal">
+            <div class="modal-header">
+                <h2>👤 Информация о сотруднике</h2>
+                <button class="modal-close" onclick="closeModal('userInfoModal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Основная информация -->
+                <div class="user-info-section">
+                    <div class="user-profile-header">
+                        <div class="user-avatar-large">
+                            <img src="../materials/avatar_for_profile.png" alt="Аватар">
+                            <span class="user-status-badge status-active">Активен</span>
+                        </div>
+                        <div class="user-main-info">
+                            <h3 class="user-fullname" id="info-user-name">Иванов Иван Иванович</h3>
+                            <p class="user-position" id="info-user-position">Системный администратор</p>
+                            <div class="user-contacts">
+                                <span class="contact-item" id="info-user-email">📧 ivanov@company.ru</span>
+                                <span class="contact-item" id="info-user-phone">📞 +7 (000) 000-00-00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Детальная информация в табличном виде -->
+                <div class="user-details-grid">
+                    <div class="detail-group">
+                        <h4>Личная информация</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Дата рождения:</span>
+                            <span class="detail-value" id="info-user-birthdate">15.03.1985</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Возраст:</span>
+                            <span class="detail-value" id="info-user-age">38 лет</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <h4>Рабочая информация</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Отдел:</span>
+                            <span class="detail-value" id="info-user-department">ИТ отдел</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Дата приёма:</span>
+                            <span class="detail-value" id="info-user-hiredate">10.01.2020</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Стаж:</span>
+                            <span class="detail-value" id="info-user-experience">4 года 2 месяца</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-group">
+                        <h4>Учётные данные</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Логин:</span>
+                            <span class="detail-value" id="info-user-login">ivanov.i</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Роль:</span>
+                            <span class="detail-value" id="info-user-role">
+                                <select class="role-select-small">
+                                    <option value="user">Пользователь</option>
+                                    <option value="admin" selected>Администратор</option>
+                                    <option value="manager">Менеджер</option>
+                                </select>
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Последний вход:</span>
+                            <span class="detail-value" id="info-user-lastlogin">20.01.2024, 14:30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика активности -->
+                <div class="user-stats-section">
+                    <h4>📊 Статистика активности</h4>
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <span class="stats-number" id="info-docs-created">24</span>
+                            <span class="stats-label">Создано документов</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-number" id="info-tasks-completed">156</span>
+                            <span class="stats-label">Выполнено задач</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-number" id="info-approvals-done">89</span>
+                            <span class="stats-label">Согласований</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-number" id="info-active-processes">5</span>
+                            <span class="stats-label">Активных процессов</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- История действий -->
+                <div class="user-history-section">
+                    <div class="section-header">
+                        <h4>📋 История действий</h4>
+                        <div class="history-filters">
+                            <select class="period-select" id="historyPeriod">
+                                <option value="7">За 7 дней</option>
+                                <option value="30" selected>За 30 дней</option>
+                                <option value="90">За 3 месяца</option>
+                                <option value="365">За год</option>
+                                <option value="custom">Произвольный период</option>
+                            </select>
+                            <div class="custom-period" id="customPeriod" style="display: none;">
+                                <span>c</span>
+                                <input type="date" id="periodStart">
+                                <span>по</span>
+                                <input type="date" id="periodEnd">
+                                <button class="buttonbase" onclick="applyCustomPeriod()">Применить</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-timeline" id="userHistoryTimeline">
+                        <!-- История будет загружаться динамически -->
+                        <div class="history-item">
+                            <div class="history-time">20.01.2024 14:25</div>
+                            <div class="history-action">
+                                <span class="action-icon">📄</span>
+                                <span class="action-text">Создал документ "Отчёт за 4 квартал 2023"</span>
+                                <span class="action-doc">№ D-000245</span>
+                            </div>
+                        </div>
+                        <div class="history-item">
+                            <div class="history-time">20.01.2024 11:30</div>
+                            <div class="history-action">
+                                <span class="action-icon">✅</span>
+                                <span class="action-text">Завершил задачу "Подготовка презентации"</span>
+                                <span class="action-doc">№ T-001567</span>
+                            </div>
+                        </div>
+                        <div class="history-item">
+                            <div class="history-time">19.01.2024 16:45</div>
+                            <div class="history-action">
+                                <span class="action-icon">🔄</span>
+                                <span class="action-text">Отправил на согласование документ</span>
+                                <span class="action-doc">Договор с ООО "ТехноПрогресс"</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-load-more">
+                        <button class="buttonbase" id="loadMoreHistory">Загрузить ещё</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="openModal('addUserModal')">✎ Редактировать</button>
+                <button class="buttonbase" onclick="generateUserReport()">📊 Отчёт по активности</button>
+                <button class="buttonbase" onclick="closeModal('userInfoModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>    
+    <div id="addEmployeeModal" class="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👤 Добавление сотрудника в структуру</h2>
+                <button class="modal-close" onclick="closeModal('addEmployeeModal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="addEmployeeForm" class="modal-form">
+                    <!-- Выбор пользователя -->
+                    <div class="form-section">
+                        <h3>Выбор пользователя</h3>
+                        <div class="form-group">
+                            <label for="employeeUser">Пользователь *</label>
+                            <select id="employeeUser" name="user" required>
+                                <option value="">Выберите пользователя</option>
+                                <option value="user1">Иванов Иван Иванович (ivanov.i)</option>
+                                <option value="user2">Петрова Мария Сергеевна (petrova.m)</option>
+                                <option value="user3">Сидоров Алексей Владимирович (sidorov.a)</option>
+                                <option value="user4">Козлова Елена Владимировна (kozlova.e)</option>
+                                <option value="user5">Николаева Татьяна Петровна (nikolaeva.t)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Расположение в структуре -->
+                    <div class="form-section">
+                        <h3>Расположение в структуре</h3>
+                        <div class="form-group">
+                            <label for="employeeDepartment">Подразделение *</label>
+                            <select id="employeeDepartment" name="department" required>
+                                <option value="">Выберите подразделение</option>
+                                <option value="company">ООО "ТехноПрогресс"</option>
+                                <option value="dev">Отдел разработки</option>
+                                <option value="dev-frontend">→ Frontend разработка</option>
+                                <option value="dev-backend">→ Backend разработка</option>
+                                <option value="finance">Финансовый отдел</option>
+                                <option value="marketing">Отдел маркетинга</option>
+                                <option value="hr">HR отдел</option>
+                                <option value="sales">Отдел продаж</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employeeParent">Руководитель</label>
+                            <select id="employeeParent" name="parent">
+                                <option value="">Непосредственный руководитель</option>
+                                <option value="user6">Смирнов Петр Константинович</option>
+                                <option value="user2">Козлова Елена Владимировна</option>
+                                <option value="user7">Васильев Андрей Михайлович</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Должность и роль -->
+                    <div class="form-section">
+                        <h3>Должность и права</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="employeePosition">Должность *</label>
+                                <input type="text" id="employeePosition" name="position" 
+                                    placeholder="Например, Frontend разработчик" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="employeeRole">Роль в системе *</label>
+                                <select id="employeeRole" name="role" required>
+                                    <option value="">Выберите роль</option>
+                                    <option value="employee">Сотрудник</option>
+                                    <option value="manager">Менеджер</option>
+                                    <option value="department_head">Руководитель отдела</option>
+                                    <option value="director">Директор</option>
+                                    <option value="admin">Администратор</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="employeeStartDate">Дата начала работы *</label>
+                                <input type="date" id="employeeStartDate" name="startDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="employeeWorkType">Тип занятости</label>
+                                <select id="employeeWorkType" name="workType">
+                                    <option value="full">Полная занятость</option>
+                                    <option value="part">Частичная занятость</option>
+                                    <option value="contract">Договор ГПХ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительная информация -->
+                    <div class="form-section">
+                        <h3>Дополнительная информация</h3>
+                        <div class="form-group">
+                            <label for="employeeWorkplace">Рабочее место</label>
+                            <input type="text" id="employeeWorkplace" name="workplace" 
+                                placeholder="Например, кабинет 305, 5 этаж">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employeePhone">Внутренний телефон</label>
+                            <input type="tel" id="employeePhone" name="phone" placeholder="+7 XXX XXX-XX-XX">
+                        </div>
+                        
+                        <div class="form-checkbox">
+                            <label>
+                                <input type="checkbox" name="sendNotification" checked> 
+                                Уведомить сотрудника о добавлении в структуру
+                            </label>
+                        </div>
+                        
+                        <div class="form-checkbox">
+                            <label>
+                                <input type="checkbox" name="createWorkplace"> 
+                                Создать рабочее место в системе
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="buttonbase" onclick="closeModal('addEmployeeModal')">Отмена</button>
+                <button type="submit" form="addEmployeeForm" class="buttonbase">➕ Добавить сотрудника</button>
+            </div>
+        </div>
+    </div>
+    <div id="addDepartmentModal" class="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏢 Добавление подразделения</h2>
+                <button class="modal-close" onclick="closeModal('addDepartmentModal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="addDepartmentForm" class="modal-form">
+                    <!-- Основная информация -->
+                    <div class="form-section">
+                        <h3>Основная информация</h3>
+                        <div class="form-group">
+                            <label for="departmentName">Название подразделения *</label>
+                            <input type="text" id="departmentName" name="name" 
+                                placeholder="Например, Отдел аналитики" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="departmentParent">Родительское подразделение *</label>
+                            <select id="departmentParent" name="parent" required>
+                                <option value="">Выберите родительское подразделение</option>
+                                <option value="company">ООО "ТехноПрогресс" (корневой уровень)</option>
+                                <option value="dev">Отдел разработки</option>
+                                <option value="finance">Финансовый отдел</option>
+                                <option value="marketing">Отдел маркетинга</option>
+                                <option value="hr">HR отдел</option>
+                                <option value="sales">Отдел продаж</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="departmentCode">Код подразделения</label>
+                            <input type="text" id="departmentCode" name="code" 
+                                placeholder="Например, DEV-ANALYTICS" 
+                                pattern="[A-Z0-9-]+" title="Только латинские буквы, цифры и дефис">
+                            <small class="form-hint">Уникальный код для идентификации в системе</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="departmentDescription">Описание</label>
+                            <textarea id="departmentDescription" name="description" 
+                                    placeholder="Опишите функции и задачи подразделения..." 
+                                    rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Руководство -->
+                    <div class="form-section">
+                        <h3>Руководство</h3>
+                        <div class="form-group">
+                            <label for="departmentManagerPosition">Должность руководителя *</label>
+                            <input type="text" id="departmentManagerPosition" name="managerPosition" 
+                                placeholder="Например, Руководитель отдела аналитики" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="departmentManager">Руководитель</label>
+                            <select id="departmentManager" name="manager">
+                                <option value="">Не назначен</option>
+                                <option value="user1">Иванов Иван Иванович</option>
+                                <option value="user2">Петрова Мария Сергеевна</option>
+                                <option value="user3">Сидоров Алексей Владимирович</option>
+                                <option value="user4">Козлова Елена Владимировна</option>
+                            </select>
+                            <small class="form-hint">Можно назначить позже</small>
+                        </div>
+                    </div>
+
+                    <!-- Контактная информация -->
+                    <div class="form-section">
+                        <h3>Контактная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="departmentEmail">Email подразделения</label>
+                                <input type="email" id="departmentEmail" name="email" 
+                                    placeholder="analytics@company.ru">
+                            </div>
+                            <div class="form-group">
+                                <label for="departmentPhone">Телефон подразделения</label>
+                                <input type="tel" id="departmentPhone" name="phone" 
+                                    placeholder="+7 XXX XXX-XX-XX">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="departmentLocation">Местоположение</label>
+                            <input type="text" id="departmentLocation" name="location" 
+                                placeholder="Например, 5 этаж, левое крыло">
+                        </div>
+                    </div>
+
+                    <!-- Настройки -->
+                    <div class="form-section">
+                        <h3>Настройки</h3>
+                        <div class="form-checkboxes">
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="autoAssign" checked> 
+                                Автоматически назначать сотрудников в это подразделение
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="notifyManager" checked> 
+                                Уведомить руководителя о назначении
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="createChat"> 
+                                Создать групповой чат подразделения
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="createFolder"> 
+                                Создать общую папку для документов
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="buttonbase" onclick="closeModal('addDepartmentModal')">Отмена</button>
+                <button type="submit" form="addDepartmentForm" class="buttonbase">🏢 Создать подразделение</button>
+            </div>
+        </div>
+    </div>
+    <div id="blockUserModal" class="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Заблокировать пользователя?</h2>
+                <button class="modal-close"  onclick="closeModal('blockUserModal')">&times;</button>
+            </div>        
+            <div class="modal-footer">
+                <button type="button" class="buttonbase" onclick="closeModal('blockUserModal')">Отмена</button>
+                <button type="submit" form="addGroupForm" class="buttonbase">Заблокировать</button>
+            </div>
+        </div>
+    </div>
+    <div id="templateEditorModal" class="admin-modal">
+        <div class="modal-content template-editor-modal">
+            <div class="modal-header">
+                <h2>📝 Редактор шаблона документа</h2>
+                <button class="modal-close" onclick="closeModal('templateEditorModal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Основная информация о шаблоне -->
+                <div class="template-meta-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Название шаблона *</label>
+                            <input type="text" id="templateName" placeholder="Например: Договор оказания услуг" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>Категория</label>
+                            <select id="templateCategory">
+                                <option value="contract">Договоры</option>
+                                <option value="report">Отчёты</option>
+                                <option value="memo">Служебные записки</option>
+                                <option value="order">Приказы</option>
+                                <option value="hr">Кадровые документы</option>
+                                <option value="finance">Финансовые документы</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Описание шаблона</label>
+                        <textarea id="templateDescription" placeholder="Краткое описание назначения шаблона..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Конструктор полей -->
+                <div class="template-builder-section">
+                    <div class="builder-header">
+                        <h3>Конструктор полей</h3>
+                        <div class="builder-actions">
+                            <button class="buttonbase" id="previewTemplateBtn">👁️ Предпросмотр</button>
+                            <button class="buttonbase" id="saveTemplateBtn">💾 Сохранить шаблон</button>
+                        </div>
+                    </div>
+
+                    <div class="builder-layout">
+                        <!-- Панель доступных полей -->
+                        <div class="fields-panel">
+                            <h4>Доступные поля</h4>
+                            <div class="fields-library">
+                                <div class="field-type" data-type="text" draggable="true">
+                                    <span class="field-icon">📝</span>
+                                    <span class="field-name">Текстовое поле</span>
+                                    <span class="field-desc">Однострочный текст</span>
+                                </div>
+                                <div class="field-type" data-type="textarea" draggable="true">
+                                    <span class="field-icon">📄</span>
+                                    <span class="field-name">Текстовая область</span>
+                                    <span class="field-desc">Многострочный текст</span>
+                                </div>
+                                <div class="field-type" data-type="number" draggable="true">
+                                    <span class="field-icon">🔢</span>
+                                    <span class="field-name">Число</span>
+                                    <span class="field-desc">Числовое значение</span>
+                                </div>
+                                <div class="field-type" data-type="date" draggable="true">
+                                    <span class="field-icon">📅</span>
+                                    <span class="field-name">Дата</span>
+                                    <span class="field-desc">Выбор даты</span>
+                                </div>
+                                <div class="field-type" data-type="select" draggable="true">
+                                    <span class="field-icon">📋</span>
+                                    <span class="field-name">Выпадающий список</span>
+                                    <span class="field-desc">Выбор из вариантов</span>
+                                </div>
+                                <div class="field-type" data-type="radio" draggable="true">
+                                    <span class="field-icon">⭕</span>
+                                    <span class="field-name">Радио-кнопки</span>
+                                    <span class="field-desc">Один из вариантов</span>
+                                </div>
+                                <div class="field-type" data-type="checkbox" draggable="true">
+                                    <span class="field-icon">☑️</span>
+                                    <span class="field-name">Чекбокс</span>
+                                    <span class="field-desc">Да/Нет</span>
+                                </div>
+                                <div class="field-type" data-type="file" draggable="true">
+                                    <span class="field-icon">📎</span>
+                                    <span class="field-name">Файл</span>
+                                    <span class="field-desc">Загрузка файла</span>
+                                </div>
+                                <div class="field-type" data-type="signature" draggable="true">
+                                    <span class="field-icon">✍️</span>
+                                    <span class="field-name">Подпись</span>
+                                    <span class="field-desc">Электронная подпись</span>
+                                </div>
+                                <div class="field-type" data-type="user" draggable="true">
+                                    <span class="field-icon">👤</span>
+                                    <span class="field-name">Пользователь</span>
+                                    <span class="field-desc">Выбор сотрудника</span>
+                                </div>
+                                <div class="field-type" data-type="department" draggable="true">
+                                    <span class="field-icon">🏢</span>
+                                    <span class="field-name">Подразделение</span>
+                                    <span class="field-desc">Выбор отдела</span>
+                                </div>
+                                <div class="field-type" data-type="calculated" draggable="true">
+                                    <span class="field-icon">🧮</span>
+                                    <span class="field-name">Вычисляемое поле</span>
+                                    <span class="field-desc">Расчёт на основе других полей</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Область конструктора -->
+                        <div class="builder-area">
+                            <div class="builder-toolbar">
+                                <button class="buttonbase" id="addSectionBtn">+ Добавить раздел</button>
+                                <button class="buttonbase" id="clearTemplateBtn">🗑️ Очистить</button>
+                                <div class="layout-options">
+                                    <button class="btn-icon" title="Одна колонка">📱</button>
+                                    <button class="btn-icon" title="Две колонки" data-columns="2">📊</button>
+                                    <button class="btn-icon" title="Три колонки" data-columns="3">📋</button>
+                                </div>
+                            </div>
+
+                            <div class="template-preview" id="templatePreview">
+                                <!-- Сюда будут добавляться поля -->
+                                <div class="empty-template">
+                                    <div class="empty-icon">📝</div>
+                                    <h4>Шаблон пуст</h4>
+                                    <p>Перетащите поля из левой панели или добавьте раздел</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Панель свойств поля -->
+                        <div class="properties-panel" id="propertiesPanel">
+                            <div class="properties-header">
+                                <h4>Свойства поля</h4>
+                                <span class="properties-hint">Выберите поле для редактирования</span>
+                            </div>
+                            <div class="properties-content">
+                                <div class="no-selection">
+                                    <p>Выберите поле в конструкторе для настройки его свойств</p>
+                                </div>
+                                <!-- Содержимое будет подгружаться динамически -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Настройки шаблона -->
+                <div class="template-settings-section">
+                    <h3>⚙️ Настройки шаблона</h3>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h4>Права доступа</h4>
+                            <div class="setting-item">
+                                <label>Кто может создавать документы по этому шаблону</label>
+                                <select id="templateAccess">
+                                    <option value="all">Все пользователи</option>
+                                    <option value="department">Только отдел</option>
+                                    <option value="role">По ролям</option>
+                                    <option value="specific">Конкретные пользователи</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="accessSettings" style="display: none;">
+                                <!-- Динамические настройки доступа -->
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Автоматизация</h4>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="autoNumbering"> Автоматическая нумерация документов
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="autoWorkflow"> Автоматически запускать процесс согласования
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Шаблон маршрута согласования</label>
+                                <select id="workflowTemplate">
+                                    <option value="">Не назначен</option>
+                                    <option value="standard">Стандартный маршрут</option>
+                                    <option value="finance">Финансовый документ</option>
+                                    <option value="legal">Юридический документ</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Уведомления</h4>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="notifyCreator"> Уведомлять создателя при изменении статуса
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="notifyParticipants"> Уведомлять всех участников процесса
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('templateEditorModal')">Отмена</button>
+                <button class="buttonbase" id="testTemplateBtn">🧪 Тестировать шаблон</button>
+                <button class="buttonbase" id="publishTemplateBtn">🚀 Опубликовать</button>
+            </div>
+        </div>
+    </div>
+    <div id="templatePreviewModal" class="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👁️ Предпросмотр шаблона</h2>
+                <button class="modal-close" onclick="closeModal('templatePreviewModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="livePreview">
+                    <!-- Динамический предпросмотр -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="roleEditorModal" class="admin-modal">
+        <div class="modal-content role-editor-modal">
+            <div class="modal-header">
+                <h2 id="roleModalTitle">👑 Создание новой роли</h2>
+                <button class="modal-close" onclick="closeModal('roleEditorModal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="roleEditorForm" class="modal-form">
+                    <!-- Основная информация -->
+                    <div class="form-section">
+                        <h3>Основная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="roleName">Название роли *</label>
+                                <input type="text" id="roleName" name="name" 
+                                    placeholder="Например, Менеджер проектов" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="roleCode">Системный код *</label>
+                                <input type="text" id="roleCode" name="code" 
+                                    placeholder="project_manager" 
+                                    pattern="[a-z_]+" title="Только строчные латинские буквы и подчеркивания" required>
+                                <small class="form-hint">Уникальный идентификатор для системы</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roleDescription">Описание роли</label>
+                            <textarea id="roleDescription" name="description" 
+                                    placeholder="Опишите назначение и возможности этой роли..." 
+                                    rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Настройка разрешений -->
+                    <div class="form-section">
+                        <h3>🔐 Настройка разрешений</h3>
+                        
+                        <!-- Быстрый выбор уровня доступа -->
+                        <div class="permission-presets">
+                            <h4>Быстрый выбор уровня доступа</h4>
+                            <div class="preset-buttons">
+                                <button type="button" class="buttonbase preset-btn" data-preset="readonly">👀 Только просмотр</button>
+                                <button type="button" class="buttonbase preset-btn" data-preset="user">👤 Стандартный пользователь</button>
+                                <button type="button" class="buttonbase preset-btn" data-preset="manager">📊 Менеджер</button>
+                                <button type="button" class="buttonbase preset-btn" data-preset="admin">👑 Администратор</button>
+                            </div>
+                        </div>
+
+                        <!-- Детальные разрешения -->
+                        <div class="permissions-grid">
+                            <!-- Документы -->
+                            <div class="permission-category">
+                                <div class="category-header">
+                                    <h4>📄 Документы</h4>
+                                    <label class="category-toggle">
+                                        <input type="checkbox" class="category-checkbox" data-category="documents">
+                                        Выбрать все
+                                    </label>
+                                </div>
+                                <div class="permission-items">
+                                    <div class="permission-item">
+                                        <label class="permission-label">Просмотр документов</label>
+                                        <select class="permission-select" name="documents_view">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="department">Свои и отдела</option>
+                                            <option value="all" selected>Все документы</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Создание документов</label>
+                                        <select class="permission-select" name="documents_create">
+                                            <option value="none">Запрещено</option>
+                                            <option value="limited">Ограниченно</option>
+                                            <option value="all" selected>Разрешено</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Редактирование документов</label>
+                                        <select class="permission-select" name="documents_edit">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="department">Свои и отдела</option>
+                                            <option value="all">Все документы</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Удаление документов</label>
+                                        <select class="permission-select" name="documents_delete">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="department">Свои и отдела</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Согласование документов</label>
+                                        <select class="permission-select" name="documents_approve">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="all">Все документы</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Задачи -->
+                            <div class="permission-category">
+                                <div class="category-header">
+                                    <h4>✅ Задачи</h4>
+                                    <label class="category-toggle">
+                                        <input type="checkbox" class="category-checkbox" data-category="tasks">
+                                        Выбрать все
+                                    </label>
+                                </div>
+                                <div class="permission-items">
+                                    <div class="permission-item">
+                                        <label class="permission-label">Просмотр задач</label>
+                                        <select class="permission-select" name="tasks_view">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="department" selected>Свои и отдела</option>
+                                            <option value="all">Все задачи</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Создание задач</label>
+                                        <select class="permission-select" name="tasks_create">
+                                            <option value="none">Запрещено</option>
+                                            <option value="all" selected>Разрешено</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Назначение задач</label>
+                                        <select class="permission-select" name="tasks_assign">
+                                            <option value="none">Запрещено</option>
+                                            <option value="department">В своем отделе</option>
+                                            <option value="all">Всем сотрудникам</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Изменение статусов</label>
+                                        <select class="permission-select" name="tasks_status">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="assigned" selected>Назначенные</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Процессы -->
+                            <div class="permission-category">
+                                <div class="category-header">
+                                    <h4>🔄 Процессы</h4>
+                                    <label class="category-toggle">
+                                        <input type="checkbox" class="category-checkbox" data-category="workflows">
+                                        Выбрать все
+                                    </label>
+                                </div>
+                                <div class="permission-items">
+                                    <div class="permission-item">
+                                        <label class="permission-label">Просмотр процессов</label>
+                                        <select class="permission-select" name="workflows_view">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="all" selected>Все процессы</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Создание процессов</label>
+                                        <select class="permission-select" name="workflows_create">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="all">Разрешено</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Редактирование процессов</label>
+                                        <select class="permission-select" name="workflows_edit">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="all">Все процессы</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Пользователи -->
+                            <div class="permission-category">
+                                <div class="category-header">
+                                    <h4>👥 Пользователи</h4>
+                                    <label class="category-toggle">
+                                        <input type="checkbox" class="category-checkbox" data-category="users">
+                                        Выбрать все
+                                    </label>
+                                </div>
+                                <div class="permission-items">
+                                    <div class="permission-item">
+                                        <label class="permission-label">Просмотр пользователей</label>
+                                        <select class="permission-select" name="users_view">
+                                            <option value="none">Запрещено</option>
+                                            <option value="department" selected>Только своего отдела</option>
+                                            <option value="all">Все пользователи</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Редактирование пользователей</label>
+                                        <select class="permission-select" name="users_edit">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="own">Только свой профиль</option>
+                                            <option value="department">В своем отделе</option>
+                                            <option value="all">Всех пользователей</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Создание пользователей</label>
+                                        <select class="permission-select" name="users_create">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="all">Разрешено</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Администрирование -->
+                            <div class="permission-category">
+                                <div class="category-header">
+                                    <h4>⚙️ Администрирование</h4>
+                                    <label class="category-toggle">
+                                        <input type="checkbox" class="category-checkbox" data-category="admin">
+                                        Выбрать все
+                                    </label>
+                                </div>
+                                <div class="permission-items">
+                                    <div class="permission-item">
+                                        <label class="permission-label">Доступ к админ-панели</label>
+                                        <select class="permission-select" name="admin_access">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="read">Только просмотр</option>
+                                            <option value="full">Полный доступ</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Управление ролями</label>
+                                        <select class="permission-select" name="admin_roles">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="full">Полный доступ</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Системные настройки</label>
+                                        <select class="permission-select" name="admin_settings">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="read">Только просмотр</option>
+                                            <option value="full">Полный доступ</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Просмотр системных логов</label>
+                                        <select class="permission-select" name="admin_logs">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="read">Разрешено</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Отчеты -->
+                            <div class="permission-category">
+                                <div class="category-header">
+                                    <h4>📊 Отчеты</h4>
+                                    <label class="category-toggle">
+                                        <input type="checkbox" class="category-checkbox" data-category="reports">
+                                        Выбрать все
+                                    </label>
+                                </div>
+                                <div class="permission-items">
+                                    <div class="permission-item">
+                                        <label class="permission-label">Просмотр отчетов</label>
+                                        <select class="permission-select" name="reports_view">
+                                            <option value="none">Запрещено</option>
+                                            <option value="own">Только свои</option>
+                                            <option value="department">Своего отдела</option>
+                                            <option value="all">Все отчеты</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Создание отчетов</label>
+                                        <select class="permission-select" name="reports_create">
+                                            <option value="none">Запрещено</option>
+                                            <option value="all" selected>Разрешено</option>
+                                        </select>
+                                    </div>
+                                    <div class="permission-item">
+                                        <label class="permission-label">Экспорт данных</label>
+                                        <select class="permission-select" name="reports_export">
+                                            <option value="none" selected>Запрещено</option>
+                                            <option value="own">Только свои данные</option>
+                                            <option value="department">Данные отдела</option>
+                                            <option value="all">Все данные</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительные настройки -->
+                    <div class="form-section">
+                        <h3>📋 Дополнительные настройки</h3>
+                        <div class="form-checkboxes">
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="is_default" id="roleIsDefault">
+                                Сделать ролью по умолчанию для новых пользователей
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="can_delegate" id="roleCanDelegate" checked>
+                                Разрешить делегирование полномочий
+                            </label>
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="is_system" id="roleIsSystem">
+                                Системная роль (нельзя удалить)
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rolePriority">Приоритет роли</label>
+                            <select id="rolePriority" name="priority">
+                                <option value="low">Низкий</option>
+                                <option value="medium" selected>Средний</option>
+                                <option value="high">Высокий</option>
+                                <option value="critical">Критический</option>
+                            </select>
+                            <small class="form-hint">Влияет на порядок отображения в списках</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="buttonbase" onclick="closeModal('roleEditorModal')">Отмена</button>
+                <button type="button" class="buttonbase" id="testRoleBtn">🧪 Тестировать роль</button>
+                <button type="submit" form="roleEditorForm" class="buttonbase" id="saveRoleBtn">💾 Сохранить роль</button>
+            </div>
+        </div>
+    </div>
+    <div id="roleTestModal" class="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🧪 Тестирование роли</h2>
+                <button class="modal-close" onclick="closeModal('roleTestModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="role-test-preview">
+                    <h4>Предпросмотр прав доступа</h4>
+                    <div class="test-results" id="testResults">
+                        <!-- Результаты тестирования будут здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <script src="../scripts/admin.js"></script>
+</body>
+</html>

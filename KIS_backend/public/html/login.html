@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Корпоративный мессенджер</title>
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
+    <link rel="stylesheet" type="text/css" href="/styles/login.css">
+</head>
+<body>
+    <div id="enterbody">
+        <div class="log_page_window" id="loginwindow">
+            <h1 class="text-header">Авторизация</h1>
+            
+            <div class="inputelem_container text-inner-header">
+                <label>Логин / Email</label>
+                <input class="inputelem" type="text" id="loginInput" placeholder="Введите логин или email">
+            </div>
+            
+            <div class="inputelem_container text-inner-header">
+                <label>Пароль</label>
+                <input class="inputelem" type="password" id="passwordInput" placeholder="Введите пароль">
+            </div>
+            
+            <button class="buttonbase log_page_button" id="loginBtn">Войти</button>
+            
+            <div id="errorMessage" style="color: red; display: none; margin-top: 10px;"></div>
+            
+            <a href="/html/register.html" id="registerLink">Зарегистрироваться</a>
+        </div>
+    </div>
+
+    <script src="/scripts/api.js"></script>
+    <script>
+        const loginBtn = document.getElementById('loginBtn');
+        const loginInput = document.getElementById('loginInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorDiv = document.getElementById('errorMessage');
+
+        loginBtn.addEventListener('click', async () => {
+            const emailOrUsername = loginInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!emailOrUsername || !password) {
+                errorDiv.textContent = 'Заполните все поля';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Вход...';
+
+            try {
+                const result = await api.auth.login(emailOrUsername, password);
+                if (result.success) {
+                    // Перенаправляем на главную страницу
+                    window.location.href = '/html/base.html';
+                } else {
+                    errorDiv.textContent = result.error || 'Ошибка входа';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Войти';
+            }
+        });
+
+        // Enter key
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+    </script>
+</body>
+</html>

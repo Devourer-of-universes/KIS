@@ -1,0 +1,1033 @@
+/* settings.css - Настройки пользователя и профиль - ПОЛНАЯ ВЕРСИЯ С АНИМАЦИЯМИ */
+
+:root {
+    --c_bg: #f5f7fb;
+    --c_bg_txt: #1a1a2e;
+    --c_surf: #ffffff;
+    --c_surf_txt: #6c757d;
+     --c_acc: #5194ff;
+    --c_acchalf:rgba(81, 148, 255, 0.5);
+    --с_brightacc: #007bff;
+    --c_success: #10b981;
+    --c_warning: #f59e0b;
+    --c_error: #ef4444;
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 20px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --transition: all 0.25s ease;
+    --transition-slow: 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+/* ========== ОСНОВНОЙ КОНТЕЙНЕР ========== */
+.settings-container {
+    margin-left: 60px;
+    background: var(--c_bg);
+    min-height: 100vh;
+    padding: 24px 32px;
+    transition: margin-left 0.3s ease;
+    animation: containerFadeIn 0.4s ease;
+}
+
+@keyframes containerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.left-menu.pinned ~ .settings-container {
+    margin-left: 260px;
+}
+
+/* ========== ОСНОВНОЙ ЛЕЙАУТ ========== */
+.settings-main {
+    display: flex;
+    gap: 28px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ========== БОКОВАЯ НАВИГАЦИЯ ========== */
+.settings-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--c_surf);
+    border-radius: var(--border-radius-lg);
+    padding: 20px 0;
+    box-shadow: var(--shadow-md);
+    height: fit-content;
+    animation: slideInLeft 0.35s ease;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.settings-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-item {
+    padding: 14px 24px;
+    text-decoration: none;
+    color: var(--c_bg_txt);
+    font-size: 15px;
+    font-weight: 500;
+    transition: all var(--transition);
+    border-left: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    background: var(--c_acchalf);
+    transition: width var(--transition);
+    z-index: -1;
+}
+
+.nav-item:hover::before {
+    width: 100%;
+}
+
+.nav-item:hover {
+    transform: translateX(5px);
+}
+
+.nav-item.active {
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+    border-left-color: var(--c_acc);
+}
+
+/* ========== ОСНОВНОЙ КОНТЕНТ ========== */
+.settings-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-section {
+    display: none;
+    animation: sectionFadeIn 0.3s ease;
+}
+
+.settings-section.active {
+    display: block;
+}
+
+@keyframes sectionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.settings-section h2 {
+    margin: 0 0 24px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    animation: titleFadeIn 0.3s ease;
+}
+
+@keyframes titleFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ========== ГРУППЫ НАСТРОЕК ========== */
+.settings-group {
+    background: var(--c_surf);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition);
+    animation: groupFadeIn 0.3s ease backwards;
+}
+
+.settings-group:nth-child(1) { animation-delay: 0.05s; }
+.settings-group:nth-child(2) { animation-delay: 0.1s; }
+.settings-group:nth-child(3) { animation-delay: 0.15s; }
+.settings-group:nth-child(4) { animation-delay: 0.2s; }
+.settings-group:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes groupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.settings-group:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.settings-group h3 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--c_acchalf);
+}
+
+/* Элемент настройки */
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #eef2f6;
+    transition: all var(--transition);
+}
+
+.setting-item:hover {
+    transform: translateX(8px);
+    background: var(--c_acchalf);
+    margin: 0 -12px;
+    padding: 16px 12px;
+    border-radius: var(--border-radius-sm);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-info {
+    flex: 1;
+}
+
+.setting-label {
+    display: block;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--c_bg_txt);
+    margin-bottom: 4px;
+}
+
+.setting-description {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+}
+
+/* Переключатель (Switch) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.25s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: transform 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--c_acc);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.switch:hover .slider:before {
+    transform: scale(1.1);
+}
+
+input:checked + .slider:hover:before {
+    transform: translateX(26px) scale(1.1);
+}
+
+/* ========== ВЫБОР ТЕМЫ ========== */
+.theme-selector {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 16px;
+    border-radius: var(--border-radius-md);
+    border: 2px solid transparent;
+    transition: all var(--transition);
+    animation: themeOptionFadeIn 0.25s ease backwards;
+}
+
+.theme-option:nth-child(1) { animation-delay: 0.05s; }
+.theme-option:nth-child(2) { animation-delay: 0.1s; }
+.theme-option:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes themeOptionFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.theme-option:hover {
+    background: var(--c_acchalf);
+    transform: translateY(-4px);
+}
+
+.theme-option.active {
+    border-color: var(--c_acc);
+    background: var(--c_acchalf);
+    animation: activeThemePulse 0.3s ease;
+}
+
+@keyframes activeThemePulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.theme-preview {
+    width: 80px;
+    height: 60px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 10px;
+    border: 1px solid #eef2f6;
+    transition: transform var(--transition);
+}
+
+.theme-option:hover .theme-preview {
+    transform: scale(1.05);
+}
+
+.light-theme {
+    background: linear-gradient(135deg, #ffffff, #f5f7fb);
+}
+
+.dark-theme {
+    background: linear-gradient(135deg, #1a1a2e, #2d2d44);
+}
+
+.theme-option span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+}
+
+/* ========== ЗАГРУЗКА АВАТАРА ========== */
+.avatar-upload {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    animation: avatarFadeIn 0.3s ease;
+}
+
+@keyframes avatarFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.current-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--c_acc);
+    transition: all var(--transition);
+}
+
+.current-avatar:hover {
+    transform: scale(1.08);
+    box-shadow: var(--shadow-md);
+}
+
+.upload-btn {
+    cursor: pointer;
+    padding: 8px 20px;
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+.upload-btn:hover {
+    background: var(--c_acc);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ========== СЕССИИ ========== */
+.sessions-list {
+    margin-bottom: 20px;
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #eef2f6;
+    transition: all var(--transition);
+    animation: sessionItemFadeIn 0.25s ease backwards;
+}
+
+.session-item:nth-child(1) { animation-delay: 0.05s; }
+.session-item:nth-child(2) { animation-delay: 0.1s; }
+
+@keyframes sessionItemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.session-item:last-child {
+    border-bottom: none;
+}
+
+.session-item:hover {
+    transform: translateX(5px);
+    background: var(--c_acchalf);
+    margin: 0 -10px;
+    padding: 14px 10px;
+    border-radius: var(--border-radius-sm);
+}
+
+.session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.session-device {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--c_bg_txt);
+}
+
+.session-time {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+}
+
+.session-location {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    background: var(--c_acchalf);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.session-item.current {
+    background: var(--c_acchalf);
+    padding: 14px;
+    border-radius: var(--border-radius-md);
+    margin: -14px 0 0 -14px;
+    width: calc(100% + 28px);
+    padding-left: 14px;
+    animation: currentSessionPulse 2s infinite;
+}
+
+@keyframes currentSessionPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+}
+
+/* Кнопка выхода */
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--c_error);
+    color: var(--c_error);
+    padding: 8px 20px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+.btn-outline:hover {
+    background: var(--c_error);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ========== ПРОФИЛЬ (вкладка Личные настройки) ========== */
+.profile-content {
+    background: var(--c_surf);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+    animation: profileFadeIn 0.4s ease;
+}
+
+@keyframes profileFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-general-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px;
+    background: linear-gradient(135deg, var(--c_acc), var(--c_brightacc));
+    color: white;
+    animation: gradientSlideIn 0.5s ease;
+}
+
+@keyframes gradientSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-general-info h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    animation: titleSlideIn 0.4s ease;
+}
+
+@keyframes titleSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition);
+    animation: avatarScaleIn 0.4s ease;
+}
+
+@keyframes avatarScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.profile-info-groups {
+    display: flex;
+    gap: 24px;
+    padding: 32px;
+}
+
+.profile-info-group {
+    flex: 1;
+    background: var(--c_bg);
+    border-radius: var(--border-radius-md);
+    padding: 24px;
+    transition: all var(--transition);
+    animation: groupCardFadeIn 0.3s ease backwards;
+}
+
+.profile-info-group:nth-child(1) { animation-delay: 0.05s; }
+.profile-info-group:nth-child(2) { animation-delay: 0.1s; }
+
+@keyframes groupCardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-info-group:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.profile-info-group-name {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--c_acc);
+}
+
+.profile-info-group-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-info-group-content-element {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--c_surf);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition);
+    animation: elementFadeIn 0.25s ease backwards;
+}
+
+.profile-info-group-content-element:nth-child(1) { animation-delay: 0.05s; }
+.profile-info-group-content-element:nth-child(2) { animation-delay: 0.1s; }
+
+@keyframes elementFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.profile-info-group-content-element:hover {
+    transform: translateX(6px);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-info-group-content-element-name {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--c_surf_txt);
+}
+
+.profile-info-group-content-element-info {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    border: none;
+    background: transparent;
+    text-align: right;
+    transition: all var(--transition);
+}
+
+.profile-info-group-content-element-info:focus {
+    outline: none;
+    border-bottom: 2px solid var(--c_acc);
+}
+
+/* Дополнительный блок "Внешний вид профиля" - отдельная карточка */
+.settings-group:last-of-type {
+    margin-top: 0;
+}
+
+/* Диапазон масштаба */
+.range-control {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.scale-slider {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    background: #eef2f6;
+    border-radius: 2px;
+}
+
+.scale-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--c_acc);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.scale-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.scale-value {
+    min-width: 45px;
+    font-weight: 600;
+    color: var(--c_acc);
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 1200px) {
+    .settings-container {
+        padding: 20px 24px;
+    }
+
+    .profile-info-groups {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .profile-general-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+
+    .profile-general-info h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 992px) {
+    .settings-main {
+        flex-direction: column;
+    }
+
+    .settings-sidebar {
+        width: 100%;
+        animation: slideInTop 0.35s ease;
+    }
+
+    @keyframes slideInTop {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .settings-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0 16px;
+        gap: 8px;
+    }
+
+    .nav-item {
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 12px 20px;
+    }
+
+    .nav-item.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--c_acc);
+    }
+
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .theme-selector {
+        justify-content: center;
+    }
+
+    .profile-info-groups {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-container {
+        margin-left: 56px;
+        padding: 16px;
+    }
+
+    .left-menu.pinned ~ .settings-container {
+        margin-left: 200px;
+    }
+
+    .settings-group {
+        padding: 20px;
+    }
+
+    .profile-info-group-content-element {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .profile-info-group-content-element-info {
+        text-align: center;
+    }
+
+    .avatar-upload {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .session-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .profile-info-groups {
+        padding: 20px;
+    }
+
+    .profile-general-info {
+        padding: 24px;
+    }
+}
+
+.nav-item,
+.setting-item,
+.theme-option,
+.upload-btn,
+.session-item,
+.btn-outline,
+.profile-info-group,
+.profile-info-group-content-element,
+.switch .slider,
+.switch .slider:before,
+.scale-slider::-webkit-slider-thumb {
+    transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+/* Плавный hover для групп настроек */
+.settings-group {
+    transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1),
+                box-shadow 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.settings-group:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Плавный hover для элементов настроек */
+.setting-item {
+    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.setting-item:hover {
+    transform: translateX(6px);
+    background: var(--c_acchalf);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Плавный hover для карточек профиля */
+.profile-info-group {
+    transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.profile-info-group:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Плавный hover для элементов внутри профиля */
+.profile-info-group-content-element {
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.profile-info-group-content-element:hover {
+    transform: translateX(5px);
+    background: var(--c_acchalf);
+}
+
+/* Плавный hover для аватара */
+.profile-avatar {
+    transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1),
+                box-shadow 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Плавный hover для кнопки загрузки аватара */
+.upload-btn {
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Плавный hover для пунктов навигации */
+.nav-item {
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-item:hover {
+    transform: translateX(5px);
+}
+
+/* Плавный hover для переключателя */
+.switch .slider {
+    transition: background-color 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.switch .slider:before {
+    transition: transform 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.switch:hover .slider:before {
+    transform: scale(1.1);
+}
+
+.switch input:checked + .slider:hover:before {
+    transform: translateX(26px) scale(1.1);
+}
+
+/* Плавный hover для сессий */
+.session-item {
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.session-item:hover {
+    transform: translateX(4px);
+    background: var(--c_acchalf);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Плавный hover для кнопки выхода */
+.btn-outline {
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.btn-outline:hover {
+    transform: translateY(-2px);
+}
+
+/* Плавный hover для опций темы */
+.theme-option {
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.theme-option:hover {
+    transform: translateY(-3px);
+}
+
+/* Плавный скролл для всей страницы */
+html {
+    scroll-behavior: smooth;
+}

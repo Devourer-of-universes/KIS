@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИС</title>
+    <link rel="stylesheet" type="text/css" href="../styles/main.css" >
+    <link rel="stylesheet" type="text/css" href="../styles/chat.css" >
+    
+
+</head>
+<body>
+   <div class="left-menu">
+        <div class="menu-item">
+            <button class="toggle-btn" title="Закрепить меню">
+                <img src="../materials/menu_stay.png" alt="Закрепить" class="toggle-btn-img menu-icon ">
+            </button>
+        </div>
+              
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/base.html">
+                <img src="../materials/icons8-рабочее-пространство-80.png" alt="Рабочее пространство" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Рабочее пространство</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/chat.html">
+                <img src="..//materials/icons8-чат-80.png" alt="Чаты" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Чаты</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/settings.html">
+                <img src="../materials/icons8-сервисы-80.png" alt="Настройки" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Настройки</h3>
+            </a> 
+        </div>
+        <div class="menu-item logout-item">
+            <a class="left_menu_pagelink" href="../html/login.html">
+                <img src="../materials/icons8-выход-48.png" alt="Выход" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Выход</h3>
+            </a> 
+        </div>
+    </div>
+    <div class="chat-container">
+        
+        
+
+        <!-- <div class="chat-dropdown-menu">
+            <div class="chat-dropdown-groups">
+                <div class="chat-dropdown-group">
+                    <div class="chat-dropdown-group-header">
+                        <h3>Личные сообщения</h3>
+                    </div>
+                    <div class="chat-dropdown-group-list">
+                        <div class="chat-dropdown-group-element">
+                            <div class="chat-dropdown-group-element-avatar">
+                                <img src="" alt="" class="chat-dropdown-group-element-avatar-icon">
+                            </div>
+                            <div class="chat-dropdown-group-element-content">
+                                <div class="chat-dropdown-group-element-name">
+                                    <h4>Иван Петров</h4>
+                                </div>
+                                <div class="chat-dropdown-group-element-lastmessage">
+                                    <h5>Утра доброго! Зайди сегодня ко мне в кабинет.</h5>
+                                </div>
+                            </div>
+                            <div class="chat-dropdown-group-element-lastmessagetime">
+                                <h5>9:41</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-dropdown-group">
+                    <div class="chat-dropdown-group-header">
+                        <h3>Структурные подразделения</h3>
+                    </div>
+                    <div class="chat-dropdown-group-list">
+                        <div class="chat-dropdown-group-element">
+                            <div class="chat-dropdown-group-element-avatar">
+                                <img src="" alt="" class="chat-dropdown-group-element-avatar-icon">
+                            </div>
+                            <div class="chat-dropdown-group-element-content">
+                                <div class="chat-dropdown-group-element-name">
+                                    <h4>Отдел ИТ</h4>
+                                </div>
+                                <div class="chat-dropdown-group-element-lastmessage">
+                                    <h5>Серов П. В.: Всем доброе утро! Задачи на сегодня:...</h5>
+                                </div>
+                            </div>
+                            <div class="chat-dropdown-group-element-lastmessagetime">
+                                <h5>8:24</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-dropdown-group">
+                    <div class="chat-dropdown-group-header">
+                        <h3>Проекты</h3>
+                    </div>
+                    <div class="chat-dropdown-group-list">
+                        <div class="chat-dropdown-group-element">
+                            <div class="chat-dropdown-group-element-avatar">
+                                <img src="" alt="" class="chat-dropdown-group-element-avatar-icon">
+                            </div>
+                            <div class="chat-dropdown-group-element-content">
+                                <div class="chat-dropdown-group-element-name">
+                                    <h4>ИС "Универсальный ЭДО"</h4>
+                                </div>
+                                <div class="chat-dropdown-group-element-lastmessage">
+                                    <h5>Иванов Р. Е.: Завтра должны быть готовы...</h5>
+                                </div>
+                            </div>
+                            <div class="chat-dropdown-group-element-lastmessagetime">
+                                <h5>10:05</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+        
+
+
+
+
+        <main class="chat-main">
+            <div class="chat-list">
+                <div class="chat-searching">
+                    <div class="chat-searching-line">
+                        <input type="text" placeholder="Поиск...">
+                        <img src="../materials/searching_icon.png" alt="search-icon">
+                    </div>
+                    
+                </div>
+                <div class="chat-list-groups">
+                    <button class="chat-list-group-name">Личные</button>
+                    <button class="chat-list-group-name active">Группы</button>
+                    <button class="chat-list-group-name">Проекты</button>
+                    <button class="buttonbase" id="addChatGroup">+</button>
+                </div>
+                <div class="chat-list-elements">
+                    <section class="chat-list-group-active">
+                        
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                    </section>
+                    <section class="chat-list-group">
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                        <div class="chat-list-element">
+                            <div class="chat-list-element-icon">
+                                <img src="" alt="F">
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">
+                                    Fu-fu-fu
+                                </div>
+                                <div class="chat-list-element-lasttxt">
+                                    Иван: ну и бредятина, что вы тут...
+                                </div>
+                            </div>
+                            <div class="chat-list-element-notifications">
+                                6
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <button class="floating-create-btn" id="floatingCreateChatBtn" title="Создать чат">
+                    <img src="../materials/icons8-карандаш-96.png" alt="Создать чат">
+                </button>
+            </div>
+            <div class="chat-content no-chat-selected">
+                <div class="chat-header">
+                    <div class="chat-info">
+                        <button class="chat-button back-to-chats-btn" id="backToChatsBtn" title="Назад к списку чатов" style="display: none;">
+                            <img src="/materials/back.png" alt="Назад" class="chat-header-buttons">
+                        </button>
+                        <div class="chat-avatar" style="width: 50px; height: 50px;"></div>
+                        <div class="chat-details">
+                            <h2 class="chat-name">Выберите чат</h2>
+                            <span class="chat-status"></span>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="chat-button" title="Настройки">
+                            <img src="/materials/chat-settings.png" alt="Настройки" class="chat-header-buttons">
+                        </button>
+                    </div>
+                </div>
+
+                <section class="chat-messages">
+                    <div class="messages-container" id="messagesContainer">
+                        <div class="empty-chat-placeholder">
+                            <div class="empty-icon">💬</div>
+                            <h3>Выберите чат</h3>
+                            <p>Нажмите на чат в списке слева, чтобы начать общение</p>
+                        </div>
+                    </div>
+                </section>
+
+                <footer class="chat-input">
+                    <div class="input-tools">
+                        <button class="tool-btn" title="Прикрепить файл">
+                            <img src="/materials/icons8-скрепка-80.png" alt="Прикрепить" class="icon">
+                            <input type="file" id="fileInput" multiple style="display: none;">
+                        </button>
+                        <button class="tool-btn" title="Смайлики">
+                            <img src="/materials/icons8-смайлик-80.png" alt="Смайлики" class="icon">
+                        </button>
+                    </div>
+                    <input type="text" class="message-input" id="messageInput" placeholder="Введите сообщение...">
+                    <button class="send-btn buttonbase" id="sendMessageBtn" title="Отправить">
+                        <img src="/materials/icons8-отправить-80.png" alt="Отправить" class="icon">
+                    </button>
+                </footer>
+            </div>
+
+            <aside class="chat-sidebar" id="chatSidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar" style="width: 170px; height: 170px;"></div>
+                        <div class="sidebar-chatname"></div>
+                    </div>
+                    <h3 id="participantsTitle">Участники (<span id="participantsCount">0</span>)</h3>
+                    <div class="user-list" id="userList">
+                        <div style="padding: 20px; text-align: center; color: #999;">Выберите чат</div>
+                    </div>
+                    
+                    <!-- Блок медиа (оставляем как есть) -->
+                    <div class="sidebar-media-container">
+                        <div class="sidebar-media-header">Медиа</div>
+                        <div class="sidebar-media-filter">
+                            <button class="sidebar-media-group-btn" data-media="files">Файлы</button>
+                            <button class="sidebar-media-group-btn active" data-media="images">Изображения</button>
+                            <button class="sidebar-media-group-btn" data-media="links">Ссылки</button>
+                        </div>
+                        <div class="sidebar-media-content">
+                            <!-- содержимое медиа -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        
+    </div>
+    <!-- Модальное окно создания чата -->
+    <div id="createChatModal" class="create-chat-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Новый чат</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Тип чата</label>
+                    <select id="chatTypeSelect">
+                        <option value="private">💬 Личный чат</option>
+                        <option value="group">👥 Групповой чат</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="groupNameGroup" style="display: none;">
+                    <label>Название группы</label>
+                    <input type="text" id="groupNameInput" placeholder="Например: Команда проекта">
+                </div>
+                
+                <div class="form-group">
+                    <label>Выберите участников</label>
+                    <div class="user-search">
+                        <input type="text" id="userSearchInput" placeholder="Поиск пользователей...">
+                    </div>
+                    <div id="userListContainer" class="user-list">
+                        <div style="padding: 20px; text-align: center; color: #999;">Загрузка пользователей...</div>
+                    </div>
+                    <div class="hint-text">✓ Нажмите на пользователя, чтобы выбрать</div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="buttonbase btn-secondary" id="cancelModalBtn">Отмена</button>
+                <button class="buttonbase" id="createChatSubmitBtn">Создать</button>
+            </div>
+        </div>
+    </div>
+    <script src="/scripts/api.js"></script>
+    <script src="/scripts/chat-api.js"></script>
+    <script src="../scripts/main.js"></script>
+    <script src="../scripts/chat.js"></script>
+</body>
+</html>

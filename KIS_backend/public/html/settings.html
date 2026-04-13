@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИС</title>
+    <link rel="stylesheet" type="text/css" href="../styles/main.css" >
+    <link rel="stylesheet" type="text/css" href="../styles/settings.css">
+    <link rel="stylesheet" type="text/css" href="../styles/profile.css">
+</head>
+<body>
+    <div class="left-menu">
+        <div class="menu-item">
+            <button class="toggle-btn" title="Закрепить меню">
+                <img src="../materials/menu_stay.png" alt="Закрепить" class="toggle-btn-img menu-icon ">
+            </button>
+        </div>
+              
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/base.html">
+                <img src="../materials/icons8-рабочее-пространство-80.png" alt="Рабочее пространство" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Рабочее пространство</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/chat.html">
+                <img src="..//materials/icons8-чат-80.png" alt="Чаты" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Чаты</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/settings.html">
+                <img src="../materials/icons8-сервисы-80.png" alt="Настройки" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Настройки</h3>
+            </a> 
+        </div>
+        <div class="menu-item logout-item">
+            <a class="left_menu_pagelink" href="../html/login.html">
+                <img src="../materials/icons8-выход-48.png" alt="Выход" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Выход</h3>
+            </a> 
+        </div>
+
+        
+        <!-- <div class="menu-item">
+            
+            <a href="l">Чаты</a>
+        </div>
+        
+        <div class="menu-item">
+            
+            <a class="left_menu_pagelink" href="">Настройки</a>
+        </div>
+        <div class="menu-spacer"></div>
+        <div class="menu-item logout-item">
+            
+            <a class="left_menu_pagelink" href="">Выход</a>
+        </div> -->
+    </div>
+
+    <div class="settings-container">
+    <!-- <header class="settings-header">
+        <h1>Настройки</h1>
+    </header> -->
+
+    <main class="settings-main">
+        <aside class="settings-sidebar">
+            <nav class="settings-nav">
+                <a href="#personal" class="nav-item active">Личные настройки</a>
+                <a href="#notifications" class="nav-item">Уведомления</a>
+                <a href="#interface" class="nav-item">Интерфейс</a>
+                <a href="#security" class="nav-item">Безопасность</a>
+            </nav>
+        </aside>
+
+        <div class="settings-content">
+            <!-- Личные настройки -->
+            <section id="personal" class="settings-section active">
+                <h2>Личные настройки</h2>
+                <div class="profile-content">
+                
+                    <div class="profile-info">
+                        <div class="profile-general-info">
+                            <img src="../materials/avatar_for_profile.png" alt="" class="profile-avatar">
+                            <h1>Иванов Иван Иванович</h1>
+                        </div>
+                        
+                        <div class="profile-info-groups">
+                            <div class="profile-info-group">
+                                <h2 class="profile-info-group-name">
+                                    Рабочая информация
+                                </h2>
+                                <div class="profile-info-group-content">
+                                    <div class="profile-info-group-content-element">
+                                        <h3 class="profile-info-group-content-element-name">
+                                            Должность
+                                        </h3>
+                                        <h3 class="profile-info-group-content-element-info">
+                                            Системный администратор
+                                        </h3>
+                                    </div>
+                                    <div class="profile-info-group-content-element">
+                                        <h3 class="profile-info-group-content-element-name">
+                                            Отдел
+                                        </h3>
+                                        <h3 class="profile-info-group-content-element-info">
+                                            Отдел ИТ
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile-info-group">
+                                <h2 class="profile-info-group-name">
+                                    Контакты
+                                </h2>
+                                <div class="profile-info-group-content">
+                                    <div class="profile-info-group-content-element">
+                                        <h3 class="profile-info-group-content-element-name">
+                                            Телефон
+                                        </h3>
+                                        <input class="profile-info-group-content-element-info" type="tel" value="8 000 000 00 00"> 
+                                    </div>
+                                    <div class="profile-info-group-content-element">
+                                        <h3 class="profile-info-group-content-element-name">
+                                            Почта
+                                        </h3>
+                                        <input class="profile-info-group-content-element-info" type="email" value="test_account@test.ru"> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Внешний вид профиля</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Аватар</span>
+                            <span class="setting-description">JPG, PNG до 2MB</span>
+                        </div>
+                        <div class="avatar-upload">
+                            <img src="../materials/avatar_for_profile.png" alt="Аватар" class="current-avatar">
+                            <input type="file" id="avatar-upload" accept="image/*" hidden>
+                            <label for="avatar-upload" class="upload-btn buttonbase">Сменить</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Уведомления -->
+            <section id="notifications" class="settings-section">
+                <h2>Уведомления</h2>
+                
+                <div class="settings-group">
+                    <h3>Типы уведомлений</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Новые задачи</span>
+                            <span class="setting-description">Уведомлять о новых назначенных задачах</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Изменение статуса документов</span>
+                            <span class="setting-description">Когда документ переходит на ваше согласование</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Напоминания о deadline</span>
+                            <span class="setting-description">За 1 день до истечения срока</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Каналы уведомлений</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Внутренние уведомления</span>
+                            <span class="setting-description">Уведомления в системе</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Email-уведомления</span>
+                            <span class="setting-description">На рабочую почту</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Интерфейс -->
+            <section id="interface" class="settings-section">
+                <h2>Настройки интерфейса</h2>
+                
+                <div class="settings-group">
+                    <h3>Внешний вид</h3>
+                    <div class="theme-selector">
+                        <div class="theme-option active" data-theme="light">
+                            <div class="theme-preview light-theme"></div>
+                            <span>Светлая</span>
+                        </div>
+                        <div class="theme-option" data-theme="dark">
+                            <div class="theme-preview dark-theme"></div>
+                            <span>Тёмная</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Поведение</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Компактный режим</span>
+                            <span class="setting-description">Уменьшить отступы и шрифты</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Автосохранение черновиков</span>
+                            <span class="setting-description">Каждые 2 минуты</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Безопасность -->
+            <section id="security" class="settings-section">
+                <h2>Безопасность</h2>
+                
+                <div class="settings-group">
+                    <h3>Сессии</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Автоматический выход</span>
+                            <span class="setting-description">При бездействии более 2 часов</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>История входов</h3>
+                    <div class="sessions-list">
+                        <div class="session-item current">
+                            <div class="session-info">
+                                <span class="session-device">Chrome, Windows 10</span>
+                                <span class="session-time">Текущая сессия</span>
+                            </div>
+                            <span class="session-location">Москва, Россия</span>
+                        </div>
+                        <div class="session-item">
+                            <div class="session-info">
+                                <span class="session-device">Safari, macOS</span>
+                                <span class="session-time">2 дня назад</span>
+                            </div>
+                            <span class="session-location">Санкт-Петербург, Россия</span>
+                        </div>
+                    </div>
+                    <button class="btn-outline buttonbase">Завершить все другие сессии</button>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/main.js"></script>
+</body>
+</html>

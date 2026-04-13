@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИС</title>
+    <link rel="stylesheet" type="text/css" href="../styles/main.css" >
+    <link rel="stylesheet" type="text/css" href="../styles/base.css" >
+    <link rel="stylesheet" type="text/css" href="../styles/admin_base.css" >
+
+</head>
+<body>
+    <div class="left-menu">
+        <div class="menu-item">
+            <button class="toggle-btn" title="Закрепить меню">
+                <img src="../materials/menu_stay.png" alt="Закрепить" class="toggle-btn-img menu-icon ">
+            </button>
+        </div>
+              
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/base.html">
+                <img src="../materials/icons8-рабочее-пространство-80.png" alt="Рабочее пространство" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Рабочее пространство</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/chat.html">
+                <img src="..//materials/icons8-чат-80.png" alt="Чаты" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Чаты</h3>
+            </a> 
+        </div>
+        <div class="menu-item">
+            <a class="left_menu_pagelink" href="../html/settings.html">
+                <img src="../materials/icons8-сервисы-80.png" alt="Настройки" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Настройки</h3>
+            </a> 
+        </div>
+        <div class="menu-item logout-item">
+            <a class="left_menu_pagelink" href="../html/login.html">
+                <img src="../materials/icons8-выход-48.png" alt="Выход" class="menu-icon">
+                <h3 class="left_menu_pagelink-text">Выход</h3>
+            </a> 
+        </div>
+
+    </div>
+    <div class="base-container">
+        <header class="base-header">
+            <div class="top_menu">
+                <div class="instruments">
+                    <div class="instruments_groups">
+                        <!-- Группа документов -->
+                        <div class="instruments_group instruments_group_documents">
+                            <span class="group-label">Документы</span>
+                            <div class="group-icons">
+                                <div class="icon-tooltip" id="top-menu-btn-docs-last" data-tooltip="Недавние документы">
+                                    <img src="../materials/icons8-документ-120.png" alt="Недавние" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-docs-at-work" data-tooltip="Документы в работе">
+                                    <img src="../materials/doc_at_work.png" alt="В работе" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-docs-new" data-tooltip="Новый документ">
+                                    <img src="../materials/new_doc.png" alt="Новый" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-docs-archive" data-tooltip="Архив документов">
+                                    <img src="../materials/icons8-коробка-120.png" alt="Архив" class="instrument-icon">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Группа задач -->
+                        <div class="instruments_group instruments_group_tasks">
+                            <span class="group-label">Задачи</span>
+                            <div class="group-icons">
+                                <div class="icon-tooltip" id="top-menu-btn-tasks-last" data-tooltip="Недавние задачи">
+                                    <img src="../materials/task.png" alt="Недавние задачи" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-tasks-at-work" data-tooltip="Задачи в работе">
+                                    <img src="../materials/task_at_work.png" alt="В работе" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-tasks-new" data-tooltip="Новая задача">
+                                    <img src="../materials/new_task.png" alt="Новая" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-tasks-archive" data-tooltip="Архив задач">
+                                    <img src="../materials/task_archive.png" alt="Архив" class="instrument-icon">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="instruments_group instruments_group_tasks">
+                            <span class="group-label">Иное</span>
+                            <div class="group-icons">
+                                 <div class="icon-tooltip" id="top-menu-btn-files" data-tooltip="Файлы" >
+                                    <img src="../materials/icons8-папка-документов-80.png" alt="Файлы" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-favourites" data-tooltip="Избранное">
+                                    <img src="../materials/icons8-закладка-лента-120.png" alt="Избранное" class="instrument-icon">
+                                </div>
+                                <div class="icon-tooltip" id="top-menu-btn-workflows" data-tooltip="Процессы">
+                                    <img src="../materials/icons8-процесс-100.png" alt="Процессы" class="instrument-icon">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- <div class="another_buttons">
+                    <div class="icon-tooltip" id="top-menu-btn-files" data-tooltip="Файлы" >
+                        <img src="../materials/icons8-папка-документов-80.png" alt="Файлы" class="instrument-icon">
+                    </div>
+                    <div class="icon-tooltip" id="top-menu-btn-favourites" data-tooltip="Избранное">
+                        <img src="../materials/icons8-закладка-лента-120.png" alt="Избранное" class="instrument-icon">
+                    </div>
+                    <div class="icon-tooltip" id="top-menu-btn-workflows" data-tooltip="Процессы">
+                        <img src="../materials/icons8-процесс-100.png" alt="Процессы" class="instrument-icon">
+                    </div>
+                </div> -->
+            </div>
+        </header>
+        <main class="base-main">
+            <div class="base-content">
+                <section class="base-section" id="base-section-dashboard">
+                    <div class="dashboard-container">
+                        <!-- Заголовок и действия -->
+                        <div class="dashboard-header">
+                            <div class="dashboard-header-left">
+                                <h2>📁 Файловая система</h2>
+                                <div class="breadcrumbs" id="breadcrumbs">
+                                    <span class="breadcrumb-item active">Общие папки</span>
+                                </div>
+                            </div>
+                            <div class="dashboard-header-right">
+                                <button class="buttonbase" id="newFolderBtn">+ Папка</button>
+                                <button class="buttonbase" id="uploadFileBtn">📤 Загрузить</button>
+                                <button class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Основное содержимое -->
+                        <div class="files-content">
+                            <!-- Дерево папок (как в GitHub) -->
+                            <div class="folder-tree" id="folderTree">
+                                <!-- Будет генерироваться динамически -->
+                            </div>
+
+                            <!-- Содержимое текущей папки -->
+                            <div class="folder-contents" id="folderContents">
+                                <!-- Здесь будут файлы текущей папки -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-doc-last">
+                    <div class="base-sec-ld-container">
+                        <div class="section-header">
+                            <h2>Недавние документы</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000000</td>
+                                <td class="table-name">План расходов на 2025 год</td>
+                                <td class="table-date">29.12.2024</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-doc-at-work">
+                    <div class="base-sec-dw-container">
+                        <div class="section-header">
+                            <h2>Документы в работе</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000003</td>
+                                <td class="table-name">План расходов на 2026 год</td>
+                                <td class="table-date">20.10.2025</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-doc-new">
+                    <div class="base-sec-modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2>📄 Создание нового документа</h2>
+                                <button  class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="modal-body-top">
+                                    <div class="modal-body-top-search">
+                                        <input type="text" placeholder="Поиск по типам документов...">
+                                    </div>
+                                </div>
+                                <div class="type-list">
+                                    <button class="type-list-elem" data-type="simple">
+                                        <div class="type-icon">📝</div>
+                                        <h4>Простой документ</h4>
+                                        <p class=-type-desc">Создайте документ с нуля</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="incoming">
+                                        <div class="type-icon">📨</div>
+                                        <h4>Входящее письмо</h4>
+                                        <p class="type-desc">Регистрация входящей корреспонденции</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="contract">
+                                        <div class="type-icon">📋</div>
+                                        <h4>Договор</h4>
+                                        <p class="type-desc">Юридический документ для соглашений</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="report">
+                                        <div class="type-icon">📊</div>
+                                        <h4>Отчёт</h4>
+                                        <p class="type-desc">Финансовый или проектный отчёт</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="memo">
+                                        <div class="type-icon">✍️</div>
+                                        <h4>Служебная записка</h4>
+                                        <p class="type-desc">Внутренний документ для коммуникации</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="order">
+                                        <div class="type-icon">📑</div>
+                                        <h4>Приказ</h4>
+                                        <p class="type-desc">Распорядительный документ руководства</p>
+                                    </button>
+                                    
+                                    
+                                <div class="modal-body-bottom">
+                                    <button class="new-type">+ Создать пользовательский шаблон</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-doc-archive">
+                    <div class="base-sec-da-container">
+                        <div class="section-header">
+                            <h2>Архив документов</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000000</td>
+                                <td class="table-name">План расходов на 2025 год</td>
+                                <td class="table-date">29.12.2024</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-task-last">
+                    <div class="base-sec-tl-container">
+                        <div class="section-header">
+                            <h2>Последние задачи</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000000</td>
+                                <td class="table-name">План расходов на 2025 год</td>
+                                <td class="table-date">29.12.2024</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>            
+                <section class="base-section" id="base-section-task-at-work">
+                    <div class="base-sec-tw-container">
+                        <div class="section-header">
+                            <h2>Задачи в работе</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000000</td>
+                                <td class="table-name">План расходов на 2025 год</td>
+                                <td class="table-date">29.12.2024</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-task-new">
+                    <div class="base-sec-modal">
+                       <div class="modal-content">
+                            <div class="modal-header">
+                                <h2>📄 Создание новой задачи</h2>
+                                <button  class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="modal-body-top">
+                                    <div class="modal-body-top-search">
+                                        <input type="text" placeholder="Поиск по типам задач...">
+                                    </div>
+                                </div>
+                                <div class="type-list task-list">
+                                    <button class="type-list-elem" data-type="simple">
+                                        <div class="type-icon">📝</div>
+                                        <h4>Задача</h4>
+                                        <p class="type-desc">Создайте задачу с нуля</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="incoming">
+                                        <div class="type-icon">📨</div>
+                                        <h4>Задача на оформление отсутствия</h4>
+                                        <p class="doc-type-desc">Оформление отсутствия</p>
+                                    </button>
+                                    
+                                    <button class="type-list-elem" data-type="contract">
+                                        <div class="type-icon">📋</div>
+                                        <h4>Задача на исполнение поручения</h4>
+                                        <p class="type-desc">-</p>
+                                    </button>
+                                    
+                                    
+                                    
+                                    
+                                <div class="modal-body-bottom">
+                                    <button class="new-type">+ Создать пользовательский шаблон</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-task-archive">
+                    <div class="base-sec-ta-container">
+                        <div class="section-header">
+                            <h2>Архив задач</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000000</td>
+                                <td class="table-name">План расходов на 2025 год</td>
+                                <td class="table-date">29.12.2024</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-favourites">
+                    <div class="base-sec-fa-container">
+                        <div class="section-header">
+                            <h2>⭐️ Избранное</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        <table>
+                            <tr>
+                                <th>№</th>
+                                <th>Имя</th>
+                                <th>Последнее использование</th>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000000</td>
+                                <td class="table-name">План расходов на 2025 год</td>
+                                <td class="table-date">29.12.2024</td>
+                            </tr>
+                            <tr>
+                                <td class="table-numer">0000001</td>
+                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
+                                <td class="table-date">14.02.2024</td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </section>
+                <section class="base-section" id="workflow-section">
+                    <div class="base-sec-wf-container">
+                        <div class="section-header">
+                            <h2>🔄 Мои процессы</h2>
+                            <button class="sec-btn-close">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+
+                        <!-- Быстрые действия -->
+                        <div class="workflow-actions-panel">
+                            <button class="buttonbase" id="addWorkflowBtn" onclick="openModal('createWorkflowModal')">
+                                <span class="btn-icon">+</span>
+                                Создать процесс
+                            </button>
+                            <div class="workflow-filters">
+                                <select class="filter-select">
+                                    <option value="all">Все процессы</option>
+                                    <option value="active">Активные</option>
+                                    <option value="draft">Черновики</option>
+                                    <option value="archived">Архивные</option>
+                                </select>
+                                <input type="text" class="search-input" placeholder="Поиск процессов...">
+                            </div>
+                        </div>
+
+                        <!-- Список процессов -->
+                        <div class="workflow-list">
+                            <div class="workflow-item">
+                                <div class="workflow-header">
+                                    <div class="workflow-info">
+                                        <h3 class="workflow-name">Согласование отпуска</h3>
+                                        <span class="workflow-type">📋 Кадровый</span>
+                                    </div>
+                                    <div class="workflow-meta">
+                                        <span class="workflow-status status-active">Активен</span>
+                                        <span class="workflow-usage">Использован 12 раз</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="workflow-steps">
+                                    <div class="workflow-step">
+                                        <span class="step-number">1</span>
+                                        <span class="step-role">Руководитель отдела</span>
+                                    </div>
+                                    <div class="workflow-step">
+                                        <span class="step-number">2</span>
+                                        <span class="step-role">HR отдел</span>
+                                    </div>
+                                    <div class="workflow-step">
+                                        <span class="step-number">3</span>
+                                        <span class="step-role">Генеральный директор</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="workflow-footer">
+                                    <span class="workflow-date">Обновлён: 15.01.2024</span>
+                                    <div class="workflow-actions">
+                                        <button class="btn-icon" title="Редактировать">✎</button>
+                                        <button class="btn-icon" title="Копировать">📋</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Другие процессы -->
+                            <div class="workflow-item">
+                                <div class="workflow-header">
+                                    <div class="workflow-info">
+                                        <h3 class="workflow-name">Согласование договора</h3>
+                                        <span class="workflow-type">📄 Юридический</span>
+                                    </div>
+                                    <div class="workflow-meta">
+                                        <span class="workflow-status status-draft">Черновик</span>
+                                        <span class="workflow-usage">Использован 0 раз</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="workflow-steps">
+                                    <div class="workflow-step">
+                                        <span class="step-number">1</span>
+                                        <span class="step-role">Юрист</span>
+                                    </div>
+                                    <div class="workflow-step">
+                                        <span class="step-number">2</span>
+                                        <span class="step-role">Финансовый директор</span>
+                                    </div>
+                                    <div class="workflow-step">
+                                        <span class="step-number">3</span>
+                                        <span class="step-role">Генеральный директор</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="workflow-footer">
+                                    <span class="workflow-date">Создан: 10.01.2024</span>
+                                    <div class="workflow-actions">
+                                        <button class="btn-icon" title="Редактировать">✎</button>
+                                        <button class="btn-icon" title="Копировать">📋</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Если процессов нет -->
+                        <div class="empty-state" style="display: none;">
+                            <div class="empty-icon">🔄</div>
+                            <h3>У вас пока нет процессов</h3>
+                            <p>Создайте свой первый процесс согласования</p>
+                            <button class="btn-primary">+ Создать процесс</button>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-doc-edit">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <div class="editor-header-info">
+                                <h2>Редактирование документа</h2>
+                                <span class="editor-number">№ 0000001</span>
+                            </div>
+                            <div class="editor-actions">
+                                <button class="buttonbase" id="saveDraftBtn">Сохранить черновик</button>
+                                <button class="buttonbase" id="previewDocBtn">Предпросмотр</button>
+                                <button class="buttonbase" id="registerDocBtn">Зарегистрировать</button>
+                                <button class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-content">
+                            <div class="editor-form">
+                                <div class="form-section">
+                                    <h3>Основная информация</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Название документа *</label>
+                                            <input type="text" class="form-input" id="docTitle" placeholder="Введите название документа">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Тип документа</label>
+                                            <select class="form-select" id="docType">
+                                                <option value="contract">Договор</option>
+                                                <option value="report">Отчёт</option>
+                                                <option value="memo">Служебная записка</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>Срок исполнения</label>
+                                            <input type="date" class="form-input" id="docDeadline">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Содержание документа</h3>
+                                    <div class="form-group">
+                                        <textarea class="form-textarea" id="docContent" placeholder="Введите текст документа..." rows="10"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Прикреплённые файлы</h3>
+                                    <div class="file-upload-area">
+                                        <input type="file" id="fileUpload" multiple hidden>
+                                        <label for="fileUpload" class="file-upload-label">
+                                            <span class="upload-icon">📎</span>
+                                            <span>Перетащите файлы сюда или нажмите для выбора</span>
+                                        </label>
+                                        <div class="uploaded-files-list" id="uploadedFiles"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="editor-sidebar">
+                                <div class="sidebar-section">
+                                    <div class="sidebar-section-header">
+                                        <h4>Маршрут согласования</h4>
+                                        <div class="sidebar-section-header-buttons">
+                                            <button class="buttonbase" id="side-sec-head-btn-choose" title="Выбрать шаблон">📋</button>
+                                            <button class="buttonbase" id="side-sec-head-btn-addPerson" title="Добавить участника">👤</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="approval-flow" id="approvalFlow">
+                                        <div class="approval-step current" draggable="true" data-step-id="1">
+                                            <span class="step-number">1</span>
+                                            <div class="step-content">
+                                                <span class="step-role">Автор</span>
+                                                <span class="step-user">Вы</span>
+                                            </div>
+                                            <button class="step-remove" title="Удалить">×</button>
+                                        </div>
+                                        <div class="approval-step" draggable="true" data-step-id="2">
+                                            <span class="step-number">2</span>
+                                            <div class="step-content">
+                                                <span class="step-role">Руководитель отдела</span>
+                                                <span class="step-user">Петров И.И.</span>
+                                            </div>
+                                            <button class="step-remove" title="Удалить">×</button>
+                                        </div>
+                                        <div class="approval-step" draggable="true" data-step-id="3">
+                                            <span class="step-number">3</span>
+                                            <div class="step-content">
+                                                <span class="step-role">Бухгалтерия</span>
+                                                <span class="step-user">Сидорова М.В.</span>
+                                            </div>
+                                            <button class="step-remove" title="Удалить">×</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Область для добавления новых участников -->
+                                    <div class="add-step-area">
+                                        <button class="add-step-btn" id="addStepBtn">+ Добавить этап</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-task-edit">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <div class="editor-header-info">
+                                <h2>Редактирование задачи</h2>
+                                <span class="editor-number">№ T000001</span>
+                            </div>
+                            <div class="editor-actions">
+                                <button class="buttonbase" id="saveTaskDraftBtn">Сохранить черновик</button>
+                                <button class="buttonbase" id="previewTaskBtn">Предпросмотр</button>
+                                <button class="buttonbase" id="registerTaskBtn">Зарегистрировать</button>
+                                <button class="buttonbase" id="closeTaskEditorBtn">Закрыть</button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-content">
+                            <div class="editor-form">
+                                <!-- Основная информация -->
+                                <div class="form-section">
+                                    <h3>Основная информация</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Название задачи *</label>
+                                            <input type="text" class="form-input" id="taskTitle" placeholder="Введите название задачи" value="Подготовка отчёта за квартал">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Тип задачи</label>
+                                            <select class="form-select" id="taskType">
+                                                <option value="simple">Обычная задача</option>
+                                                <option value="urgent" selected>Срочная задача</option>
+                                                <option value="project">Проектная задача</option>
+                                                <option value="review">Задача на проверку</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>Приоритет</label>
+                                            <select class="form-select" id="taskPriority">
+                                                <option value="low">Низкий</option>
+                                                <option value="medium">Средний</option>
+                                                <option value="high" selected>Высокий</option>
+                                                <option value="critical">Критический</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Дата начала</label>
+                                            <input type="date" class="form-input" id="taskStartDate" value="2024-01-15">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>Срок выполнения *</label>
+                                            <input type="date" class="form-input" id="taskDeadline" value="2024-01-30">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Описание задачи -->
+                                <div class="form-section">
+                                    <h3>Описание задачи</h3>
+                                    <div class="form-group">
+                                        <textarea class="form-textarea" id="taskDescription" placeholder="Опишите детали задачи..." rows="6">Необходимо подготовить детальный отчёт по итогам работы за 4 квартал 2023 года. Включить статистику по всем проектам, финансовые показатели и план на следующий квартал.</textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- Исполнители -->
+                                <div class="form-section">
+                                    <h3>Исполнители</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Основной исполнитель *</label>
+                                            <select class="form-select" id="taskAssignee">
+                                                <option value="user1">Иванов И.И. (отдел аналитики)</option>
+                                                <option value="user2" selected>Петрова М.С. (финансовый отдел)</option>
+                                                <option value="user3">Сидоров А.В. (отдел разработки)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>Ответственный руководитель</label>
+                                            <select class="form-select" id="taskManager">
+                                                <option value="manager1">Смирнов П.К.</option>
+                                                <option value="manager2" selected>Козлова Е.В.</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Дополнительные исполнители</label>
+                                        <select class="form-select" id="taskCollaborators" multiple>
+                                            <option value="user1" selected>Иванов И.И.</option>
+                                            <option value="user3">Сидоров А.В.</option>
+                                            <option value="user4">Николаева Т.П.</option>
+                                        </select>
+                                        <small style="color: var(--text-gray); font-size: 12px;">Для выбора нескольких исполнителей удерживайте Ctrl</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Прикреплённые файлы -->
+                                <div class="form-section">
+                                    <h3>Прикреплённые файлы</h3>
+                                    <div class="file-upload-area">
+                                        <input type="file" id="taskFileUpload" multiple hidden>
+                                        <label for="taskFileUpload" class="file-upload-label">
+                                            <span class="upload-icon">📎</span>
+                                            <span>Перетащите файлы сюда или нажмите для выбора</span>
+                                        </label>
+                                        <div class="uploaded-files-list" id="taskUploadedFiles">
+                                            <div class="uploaded-file">
+                                                <div class="file-info">
+                                                    <span class="file-name">Шаблон_отчёта_квартал.docx</span>
+                                                    <span class="file-size">(2.1 MB)</span>
+                                                </div>
+                                                <button class="file-remove">🗑️</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="editor-sidebar">
+                                <!-- Статус и прогресс -->
+                                <div class="sidebar-section">
+                                    <h4>Статус выполнения</h4>
+                                    <div class="approval-flow">
+                                        <div class="approval-step completed">
+                                            <span class="step-number">1</span>
+                                            <div class="step-info">
+                                                <span class="step-role">Создана</span>
+                                                <span class="step-user">15.01.2024</span>
+                                            </div>
+                                        </div>
+                                        <div class="approval-step current">
+                                            <span class="step-number">2</span>
+                                            <div class="step-info">
+                                                <span class="step-role">В работе</span>
+                                                <span class="step-user">с 16.01.2024</span>
+                                            </div>
+                                        </div>
+                                        <div class="approval-step">
+                                            <span class="step-number">3</span>
+                                            <div class="step-info">
+                                                <span class="step-role">На проверке</span>
+                                                <span class="step-user">-</span>
+                                            </div>
+                                        </div>
+                                        <div class="approval-step">
+                                            <span class="step-number">4</span>
+                                            <div class="step-info">
+                                                <span class="step-role">Завершена</span>
+                                                <span class="step-user">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress-info" style="margin-top: 15px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-size: 12px; color: var(--text-gray);">Прогресс:</span>
+                                            <span style="font-size: 12px; font-weight: 600; color: var(--btn-main-brightblue);">40%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 40%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Уведомления -->
+                                <div class="sidebar-section">
+                                    <h4>Уведомления</h4>
+                                    <div class="notification-settings">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" checked> Уведомлять о приближении дедлайна
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" checked> Уведомлять об изменении статуса
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox"> Уведомлять о комментариях
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- История изменений -->
+                                <div class="sidebar-section">
+                                    <h4>История изменений</h4>
+                                    <div class="change-history">
+                                        <div class="history-item">
+                                            <span class="history-action">Статус изменён на "В работе"</span>
+                                            <span class="history-time">16.01.2024, 10:30</span>
+                                        </div>
+                                        <div class="history-item">
+                                            <span class="history-action">Добавлен исполнитель: Петрова М.С.</span>
+                                            <span class="history-time">15.01.2024, 16:45</span>
+                                        </div>
+                                        <div class="history-item">
+                                            <span class="history-action">Задача создана</span>
+                                            <span class="history-time">15.01.2024, 14:20</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <div id="createWorkflowModal" class="admin-modal">
+                    <div class="modal-content workflow-editor-modal">
+                        <div class="modal-header">
+                            <h2>🔄 Создание нового процесса</h2>
+                            <button class="modal-close" onclick="closeModal('createWorkflowModal')">&times;</button>
+                        </div>
+                        
+                        <div class="modal-body">
+                            <form id="createWorkflowForm" class="modal-form">
+                                <!-- Основная информация -->
+                                <div class="form-section">
+                                    <h3>Основная информация</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="workflowName">Название процесса *</label>
+                                            <input type="text" id="workflowName" name="name" 
+                                                placeholder="Например, Согласование отпуска" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="workflowCategory">Категория *</label>
+                                            <select id="workflowCategory" name="category" required>
+                                                <option value="">Выберите категорию</option>
+                                                <option value="hr">📋 Кадровые процессы</option>
+                                                <option value="finance">💰 Финансовые процессы</option>
+                                                <option value="legal">⚖️ Юридические процессы</option>
+                                                <option value="project">🚀 Проектные процессы</option>
+                                                <option value="approval">✅ Процессы согласования</option>
+                                                <option value="other">📁 Другие процессы</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="workflowDescription">Описание процесса</label>
+                                        <textarea id="workflowDescription" name="description" 
+                                                placeholder="Опишите назначение и особенности процесса..." 
+                                                rows="3"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Конструктор этапов процесса -->
+                                <div class="form-section">
+                                    <h3>🎯 Этапы процесса</h3>
+                                    
+                                    <div class="workflow-builder">
+                                        <!-- Панель доступных этапов -->
+                                        <div class="stages-panel">
+                                            <h4>Доступные этапы</h4>
+                                            <div class="stages-library">
+                                                <div class="stage-type" data-type="approval" draggable="true">
+                                                    <div class="stage-icon">✅</div>
+                                                    <div class="stage-info">
+                                                        <div class="stage-name">Согласование</div>
+                                                        <div class="stage-desc">Утверждение документа</div>
+                                                    </div>
+                                                </div>
+                                                <div class="stage-type" data-type="review" draggable="true">
+                                                    <div class="stage-icon">👀</div>
+                                                    <div class="stage-info">
+                                                        <div class="stage-name">Проверка</div>
+                                                        <div class="stage-desc">Проверка корректности</div>
+                                                    </div>
+                                                </div>
+                                                <div class="stage-type" data-type="signature" draggable="true">
+                                                    <div class="stage-icon">✍️</div>
+                                                    <div class="stage-info">
+                                                        <div class="stage-name">Подписание</div>
+                                                        <div class="stage-desc">Электронная подпись</div>
+                                                    </div>
+                                                </div>
+                                                <div class="stage-type" data-type="notification" draggable="true">
+                                                    <div class="stage-icon">🔔</div>
+                                                    <div class="stage-info">
+                                                        <div class="stage-name">Уведомление</div>
+                                                        <div class="stage-desc">Информирование участников</div>
+                                                    </div>
+                                                </div>
+                                                <div class="stage-type" data-type="task" draggable="true">
+                                                    <div class="stage-icon">📝</div>
+                                                    <div class="stage-info">
+                                                        <div class="stage-name">Задача</div>
+                                                        <div class="stage-desc">Выполнение действия</div>
+                                                    </div>
+                                                </div>
+                                                <div class="stage-type" data-type="condition" draggable="true">
+                                                    <div class="stage-icon">🔀</div>
+                                                    <div class="stage-info">
+                                                        <div class="stage-name">Условие</div>
+                                                        <div class="stage-desc">Ветвление процесса</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Область конструктора -->
+                                        <div class="workflow-canvas">
+                                            <div class="canvas-toolbar">
+                                                <button type="button" class="buttonbase" id="autoArrangeBtn">🔄 Авторасположение</button>
+                                                <button type="button" class="buttonbase" id="clearCanvasBtn">🗑️ Очистить</button>
+                                                <div class="zoom-controls">
+                                                    <button type="button" class="btn-icon" id="zoomOutBtn">🔍-</button>
+                                                    <span class="zoom-level">100%</span>
+                                                    <button type="button" class="btn-icon" id="zoomInBtn">🔍+</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="canvas-area" id="workflowCanvas">
+                                                <!-- Начальный этап -->
+                                                <div class="workflow-stage start-stage" data-stage-type="start">
+                                                    <div class="stage-header">
+                                                        <div class="stage-number">🚀</div>
+                                                        <div class="stage-title">Начало процесса</div>
+                                                    </div>
+                                                    <div class="stage-content">
+                                                        <div class="stage-details">Автоматически запускается при создании документа</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Конечный этап -->
+                                                <div class="workflow-stage end-stage" data-stage-type="end">
+                                                    <div class="stage-header">
+                                                        <div class="stage-number">🏁</div>
+                                                        <div class="stage-title">Завершение процесса</div>
+                                                    </div>
+                                                    <div class="stage-content">
+                                                        <div class="stage-details">Процесс завершен</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Сюда будут добавляться этапы -->
+                                                <div class="stage-connectors" id="stageConnectors">
+                                                    <!-- Соединительные линии будут здесь -->
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Панель свойств этапа -->
+                                        <div class="stage-properties-panel">
+                                            <div class="properties-header">
+                                                <h4>Свойства этапа</h4>
+                                                <span class="properties-hint">Выберите этап для настройки</span>
+                                            </div>
+                                            <div class="properties-content" id="stageProperties">
+                                                <div class="no-selection">
+                                                    <p>Выберите этап в конструкторе для настройки</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Настройки процесса -->
+                                <div class="form-section">
+                                    <h3>⚙️ Настройки процесса</h3>
+                                    
+                                    <div class="settings-grid">
+                                        <div class="setting-group">
+                                            <h4>Общие настройки</h4>
+                                            <div class="setting-item">
+                                                <label>
+                                                    <input type="checkbox" name="autoStart" checked>
+                                                    Автоматически запускать при создании документа
+                                                </label>
+                                            </div>
+                                            <div class="setting-item">
+                                                <label>
+                                                    <input type="checkbox" name="allowParallel" id="allowParallel">
+                                                    Разрешить параллельное выполнение этапов
+                                                </label>
+                                            </div>
+                                            <div class="setting-item">
+                                                <label>
+                                                    <input type="checkbox" name="notifyParticipants" checked>
+                                                    Уведомлять участников о новых этапах
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="setting-group">
+                                            <h4>Ограничения по времени</h4>
+                                            <div class="setting-item">
+                                                <label>Максимальное время процесса</label>
+                                                <div class="time-input-group">
+                                                    <input type="number" name="maxDuration" value="30" min="1" max="365">
+                                                    <select name="durationUnit">
+                                                        <option value="days">дней</option>
+                                                        <option value="hours">часов</option>
+                                                        <option value="weeks">недель</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="setting-item">
+                                                <label>Напоминание о дедлайне</label>
+                                                <div class="time-input-group">
+                                                    <input type="number" name="reminderBefore" value="1" min="1" max="7">
+                                                    <span>дня(ей) до окончания</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="setting-group">
+                                            <h4>Права доступа</h4>
+                                            <div class="setting-item">
+                                                <label>Кто может запускать процесс</label>
+                                                <select name="canStart">
+                                                    <option value="all">Все пользователи</option>
+                                                    <option value="department">Только отдел</option>
+                                                    <option value="role">По ролям</option>
+                                                    <option value="specific">Конкретные пользователи</option>
+                                                </select>
+                                            </div>
+                                            <div class="setting-item">
+                                                <label>Видимость процесса</label>
+                                                <select name="visibility">
+                                                    <option value="public">Публичный</option>
+                                                    <option value="department">Внутри отделов</option>
+                                                    <option value="private">Приватный</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Шаблоны документов -->
+                                <div class="form-section">
+                                    <h3>📄 Привязка к шаблонам</h3>
+                                    <div class="form-group">
+                                        <label>Шаблоны документов для этого процесса</label>
+                                        <select name="templates" multiple id="workflowTemplates">
+                                            <option value="contract">Договор оказания услуг</option>
+                                            <option value="report">Отчёт о выполнении работ</option>
+                                            <option value="vacation">Заявление на отпуск</option>
+                                            <option value="business_trip">Командировочное удостоверение</option>
+                                            <option value="expense">Авансовый отчёт</option>
+                                        </select>
+                                        <small class="form-hint">Выберите шаблоны, для которых доступен этот процесс (удерживайте Ctrl для множественного выбора)</small>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="buttonbase" onclick="closeModal('createWorkflowModal')">Отмена</button>
+                            <button type="button" class="buttonbase" id="testWorkflowBtn">🧪 Тестировать процесс</button>
+                            <button type="button" class="buttonbase" id="saveDraftBtn">💾 Сохранить черновик</button>
+                            <button type="submit" form="createWorkflowForm" class="buttonbase" id="publishWorkflowBtn">🚀 Опубликовать процесс</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="testWorkflowModal" class="admin-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>🧪 Тестирование процесса</h2>
+                            <button class="modal-close" onclick="closeModal('testWorkflowModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="workflow-test">
+                                <h4>Симуляция выполнения процесса</h4>
+                                <div class="test-controls">
+                                    <button class="buttonbase" id="startTestBtn">▶️ Начать тест</button>
+                                    <button class="buttonbase" id="nextStepBtn" disabled>⏭️ Следующий этап</button>
+                                    <button class="buttonbase" id="resetTestBtn">🔄 Сбросить</button>
+                                </div>
+                                <div class="test-visualization" id="testVisualization">
+                                    <!-- Визуализация теста будет здесь -->
+                                </div>
+                                <div class="test-log" id="testLog">
+                                    <!-- Лог тестирования будет здесь -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    
+    <script src="../scripts/admin.js"></script>
+    <script src="../scripts/base.js"></script>
+    <script src="../scripts/main.js"></script>
+</body>
+<script src="/scripts/api.js"></script>
+<script>
+    // Проверяем, авторизован ли пользователь
+    (async () => {
+        try {
+            const user = await api.auth.getMe();
+            if (!user) {
+                window.location.href = '/html/login.html';
+            }
+            // Сохраняем текущего пользователя
+            window.currentUser = user.user;
+        } catch (error) {
+            window.location.href = '/html/login.html';
+        }
+    })();
+</script>
+</html>

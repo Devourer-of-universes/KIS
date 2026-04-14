@@ -4,6 +4,8 @@ class ChatManager {
         this.currentChatId = null;
         this.chats = [];
         this.messages = [];
+        this.files = [];      // Добавляем
+        this.images = [];     // Добавляем
         this.ws = null;
         this.init();
     }
@@ -259,7 +261,8 @@ class ChatManager {
                     </div>
                 `;
             } else {
-                contentHtml = `<div class="message-text">${this.escapeHtml(msg.content)}</div>`;
+                const formattedText = this.formatLinks(this.escapeHtml(msg.content));
+                contentHtml = `<div class="message-text">${formattedText}</div>`;
             }
             
             // Аватар для чужих сообщений
@@ -293,6 +296,39 @@ class ChatManager {
         messagesContainer.innerHTML = html;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+
+    // Отрисовка ссылок в сайдбаре
+    renderLinks(links) {
+        console.log('🔗 Rendering links, count:', links.length);
+        
+        const linksContainer = document.querySelector('.sidebar-media-group-links');
+        if (!linksContainer) {
+            console.error('Links container not found!');
+            return;
+        }
+        
+        if (!links || links.length === 0) {
+            linksContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет ссылок</div>';
+            return;
+        }
+        
+        linksContainer.innerHTML = `
+            <table class="media-files">
+                <tbody>
+                    ${links.map(link => `
+                        <tr class="media-files-element" onclick="window.open('${link.url}', '_blank')">
+                            <td class="media-files-element-name">
+                                <span class="file-icon">🔗</span> 
+                                <span class="link-url">${this.escapeHtml(link.url.substring(0, 50))}${link.url.length > 50 ? '...' : ''}</span>
+                            </td>
+                            <td class="media-files-element-senddate">${this.formatDate(link.date)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
     // Вспомогательный метод для скачивания файла из сообщения
     downloadFileFromMessage(content) {
         // Извлекаем имя файла из сообщения
@@ -370,109 +406,109 @@ class ChatManager {
         }
     }
     // Открытие чата и загрузка сообщений
-    async openChat(chatId, chatName) {
-        console.log('Opening chat:', chatId, chatName);
+    // async openChat(chatId, chatName) {
+    //     console.log('Opening chat:', chatId, chatName);
         
-        // Показываем контент чата
-        const chatContent = document.querySelector('.chat-content');
-        if (chatContent) {
-            chatContent.classList.remove('no-chat-selected');
-        }
+    //     // Показываем контент чата
+    //     const chatContent = document.querySelector('.chat-content');
+    //     if (chatContent) {
+    //         chatContent.classList.remove('no-chat-selected');
+    //     }
         
-        // Показываем кнопку "Назад"
-        const backBtn = document.getElementById('backToChatsBtn');
-        if (backBtn) {
-            backBtn.style.display = 'flex';
-        }
+    //     // Показываем кнопку "Назад"
+    //     const backBtn = document.getElementById('backToChatsBtn');
+    //     if (backBtn) {
+    //         backBtn.style.display = 'flex';
+    //     }
         
-        // Показываем сайдбар
-        const chatSidebar = document.getElementById('chatSidebar');
-        if (chatSidebar) {
-            chatSidebar.style.display = 'block';
-        }
+    //     // Показываем сайдбар
+    //     const chatSidebar = document.getElementById('chatSidebar');
+    //     if (chatSidebar) {
+    //         chatSidebar.style.display = 'block';
+    //     }
         
-        // Загружаем информацию о чате
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/chats/${chatId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            const chat = data.chat;
+    //     // Загружаем информацию о чате
+    //     try {
+    //         const token = localStorage.getItem('token');
+    //         const response = await fetch(`/api/chats/${chatId}`, {
+    //             headers: { 'Authorization': `Bearer ${token}` }
+    //         });
+    //         const data = await response.json();
+    //         const chat = data.chat;
             
-            const isGroup = chat.is_group;
+    //         const isGroup = chat.is_group;
             
-            // Обновляем заголовок и аватар в шапке
-            const chatNameHeader = document.querySelector('.chat-name');
-            const chatAvatar = document.querySelector('.chat-avatar');
-            const sidebarAvatar = document.querySelector('.sidebar-avatar');
-            const sidebarChatName = document.querySelector('.sidebar-chatname');
-            const participantsHeader = document.querySelector('.sidebar-section h3');
-            const userListContainer = document.getElementById('userList');
+    //         // Обновляем заголовок и аватар в шапке
+    //         const chatNameHeader = document.querySelector('.chat-name');
+    //         const chatAvatar = document.querySelector('.chat-avatar');
+    //         const sidebarAvatar = document.querySelector('.sidebar-avatar');
+    //         const sidebarChatName = document.querySelector('.sidebar-chatname');
+    //         const participantsHeader = document.querySelector('.sidebar-section h3');
+    //         const userListContainer = document.getElementById('userList');
             
-            if (isGroup) {
-                // Групповой чат
-                chatNameHeader.textContent = chat.name || 'Групповой чат';
-                if (chatAvatar) {
-                    chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${this.getGroupAvatar(chat)}</div>`;
-                }
-                if (sidebarAvatar) {
-                    sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${this.getGroupAvatar(chat)}</div>`;
-                }
-                if (sidebarChatName) sidebarChatName.textContent = chat.name || 'Групповой чат';
+    //         if (isGroup) {
+    //             // Групповой чат
+    //             chatNameHeader.textContent = chat.name || 'Групповой чат';
+    //             if (chatAvatar) {
+    //                 chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${this.getGroupAvatar(chat)}</div>`;
+    //             }
+    //             if (sidebarAvatar) {
+    //                 sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${this.getGroupAvatar(chat)}</div>`;
+    //             }
+    //             if (sidebarChatName) sidebarChatName.textContent = chat.name || 'Групповой чат';
                 
-                // Показываем заголовок "Участники" и список участников
-                if (participantsHeader) {
-                    participantsHeader.textContent = `Участники (${chat.participants?.length || 0})`;
-                    participantsHeader.style.display = 'block';
-                }
+    //             // Показываем заголовок "Участники" и список участников
+    //             if (participantsHeader) {
+    //                 participantsHeader.textContent = `Участники (${chat.participants?.length || 0})`;
+    //                 participantsHeader.style.display = 'block';
+    //             }
                 
-                // Загружаем список участников
-                await this.loadChatParticipants(chatId);
+    //             // Загружаем список участников
+    //             await this.loadChatParticipants(chatId);
                 
-            } else {
-                // Личный чат - берем данные собеседника
-                const otherUser = chat.participants?.find(p => p.id !== window.currentUser?.id);
-                if (otherUser) {
-                    const displayName = `${otherUser.surname} ${otherUser.name}`;
-                    chatNameHeader.textContent = displayName;
+    //         } else {
+    //             // Личный чат - берем данные собеседника
+    //             const otherUser = chat.participants?.find(p => p.id !== window.currentUser?.id);
+    //             if (otherUser) {
+    //                 const displayName = `${otherUser.surname} ${otherUser.name}`;
+    //                 chatNameHeader.textContent = displayName;
                     
-                    const avatarHtml = this.getAvatar(otherUser.avatar_uri, otherUser.name, otherUser.surname);
-                    if (chatAvatar) {
-                        chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${avatarHtml}</div>`;
-                    }
-                    if (sidebarAvatar) {
-                        sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${avatarHtml}</div>`;
-                    }
-                    if (sidebarChatName) sidebarChatName.textContent = displayName;
-                }
+    //                 const avatarHtml = this.getAvatar(otherUser.avatar_uri, otherUser.name, otherUser.surname);
+    //                 if (chatAvatar) {
+    //                     chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${avatarHtml}</div>`;
+    //                 }
+    //                 if (sidebarAvatar) {
+    //                     sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${avatarHtml}</div>`;
+    //                 }
+    //                 if (sidebarChatName) sidebarChatName.textContent = displayName;
+    //             }
                 
-                // Скрываем заголовок "Участники" и список участников
-                if (participantsHeader) {
-                    participantsHeader.style.display = 'none';
-                }
-                if (userListContainer) {
-                    userListContainer.innerHTML = '';
-                }
-            }
+    //             // Скрываем заголовок "Участники" и список участников
+    //             if (participantsHeader) {
+    //                 participantsHeader.style.display = 'none';
+    //             }
+    //             if (userListContainer) {
+    //                 userListContainer.innerHTML = '';
+    //             }
+    //         }
             
-        } catch (error) {
-            console.error('Failed to load chat info:', error);
-        }
-        await this.loadChatMedia(chatId);
-        // Показываем индикатор загрузки
-        const messagesContainer = document.getElementById('messagesContainer');
-        if (messagesContainer) {
-            messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка сообщений...</div>';
-        }
+    //     } catch (error) {
+    //         console.error('Failed to load chat info:', error);
+    //     }
+    //     await this.loadChatMedia(chatId);
+    //     // Показываем индикатор загрузки
+    //     const messagesContainer = document.getElementById('messagesContainer');
+    //     if (messagesContainer) {
+    //         messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка сообщений...</div>';
+    //     }
         
-        // Загружаем сообщения
-        await this.loadMessages(chatId);
+    //     // Загружаем сообщения
+    //     await this.loadMessages(chatId);
         
-        // Показываем поле ввода
-        const chatInput = document.querySelector('.chat-input');
-        if (chatInput) chatInput.style.display = 'flex';
-    }
+    //     // Показываем поле ввода
+    //     const chatInput = document.querySelector('.chat-input');
+    //     if (chatInput) chatInput.style.display = 'flex';
+    // }
     initEventListeners() {
         // Отправка сообщения по Enter
         const messageInput = document.querySelector('.message-input');
@@ -526,23 +562,55 @@ class ChatManager {
         const attachBtn = document.querySelector('.tool-btn');
         const fileInput = document.getElementById('fileInput');
 
-        attachBtn.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', async (e) => {
-            for (const file of e.target.files) {
-                if (file.type.startsWith('image/')) {
-                    // Показываем превью в чате
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.sendMessage(this.currentChatId, `📷 *изображение*\n${e.target.result}`);
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    this.sendMessage(this.currentChatId, `📎 *файл*: ${file.name}`);
+        if (attachBtn && fileInput) {
+            attachBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                
+                for (const file of files) {
+                    // Показываем временное сообщение
+                    const tempId = 'temp_' + Date.now();
+                    const isImage = file.type.startsWith('image/');
+                    
+                    this.messages.push({
+                        id: tempId,
+                        chat_id: this.currentChatId,
+                        user_id: window.currentUser?.id,
+                        content: isImage ? '📷 Загрузка изображения...' : `📎 Загрузка ${file.name}...`,
+                        created_at: new Date().toISOString(),
+                        is_temp: true,
+                        surname: window.currentUser?.surname,
+                        name: window.currentUser?.name
+                    });
+                    this.renderMessages();
+                    
+                    try {
+                        const result = await this.uploadFile(this.currentChatId, file);
+                        if (result.success) {
+                            // Удаляем временное сообщение и добавляем реальное
+                            this.messages = this.messages.filter(m => m.id !== tempId);
+                            this.messages.push(result.message);
+                            this.renderMessages();
+                            this.loadChats();
+                            // ОБНОВЛЯЕМ МЕДИА В САЙДБАРЕ
+                            await this.loadChatMedia(this.currentChatId);
+                        }
+                    } catch (error) {
+                        console.error('Upload failed:', error);
+                        // Помечаем сообщение как ошибку
+                        const failedMsg = this.messages.find(m => m.id === tempId);
+                        if (failedMsg) {
+                            failedMsg.content = '❌ Ошибка загрузки';
+                            this.renderMessages();
+                        }
+                    }
                 }
-            }
-            fileInput.value = '';
-        });
+                
+                fileInput.value = '';
+            });
+        }
+        // Переключение вкладок медиа в сайдбаре
         const mediaBtns = document.querySelectorAll('.sidebar-media-group-btn');
         const mediaGroups = document.querySelectorAll('.media-group');
 
@@ -550,21 +618,24 @@ class ChatManager {
             btn.addEventListener('click', () => {
                 // Убираем активный класс у всех кнопок
                 mediaBtns.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+                btn.classList.add('active');
                 
-                // Получаем тип медиа
-                const mediaType = this.dataset.media;
+                // Получаем тип медиа из data-media атрибута
+                const mediaType = btn.getAttribute('data-media');
                 
                 // Скрываем все группы
                 mediaGroups.forEach(group => group.classList.remove('active'));
                 
                 // Показываем нужную группу
                 if (mediaType === 'files') {
-                    document.querySelector('.sidebar-media-group-files')?.classList.add('active');
+                    const filesGroup = document.querySelector('.sidebar-media-group-files');
+                    if (filesGroup) filesGroup.classList.add('active');
                 } else if (mediaType === 'images') {
-                    document.querySelector('.sidebar-media-group-images')?.classList.add('active');
+                    const imagesGroup = document.querySelector('.sidebar-media-group-images');
+                    if (imagesGroup) imagesGroup.classList.add('active');
                 } else if (mediaType === 'links') {
-                    document.querySelector('.sidebar-media-group-links')?.classList.add('active');
+                    const linksGroup = document.querySelector('.sidebar-media-group-links');
+                    if (linksGroup) linksGroup.classList.add('active');
                 }
             });
         });
@@ -1096,13 +1167,13 @@ class ChatManager {
         });
         return response.json();
     }
-    // Загрузка и отображение медиа чата
     // Загрузка медиа чата
     async loadChatMedia(chatId) {
         try {
             const token = localStorage.getItem('token');
             const timestamp = Date.now();
             
+            // Получаем медиа с сервера
             const response = await fetch(`/api/chats/${chatId}/media?_=${timestamp}`, {
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -1110,76 +1181,104 @@ class ChatManager {
                 }
             });
             
-            if (!response.ok) throw new Error('Failed to load media');
-            
             const data = await response.json();
+            console.log('📁 Media data received:', data);
             
-            // Отображаем файлы в секции "Файлы"
-            this.renderFiles(data.files || []);
+            // Сохраняем файлы и изображения
+            this.files = data.files || [];
+            this.images = data.images || [];
             
-            // Отображаем изображения в секции "Изображения"
-            this.renderImages(data.images || []);
+            // === НОВЫЙ КОД: Собираем ссылки из сообщений ===
+            const links = [];
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            
+            for (const msg of this.messages) {
+                if (msg.content && !msg.content.startsWith('📷') && !msg.content.startsWith('📎')) {
+                    const urls = msg.content.match(urlRegex);
+                    if (urls) {
+                        for (const url of urls) {
+                            links.push({
+                                url: url,
+                                date: msg.created_at,
+                                message_id: msg.id,
+                                preview: url.length > 50 ? url.substring(0, 50) + '...' : url
+                            });
+                        }
+                    }
+                }
+            }
+            this.links = links;
+            console.log('🔗 Links found:', links.length);
+            // === КОНЕЦ НОВОГО КОДА ===
+            
+            // Отображаем
+            this.renderImages(this.images);
+            this.renderFiles(this.files);
+            this.renderLinks(this.links); // Добавляем отрисовку ссылок
             
         } catch (error) {
             console.error('Failed to load media:', error);
         }
     }
 
+    // Отрисовка изображений в сайдбаре
+    renderImages(images) {
+        console.log('🖼️ Rendering images, count:', images.length);
+        
+        const imagesContainer = document.querySelector('.sidebar-media-group-images');
+        if (!imagesContainer) {
+            console.error('Images container not found!');
+            return;
+        }
+        
+        if (!images || images.length === 0) {
+            imagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет изображений</div>';
+            return;
+        }
+        
+        let html = '<div class="images-grid">';
+        for (const img of images) {
+            const imageUrl = img.url || img.file_uri;
+            const imageName = img.name || img.file_name;
+            html += `
+                <div class="grid-image-item" onclick="chatManager.openImageViewer('${imageUrl}')">
+                    <img src="${imageUrl}" alt="${imageName}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+            `;
+        }
+        html += '</div>';
+        
+        imagesContainer.innerHTML = html;
+        console.log('✅ Images rendered');
+    }
+
     // Отрисовка файлов в сайдбаре
     renderFiles(files) {
-        const filesContainer = document.querySelector('.sidebar-media-group-files .media-files');
-        if (!filesContainer) return;
+        console.log('📄 Rendering files, count:', files.length);
         
-        if (files.length === 0) {
+        const filesContainer = document.querySelector('.sidebar-media-group-files .media-files');
+        if (!filesContainer) {
+            console.error('Files container not found!');
+            return;
+        }
+        
+        if (!files || files.length === 0) {
             filesContainer.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">Нет файлов</td></tr>';
             return;
         }
         
         filesContainer.innerHTML = files.map(file => `
-            <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url}', '${file.name}')">
+            <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url || file.file_uri}', '${file.name || file.file_name}')">
                 <td class="media-files-element-name">
-                    <span class="file-icon">📄</span> ${this.escapeHtml(file.name)}
+                    <span class="file-icon">📄</span> ${this.escapeHtml(file.name || file.file_name)}
                 </td>
                 <td class="media-files-element-size">${file.size || '—'}</td>
-                <td class="media-files-element-senddate">${this.formatDate(file.date)}</td>
+                <td class="media-files-element-senddate">${this.formatDate(file.created_at || file.uploaded_at)}</td>
             </tr>
         `).join('');
     }
 
-    // Отрисовка изображений в сайдбаре
-    renderImages(images) {
-        const imagesContainer = document.querySelector('.sidebar-media-group-images');
-        if (!imagesContainer) return;
-        
-        if (images.length === 0) {
-            imagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет изображений</div>';
-            return;
-        }
-        
-        // Группируем изображения по датам
-        const grouped = {};
-        for (const img of images) {
-            const date = img.date || 'другое';
-            if (!grouped[date]) grouped[date] = [];
-            grouped[date].push(img);
-        }
-        
-        let html = '';
-        for (const [date, imgs] of Object.entries(grouped)) {
-            html += `<div class="media-date-header">${date === 'другое' ? 'Прочее' : date}</div>`;
-            html += `<div class="images-grid">`;
-            for (const img of imgs) {
-                html += `
-                    <div class="grid-image-item" onclick="chatManager.openImageViewer('${img.url}')">
-                        <img src="${img.url}" alt="${img.name}" loading="lazy">
-                    </div>
-                `;
-            }
-            html += `</div>`;
-        }
-        
-        imagesContainer.innerHTML = html;
-    }
+
 
     // Скачивание файла
     downloadFile(url, fileName) {
@@ -1197,47 +1296,47 @@ class ChatManager {
         modal.innerHTML = `<img src="${url}" style="max-width:90%;max-height:90%;border-radius:10px;">`;
         document.body.appendChild(modal);
     }
-    // Отрисовка файлов
-    renderFiles(files) {
-        const filesContainer = document.querySelector('.sidebar-media-group-files .media-files');
-        if (!filesContainer) return;
+    // // Отрисовка файлов
+    // renderFiles(files) {
+    //     const filesContainer = document.querySelector('.sidebar-media-group-files .media-files');
+    //     if (!filesContainer) return;
         
-        if (files.length === 0) {
-            filesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">Нет файлов</div>';
-            return;
-        }
+    //     if (files.length === 0) {
+    //         filesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">Нет файлов</div>';
+    //         return;
+    //     }
         
-        filesContainer.innerHTML = files.map(file => `
-            <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url}')">
-                <th class="media-files-element-name">
-                    <span class="file-icon">📄</span> ${file.name}
-                </th>
-                <th class="media-files-element-size">${file.size}</th>
-                <th class="media-files-element-senddate">${file.date}</th>
-            </tr>
-        `).join('');
-    }
+    //     filesContainer.innerHTML = files.map(file => `
+    //         <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url}')">
+    //             <th class="media-files-element-name">
+    //                 <span class="file-icon">📄</span> ${file.name}
+    //             </th>
+    //             <th class="media-files-element-size">${file.size}</th>
+    //             <th class="media-files-element-senddate">${file.date}</th>
+    //         </tr>
+    //     `).join('');
+    // }ope
 
-    // Отрисовка изображений
-    renderImages(images) {
-        const imagesContainer = document.querySelector('.sidebar-media-group-images');
-        if (!imagesContainer) return;
+    // // Отрисовка изображений
+    // renderImages(images) {
+    //     const imagesContainer = document.querySelector('.sidebar-media-group-images');
+    //     if (!imagesContainer) return;
         
-        if (images.length === 0) {
-            imagesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">Нет изображений</div>';
-            return;
-        }
+    //     if (images.length === 0) {
+    //         imagesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">Нет изображений</div>';
+    //         return;
+    //     }
         
-        imagesContainer.innerHTML = `
-            <div class="images-grid">
-                ${images.map(img => `
-                    <div class="grid-image-item" onclick="chatManager.openImage('${img.url}')">
-                        <img src="${img.url}" alt="${img.name}">
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
+    //     imagesContainer.innerHTML = `
+    //         <div class="images-grid">
+    //             ${images.map(img => `
+    //                 <div class="grid-image-item" onclick="chatManager.openImage('${img.url}')">
+    //                     <img src="${img.url}" alt="${img.name}">
+    //                 </div>
+    //             `).join('')}
+    //         </div>
+    //     `;
+    // }
 
     // Скачивание файла
     downloadFile(url) {
@@ -1261,7 +1360,15 @@ class ChatManager {
         const date = new Date(dateString);
         return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
     }
-
+    // Функция для преобразования ссылок в HTML
+    formatLinks(text) {
+        if (!text) return '';
+        // Регулярное выражение для поиска URL
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, (url) => {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="message-link">${url}</a>`;
+        });
+    }
     // Получение аватара (если нет метода)
     getAvatar(avatarUri, name, surname) {
         if (avatarUri && avatarUri !== 'null' && avatarUri !== '') {
@@ -1304,6 +1411,29 @@ class ChatManager {
     downloadFileFromMessage(fileName) {
         alert(`Скачивание файла: ${fileName}\n(Функция в разработке)`);
         this.downloadFile()
+    }
+    // Загрузка файла
+    async uploadFile(chatId, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`/api/chats/${chatId}/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Upload failed: ${error}`);
+        }
+        
+        const result = await response.json();
+        console.log('Upload result:', result);
+        // Убираем строки с tempId, они уже обработаны в обработчике fileInput
+        return result;
     }
 }
 

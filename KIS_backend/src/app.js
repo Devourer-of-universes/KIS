@@ -33,7 +33,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
-
+const uploadsPath = path.join(__dirname, '../uploads');
+console.log('Uploads path:', uploadsPath); // Для проверки
+app.use('/uploads', express.static(uploadsPath));
 // 404 обработчик
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found', path: req.originalUrl });
@@ -45,7 +47,26 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
+const multer = require('multer');
 
+// Настройка multer для сохранения файлов
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '../uploads/chat-files'));
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+// Делаем upload доступным в routes
+app.locals.upload = upload;
 // =====================================================
 // ЗАПУСК СЕРВЕРА
 // =====================================================

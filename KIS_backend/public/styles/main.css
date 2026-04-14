@@ -95,7 +95,7 @@ body {
 }
 
 /* Ripple эффект */
-.buttonbase::after {
+/* .buttonbase::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -103,10 +103,10 @@ body {
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--с_brightacc);
     transform: translate(-50%, -50%);
     transition: width 0.4s ease, height 0.4s ease;
-}
+} */
 
 .buttonbase:active::after {
     width: 120%;

@@ -290,57 +290,234 @@ const getChatById = async (req, res) => {
     }
 };
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const path = require('path');
+const fs = require('fs');
+
+// Настройка multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = path.join(__dirname, '../../uploads/chat-files');
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }
+});
+
+// Маршрут для загрузки файла
+router.post('/:chatId/upload', authMiddleware, upload.single('file'), async (req, res) => {
+    console.log('📁 Upload request received');
+    console.log('File:', req.file);
+    console.log('Body:', req.body);
+    console.log('ChatId:', req.params.chatId);
+    
+    try {
+        const { chatId } = req.params;
+        const file = req.file;
+        
+        if (!file) {
+            return res.status(400).json({ error: 'Файл не загружен' });
+        }
+        
+        // Декодируем имя файла
+        const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        let fileType = 'document';
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
+            fileType = 'image';
+        } else if (file.mimetype === 'application/x-zip-compressed') {
+            fileType = 'archive';
+        } else if (file.mimetype.includes('word') || file.mimetype.includes('document')) {
+            fileType = 'document';
+        } else {
+            fileType = 'document';
+        }
+        
+        // Создаём сообщение
+        const content = fileType === 'image' 
+            ? `📷 Изображение\n/uploads/chat-files/${file.filename}` 
+            : `📎 ${originalName}`;
+        
+        const result = await query(
+            `INSERT INTO messages (chat_id, user_id, content) VALUES ($1, $2, $3) RETURNING id`,
+            [chatId, req.userId, content]
+        );
+        
+        const messageId = result.rows[0].id;
+        
+        // Сохраняем вложение с правильным именем
+        await query(
+            `INSERT INTO message_attachments (message_id, file_uri, file_name, file_size, file_type, mime_type)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [messageId, `/uploads/chat-files/${file.filename}`, originalName, file.size, fileType, file.mimetype]
+        );
+        
+        console.log('Attachment saved');
+        
+        // Обновляем last_message_at
+        await query(`UPDATE chats SET last_message_at = CURRENT_TIMESTAMP WHERE id = $1`, [chatId]);
+        
+        // Получаем данные пользователя
+        const userResult = await query(`SELECT surname, name, avatar_uri FROM users WHERE id = $1`, [req.userId]);
+        
+        res.status(201).json({ 
+            success: true, 
+            message: {
+                id: messageId,
+                chat_id: parseInt(chatId),
+                user_id: req.userId,
+                content: content,
+                created_at: new Date().toISOString(),
+                surname: userResult.rows[0].surname,
+                name: userResult.rows[0].name,
+                avatar_uri: userResult.rows[0].avatar_uri,
+                attachments: [{
+                    id: messageId,
+                    file_uri: `/uploads/chat-files/${file.filename}`,
+                    file_name: file.originalname,
+                    file_size: file.size,
+                    file_type: fileType
+                }]
+            }
+        });
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Маршруты
 router.use(authMiddleware);
 router.get('/', getChats);
 router.post('/', createChat);
 router.get('/:id/messages', getMessages);
-router.post('/:chatId/messages', sendMessage);
+router.post('/:chatId/messages', authMiddleware, async (req, res) => {
+    try {
+        const { chatId } = req.params;
+        const { content, attachments = [] } = req.body;
+        
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ error: 'Сообщение не может быть пустым' });
+        }
+        
+        // Проверяем, что пользователь участник чата
+        const isParticipant = await query(
+            `SELECT 1 FROM chat_participants WHERE chat_id = $1 AND user_id = $2`,
+            [chatId, req.userId]
+        );
+        
+        if (isParticipant.rows.length === 0) {
+            return res.status(403).json({ error: 'Нет доступа к этому чату' });
+        }
+        
+        // Создаем сообщение
+        const result = await query(
+            `INSERT INTO messages (chat_id, user_id, content) 
+             VALUES ($1, $2, $3) RETURNING *`,
+            [chatId, req.userId, content.trim()]
+        );
+        
+        const message = result.rows[0];
+        
+        // Сохраняем вложения с определением типа
+        for (const att of attachments) {
+            // Определяем тип файла по mime-type или расширению
+            let fileType = 'document';
+            if (att.mimeType && att.mimeType.startsWith('image/')) {
+                fileType = 'image';
+            } else if (att.name && att.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                fileType = 'image';
+            }
+            
+            await query(
+                `INSERT INTO message_attachments (message_id, file_uri, file_name, file_size, file_type, mime_type)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [message.id, att.uri, att.name, att.size, fileType, att.mimeType || null]
+            );
+        }
+        
+        // Обновляем last_message_at в чате
+        await query(
+            `UPDATE chats SET last_message_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [chatId]
+        );
+        
+        // Получаем данные пользователя
+        const userResult = await query(
+            `SELECT surname, name, avatar_uri FROM users WHERE id = $1`,
+            [req.userId]
+        );
+        
+        const responseMessage = {
+            ...message,
+            surname: userResult.rows[0].surname,
+            name: userResult.rows[0].name,
+            avatar_uri: userResult.rows[0].avatar_uri
+        };
+        
+        res.status(201).json({ success: true, message: responseMessage });
+    } catch (error) {
+        console.error('Send message error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 router.get('/:id', getChatById);
 router.post('/:chatId/upload', authMiddleware, upload.single('file'), async (req, res) => {
     res.json({ success: true, file: req.file });
 });
 // Получение медиа чата
+// Получение медиа чата - максимально простой запрос
+// Получение медиа чата
 router.get('/:id/media', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Файлы (не изображения)
-        const files = await query(
-            `SELECT DISTINCT ON (ma.file_name) 
+        console.log('Media request for chat:', id);
+        
+        // Правильный запрос с uploaded_at
+        const result = await query(
+            `SELECT 
                 ma.id, 
                 ma.file_name as name, 
                 ma.file_uri as url,
-                TO_CHAR(ma.uploaded_at, 'DD.MM.YY') as date,
-                pg_size_pretty(ma.file_size) as size
+                ma.file_type,
+                ma.uploaded_at as created_at,
+                ma.file_size
              FROM message_attachments ma
-             JOIN messages m ON ma.message_id = m.id
-             WHERE m.chat_id = $1 AND ma.file_type != 'image'
-             ORDER BY ma.file_name, ma.uploaded_at DESC`,
+             WHERE ma.message_id IN (
+                 SELECT id FROM messages WHERE chat_id = $1
+             )
+             ORDER BY ma.uploaded_at DESC`,
             [id]
         );
         
-        // Изображения
-        const images = await query(
-            `SELECT DISTINCT ON (ma.file_name)
-                ma.id, 
-                ma.file_name as name, 
-                ma.file_uri as url,
-                TO_CHAR(ma.uploaded_at, 'DD.MM.YY') as date
-             FROM message_attachments ma
-             JOIN messages m ON ma.message_id = m.id
-             WHERE m.chat_id = $1 AND ma.file_type = 'image'
-             ORDER BY ma.file_name, ma.uploaded_at DESC`,
-            [id]
-        );
+        console.log('Found attachments:', result.rows.length);
+        if (result.rows.length > 0) {
+            console.log('First row:', result.rows[0]);
+        }
         
-        console.log('Media found - files:', files.rows.length, 'images:', images.rows.length);
+        // Форматируем размер
+        const rows = result.rows.map(row => ({
+            ...row,
+            size: row.file_size ? 
+                (row.file_size < 1024 ? row.file_size + ' B' :
+                 row.file_size < 1024*1024 ? (row.file_size/1024).toFixed(1) + ' KB' :
+                 (row.file_size/(1024*1024)).toFixed(1) + ' MB') : '—'
+        }));
         
-        res.json({ 
-            files: files.rows, 
-            images: images.rows 
-        });
+        // Разделяем на файлы и изображения
+        const images = rows.filter(r => r.file_type === 'image');
+        const files = rows.filter(r => r.file_type !== 'image');
+        
+        console.log('Images:', images.length, 'Files:', files.length);
+        
+        res.json({ files, images });
     } catch (error) {
         console.error('Get media error:', error);
         res.status(500).json({ error: error.message });

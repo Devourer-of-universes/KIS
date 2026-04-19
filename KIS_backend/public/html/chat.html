@@ -43,89 +43,6 @@
         </div>
     </div>
     <div class="chat-container">
-        
-        
-
-        <!-- <div class="chat-dropdown-menu">
-            <div class="chat-dropdown-groups">
-                <div class="chat-dropdown-group">
-                    <div class="chat-dropdown-group-header">
-                        <h3>Личные сообщения</h3>
-                    </div>
-                    <div class="chat-dropdown-group-list">
-                        <div class="chat-dropdown-group-element">
-                            <div class="chat-dropdown-group-element-avatar">
-                                <img src="" alt="" class="chat-dropdown-group-element-avatar-icon">
-                            </div>
-                            <div class="chat-dropdown-group-element-content">
-                                <div class="chat-dropdown-group-element-name">
-                                    <h4>Иван Петров</h4>
-                                </div>
-                                <div class="chat-dropdown-group-element-lastmessage">
-                                    <h5>Утра доброго! Зайди сегодня ко мне в кабинет.</h5>
-                                </div>
-                            </div>
-                            <div class="chat-dropdown-group-element-lastmessagetime">
-                                <h5>9:41</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="chat-dropdown-group">
-                    <div class="chat-dropdown-group-header">
-                        <h3>Структурные подразделения</h3>
-                    </div>
-                    <div class="chat-dropdown-group-list">
-                        <div class="chat-dropdown-group-element">
-                            <div class="chat-dropdown-group-element-avatar">
-                                <img src="" alt="" class="chat-dropdown-group-element-avatar-icon">
-                            </div>
-                            <div class="chat-dropdown-group-element-content">
-                                <div class="chat-dropdown-group-element-name">
-                                    <h4>Отдел ИТ</h4>
-                                </div>
-                                <div class="chat-dropdown-group-element-lastmessage">
-                                    <h5>Серов П. В.: Всем доброе утро! Задачи на сегодня:...</h5>
-                                </div>
-                            </div>
-                            <div class="chat-dropdown-group-element-lastmessagetime">
-                                <h5>8:24</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chat-dropdown-group">
-                    <div class="chat-dropdown-group-header">
-                        <h3>Проекты</h3>
-                    </div>
-                    <div class="chat-dropdown-group-list">
-                        <div class="chat-dropdown-group-element">
-                            <div class="chat-dropdown-group-element-avatar">
-                                <img src="" alt="" class="chat-dropdown-group-element-avatar-icon">
-                            </div>
-                            <div class="chat-dropdown-group-element-content">
-                                <div class="chat-dropdown-group-element-name">
-                                    <h4>ИС "Универсальный ЭДО"</h4>
-                                </div>
-                                <div class="chat-dropdown-group-element-lastmessage">
-                                    <h5>Иванов Р. Е.: Завтра должны быть готовы...</h5>
-                                </div>
-                            </div>
-                            <div class="chat-dropdown-group-element-lastmessagetime">
-                                <h5>10:05</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> -->
-        
-
-
-
-
         <main class="chat-main">
             <div class="chat-list">
                 <div class="chat-searching">
@@ -135,12 +52,18 @@
                     </div>
                     
                 </div>
-                <div class="chat-list-groups">
-                    <button class="chat-list-group-name">Личные</button>
-                    <button class="chat-list-group-name active">Группы</button>
-                    <button class="chat-list-group-name">Проекты</button>
-                    <button class="buttonbase" id="addChatGroup">+</button>
+                <div class="chat-folders">
+                    <div class="chat-folders-wrapper">
+                        <div class="chat-folders-container">
+                            <div class="chat-folders-list" id="foldersList">
+                                <!-- Папки будут загружаться динамически -->
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <button class="add-folder-btn" id="addFolderBtn" title="Создать папку">+</button>
                 </div>
+                
                 <div class="chat-list-elements">
                     <section class="chat-list-group-active">
                         
@@ -292,21 +215,35 @@
                         </div>
                     </div>
                 </section>
-
-                <footer class="chat-input">
-                    <div class="input-tools">
-                        <button class="tool-btn" title="Прикрепить файл">
-                            <img src="/materials/icons8-скрепка-80.png" alt="Прикрепить" class="icon">
-                            <input type="file" id="fileInput" multiple style="display: none;">
-                        </button>
-                        <button class="tool-btn" title="Смайлики">
-                            <img src="/materials/icons8-смайлик-80.png" alt="Смайлики" class="icon">
+                
+                <footer class="chat-input-section">
+                    <div class="under-input-field">
+                        <div class="attachments-preview" style="display: none; padding: 8px 12px; background: var(--c_bg, #f5f5f5); border-radius: 12px; margin-bottom: 8px;">
+                            <div class="attachments-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                        </div>
+                        <div class="editing-indicator" style="display: none; padding: 8px 12px; background: var(--c_acchalf, rgba(81,148,255,0.1)); border-radius: 12px; margin-bottom: 8px;">
+                            <span>✏️ Редактирование сообщения</span>
+                            <button class="cancel-edit-btn" style="margin-left: auto; background: none; border: none; cursor: pointer;">❌</button>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <div class="input-tools">
+                            <button class="tool-btn" title="Прикрепить файл">
+                                <img src="/materials/icons8-скрепка-80.png" alt="Прикрепить" class="icon">
+                                <input type="file" id="fileInput" multiple style="display: none;">
+                            </button>
+                            <button class="tool-btn" title="Смайлики">
+                                <img src="/materials/icons8-смайлик-80.png" alt="Смайлики" class="icon">
+                            </button>
+                        </div>
+                        
+                        
+                        <input type="text" class="message-input" id="messageInput" placeholder="Введите сообщение...">
+                        <button class="send-btn buttonbase" id="sendMessageBtn" title="Отправить">
+                            <img src="/materials/icons8-отправить-80.png" alt="Отправить" class="icon">
                         </button>
                     </div>
-                    <input type="text" class="message-input" id="messageInput" placeholder="Введите сообщение...">
-                    <button class="send-btn buttonbase" id="sendMessageBtn" title="Отправить">
-                        <img src="/materials/icons8-отправить-80.png" alt="Отправить" class="icon">
-                    </button>
+                    
                 </footer>
             </div>
 
@@ -394,6 +331,144 @@
             </div>
         </div>
     </div>
+    <div id="editMessageModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h3>✏️ Редактирование сообщения</h3>
+                <button class="custom-modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <textarea id="editMessageInput" rows="4" placeholder="Введите текст сообщения..."></textarea>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase" onclick="closeEditModal()">Отмена</button>
+                <button class="buttonbase" id="saveEditBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для жалобы -->
+    <div id="reportMessageModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h3>⚠️ Пожаловаться на сообщение</h3>
+                <button class="custom-modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <textarea id="reportReasonInput" rows="3" placeholder="Укажите причину жалобы..."></textarea>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase" onclick="closeReportModal()">Отмена</button>
+                <button class="buttonbase" id="sendReportBtn">Отправить жалобу</button>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="confirmDeleteModal" class="custom-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>🗑️ Подтверждение удаления</h3>
+                <button class="modal-close" onclick="closeConfirmDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить это сообщение?</p>
+                <p style="font-size: 12px; color: #999; margin-top: 10px;">Это действие нельзя отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeConfirmDeleteModal()">Отмена</button>
+                <button class="buttonbase" id="confirmDeleteBtn" style="background-color: #dc3545;">Удалить</button>
+            </div>
+        </div>
+    </div>   
+    <!-- Модальное окно создания папки -->
+    <div id="createFolderModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h3>📁 Создание папки</h3>
+                <button class="custom-modal-close" onclick="closeCreateFolderModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <div class="form-group">
+                    <label>Название папки</label>
+                    <input type="text" id="folderNameInput" placeholder="Например: Работа, Друзья, Семья..." autocomplete="off">
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase btn-secondary" onclick="closeCreateFolderModal()">Отмена</button>
+                <button class="buttonbase" id="confirmCreateFolderBtn">Создать</button>
+            </div>
+        </div>
+    </div> 
+    <!-- Модальное окно редактирования папки -->
+    <div id="editFolderModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h3>✏️ Переименовать папку</h3>
+                <button class="custom-modal-close" onclick="closeEditFolderModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <div class="form-group">
+                    <label>Новое название</label>
+                    <input type="text" id="editFolderNameInput" placeholder="Название папки">
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase btn-secondary" onclick="closeEditFolderModal()">Отмена</button>
+                <button class="buttonbase" id="confirmEditFolderBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно удаления папки -->
+    <div id="deleteFolderModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content" style="max-width: 400px;">
+            <div class="custom-modal-header">
+                <h3>🗑️ Удалить папку</h3>
+                <button class="custom-modal-close" onclick="closeDeleteFolderModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <p>Вы уверены, что хотите удалить эту папку?</p>
+                <p style="font-size: 12px; color: #999;">Чаты не будут удалены, они останутся в разделе "Все чаты".</p>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase btn-secondary" onclick="closeDeleteFolderModal()">Отмена</button>
+                <button class="buttonbase" id="confirmDeleteFolderBtn" style="background-color: #dc3545;">Удалить</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Закрытие модальных окон папок
+        function closeEditFolderModal() {
+            const modal = document.getElementById('editFolderModal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        function closeDeleteFolderModal() {
+            const modal = document.getElementById('deleteFolderModal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        // Закрытие модальных окон сообщений
+        function closeEditModal() {
+            const modal = document.getElementById('editMessageModal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        function closeReportModal() {
+            const modal = document.getElementById('reportMessageModal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        function closeConfirmDeleteModal() {
+            const modal = document.getElementById('confirmDeleteModal');
+            if (modal) modal.style.display = 'none';
+        }
+        
+        function closeCreateFolderModal() {
+            const modal = document.getElementById('createFolderModal');
+            if (modal) modal.style.display = 'none';
+        }
+    </script>
     <script src="/scripts/api.js"></script>
     <script src="/scripts/chat-api.js"></script>
     <script src="../scripts/main.js"></script>

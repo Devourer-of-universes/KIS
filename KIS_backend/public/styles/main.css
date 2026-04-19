@@ -80,7 +80,7 @@ body {
 }
 
 .buttonbase:hover {
-    background-color: var(--c_brightacc);
+    background-color: var(--с_brightacc);  /* ← темнее, а не белый */
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
 }

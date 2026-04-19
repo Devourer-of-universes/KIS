@@ -310,6 +310,381 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 }
 });
+const editMessage = async (req, res) => {
+    try {
+        const { id } = req.params;           // ID сообщения из URL
+        const { content } = req.body;        // Новый текст из тела запроса
+        const userId = req.userId;            // ID текущего пользователя (из токена)
+        
+        // 1. Проверяем, что сообщение существует и принадлежит пользователю
+        const result = await query(
+            `UPDATE messages 
+             SET content = $1, updated_at = CURRENT_TIMESTAMP, is_edited = true
+             WHERE id = $2 AND user_id = $3 AND is_deleted = false
+             RETURNING *`,
+            [content, id, userId]
+        );
+        
+        // 2. Если сообщение не найдено или не принадлежит пользователю
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Сообщение не найдено' });
+        }
+        
+        // 3. Возвращаем обновлённое сообщение
+        res.json({ success: true, message: result.rows[0] });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+const reportMessage = async (req, res) => {
+    try {
+        const { id } = req.params;           // ID сообщения из URL
+        const { reason } = req.body;         // Причина жалобы
+        const reporterId = req.userId;       // ID того, кто жалуется
+        
+        // 1. Проверяем, что сообщение существует
+        const message = await query(
+            `SELECT m.*, u.surname, u.name 
+             FROM messages m
+             JOIN users u ON m.user_id = u.id
+             WHERE m.id = $1 AND m.is_deleted = false`,
+            [id]
+        );
+        
+        if (message.rows.length === 0) {
+            return res.status(404).json({ error: 'Сообщение не найдено' });
+        }
+        
+        // 2. Получаем всех администраторов
+        const admins = await query(`SELECT id FROM users WHERE role_id = 1`);
+        
+        // 3. Создаём уведомление для каждого админа
+        for (const admin of admins.rows) {
+            await query(
+                `INSERT INTO notifications (user_id, type, title, content, data)
+                 VALUES ($1, 'report', 'Жалоба на сообщение', 
+                         'Пользователь пожаловался на сообщение', $2)`,
+                [admin.id, JSON.stringify({
+                    messageId: id,
+                    messageContent: message.rows[0].content,
+                    messageAuthor: `${message.rows[0].surname} ${message.rows[0].name}`,
+                    reporterId: reporterId,
+                    reason: reason,
+                    chatId: message.rows[0].chat_id
+                })]
+            );
+        }
+        
+        res.json({ success: true, message: 'Жалоба отправлена администратору' });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+const deleteMessage = async (req, res) => {
+    console.log('🗑️ Delete message request for ID:', req.params.id);
+    
+    try {
+        const { id } = req.params;
+        
+        // 1. Получаем сообщение
+        const messageResult = await query(
+            `SELECT * FROM messages WHERE id = $1 AND is_deleted = false`,
+            [id]
+        );
+        
+        if (messageResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Сообщение не найдено' });
+        }
+        
+        const message = messageResult.rows[0];
+        
+        // 2. Проверяем права (только автор может удалить)
+        if (message.user_id !== req.userId) {
+            return res.status(403).json({ error: 'Нет прав для удаления' });
+        }
+        
+        // 3. Получаем вложения
+        const attachments = await query(
+            `SELECT * FROM message_attachments WHERE message_id = $1`,
+            [id]
+        );
+        
+        console.log(`📎 Found ${attachments.rows.length} attachments to delete`);
+        
+        // 4. Удаляем файлы с диска
+        const fs = require('fs');
+        const path = require('path');
+        
+        for (const att of attachments.rows) {
+            const filePath = path.join(__dirname, '../../', att.file_uri);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`✅ Deleted file: ${filePath}`);
+            } else {
+                console.log(`⚠️ File not found: ${filePath}`);
+            }
+        }
+        
+        // 5. Удаляем записи о вложениях из БД
+        if (attachments.rows.length > 0) {
+            await query(`DELETE FROM message_attachments WHERE message_id = $1`, [id]);
+            console.log(`✅ Deleted ${attachments.rows.length} attachment records from DB`);
+        }
+        
+        // 6. Помечаем сообщение как удалённое
+        await query(
+            `UPDATE messages SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [id]
+        );
+        
+        // 7. Обновляем last_message_at в чате
+        const lastMessage = await query(
+            `SELECT created_at FROM messages WHERE chat_id = $1 AND is_deleted = false ORDER BY created_at DESC LIMIT 1`,
+            [message.chat_id]
+        );
+        
+        await query(
+            `UPDATE chats SET last_message_at = $1 WHERE id = $2`,
+            [lastMessage.rows[0]?.created_at || new Date(), message.chat_id]
+        );
+        
+        console.log('✅ Message deleted successfully');
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Delete message error:', error);
+        res.status(500).json({ error: error.message });
+    }
+}; 
+
+
+
+// ========== ГРУППЫ ЧАТОВ (ПАПКИ) ==========
+
+// Получение всех групп пользователя
+router.get('/folders', authMiddleware, async (req, res) => {
+    try {
+        const result = await query(
+            `SELECT * FROM chat_folders WHERE user_id = $1 ORDER BY created_at ASC`,
+            [req.userId]
+        );
+        res.json({ folders: result.rows });
+    } catch (error) {
+        console.error('Get folders error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Создание группы
+router.post('/folders', authMiddleware, async (req, res) => {
+    try {
+        const { name } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ error: 'Укажите название группы' });
+        }
+        
+        const result = await query(
+            `INSERT INTO chat_folders (user_id, name) VALUES ($1, $2) RETURNING *`,
+            [req.userId, name.trim()]
+        );
+        
+        res.status(201).json({ folder: result.rows[0] });
+    } catch (error) {
+        console.error('Create folder error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Обновление группы
+router.put('/folders/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, icon } = req.body;
+        
+        // Проверяем, что группа принадлежит пользователю
+        const check = await query(
+            `SELECT id FROM chat_folders WHERE id = $1 AND user_id = $2`,
+            [id, req.userId]
+        );
+        
+        if (check.rows.length === 0) {
+            return res.status(404).json({ error: 'Группа не найдена' });
+        }
+        
+        const updates = [];
+        const values = [];
+        let idx = 1;
+        
+        if (name !== undefined) {
+            updates.push(`name = $${idx++}`);
+            values.push(name.trim());
+        }
+        if (icon !== undefined) {
+            updates.push(`icon = $${idx++}`);
+            values.push(icon);
+        }
+        
+        updates.push(`updated_at = CURRENT_TIMESTAMP`);
+        
+        values.push(id);
+        
+        const result = await query(
+            `UPDATE chat_folders SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+            values
+        );
+        
+        res.json({ folder: result.rows[0] });
+    } catch (error) {
+        console.error('Update folder error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Удаление группы
+router.delete('/folders/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Проверяем, что группа принадлежит пользователю
+        const check = await query(
+            `SELECT id FROM chat_folders WHERE id = $1 AND user_id = $2`,
+            [id, req.userId]
+        );
+        
+        if (check.rows.length === 0) {
+            return res.status(404).json({ error: 'Группа не найдена' });
+        }
+        
+        // Удаляем связи чатов с этой группой (чаты не удаляются)
+        await query(`DELETE FROM chat_folder_items WHERE folder_id = $1`, [id]);
+        
+        // Удаляем группу
+        await query(`DELETE FROM chat_folders WHERE id = $1`, [id]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete folder error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Получение чатов в группе
+router.get('/folders/:id/chats', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(
+            `SELECT c.*, 
+                    (SELECT COUNT(*) FROM messages WHERE chat_id = c.id AND is_deleted = false) as message_count,
+                    (SELECT json_build_object(
+                        'id', m.id,
+                        'content', CASE WHEN m.is_deleted THEN '[Сообщение удалено]' ELSE m.content END,
+                        'created_at', m.created_at,
+                        'user_id', m.user_id
+                     ) FROM messages m 
+                     WHERE m.chat_id = c.id AND m.is_deleted = false 
+                     ORDER BY m.created_at DESC LIMIT 1) as last_message
+             FROM chats c
+             INNER JOIN chat_folder_items fi ON fi.chat_id = c.id
+             WHERE fi.folder_id = $1
+             ORDER BY c.last_message_at DESC`,
+            [id]
+        );
+        
+        const chats = result.rows;
+        
+        // Для личных чатов подставляем имя собеседника
+        for (const chat of chats) {
+            if (!chat.is_group && !chat.name) {
+                const participants = await query(
+                    `SELECT u.surname, u.name
+                     FROM users u
+                     JOIN chat_participants cp ON cp.user_id = u.id
+                     WHERE cp.chat_id = $1 AND u.id != $2`,
+                    [chat.id, req.userId]
+                );
+                if (participants.rows[0]) {
+                    const p = participants.rows[0];
+                    chat.name = `${p.surname} ${p.name}`;
+                }
+            }
+        }
+        
+        res.json({ chats });
+    } catch (error) {
+        console.error('Get folder chats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Добавление чата в группу
+router.post('/folders/:folderId/chats/:chatId', authMiddleware, async (req, res) => {
+    try {
+        const { folderId, chatId } = req.params;
+        
+        console.log('Adding chat to folder:', { folderId, chatId, userId: req.userId });
+        
+        // 1. Проверяем, что папка существует и принадлежит пользователю
+        const folderCheck = await query(
+            'SELECT id FROM chat_folders WHERE id = $1 AND user_id = $2',
+            [folderId, req.userId]
+        );
+        
+        if (folderCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Папка не найдена' });
+        }
+        
+        // 2. Проверяем, что пользователь участник чата
+        const chatCheck = await query(
+            'SELECT 1 FROM chat_participants WHERE chat_id = $1 AND user_id = $2',
+            [chatId, req.userId]
+        );
+        
+        if (chatCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Нет доступа к чату' });
+        }
+        
+        // 3. Добавляем чат в папку
+        await query(
+            'INSERT INTO chat_folder_items (folder_id, chat_id) VALUES ($1, $2) ON CONFLICT (folder_id, chat_id) DO NOTHING',
+            [folderId, chatId]
+        );
+        
+        console.log('Chat added to folder successfully');
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Add chat to folder error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// Удаление чата из группы
+router.delete('/folders/:folderId/chats/:chatId', authMiddleware, async (req, res) => {
+    try {
+        const { folderId, chatId } = req.params;
+        
+        await query(
+            `DELETE FROM chat_folder_items WHERE folder_id = $1 AND chat_id = $2`,
+            [folderId, chatId]
+        );
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Remove chat from folder error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
+
+
+
+
 
 // Маршрут для загрузки файла
 router.post('/:chatId/upload', authMiddleware, upload.single('file'), async (req, res) => {
@@ -342,7 +717,7 @@ router.post('/:chatId/upload', authMiddleware, upload.single('file'), async (req
         // Создаём сообщение
         const content = fileType === 'image' 
             ? `📷 Изображение\n/uploads/chat-files/${file.filename}` 
-            : `📎 ${originalName}`;
+            : `📎 ${originalName}\n/uploads/chat-files/${file.filename}`;
         
         const result = await query(
             `INSERT INTO messages (chat_id, user_id, content) VALUES ($1, $2, $3) RETURNING id`,
@@ -397,6 +772,9 @@ router.use(authMiddleware);
 router.get('/', getChats);
 router.post('/', createChat);
 router.get('/:id/messages', getMessages);
+router.put('/messages/:id', authMiddleware, editMessage);
+router.delete('/messages/:id', authMiddleware, deleteMessage);
+router.post('/messages/:id/report', authMiddleware, reportMessage);
 router.post('/:chatId/messages', authMiddleware, async (req, res) => {
     try {
         const { chatId } = req.params;
@@ -471,9 +849,6 @@ router.get('/:id', getChatById);
 router.post('/:chatId/upload', authMiddleware, upload.single('file'), async (req, res) => {
     res.json({ success: true, file: req.file });
 });
-// Получение медиа чата
-// Получение медиа чата - максимально простой запрос
-// Получение медиа чата
 router.get('/:id/media', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
@@ -537,5 +912,11 @@ router.post('/:id/read', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+router.delete('/messages/:id', authMiddleware, deleteMessage);  
+
+
+
+
+
 
 module.exports = router;

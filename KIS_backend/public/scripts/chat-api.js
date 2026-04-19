@@ -8,17 +8,17 @@ class ChatManager {
         this.images = [];     // Добавляем
         this.ws = null;
         this.init();
+        this.editingMessageId = null;
+        this.editingOriginalContent = '';
+        this.pendingAttachments = [];
+
     }
     
     async init() {
-        // Загружаем текущего пользователя
         await this.loadCurrentUser();
-        
-        // Сбрасываем вид (чат не выбран)
         this.resetChatView();
-        
+        await this.loadFolders();
         await this.loadChats();
-        // this.initWebSocket();
         this.initEventListeners();
     }
     
@@ -59,6 +59,9 @@ class ChatManager {
             // ВЫЗЫВАЕМ ОТРИСОВКУ
             this.renderMessages();
             
+            // УБИРАЕМ this.loadChats() ОТСЮДА
+            // this.loadChats();  // ← ЗАКОММЕНТИРОВАТЬ ИЛИ УДАЛИТЬ
+            
             this.markAsRead(chatId);
             
         } catch (error) {
@@ -78,7 +81,7 @@ class ChatManager {
             const result = await api.chats.sendMessage(chatId, content);
             if (result.success) {
                 await this.loadMessages(chatId);
-                await this.loadChats();  // ← добавить эту строку
+                await this.loadChats();  // ← Здесь оставляем
             }
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -204,18 +207,21 @@ class ChatManager {
             }
             
             return `
-                <div class="chat-list-element" data-chat-id="${chat.id}" onclick="chatManager.openChat(${chat.id}, '${this.escapeHtml(displayName)}')">
-                    <div class="chat-list-element-icon">
-                        ${avatarHtml}
-                    </div>
-                    <div class="chat-list-element-info">
-                        <div class="chat-list-element-header">${this.escapeHtml(displayName)}</div>
-                        <div class="chat-list-element-lasttxt">${this.formatLastMessage(chat.last_message)}</div>
-                    </div>
-                    ${chat.unread_count > 0 ? `<div class="chat-list-element-notifications">${chat.unread_count}</div>` : ''}
-                </div>
-            `;
-        }).join('');
+                        <div class="chat-list-element" 
+                            data-chat-id="${chat.id}" 
+                            onclick="chatManager.openChat(${chat.id}, '${this.escapeHtml(displayName)}')"
+                            oncontextmenu="chatManager.showChatContextMenu(event, ${chat.id}, '${this.escapeHtml(displayName)}')">
+                            <div class="chat-list-element-icon">
+                                ${avatarHtml}
+                            </div>
+                            <div class="chat-list-element-info">
+                                <div class="chat-list-element-header">${this.escapeHtml(displayName)}</div>
+                                <div class="chat-list-element-lasttxt">${this.formatLastMessage(chat.last_message)}</div>
+                            </div>
+                            ${chat.unread_count > 0 ? `<div class="chat-list-element-notifications">${chat.unread_count}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
     }
     formatLastMessage(message) {
         if (!message) return 'Нет сообщений';
@@ -223,12 +229,18 @@ class ChatManager {
         if (message.content && message.content.startsWith('📎')) return '📎 Файл';
         return this.escapeHtml(message.content.substring(0, 40));
     }
+    downloadFile(url, fileName) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
     // Отрисовка сообщений
     renderMessages() {
         const messagesContainer = document.getElementById('messagesContainer');
         if (!messagesContainer) return;
-        
-        console.log('Rendering messages, count:', this.messages.length);
         
         if (!this.messages || this.messages.length === 0) {
             messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">💬 Нет сообщений<br>Напишите что-нибудь...</div>';
@@ -236,11 +248,24 @@ class ChatManager {
         }
         
         const currentUserId = window.currentUser?.id;
-        console.log('Current user ID:', currentUserId);
-        
+        let lastDate = null;
         let html = '';
         
-        for (const msg of this.messages) {
+        for (let i = 0; i < this.messages.length; i++) {
+            const msg = this.messages[i];
+            const msgDate = new Date(msg.created_at);
+            const currentDate = msgDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            // Проверяем, нужно ли добавить разделитель даты
+            if (lastDate !== currentDate) {
+                html += `
+                    <div class="date-divider">
+                        <span class="date-divider-text">${this.formatDateDivider(msgDate)}</span>
+                    </div>
+                `;
+                lastDate = currentDate;
+            }
+            
             const isOwn = msg.user_id === currentUserId;
             
             // Проверяем тип сообщения
@@ -253,9 +278,11 @@ class ChatManager {
                 const imageUrl = msg.content.split('\n')[1];
                 contentHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy">`;
             } else if (isFile) {
-                const fileName = msg.content.replace('📎 *файл*: ', '');
+                const lines = msg.content.split('\n');
+                const fileName = lines[0].replace('📎 ', '');
+                const fileUrl = lines[1] || '';
                 contentHtml = `
-                    <div class="message-file" onclick="chatManager.downloadFileFromMessage('${fileName}')">
+                    <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')">
                         <span class="file-icon">📎</span>
                         <span class="file-name">${this.escapeHtml(fileName)}</span>
                     </div>
@@ -269,7 +296,7 @@ class ChatManager {
             const avatarHtml = !isOwn ? this.getAvatar(msg.avatar_uri, msg.name, msg.surname) : '';
             
             html += `
-                <div class="message ${isOwn ? 'sent' : 'received'}">
+                <div class="message ${isOwn ? 'sent' : 'received'}" data-message-id="${msg.id}" data-message-user="${msg.user_id}" data-message-content="${this.escapeHtml(msg.content)}">
                     <div class="message-content">
                         ${!isOwn ? `
                             <div class="message-av-container">
@@ -296,6 +323,227 @@ class ChatManager {
         messagesContainer.innerHTML = html;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+    // Показать контекстное меню для сообщения
+    showContextMenu(event, messageId, isOwn, content) {
+        event.preventDefault();
+        
+        // Удаляем существующее меню
+        this.closeContextMenu();
+        
+        // Создаём меню
+        const menu = document.createElement('div');
+        menu.className = 'message-context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            top: ${event.clientY}px;
+            left: ${event.clientX}px;
+            background: var(--c_surf, white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+            min-width: 180px;
+            overflow: hidden;
+        `;
+        
+        let menuItems = '';
+        
+        if (isOwn) {
+            menuItems += `
+                <div class="context-menu-item" onclick="chatManager.startEditing(${messageId}, '${this.escapeHtml(content).replace(/'/g, "\\'")}')">
+                    ✏️ Редактировать
+                </div>
+                <div class="context-menu-item" onclick="chatManager.deleteMessage(${messageId})">
+                    🗑️ Удалить
+                </div>
+            `;
+        } else {
+            menuItems += `
+                <div class="context-menu-item" onclick="chatManager.reportMessage(${messageId})">
+                    ⚠️ Пожаловаться
+                </div>
+            `;
+        }
+        
+        menu.innerHTML = menuItems;
+        document.body.appendChild(menu);
+        
+        // Закрыть меню при клике вне
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+    // Редактирование сообщения (через модалку)
+    async editMessage(messageId, oldContent) {
+        this.closeContextMenu();
+        const modal = document.getElementById('editMessageModal');
+        const textarea = document.getElementById('editMessageInput');
+        const saveBtn = document.getElementById('saveEditBtn');
+        
+        textarea.value = oldContent;
+        modal.style.display = 'flex';
+        
+        const saveHandler = async () => {
+            const newContent = textarea.value.trim();
+            if (!newContent || newContent === oldContent) {
+                closeEditModal();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/chats/messages/${messageId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+                
+                if (response.ok) {
+                    await this.loadMessages(this.currentChatId);
+                    await this.loadChatMedia(this.currentChatId);
+                    closeEditModal();
+                } else {
+                    alert('Ошибка редактирования');
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+            }
+        };
+        
+        saveBtn.onclick = saveHandler;
+        textarea.onkeypress = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                saveHandler();
+            }
+        };
+    }
+    // Начать редактирование
+    startEditing(messageId, currentContent) {
+        this.editingMessageId = messageId;
+        this.editingOriginalContent = currentContent;
+        
+        const messageInput = document.querySelector('.message-input');
+        const editIndicator = document.querySelector('.editing-indicator');
+        
+        if (messageInput) {
+            messageInput.value = currentContent;
+            messageInput.focus();
+            messageInput.placeholder = 'Редактирование...';
+        }
+        
+        if (editIndicator) editIndicator.style.display = 'flex';
+    }
+
+    // Отменить редактирование
+    cancelEditing() {
+        this.editingMessageId = null;
+        this.editingOriginalContent = '';
+        
+        const editIndicator = document.querySelector('.editing-indicator');
+        if (editIndicator) editIndicator.style.display = 'none';
+        
+        const messageInput = document.querySelector('.message-input');
+        if (messageInput) {
+            messageInput.value = '';
+            messageInput.placeholder = 'Введите сообщение...';
+        }
+    }
+
+    // Сохранить редактирование
+    async saveEditing() {
+        if (!this.editingMessageId) return;
+        
+        const messageInput = document.querySelector('.message-input');
+        const newContent = messageInput.value.trim();
+        
+        if (!newContent || newContent === this.editingOriginalContent) {
+            this.cancelEditing();
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/chats/messages/${this.editingMessageId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ content: newContent })
+            });
+            
+            if (response.ok) {
+                await this.loadMessages(this.currentChatId);
+                await this.loadChatMedia(this.currentChatId);
+                this.cancelEditing();
+            } else {
+                alert('Ошибка редактирования');
+            }
+        } catch (error) {
+            console.error('Edit error:', error);
+        }
+    }
+    // Жалоба (через модалку)
+    async reportMessage(messageId) {
+        this.closeContextMenu();
+        const modal = document.getElementById('reportMessageModal');
+        const textarea = document.getElementById('reportReasonInput');
+        const sendBtn = document.getElementById('sendReportBtn');
+        
+        textarea.value = '';
+        modal.style.display = 'flex';
+        
+        const sendHandler = async () => {
+            const reason = textarea.value.trim();
+            if (!reason) {
+                alert('Укажите причину жалобы');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/chats/messages/${messageId}/report`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                
+                if (response.ok) {
+                    alert('Жалоба отправлена администратору');
+                    closeReportModal();
+                } else {
+                    alert('Ошибка отправки жалобы');
+                }
+            } catch (error) {
+                console.error('Report error:', error);
+            }
+        };
+        
+        sendBtn.onclick = sendHandler;
+    }
+
+    // Функции закрытия модалок
+    closeEditModal = () => {
+        document.getElementById('editMessageModal').style.display = 'none';
+    };
+
+    closeReportModal = () => {
+        document.getElementById('reportMessageModal').style.display = 'none';
+    };
+
+    // Удаление сообщения
+    async deleteMessage(messageId) {
+        this.closeContextMenu();
+        this.showConfirmDeleteModal(messageId);
+    }
+
 
     // Отрисовка ссылок в сайдбаре
     renderLinks(links) {
@@ -306,7 +554,7 @@ class ChatManager {
             console.error('Links container not found!');
             return;
         }
-        
+        linksContainer.innerHTML = '';
         if (!links || links.length === 0) {
             linksContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет ссылок</div>';
             return;
@@ -329,14 +577,7 @@ class ChatManager {
         `;
     }
 
-    // Вспомогательный метод для скачивания файла из сообщения
-    downloadFileFromMessage(content) {
-        // Извлекаем имя файла из сообщения
-        const fileName = content.replace('📎 *файл*: ', '');
-        // Здесь нужно реализовать логику скачивания файла по имени
-        // Пока просто показываем уведомление
-        alert(`Скачивание файла: ${fileName}\n(Функция в разработке)`);
-    }
+
 
     // Метод для открытия просмотра изображения
     openImageViewer(url) {
@@ -347,32 +588,8 @@ class ChatManager {
         document.body.appendChild(modal);
     }
 
-    // Вспомогательный метод для скачивания файла из сообщения
-    downloadFileFromMessage(content) {
-        // Извлекаем имя файла из сообщения
-        const fileName = content.replace('📎 *файл*: ', '');
-        // Здесь нужно реализовать логику скачивания файла по имени
-        // Пока просто показываем уведомление
-        alert(`Скачивание файла: ${fileName}\n(Функция в разработке)`);
-    }
 
-    // Метод для открытия просмотра изображения
-    openImageViewer(url) {
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;cursor:pointer;';
-        modal.onclick = () => modal.remove();
-        modal.innerHTML = `<img src="${url}" style="max-width:90%;max-height:90%;border-radius:10px;object-fit:contain;">`;
-        document.body.appendChild(modal);
-    }
-    downloadFile(url, fileName) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-    // Отметка о прочтении
+
     async markAsRead(chatId) {
         try {
             await fetch(`${API_URL}/chats/${chatId}/read`, {
@@ -381,7 +598,8 @@ class ChatManager {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
-            this.loadChats(); // Обновляем счетчики
+            // Убираем this.loadChats() отсюда
+            // this.loadChats();
         } catch (error) {
             console.error('Failed to mark as read:', error);
         }
@@ -405,114 +623,28 @@ class ChatManager {
             }));
         }
     }
-    // Открытие чата и загрузка сообщений
-    // async openChat(chatId, chatName) {
-    //     console.log('Opening chat:', chatId, chatName);
-        
-    //     // Показываем контент чата
-    //     const chatContent = document.querySelector('.chat-content');
-    //     if (chatContent) {
-    //         chatContent.classList.remove('no-chat-selected');
-    //     }
-        
-    //     // Показываем кнопку "Назад"
-    //     const backBtn = document.getElementById('backToChatsBtn');
-    //     if (backBtn) {
-    //         backBtn.style.display = 'flex';
-    //     }
-        
-    //     // Показываем сайдбар
-    //     const chatSidebar = document.getElementById('chatSidebar');
-    //     if (chatSidebar) {
-    //         chatSidebar.style.display = 'block';
-    //     }
-        
-    //     // Загружаем информацию о чате
-    //     try {
-    //         const token = localStorage.getItem('token');
-    //         const response = await fetch(`/api/chats/${chatId}`, {
-    //             headers: { 'Authorization': `Bearer ${token}` }
-    //         });
-    //         const data = await response.json();
-    //         const chat = data.chat;
-            
-    //         const isGroup = chat.is_group;
-            
-    //         // Обновляем заголовок и аватар в шапке
-    //         const chatNameHeader = document.querySelector('.chat-name');
-    //         const chatAvatar = document.querySelector('.chat-avatar');
-    //         const sidebarAvatar = document.querySelector('.sidebar-avatar');
-    //         const sidebarChatName = document.querySelector('.sidebar-chatname');
-    //         const participantsHeader = document.querySelector('.sidebar-section h3');
-    //         const userListContainer = document.getElementById('userList');
-            
-    //         if (isGroup) {
-    //             // Групповой чат
-    //             chatNameHeader.textContent = chat.name || 'Групповой чат';
-    //             if (chatAvatar) {
-    //                 chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${this.getGroupAvatar(chat)}</div>`;
-    //             }
-    //             if (sidebarAvatar) {
-    //                 sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${this.getGroupAvatar(chat)}</div>`;
-    //             }
-    //             if (sidebarChatName) sidebarChatName.textContent = chat.name || 'Групповой чат';
-                
-    //             // Показываем заголовок "Участники" и список участников
-    //             if (participantsHeader) {
-    //                 participantsHeader.textContent = `Участники (${chat.participants?.length || 0})`;
-    //                 participantsHeader.style.display = 'block';
-    //             }
-                
-    //             // Загружаем список участников
-    //             await this.loadChatParticipants(chatId);
-                
-    //         } else {
-    //             // Личный чат - берем данные собеседника
-    //             const otherUser = chat.participants?.find(p => p.id !== window.currentUser?.id);
-    //             if (otherUser) {
-    //                 const displayName = `${otherUser.surname} ${otherUser.name}`;
-    //                 chatNameHeader.textContent = displayName;
-                    
-    //                 const avatarHtml = this.getAvatar(otherUser.avatar_uri, otherUser.name, otherUser.surname);
-    //                 if (chatAvatar) {
-    //                     chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${avatarHtml}</div>`;
-    //                 }
-    //                 if (sidebarAvatar) {
-    //                     sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${avatarHtml}</div>`;
-    //                 }
-    //                 if (sidebarChatName) sidebarChatName.textContent = displayName;
-    //             }
-                
-    //             // Скрываем заголовок "Участники" и список участников
-    //             if (participantsHeader) {
-    //                 participantsHeader.style.display = 'none';
-    //             }
-    //             if (userListContainer) {
-    //                 userListContainer.innerHTML = '';
-    //             }
-    //         }
-            
-    //     } catch (error) {
-    //         console.error('Failed to load chat info:', error);
-    //     }
-    //     await this.loadChatMedia(chatId);
-    //     // Показываем индикатор загрузки
-    //     const messagesContainer = document.getElementById('messagesContainer');
-    //     if (messagesContainer) {
-    //         messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка сообщений...</div>';
-    //     }
-        
-    //     // Загружаем сообщения
-    //     await this.loadMessages(chatId);
-        
-    //     // Показываем поле ввода
-    //     const chatInput = document.querySelector('.chat-input');
-    //     if (chatInput) chatInput.style.display = 'flex';
-    // }
     initEventListeners() {
-        // Отправка сообщения по Enter
-        const messageInput = document.querySelector('.message-input');
-        const sendBtn = document.querySelector('.send-btn');
+        // Создаём индикатор редактирования, если его нет
+        if (!document.querySelector('.editing-indicator')) {
+            const editIndicator = document.createElement('div');
+            editIndicator.className = 'editing-indicator';
+            editIndicator.style.cssText = 'display: none; align-items: center; gap: 10px; padding: 8px 15px; background: var(--c_acchalf); border-radius: 20px; margin-bottom: 10px;';
+            editIndicator.innerHTML = `
+                <span>✏️ Редактирование сообщения</span>
+                <button class="cancel-edit-btn" style="background: none; border: none; cursor: pointer; color: #ff6b6b;">✖️ Отмена</button>
+            `;
+            const chatInputSection = document.querySelector('.chat-input-section');
+            if (chatInputSection) {
+                chatInputSection.insertBefore(editIndicator, chatInputSection.firstChild);
+            }
+        }
+
+        // Обработчик отмены редактирования
+        const cancelEditBtn = document.querySelector('.cancel-edit-btn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => this.cancelEditing());
+        }
+
         // Плавающая кнопка создания чата
         const floatingBtn = document.getElementById('floatingCreateChatBtn');
         if (floatingBtn) {
@@ -520,6 +652,7 @@ class ChatManager {
                 this.showCreateChatModal();
             });
         }
+
         // Кнопка "Назад к списку чатов"
         const backBtn = document.getElementById('backToChatsBtn');
         if (backBtn) {
@@ -527,38 +660,55 @@ class ChatManager {
                 this.resetChatView();
             });
         }
+
+        // Отправка сообщения по Enter
+        const messageInput = document.querySelector('.message-input');
         if (messageInput) {
-            messageInput.addEventListener('keypress', (e) => {
+            const newMessageInput = messageInput.cloneNode(true);
+            messageInput.parentNode.replaceChild(newMessageInput, messageInput);
+            
+            newMessageInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    if (this.currentChatId) {
-                        this.sendMessage(this.currentChatId, messageInput.value);
-                        messageInput.value = '';
+                    const text = newMessageInput.value.trim();
+                    
+                    if (text || this.pendingAttachments.length > 0) {
+                        await this.sendMessageWithAttachments(this.currentChatId, text);
+                        newMessageInput.value = '';
                     }
                 }
             });
             
-            // Индикатор набора текста
-            let typingTimeout;
-            messageInput.addEventListener('input', () => {
-                if (this.currentChatId) {
-                    this.sendTyping(this.currentChatId, true);
-                    clearTimeout(typingTimeout);
-                    typingTimeout = setTimeout(() => {
-                        this.sendTyping(this.currentChatId, false);
-                    }, 1000);
-                }
-            });
+            window.messageInput = newMessageInput;
         }
-        
+        // Контекстное меню для папок
+        document.addEventListener('contextmenu', (e) => {
+            const folderItem = e.target.closest('.folder-item');
+            if (folderItem && folderItem.dataset.folderId && folderItem.dataset.folderId !== 'all') {
+                e.preventDefault();
+                const folderId = parseInt(folderItem.dataset.folderId);
+                const folderName = folderItem.querySelector('.folder-name')?.textContent || '';
+                this.showFolderContextMenu(e, folderId, folderName);
+            }
+        });
+        // Кнопка отправки
+        const sendBtn = document.querySelector('.send-btn');
         if (sendBtn) {
-            sendBtn.addEventListener('click', () => {
-                if (this.currentChatId && messageInput) {
-                    this.sendMessage(this.currentChatId, messageInput.value);
-                    messageInput.value = '';
+            const newSendBtn = sendBtn.cloneNode(true);
+            sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+            
+            newSendBtn.addEventListener('click', async () => {
+                const messageInput = document.querySelector('.message-input');
+                const text = messageInput?.value.trim();
+                
+                if ((text || this.pendingAttachments.length > 0) && this.currentChatId) {
+                    await this.sendMessageWithAttachments(this.currentChatId, text || '');
+                    if (messageInput) messageInput.value = '';
                 }
             });
         }
+
+        // Прикрепление файлов
         const attachBtn = document.querySelector('.tool-btn');
         const fileInput = document.getElementById('fileInput');
 
@@ -569,64 +719,38 @@ class ChatManager {
                 const files = Array.from(e.target.files);
                 
                 for (const file of files) {
-                    // Показываем временное сообщение
-                    const tempId = 'temp_' + Date.now();
-                    const isImage = file.type.startsWith('image/');
-                    
-                    this.messages.push({
-                        id: tempId,
-                        chat_id: this.currentChatId,
-                        user_id: window.currentUser?.id,
-                        content: isImage ? '📷 Загрузка изображения...' : `📎 Загрузка ${file.name}...`,
-                        created_at: new Date().toISOString(),
-                        is_temp: true,
-                        surname: window.currentUser?.surname,
-                        name: window.currentUser?.name
-                    });
-                    this.renderMessages();
-                    
-                    try {
-                        const result = await this.uploadFile(this.currentChatId, file);
-                        if (result.success) {
-                            // Удаляем временное сообщение и добавляем реальное
-                            this.messages = this.messages.filter(m => m.id !== tempId);
-                            this.messages.push(result.message);
-                            this.renderMessages();
-                            this.loadChats();
-                            // ОБНОВЛЯЕМ МЕДИА В САЙДБАРЕ
-                            await this.loadChatMedia(this.currentChatId);
-                        }
-                    } catch (error) {
-                        console.error('Upload failed:', error);
-                        // Помечаем сообщение как ошибку
-                        const failedMsg = this.messages.find(m => m.id === tempId);
-                        if (failedMsg) {
-                            failedMsg.content = '❌ Ошибка загрузки';
-                            this.renderMessages();
-                        }
-                    }
+                    this.addPendingAttachment(file);
                 }
                 
                 fileInput.value = '';
             });
         }
+
+        // ===== КНОПКА СОЗДАНИЯ ПАПКИ (ВЫНЕСЕНА ОТДЕЛЬНО) =====
+        const addFolderBtn = document.getElementById('addFolderBtn');
+        if (addFolderBtn) {
+            // Удаляем старые обработчики
+            const newAddFolderBtn = addFolderBtn.cloneNode(true);
+            addFolderBtn.parentNode.replaceChild(newAddFolderBtn, addFolderBtn);
+            
+            newAddFolderBtn.addEventListener('click', () => {
+                this.showCreateFolderModal();
+            });
+        }
+
         // Переключение вкладок медиа в сайдбаре
         const mediaBtns = document.querySelectorAll('.sidebar-media-group-btn');
         const mediaGroups = document.querySelectorAll('.media-group');
 
         mediaBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                // Убираем активный класс у всех кнопок
                 mediaBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                // Получаем тип медиа из data-media атрибута
                 const mediaType = btn.getAttribute('data-media');
                 
-                // Скрываем все группы
                 mediaGroups.forEach(group => group.classList.remove('active'));
                 
-                // Показываем нужную группу
                 if (mediaType === 'files') {
                     const filesGroup = document.querySelector('.sidebar-media-group-files');
                     if (filesGroup) filesGroup.classList.add('active');
@@ -638,6 +762,18 @@ class ChatManager {
                     if (linksGroup) linksGroup.classList.add('active');
                 }
             });
+        });
+
+        // Контекстное меню для сообщений
+        document.addEventListener('contextmenu', (e) => {
+            const messageDiv = e.target.closest('.message');
+            if (messageDiv) {
+                e.preventDefault();
+                const messageId = parseInt(messageDiv.dataset.messageId);
+                const isOwn = messageDiv.classList.contains('sent');
+                const content = messageDiv.dataset.messageContent || '';
+                this.showContextMenu(e, messageId, isOwn, content);
+            }
         });
     }
     
@@ -680,6 +816,26 @@ class ChatManager {
         document.getElementById('userSearchInput').oninput = (e) => {
             this.filterUserList(e.target.value);
         };
+        // Отмена редактирования
+        const cancelEditBtn = document.querySelector('.cancel-edit-btn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => this.cancelEditing());
+        }
+
+        // Отправка сообщения (с учётом режима редактирования)
+        if (messageInput) {
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.editingMessageId) {
+                        this.saveEditing();
+                    } else if (this.currentChatId) {
+                        this.sendMessage(this.currentChatId, messageInput.value);
+                        messageInput.value = '';
+                    }
+                }
+            });
+        }
     }
     // Загрузка текущего пользователя
     async loadCurrentUser() {
@@ -986,7 +1142,8 @@ class ChatManager {
     // Открытие чата и загрузка сообщений
     async openChat(chatId, chatName) {
         console.log('Opening chat:', chatId, chatName);
-        
+        this.lastOpenedChatId = chatId;
+        this.lastOpenedChatName = chatName;
         // === ОЧИЩАЕМ ПЕРЕД ЗАГРУЗКОЙ НОВОГО ЧАТА ===
         // Очищаем список участников
         const userListContainer = document.getElementById('userList');
@@ -1230,7 +1387,7 @@ class ChatManager {
             console.error('Images container not found!');
             return;
         }
-        
+        imagesContainer.innerHTML = '';
         if (!images || images.length === 0) {
             imagesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет изображений</div>';
             return;
@@ -1261,7 +1418,7 @@ class ChatManager {
             console.error('Files container not found!');
             return;
         }
-        
+        filesContainer.innerHTML = '';
         if (!files || files.length === 0) {
             filesContainer.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">Нет файлов</td></tr>';
             return;
@@ -1276,71 +1433,6 @@ class ChatManager {
                 <td class="media-files-element-senddate">${this.formatDate(file.created_at || file.uploaded_at)}</td>
             </tr>
         `).join('');
-    }
-
-
-
-    // Скачивание файла
-    downloadFile(url, fileName) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-    openImageViewer(url) {
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;cursor:pointer;';
-        modal.onclick = () => modal.remove();
-        modal.innerHTML = `<img src="${url}" style="max-width:90%;max-height:90%;border-radius:10px;">`;
-        document.body.appendChild(modal);
-    }
-    // // Отрисовка файлов
-    // renderFiles(files) {
-    //     const filesContainer = document.querySelector('.sidebar-media-group-files .media-files');
-    //     if (!filesContainer) return;
-        
-    //     if (files.length === 0) {
-    //         filesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">Нет файлов</div>';
-    //         return;
-    //     }
-        
-    //     filesContainer.innerHTML = files.map(file => `
-    //         <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url}')">
-    //             <th class="media-files-element-name">
-    //                 <span class="file-icon">📄</span> ${file.name}
-    //             </th>
-    //             <th class="media-files-element-size">${file.size}</th>
-    //             <th class="media-files-element-senddate">${file.date}</th>
-    //         </tr>
-    //     `).join('');
-    // }ope
-
-    // // Отрисовка изображений
-    // renderImages(images) {
-    //     const imagesContainer = document.querySelector('.sidebar-media-group-images');
-    //     if (!imagesContainer) return;
-        
-    //     if (images.length === 0) {
-    //         imagesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">Нет изображений</div>';
-    //         return;
-    //     }
-        
-    //     imagesContainer.innerHTML = `
-    //         <div class="images-grid">
-    //             ${images.map(img => `
-    //                 <div class="grid-image-item" onclick="chatManager.openImage('${img.url}')">
-    //                     <img src="${img.url}" alt="${img.name}">
-    //                 </div>
-    //             `).join('')}
-    //         </div>
-    //     `;
-    // }
-
-    // Скачивание файла
-    downloadFile(url) {
-        window.open(url, '_blank');
     }
 
     // Открытие изображения
@@ -1398,19 +1490,16 @@ class ChatManager {
         return `<div class="avatar-letter" >👥</div>`;
     }
 
-    // Открытие просмотра изображения
-    openImageViewer(url) {
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;cursor:pointer;';
-        modal.onclick = () => modal.remove();
-        modal.innerHTML = `<img src="${url}" style="max-width:90%;max-height:90%;border-radius:10px;object-fit:contain;">`;
-        document.body.appendChild(modal);
-    }
 
-    // Скачивание файла из сообщения
-    downloadFileFromMessage(fileName) {
-        alert(`Скачивание файла: ${fileName}\n(Функция в разработке)`);
-        this.downloadFile()
+    // Скачивание файла из сообщения (ищем файл в медиа)
+    async downloadFileFromMessage(fileName) {
+        // Ищем файл в загруженных медиа
+        const file = this.files.find(f => f.name === fileName);
+        if (file && file.url) {
+            this.downloadFile(file.url, fileName);
+        } else {
+            alert(`Файл "${fileName}" не найден на сервере`);
+        }
     }
     // Загрузка файла
     async uploadFile(chatId, file) {
@@ -1435,6 +1524,540 @@ class ChatManager {
         // Убираем строки с tempId, они уже обработаны в обработчике fileInput
         return result;
     }
+    addPendingAttachment(file) {
+        this.pendingAttachments.push(file);
+        this.renderPendingAttachments();
+    }
+
+    // Удалить из очереди
+    removePendingAttachment(index) {
+        this.pendingAttachments.splice(index, 1);
+        this.renderPendingAttachments();
+    }
+
+    // Показать превью
+    renderPendingAttachments() {
+        const container = document.querySelector('.attachments-preview');
+        const list = document.querySelector('.attachments-list');
+        
+        if (!container || !list) return;
+        
+        if (this.pendingAttachments.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        container.style.display = 'block';
+        list.innerHTML = this.pendingAttachments.map((file, idx) => `
+            <div class="pending-attachment">
+                <span>${file.type.startsWith('image/') ? '🖼️' : '📎'} ${this.escapeHtml(file.name)}</span>
+                <button class="remove-attachment" onclick="chatManager.removePendingAttachment(${idx})">✖️</button>
+            </div>
+        `).join('');
+    }
+
+    // Отправить сообщение с файлами
+    async sendMessageWithAttachments(chatId, text) {
+        // Отправляем текст (если есть)
+        if (text && text.trim()) {
+            await this.sendMessage(chatId, text);
+        }
+        
+        // Отправляем файлы из очереди
+        for (const file of this.pendingAttachments) {
+            await this.uploadFile(chatId, file);
+        }
+        
+        // Очищаем очередь
+        this.pendingAttachments = [];
+        this.renderPendingAttachments();
+    }
+    // Закрыть контекстное меню
+    closeContextMenu() {
+        const menu = document.querySelector('.message-context-menu');
+        if (menu) menu.remove();
+    }
+
+    // Показать модалку подтверждения удаления
+    showConfirmDeleteModal(messageId) {
+        this.pendingDeleteMessageId = messageId;
+        const modal = document.getElementById('confirmDeleteModal');
+        if (modal) modal.style.display = 'flex';
+        
+        // Обработчик подтверждения
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        const oldHandler = confirmBtn.onclick;
+        confirmBtn.onclick = async () => {
+            await this.executeDelete();
+            closeConfirmDeleteModal();
+        };
+    }
+
+    // Выполнить удаление
+    async executeDelete() {
+        if (!this.pendingDeleteMessageId) return;
+        
+        try {
+            const response = await fetch(`/api/chats/messages/${this.pendingDeleteMessageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (response.ok) {
+                await this.loadMessages(this.currentChatId);
+                await this.loadChatMedia(this.currentChatId); // ← ОБНОВЛЯЕМ МЕДИА
+                await this.loadChats();
+            } else {
+                alert('Ошибка удаления');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+        } finally {
+            this.pendingDeleteMessageId = null;
+            this.closeConfirmDeleteModal();
+        }
+    }
+
+    // Закрыть модалку подтверждения
+    closeConfirmDeleteModal() {
+        const modal = document.getElementById('confirmDeleteModal');
+        if (modal) modal.style.display = 'none';
+        this.pendingDeleteMessageId = null;
+    }
+    formatDateDivider(date) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        
+        if (msgDate.getTime() === today.getTime()) {
+            return 'Сегодня';
+        } else if (msgDate.getTime() === yesterday.getTime()) {
+            return 'Вчера';
+        } else {
+            return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+    }
+    // Загрузка папок пользователя
+    async loadFolders() {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/chats/folders', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error('Failed to load folders');
+            
+            const data = await response.json();
+            this.folders = data.folders || [];
+            this.renderFolders();
+        } catch (error) {
+            console.error('Failed to load folders:', error);
+            this.folders = [];
+        }
+    }
+
+    // Отрисовка списка папок
+    renderFolders() {
+        const container = document.getElementById('foldersList');
+        if (!container) return;
+        
+        let html = `
+            <div class="folder-item ${this.currentFolderId === 'all' ? 'active' : ''}" data-folder-id="all" onclick="chatManager.selectFolder('all')">
+                <span class="folder-icon">💬</span>
+                <span class="folder-name">Все чаты</span>
+            </div>
+        `;
+        
+        for (const folder of this.folders) {
+            html += `
+                <div class="folder-item ${this.currentFolderId === folder.id ? 'active' : ''}" data-folder-id="${folder.id}" onclick="chatManager.selectFolder(${folder.id})">
+                    <span class="folder-icon">📁</span>
+                    <span class="folder-name">${this.escapeHtml(folder.name)}</span>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+
+    // Выбор папки
+    async selectFolder(folderId) {
+        this.currentFolderId = folderId;
+        this.renderFolders();
+        
+        if (folderId === 'all') {
+            // Загружаем все чаты
+            await this.loadChats();
+        } else {
+            // Загружаем чаты из папки
+            await this.loadChatsFromFolder(folderId);
+        }
+    }
+
+    // Загрузка чатов из папки
+    async loadChatsFromFolder(folderId) {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/chats/folders/${folderId}/chats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error('Failed to load folder chats');
+            
+            const data = await response.json();
+            this.chats = data.chats || [];
+            this.renderChatList();
+        } catch (error) {
+            console.error('Failed to load folder chats:', error);
+        }
+    }
+
+    // Создание новой папки
+    async createFolder() {
+        const name = prompt('Введите название папки:');
+        if (!name || name.trim() === '') return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/chats/folders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: name.trim() })
+            });
+            
+            if (!response.ok) throw new Error('Failed to create folder');
+            
+            await this.loadFolders();
+        } catch (error) {
+            console.error('Failed to create folder:', error);
+            alert('Ошибка создания папки');
+        }
+    }
+
+    // Редактирование папки
+    async editFolder(folderId, currentName) {
+        const newName = prompt('Введите новое название папки:', currentName);
+        if (!newName || newName.trim() === '' || newName === currentName) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/chats/folders/${folderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: newName.trim() })
+            });
+            
+            if (!response.ok) throw new Error('Failed to update folder');
+            
+            await this.loadFolders();
+        } catch (error) {
+            console.error('Failed to update folder:', error);
+            alert('Ошибка переименования папки');
+        }
+    }
+
+    // Удаление папки
+    async deleteFolder(folderId) {
+        // if (!confirm('Удалить эту папку? Чаты не будут удалены.')) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/chats/folders/${folderId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to delete folder');
+            
+            if (this.currentFolderId === folderId) {
+                this.currentFolderId = 'all';
+            }
+            await this.loadFolders();
+            await this.loadChats();
+        } catch (error) {
+            console.error('Failed to delete folder:', error);
+            alert('Ошибка удаления папки');
+        }
+    }
+    showCreateFolderModal() {
+        const modal = document.getElementById('createFolderModal');
+        const input = document.getElementById('folderNameInput');
+        const confirmBtn = document.getElementById('confirmCreateFolderBtn');
+        
+        if (!modal) return;
+        
+        input.value = '';
+        modal.style.display = 'flex';
+        input.focus();
+        
+        // Убираем старый обработчик
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = async () => {
+            const name = input.value.trim();
+            if (!name) {
+                alert('Введите название папки');
+                return;
+            }
+            await this.createFolder(name);
+            modal.style.display = 'none';
+        };
+    }
+
+    async createFolder(name) {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/chats/folders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name })
+            });
+            
+            if (!response.ok) throw new Error('Failed to create folder');
+            
+            await this.loadFolders();
+        } catch (error) {
+            console.error('Failed to create folder:', error);
+            alert('Ошибка создания папки');
+        }
+    }
+    // Показать модалку редактирования папки
+    showEditFolderModal(folderId, currentName) {
+        const modal = document.getElementById('editFolderModal');
+        const input = document.getElementById('editFolderNameInput');
+        const confirmBtn = document.getElementById('confirmEditFolderBtn');
+        
+        if (!modal) return;
+        
+        input.value = currentName;
+        modal.style.display = 'flex';
+        input.focus();
+        
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = async () => {
+            const newName = input.value.trim();
+            if (!newName || newName === currentName) {
+                modal.style.display = 'none';
+                return;
+            }
+            await this.renameFolder(folderId, newName);
+            modal.style.display = 'none';
+        };
+    }
+
+    // Показать модалку удаления папки
+    showDeleteFolderModal(folderId) {
+        const modal = document.getElementById('deleteFolderModal');
+        const confirmBtn = document.getElementById('confirmDeleteFolderBtn');
+        
+        if (!modal) return;
+        
+        modal.style.display = 'flex';
+        
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = async () => {
+            await this.deleteFolder(folderId);
+            modal.style.display = 'none';
+        };
+    }
+
+    // Переименование папки
+    async renameFolder(folderId, newName) {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/chats/folders/${folderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: newName })
+            });
+            
+            if (!response.ok) throw new Error('Failed to rename folder');
+            
+            await this.loadFolders();
+        } catch (error) {
+            console.error('Failed to rename folder:', error);
+            alert('Ошибка переименования папки');
+        }
+    }
+    showFolderContextMenu(event, folderId, folderName) {
+        // Удаляем существующее меню
+        this.closeContextMenu();
+        
+        // Создаём меню
+        const menu = document.createElement('div');
+        menu.className = 'message-context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            top: ${event.clientY}px;
+            left: ${event.clientX}px;
+            background: var(--c_surf, white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+            min-width: 180px;
+            overflow: hidden;
+        `;
+        
+        menu.innerHTML = `
+            <div class="context-menu-item" onclick="chatManager.showEditFolderModal(${folderId}, '${this.escapeHtml(folderName)}')">
+                ✏️ Переименовать
+            </div>
+            <div class="context-menu-item" onclick="chatManager.showDeleteFolderModal(${folderId})">
+                🗑️ Удалить
+            </div>
+        `;
+        
+        document.body.appendChild(menu);
+        
+        // Закрыть меню при клике вне
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+    showChatContextMenu(event, chatId, chatName) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Удаляем существующее меню
+        this.closeContextMenu();
+        
+        // Получаем список папок
+        const folders = this.folders || [];
+        
+        // Создаём меню
+        const menu = document.createElement('div');
+        menu.className = 'message-context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            top: ${event.clientY}px;
+            left: ${event.clientX}px;
+            background: var(--c_surf, white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+            min-width: 200px;
+            overflow: hidden;
+        `;
+        
+        let menuItems = `
+            <div class="context-menu-item" style="font-weight: 600; border-bottom: 1px solid #eee;">
+                📁 Переместить в папку
+            </div>
+        `;
+        
+        // Добавляем пункт "Все чаты" (убрать из папки)
+        menuItems += `
+            <div class="context-menu-item" onclick="chatManager.moveChatToFolder(${chatId}, null)">
+                📬 Все чаты
+            </div>
+        `;
+        
+        // Добавляем все папки пользователя
+        for (const folder of folders) {
+            menuItems += `
+                <div class="context-menu-item" onclick="chatManager.moveChatToFolder(${chatId}, ${folder.id})">
+                    📁 ${this.escapeHtml(folder.name)}
+                </div>
+            `;
+        }
+        
+        menu.innerHTML = menuItems;
+        document.body.appendChild(menu);
+        
+        // Закрыть меню при клике вне
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+    async moveChatToFolder(chatId, folderId) {
+        try {
+            const token = localStorage.getItem('token');
+            
+            let response;
+            if (folderId === null) {
+                // Удаляем чат из всех папок (в "Все чаты")
+                // Нужно удалить все связи чата с папками пользователя
+                const userFolders = this.folders.map(f => f.id);
+                for (const fId of userFolders) {
+                    await fetch(`/api/chats/folders/${fId}/chats/${chatId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+                response = { ok: true };
+            } else {
+                // Добавляем чат в папку
+                response = await fetch(`/api/chats/folders/${folderId}/chats/${chatId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            }
+            
+            if (!response.ok) throw new Error('Failed to move chat');
+            
+            // Обновляем отображение
+            if (this.currentFolderId !== 'all') {
+                // Если мы в папке, обновляем список чатов
+                await this.loadChatsFromFolder(this.currentFolderId);
+            } else {
+                // Если во "Все чаты", просто обновляем список
+                await this.loadChats();
+            }
+            
+            // Обновляем папки (для обновления счетчиков)
+            await this.loadFolders();
+            
+        } catch (error) {
+            console.error('Failed to move chat:', error);
+            alert('Ошибка перемещения чата');
+        }
+    }
+
+
+
+    
+    closeEditFolderModal() {
+        document.getElementById('editFolderModal').style.display = 'none';
+    }
+
+    closeDeleteFolderModal() {
+        document.getElementById('deleteFolderModal').style.display = 'none';
+    }
 }
 
 // Инициализация при загрузке страницы
@@ -1443,3 +2066,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatManager = new ChatManager();
     window.chatManager = chatManager;
 });
+function closeConfirmDeleteModal() {
+        if (chatManager) chatManager.closeConfirmDeleteModal();
+    }
+

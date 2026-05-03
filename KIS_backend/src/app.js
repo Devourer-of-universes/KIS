@@ -22,6 +22,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Проверка статуса
 app.get('/api/status', (req, res) => {
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 const uploadsPath = path.join(__dirname, '../uploads');
 console.log('Uploads path:', uploadsPath); // Для проверки
 app.use('/uploads', express.static(uploadsPath));

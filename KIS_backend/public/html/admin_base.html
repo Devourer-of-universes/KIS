@@ -84,7 +84,14 @@
                         <h2>Управление пользователями</h2>
                         <button class="buttonbase" id="addUserBtn" onclick="openUserModal()">+ Добавить пользователя</button>
                     </div>
-
+                    <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                        <div class="pagination-info">
+                            Показано <span id="showingFrom">0</span>-<span id="showingTo">0</span> из <span id="totalCount">0</span> пользователей
+                        </div>
+                        <div class="pagination-buttons" id="paginationButtons">
+                            <!-- Кнопки пагинации будут здесь -->
+                        </div>
+                    </div>
                     <div class="users-table-container">
                         <table class="admin-table">
                             <thead>
@@ -484,147 +491,24 @@
                         <header class="structure-header">
                             <h2>🏢 Структура организации</h2>
                             <div class="structure-main-buttons">
-                                <button class="buttonbase" onclick="openModal('addDepartmentModal')">+ Добавить подразделение</button>
-                                <button class="buttonbase" onclick="openModal('addEmployeeModal')">+ Добавить сотрудника</button>
+                                <button class="buttonbase" id="addMainDepartmentBtn">+ Добавить подразделение</button>
                                 <button class="buttonbase" id="collapseAllBtn">Свернуть все</button>
                                 <button class="buttonbase" id="expandAllBtn">Развернуть все</button>
                             </div>
                         </header>
-
-                        <div class="structure-content">
-                            <!-- Главная организация -->
-                            <ul class="structure-group root-group">
-                                <li class="structure-group-item">
-                                    <div class="group-header">
-                                        <button class="toggle-btn expanded" title="Свернуть/развернуть">
-                                            <span class="toggle-icon">▼</span>
-                                        </button>
-                                        <div class="group-info">
-                                            <h3 class="structure-group-name">ООО "ТехноПрогресс"</h3>
-                                            <span class="structure-group-number-employe">24 сотрудника</span>
-                                        </div>
-                                        <div class="group-manager">
-                                            <h4 class="structure-employe-post manager-post">Генеральный директор</h4>
-                                            <h5 class="structure-employe-role manager-role">Руководитель</h5>
-                                            <h5 class="structure-employe-person manager-name">Смирнов Петр Константинович</h5>
-                                            <span class="structure-employe-status manager-status status-active">Активен</span>
-                                        </div>
-                                        <div class="structure-group-actionbuttons">
-                                            <!-- <button class="structure-group-actionbutton buttonbase">+ Подразделение</button>
-                                            <button class="structure-group-actionbutton buttonbase">+ Сотрудник</button> -->
-                                            <button class="structure-group-actionbutton buttonbase"  onclick="openModal('addDepartmentModal')">✎</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Подразделения -->
-                                    <ul class="structure-subgroups">
-                                        <!-- Отдел разработки -->
-                                        <li class="structure-group-item">
-                                            <div class="group-header">
-                                                <button class="toggle-btn expanded" title="Свернуть/развернуть">
-                                                    <span class="toggle-icon">▼</span>
-                                                </button>
-                                                <div class="group-info">
-                                                    <h3 class="structure-group-name">Отдел разработки</h3>
-                                                    <span class="structure-group-number-employe">8 сотрудников</span>
-                                                </div>
-                                                <div class="group-manager employee-card">
-                                                    <h4 class="structure-employe-post manager-post">Руководитель отдела</h4>
-                                                    <h5 class="structure-employe-role manager-role">Менеджер</h5>
-                                                    <h5 class="structure-employe-person manager-name">Козлова Елена Владимировна</h5>
-                                                    <span class="structure-employe-status manager-status status-active">Активен</span>
-                                                </div>
-                                                <div class="structure-group-actionbuttons">
-                                                    <!-- <button class="structure-group-actionbutton buttonbase">+ Подразделение</button>
-                                                    <button class="structure-group-actionbutton buttonbase">+ Сотрудник</button> -->
-                                                    <button class="structure-group-actionbutton buttonbase" onclick="openModal('addDepartmentModal')">✎</button>
-                                                </div>
-                                            </div>
-
-                                            <!-- Сотрудники отдела разработки -->
-                                            <ul class="structure-employees">
-                                                <li class="structure-employee-item">
-                                                    <div class="employee-card">
-                                                        <div class="employee-avatar">
-                                                            <img src="../materials/avatar_for_profile.png" alt="Аватар">
-                                                        </div>
-                                                        <div class="employee-info">
-                                                            <h4 class="structure-employe-post">Старший разработчик</h4>
-                                                            <h5 class="structure-employe-role">Разработчик</h5>
-                                                            <h5 class="structure-employe-person">Иванов Иван Иванович</h5>
-                                                            <span class="structure-employe-status status-active">Неактивен</span>
-                                                        </div>
-                                                        <div class="employee-actions">
-                                                            <button class="buttonbase" title="Редактировать" onclick="openModal('addEmployeeModal')">✎</button>
-                                                            <button class="buttonbase" title="Переместить">↷</button>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                
-                                                <li class="structure-employee-item">
-                                                    <div class="employee-card">
-                                                        <div class="employee-avatar">
-                                                            <img src="../materials/avatar_for_profile.png" alt="Аватар">
-                                                        </div>
-                                                        <div class="employee-info">
-                                                            <h4 class="structure-employe-post">Frontend разработчик</h4>
-                                                            <h5 class="structure-employe-role">Разработчик</h5>
-                                                            <h5 class="structure-employe-person">Петрова Мария Сергеевна</h5>
-                                                            <span class="structure-employe-status status-active">Активен</span>
-                                                        </div>
-                                                        <div class="employee-actions">
-                                                            <button class="buttonbase" title="Редактировать">✎</button>
-                                                            <button class="buttonbase" title="Переместить">↷</button>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
+                        <div class="structure-content" id="structureContent">
+                            <div style="text-align: center; padding: 40px;">Загрузка структуры...</div>
                         </div>
                     </div>
                 </section>
                 <section id="roles-section" class="admin-section">
                     <div class="section-header">
                         <h2>👑 Управление ролями</h2>
-                        <button class="buttonbase" id="addRoleBtn" onclick="openModal('roleEditorModal')">+ Создать роль</button>
+                        <button class="buttonbase" id="addRoleBtn">+ Создать роль</button>
                     </div>
                     
-                    <div class="roles-grid">
-                        <div class="role-card">
-                            <div class="role-header">
-                                <h4>Администратор</h4>
-                                <button class="buttonbase">Редактировать</button>
-                            </div>
-                            <p class="role-desc">Полный доступ ко всем функциям системы</p>
-                            <div class="role-users">
-                                <span>Пользователей: 2</span>
-                            </div>
-                        </div>
-                        
-                        <div class="role-card">
-                            <div class="role-header">
-                                <h4>Менеджер</h4>
-                                <button class="buttonbase">Редактировать</button>
-                            </div>
-                            <p class="role-desc">Управление документами и задачами отдела</p>
-                            <div class="role-users">
-                                <span>Пользователей: 5</span>
-                            </div>
-                        </div>
-                        
-                        <div class="role-card">
-                            <div class="role-header">
-                                <h4>Сотрудник</h4>
-                                <button class="buttonbase">Редактировать</button>
-                            </div>
-                            <p class="role-desc">Базовый доступ к рабочим функциям</p>
-                            <div class="role-users">
-                                <span>Пользователей: 17</span>
-                            </div>
-                        </div>
+                    <div class="roles-grid" id="rolesGrid">
+                        <div style="text-align: center; padding: 40px;">Загрузка...</div>
                     </div>
                 </section>
                 

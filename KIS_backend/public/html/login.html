@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход - Корпоративный мессенджер</title>
+    <title>Вход - КИС</title>
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <link rel="stylesheet" type="text/css" href="/styles/login.css">
 </head>
@@ -55,7 +55,7 @@
                 const result = await api.auth.login(emailOrUsername, password);
                 if (result.success) {
                     // Перенаправляем на главную страницу
-                    window.location.href = '/html/base.html';
+                    window.location.href = '/html/admin_base.html';
                 } else {
                     errorDiv.textContent = result.error || 'Ошибка входа';
                     errorDiv.style.display = 'block';

@@ -42,7 +42,8 @@ btn_roles.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('roles-section');
     setActiveNavButton(this);
-})
+    loadRoles(); // Должно быть
+});
 
 
 if (btn_addUser) {
@@ -94,6 +95,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (defaultNavBtn) {
         defaultNavBtn.classList.add('active');
     }
+    // Кнопка добавления корневого подразделения
+    document.getElementById('addMainDepartmentBtn')?.addEventListener('click', () => {
+        openAddDepartmentModal(null);
+    });
+
+    // Кнопки сворачивания/разворачивания
+    document.getElementById('collapseAllBtn')?.addEventListener('click', collapseAllNodes);
+    document.getElementById('expandAllBtn')?.addEventListener('click', expandAllNodes);
 });
 
 
@@ -290,6 +299,8 @@ document.addEventListener('keydown', function(e) {
 
 
 
+// ========== ДОБАВЛЕНИЕ/РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ ==========
+
 let currentEditingUserId = null;
 
 function openUserModal(userId = null) {
@@ -302,15 +313,150 @@ function openUserModal(userId = null) {
     if (userId) {
         title.textContent = '✏️ Редактирование сотрудника';
         submitBtn.textContent = 'Сохранить изменения';
-        fillFormWithUserData(userId);
+        loadUserDataToForm(userId);
     } else {
         title.textContent = '👤 Добавление сотрудника';
         submitBtn.textContent = 'Добавить сотрудника';
         clearForm();
+        generateCredentials();
     }
     
     openModal('addUserModal');
 }
+
+// Загрузка данных пользователя в форму (для редактирования)
+async function loadUserDataToForm(userId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load user');
+        
+        const data = await response.json();
+        const user = data.user;
+        
+        document.getElementById('userLastName').value = user.surname || '';
+        document.getElementById('userFirstName').value = user.name || '';
+        document.getElementById('userMiddleName').value = user.patronymic || '';
+        document.getElementById('userBirthDate').value = user.birthday ? user.birthday.split('T')[0] : '';
+        document.getElementById('userPhone').value = user.tel_num || '';
+        document.getElementById('userEmail').value = user.email || '';
+        document.getElementById('userPosition').value = user.post_name || '';
+        document.getElementById('userDepartment').value = user.department_id || '';
+        document.getElementById('userStartDate').value = user.created_at ? user.created_at.split('T')[0] : '';
+        document.getElementById('userLogin').value = user.username || '';
+        document.getElementById('userPassword').value = '••••••••';
+        
+    } catch (error) {
+        console.error('Error loading user for edit:', error);
+        showToast('Ошибка загрузки данных', 'error');
+        closeModal('addUserModal');
+    }
+}
+
+// Очистка формы
+function clearForm() {
+    document.getElementById('addUserForm').reset();
+    currentEditingUserId = null;
+}
+
+// Генерация логина и пароля
+function generateCredentials() {
+    const lastName = document.getElementById('userLastName').value;
+    const firstName = document.getElementById('userFirstName').value;
+    
+    if (lastName && firstName) {
+        const login = `${lastName.toLowerCase()}.${firstName.charAt(0).toLowerCase()}`;
+        document.getElementById('userLogin').value = login;
+        generatePassword();
+    }
+}
+
+function generatePassword() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('userPassword').value = password;
+}
+
+// Получение данных из формы
+function getFormData() {
+    return {
+        username: document.getElementById('userLogin').value,
+        surname: document.getElementById('userLastName').value,
+        name: document.getElementById('userFirstName').value,
+        patronymic: document.getElementById('userMiddleName').value,
+        birthday: document.getElementById('userBirthDate').value,
+        email: document.getElementById('userEmail').value,
+        telNum: document.getElementById('userPhone').value,
+        password: document.getElementById('userPassword').value,
+        postId: 1, // временно, потом можно доработать
+        departmentId: 1, // временно
+        roleId: 2 // по умолчанию пользователь
+    };
+}
+
+// Отправка формы
+document.getElementById('addUserForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = getFormData();
+    
+    // Валидация
+    if (!formData.username || !formData.surname || !formData.name || !formData.email || !formData.telNum || !formData.password) {
+        showToast('Заполните все обязательные поля', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        let response;
+        
+        if (currentEditingUserId) {
+            // Редактирование
+            response = await fetch(`/api/admin/users/${currentEditingUserId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            // Создание нового пользователя
+            response = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        }
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Operation failed');
+        }
+        
+        closeModal('addUserModal');
+        loadUsers(currentPage, currentSearchTerm);
+        showToast(currentEditingUserId ? 'Пользователь обновлён' : 'Пользователь создан', 'success');
+        clearForm();
+        
+    } catch (error) {
+        console.error('Error saving user:', error);
+        showToast(error.message, 'error');
+    }
+});
+
+// Автогенерация при вводе имени/фамилии
+document.getElementById('userLastName').addEventListener('blur', generateCredentials);
+document.getElementById('userFirstName').addEventListener('blur', generateCredentials);
 
 function fillFormWithUserData(userId) {
     const userData = getUserDataById(userId);
@@ -1132,3 +1278,816 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModal('templateEditorModal');
     });
 });
+// В конце файла, после существующего кода, добавь:
+document.addEventListener('DOMContentLoaded', function() {
+    // Загружаем пользователей
+    if (typeof loadUsers === 'function') {
+        loadUsers();
+    }
+});
+
+
+
+
+
+
+
+
+// ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==========
+
+let currentPage = 1;
+let usersPerPage = 20;
+let totalUsers = 0;
+let usersList = [];
+let currentSearchTerm = '';
+
+// Загрузка списка пользователей
+async function loadUsers(page = 1, search = '') {
+    currentPage = page;
+    currentSearchTerm = search;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const offset = (page - 1) * usersPerPage;
+        
+        const response = await fetch(`/api/admin/users?limit=${usersPerPage}&offset=${offset}&search=${encodeURIComponent(search)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load users');
+        
+        const data = await response.json();
+        usersList = data.users;
+        totalUsers = data.total;
+        
+        renderUsersTable(usersList);
+        renderPagination();
+        
+    } catch (error) {
+        console.error('Error loading users:', error);
+        const tbody = document.querySelector('#users-section .admin-table tbody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">❌ Ошибка загрузки пользователей</td></tr>';
+        }
+    }
+}
+function getStatusBadge(status) {
+    switch(status) {
+        case 'active': return '<span class="status-badge status-active">🟢 Активен</span>';
+        case 'away': return '<span class="status-badge status-away">🌙 Не беспокоить</span>';
+        case 'offline': return '<span class="status-badge status-offline">⚫ Не в сети</span>';
+        case 'blocked': return '<span class="status-badge status-blocked">🔴 Заблокирован</span>';
+        default: return '<span class="status-badge">❓ Неизвестно</span>';
+    }
+}
+// Отрисовка таблицы пользователей
+function renderUsersTable(users) {
+    const tbody = document.querySelector('#users-section .admin-table tbody');
+    if (!tbody) return;
+    
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">📭 Нет пользователей</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td><strong>${escapeHtml(user.surname)} ${escapeHtml(user.name)}</strong>${user.patronymic ? ` ${escapeHtml(user.patronymic)}` : ''}<br><small style="color:#999;">@${escapeHtml(user.username)}</small></td>
+            <td>${escapeHtml(user.post_name || '-')}</td>
+            <td>${escapeHtml(user.department_name || '-')}</td>
+            <td>
+                <select class="role-select" data-user-id="${user.id}" onchange="updateUserRole(${user.id}, this.value)">
+                    <option value="1" ${user.role_id === 1 ? 'selected' : ''}>👑 Администратор</option>
+                    <option value="2" ${user.role_id === 2 ? 'selected' : ''}>👤 Пользователь</option>
+                </select>
+            </td>
+            <td>${getStatusBadge(user.status)}</td>
+            <td>
+                <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})">ℹ️</button>
+                <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})">✏️</button>
+                <button class="btn-icon buttonbase" title="Сменить статус" onclick="openChangeStatusModal(${user.id}, '${user.status}')">🔄</button>
+                <button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')">🔑</button>
+                <button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Обновляем информацию о пагинации
+    const start = (currentPage - 1) * usersPerPage + 1;
+    const end = Math.min(currentPage * usersPerPage, totalUsers);
+    document.getElementById('showingFrom').textContent = totalUsers === 0 ? 0 : start;
+    document.getElementById('showingTo').textContent = end;
+    document.getElementById('totalCount').textContent = totalUsers;
+}
+async function deleteUser(userId) {
+    if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to delete user');
+        
+        loadUsers(currentPage, currentSearchTerm);
+        showToast('Пользователь удалён', 'success');
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Ошибка удаления', 'error');
+    }
+}
+// Отрисовка пагинации
+function renderPagination() {
+    const totalPages = Math.ceil(totalUsers / usersPerPage);
+    const container = document.getElementById('paginationButtons');
+    if (!container) return;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // Кнопка "Назад"
+    if (currentPage > 1) {
+        html += `<button class="pagination-btn" onclick="loadUsers(${currentPage - 1}, '${currentSearchTerm}')">← Назад</button>`;
+    }
+    
+    // Номера страниц
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        html += `<button class="pagination-btn" onclick="loadUsers(1, '${currentSearchTerm}')">1</button>`;
+        if (startPage > 2) html += `<span class="pagination-dots">...</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="loadUsers(${i}, '${currentSearchTerm}')">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="pagination-dots">...</span>`;
+        html += `<button class="pagination-btn" onclick="loadUsers(${totalPages}, '${currentSearchTerm}')">${totalPages}</button>`;
+    }
+    
+    // Кнопка "Вперёд"
+    if (currentPage < totalPages) {
+        html += `<button class="pagination-btn" onclick="loadUsers(${currentPage + 1}, '${currentSearchTerm}')">Вперёд →</button>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+// Поиск пользователей
+function searchUsers() {
+    const searchInput = document.getElementById('userSearchInput');
+    const searchTerm = searchInput ? searchInput.value : '';
+    loadUsers(1, searchTerm);
+}
+
+// Экранирование HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Обновление роли пользователя
+async function updateUserRole(userId, roleId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ roleId: parseInt(roleId) })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update role');
+        
+        loadUsers(currentPage, currentSearchTerm);
+        showToast('Роль обновлена', 'success');
+    } catch (error) {
+        console.error('Error updating role:', error);
+        showToast('Ошибка обновления роли', 'error');
+    }
+}
+
+// Изменение статуса
+async function toggleUserStatus(userId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+    const action = newStatus === 'active' ? 'разблокировать' : 'заблокировать';
+    
+    if (!confirm(`Вы уверены, что хотите ${action} этого пользователя?`)) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update status');
+        
+        loadUsers(currentPage, currentSearchTerm);
+        showToast(`Пользователь ${action}н`, 'success');
+    } catch (error) {
+        console.error('Error updating status:', error);
+        showToast('Ошибка изменения статуса', 'error');
+    }
+}
+
+// Всплывающие уведомления
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#5194ff'};
+        color: white;
+        border-radius: 8px;
+        z-index: 10000;
+        animation: fadeInOut 3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+
+
+
+
+
+
+
+
+// ========== УПРАВЛЕНИЕ РОЛЯМИ ==========
+
+let rolesList = [];
+
+// Загрузка ролей
+async function loadRoles() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/roles', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load roles');
+        
+        const data = await response.json();
+        console.log('Roles API response:', data); // Отладка
+        
+        rolesList = data.roles || [];
+        renderRolesCards();
+    } catch (error) {
+        console.error('Error loading roles:', error);
+        document.getElementById('rolesGrid').innerHTML = '<div style="text-align:center; padding:40px; color:red;">Ошибка загрузки</div>';
+    }
+}
+
+// Отрисовка карточек ролей
+function renderRolesCards() {
+    const container = document.getElementById('rolesGrid');
+    if (!container) return;
+    
+    console.log('Roles list:', rolesList); // Отладка
+    
+    if (!rolesList || rolesList.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px;">📭 Нет ролей</div>';
+        return;
+    }
+    
+    container.innerHTML = rolesList.map(role => {
+        const isSystem = role.id === 1 || role.id === 2;
+        const roleIcon = getRoleIcon(role.name);
+        
+        return `
+            <div class="role-card ${isSystem ? 'system' : ''}" onclick="openRoleModal(${role.id})" style="cursor: pointer;">
+                <div class="role-card-header">
+                    <div class="role-card-title">
+                        <div class="role-card-icon">${roleIcon}</div>
+                        <h3>${escapeHtml(role.name)}</h3>
+                    </div>
+                    ${isSystem ? '<span class="role-card-badge">Системная</span>' : ''}
+                </div>
+                <div class="role-card-desc">
+                    ${getRoleDescription(role.name, role.permissions)}
+                </div>
+                <div class="role-card-stats">
+                    <div class="role-card-users">
+                        <span>👥</span>
+                        <span>—</span>
+                    </div>
+                    <div class="role-card-actions" onclick="event.stopPropagation()">
+                        ${!isSystem ? `
+                            <button class="btn-icon buttonbase" title="Редактировать" onclick="openRoleModal(${role.id})">✏️</button>
+                            <button class="btn-icon buttonbase" title="Удалить" onclick="deleteRole(${role.id})" style="color:#dc3545;">🗑️</button>
+                        ` : `
+                            <button class="btn-icon buttonbase" title="Просмотр" onclick="openRoleModal(${role.id})">👁️</button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Иконка для роли
+function getRoleIcon(roleName) {
+    const name = roleName.toLowerCase();
+    if (name.includes('админ')) return '👑';
+    if (name.includes('менеджер')) return '📊';
+    if (name.includes('пользователь')) return '👤';
+    return '⭐';
+}
+
+// Описание роли
+function getRoleDescription(roleName, permissions) {
+    const name = roleName.toLowerCase();
+    if (name.includes('админ')) return 'Полный доступ ко всем функциям системы';
+    if (name.includes('менеджер')) return 'Управление документами и задачами отдела';
+    if (name.includes('пользователь')) return 'Базовый доступ к рабочим функциям';
+    return 'Пользовательская роль с настраиваемыми правами';
+}
+
+// Открытие модалки редактирования роли
+function openEditRoleModal(roleId) {
+    const role = rolesList.find(r => r.id === roleId);
+    if (!role) return;
+    
+    // TODO: открыть модалку с формой редактирования
+    alert(`Редактирование роли: ${role.name}\nПрава: ${JSON.stringify(role.permissions, null, 2)}`);
+}
+
+// Удаление роли
+async function deleteRole(roleId) {
+    const role = rolesList.find(r => r.id === roleId);
+    if (!confirm(`Удалить роль "${role.name}"?`)) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/roles/${roleId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error);
+        }
+        
+        loadRoles();
+        showToast('Роль удалена', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+// ========== РЕДАКТОР РОЛЕЙ ==========
+
+let currentEditingRoleId = null;
+
+// Открытие модалки создания/редактирования роли
+function openRoleModal(roleId = null) {
+    currentEditingRoleId = roleId;
+    const modal = document.getElementById('roleEditorModal');
+    const title = document.getElementById('roleModalTitle');
+    const form = document.getElementById('roleEditorForm');
+    
+    if (roleId) {
+        title.textContent = '✏️ Редактирование роли';
+        loadRoleData(roleId);
+    } else {
+        title.textContent = '👑 Создание новой роли';
+        form.reset();
+        resetPermissions();
+        currentEditingRoleId = null;
+    }
+    
+    openModal('roleEditorModal');
+}
+
+// Загрузка данных роли для редактирования
+async function loadRoleData(roleId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/roles/${roleId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load role');
+        
+        const data = await response.json();
+        const role = data.role;
+        
+        const isSystem = role.id === 1 || role.id === 2;
+        
+        document.getElementById('roleName').value = role.name;
+        document.getElementById('roleCode').value = role.code || role.name.toLowerCase().replace(/\s/g, '_');
+        document.getElementById('roleDescription').value = role.description || '';
+        
+        // Блокируем поля для системных ролей
+        if (isSystem) {
+            document.getElementById('roleName').disabled = true;
+            document.getElementById('roleCode').disabled = true;
+            document.getElementById('roleDescription').disabled = true;
+            document.querySelectorAll('.permission-select').forEach(select => select.disabled = true);
+            document.getElementById('roleIsDefault').disabled = true;
+            document.getElementById('roleCanDelegate').disabled = true;
+            document.getElementById('roleIsSystem').disabled = true;
+            document.getElementById('rolePriority').disabled = true;
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.disabled = true);
+        } else {
+            // Разблокируем
+            document.getElementById('roleName').disabled = false;
+            document.getElementById('roleCode').disabled = false;
+            document.getElementById('roleDescription').disabled = false;
+            document.querySelectorAll('.permission-select').forEach(select => select.disabled = false);
+            document.getElementById('roleIsDefault').disabled = false;
+            document.getElementById('roleCanDelegate').disabled = false;
+            document.getElementById('roleIsSystem').disabled = false;
+            document.getElementById('rolePriority').disabled = false;
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.disabled = false);
+        }
+        
+        // Загружаем права
+        if (role.permissions) {
+            loadPermissionsToForm(role.permissions);
+        }
+        
+        // Дополнительные настройки
+        document.getElementById('roleIsDefault').checked = role.is_default || false;
+        document.getElementById('roleCanDelegate').checked = role.can_delegate !== false;
+        document.getElementById('roleIsSystem').checked = role.is_system || false;
+        document.getElementById('rolePriority').value = role.priority || 'medium';
+        
+        // Для системных ролей скрываем кнопку сохранения
+        const saveBtn = document.querySelector('#roleEditorForm button[type="submit"]');
+        if (saveBtn) {
+            saveBtn.style.display = isSystem ? 'none' : 'block';
+        }
+        
+    } catch (error) {
+        console.error('Error loading role:', error);
+        showToast('Ошибка загрузки данных роли', 'error');
+    }
+}
+
+// Сброс всех разрешений
+function resetPermissions() {
+    document.querySelectorAll('.permission-select').forEach(select => {
+        select.value = 'none';
+    });
+    
+    document.querySelectorAll('.category-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+}
+
+// Загрузка прав в форму
+function loadPermissionsToForm(permissions) {
+    for (const [key, value] of Object.entries(permissions)) {
+        const select = document.querySelector(`.permission-select[name="${key}"]`);
+        if (select) select.value = value;
+    }
+}
+
+// Сбор данных с формы
+function getRoleFormData() {
+    const permissions = {};
+    
+    document.querySelectorAll('.permission-select').forEach(select => {
+        permissions[select.name] = select.value;
+    });
+    
+    return {
+        name: document.getElementById('roleName').value,
+        code: document.getElementById('roleCode').value,
+        description: document.getElementById('roleDescription').value,
+        permissions: permissions,
+        is_default: document.getElementById('roleIsDefault').checked,
+        can_delegate: document.getElementById('roleCanDelegate').checked,
+        is_system: document.getElementById('roleIsSystem').checked,
+        priority: document.getElementById('rolePriority').value
+    };
+}
+
+// Сохранение роли
+document.getElementById('roleEditorForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = getRoleFormData();
+    
+    if (!formData.name || !formData.code) {
+        showToast('Заполните название и код роли', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        let response;
+        
+        if (currentEditingRoleId) {
+            response = await fetch(`/api/admin/roles/${currentEditingRoleId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            response = await fetch('/api/admin/roles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+        }
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error);
+        }
+        
+        closeModal('roleEditorModal');
+        loadRoles();
+        showToast(currentEditingRoleId ? 'Роль обновлена' : 'Роль создана', 'success');
+        
+    } catch (error) {
+        console.error('Error saving role:', error);
+        showToast(error.message, 'error');
+    }
+});
+
+// Кнопка "Создать роль"
+document.getElementById('addRoleBtn')?.addEventListener('click', () => {
+    openRoleModal();
+});
+
+// Быстрые пресеты прав
+document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        applyPreset(preset);
+    });
+});
+
+function applyPreset(preset) {
+    const presets = {
+        readonly: { documents_view: 'all', tasks_view: 'department', users_view: 'department' },
+        user: { documents_view: 'all', documents_create: 'all', tasks_view: 'all', tasks_create: 'all' },
+        manager: { documents_view: 'all', documents_create: 'all', documents_approve: 'all', tasks_view: 'all', tasks_create: 'all', tasks_assign: 'department' },
+        admin: { admin_access: 'full', admin_roles: 'full', admin_settings: 'full', admin_logs: 'read' }
+    };
+    
+    const presetData = presets[preset] || {};
+    for (const [key, value] of Object.entries(presetData)) {
+        const select = document.querySelector(`.permission-select[name="${key}"]`);
+        if (select) select.value = value;
+    }
+}
+
+
+
+
+
+// ========== СТРУКТУРА ОРГАНИЗАЦИИ ==========
+
+// Загрузка структуры
+async function loadStructure() {
+    const container = document.getElementById('structureContent');
+    container.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка...</div>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/structure', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load structure');
+        
+        const data = await response.json();
+        renderStructureTree(data.structure);
+    } catch (error) {
+        console.error('Error loading structure:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">❌ Ошибка загрузки структуры</div>';
+    }
+}
+
+// Отрисовка дерева структуры
+function renderStructureTree(departments, level = 0) {
+    const container = document.getElementById('structureContent');
+    if (!departments || departments.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px;">📭 Нет подразделений</div>';
+        return;
+    }
+    
+    let html = '<ul class="structure-group root-group">';
+    
+    for (const dept of departments) {
+        const hasChildren = dept.children && dept.children.length > 0;
+        const hasEmployees = dept.employees && dept.employees.length > 0;
+        
+        html += `
+            <li class="structure-group-item" data-dept-id="${dept.id}">
+                <div class="group-header">
+                    <button class="toggle-btn" onclick="toggleDepartmentNode(${dept.id})">
+                        <span class="toggle-icon">▼</span>
+                    </button>
+                    <div class="group-info">
+                        <h3 class="structure-group-name">${escapeHtml(dept.name)}</h3>
+                        <span class="structure-group-number-employe">${dept.employees.length} сотрудников</span>
+                    </div>
+                    <div class="group-manager">
+                        <h4 class="structure-employe-post manager-post">Руководитель</h4>
+                        <h5 class="structure-employe-role manager-role">—</h5>
+                        <h5 class="structure-employe-person manager-name">—</h5>
+                        <span class="structure-employe-status manager-status status-inactive">—</span>
+                    </div>
+                    <div class="structure-group-actionbuttons">
+                        <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
+                        <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
+                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id})" title="Удалить" style="color:#dc3545;">🗑️</button>
+                    </div>
+                </div>
+        `;
+        
+        // Сотрудники
+        if (hasEmployees) {
+            html += `<ul class="structure-employees" id="employees-${dept.id}">`;
+            for (const emp of dept.employees) {
+                html += `
+                    <li class="structure-employee-item">
+                        <div class="employee-card">
+                            <div class="employee-avatar">
+                                <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
+                            </div>
+                            <div class="employee-info">
+                                <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
+                                <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
+                                <h5 class="structure-employe-person">${escapeHtml(emp.patronymic || '')}</h5>
+                                <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
+                                    ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
+                                </span>
+                            </div>
+                            <div class="employee-actions">
+                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
+                                <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }
+            html += `</ul>`;
+        }
+        
+        // Дочерние подразделения
+        if (hasChildren) {
+            html += `<div class="structure-subgroups" id="subdepartments-${dept.id}">`;
+            html += renderSubtree(dept.children);
+            html += `</div>`;
+        }
+        
+        html += `</li>`;
+    }
+    
+    html += `</ul>`;
+    container.innerHTML = html;
+}
+
+// Рендер дочерних подразделений (рекурсия)
+function renderSubtree(departments) {
+    let html = '<ul class="structure-group">';
+    
+    for (const dept of departments) {
+        const hasChildren = dept.children && dept.children.length > 0;
+        const hasEmployees = dept.employees && dept.employees.length > 0;
+        
+        html += `
+            <li class="structure-group-item" data-dept-id="${dept.id}">
+                <div class="group-header">
+                    <button class="toggle-btn" onclick="toggleDepartmentNode(${dept.id})">
+                        <span class="toggle-icon">▼</span>
+                    </button>
+                    <div class="group-info">
+                        <h3 class="structure-group-name">${escapeHtml(dept.name)}</h3>
+                        <span class="structure-group-number-employe">${dept.employees.length} сотрудников</span>
+                    </div>
+                    <div class="group-manager">
+                        <h4 class="structure-employe-post manager-post">Руководитель</h4>
+                        <h5 class="structure-employe-role manager-role">—</h5>
+                        <h5 class="structure-employe-person manager-name">—</h5>
+                    </div>
+                    <div class="structure-group-actionbuttons">
+                        <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
+                        <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
+                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id})" title="Удалить" style="color:#dc3545;">🗑️</button>
+                    </div>
+                </div>
+        `;
+        
+        if (hasEmployees) {
+            html += `<ul class="structure-employees" id="employees-${dept.id}">`;
+            for (const emp of dept.employees) {
+                html += `
+                    <li class="structure-employee-item">
+                        <div class="employee-card">
+                            <div class="employee-avatar">
+                                <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}">
+                            </div>
+                            <div class="employee-info">
+                                <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
+                                <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
+                                <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
+                                    ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
+                                </span>
+                            </div>
+                            <div class="employee-actions">
+                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }
+            html += `</ul>`;
+        }
+        
+        if (hasChildren) {
+            html += `<div class="structure-subgroups" id="subdepartments-${dept.id}">`;
+            html += renderSubtree(dept.children);
+            html += `</div>`;
+        }
+        
+        html += `</li>`;
+    }
+    
+    html += `</ul>`;
+    return html;
+}
+
+// Сворачивание/разворачивание
+function toggleDepartmentNode(deptId) {
+    const subdepts = document.getElementById(`subdepartments-${deptId}`);
+    const employees = document.getElementById(`employees-${deptId}`);
+    const btn = document.querySelector(`.structure-group-item[data-dept-id="${deptId}"] .toggle-btn .toggle-icon`);
+    
+    if (subdepts) {
+        if (subdepts.style.display === 'none') {
+            subdepts.style.display = 'block';
+            if (employees) employees.style.display = 'block';
+            btn.textContent = '▼';
+        } else {
+            subdepts.style.display = 'none';
+            if (employees) employees.style.display = 'none';
+            btn.textContent = '▶';
+        }
+    } else if (employees) {
+        if (employees.style.display === 'none') {
+            employees.style.display = 'block';
+            btn.textContent = '▼';
+        } else {
+            employees.style.display = 'none';
+            btn.textContent = '▶';
+        }
+    }
+}
+
+// Сворачиваем всё
+function collapseAllNodes() {
+    document.querySelectorAll('.structure-subgroups, .structure-employees').forEach(el => {
+        el.style.display = 'none';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▶';
+    });
+}
+
+// Разворачиваем всё
+function expandAllNodes() {
+    document.querySelectorAll('.structure-subgroups, .structure-employees').forEach(el => {
+        el.style.display = 'block';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▼';
+    });
+}

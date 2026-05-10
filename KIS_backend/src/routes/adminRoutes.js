@@ -313,18 +313,31 @@ router.delete('/roles/:id', authMiddleware, async (req, res) => {
 router.get('/structure', authMiddleware, async (req, res) => {
     try {
         // Получаем все подразделения
-        const departments = await query(`SELECT * FROM departments ORDER BY id`);
+        const departments = await query(`
+            SELECT d.* 
+            FROM departments d
+            ORDER BY d.id
+        `);
         
-        // Получаем всех пользователей с их должностями
+        // Получаем всех пользователей с их должностями и ролями
         const users = await query(`
             SELECT u.id, u.surname, u.name, u.patronymic, u.avatar_uri, 
-                   u.status, u.department_id, p.name as post_name
+                   u.status, u.department_id, 
+                   p.name as post_name,
+                   r.name as role_name
             FROM users u
             LEFT JOIN posts p ON u.post_id = p.id
+            LEFT JOIN roles r ON u.role_id = r.id
             WHERE u.deleted_at IS NULL
         `);
         
-        // Строим дерево
+        // Строим карту пользователей
+        const usersMap = new Map();
+        for (const user of users.rows) {
+            usersMap.set(user.id, user);
+        }
+        
+        // Строим дерево подразделений
         const deptMap = new Map();
         const roots = [];
         
@@ -332,11 +345,12 @@ router.get('/structure', authMiddleware, async (req, res) => {
             deptMap.set(dept.id, { 
                 ...dept, 
                 children: [], 
-                employees: [] 
+                employees: [],
+                manager: dept.manager_id ? usersMap.get(dept.manager_id) : null
             });
         }
         
-        // Добавляем сотрудников
+        // Добавляем сотрудников в отделы
         for (const user of users.rows) {
             if (deptMap.has(user.department_id)) {
                 deptMap.get(user.department_id).employees.push(user);
@@ -440,16 +454,43 @@ router.post('/departments', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// Получение плоского списка подразделений (для селекта)
+router.get('/departments/list', authMiddleware, async (req, res) => {
+    try {
+        // Простой запрос без рекурсии
+        const result = await query(`
+            SELECT id, name, parent_department_id 
+            FROM departments 
+            ORDER BY name
+        `);
+        
+        // Строим дерево с уровнями на клиенте или просто возвращаем плоский список
+        // Для селекта достаточно простого списка
+        const departments = result.rows.map(dept => ({
+            id: dept.id,
+            name: dept.name,
+            level: 0 // временно, для отступа
+        }));
+        
+        res.json({ departments });
+    } catch (error) {
+        console.error('Get departments list error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Обновление подразделения
 router.put('/departments/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, parentDepartmentId } = req.body;
+        const { name, parentDepartmentId, code, description, managerId, email, phone, location } = req.body;
         
         const result = await query(
-            `UPDATE departments SET name = $1, parent_department_id = $2 WHERE id = $3 RETURNING *`,
-            [name, parentDepartmentId || null, id]
+            `UPDATE departments 
+             SET name = $1, parent_department_id = $2, code = $3, description = $4, 
+                 manager_id = $5, email = $6, phone = $7, location = $8
+             WHERE id = $9 
+             RETURNING *`,
+            [name, parentDepartmentId || null, code, description, managerId || null, email, phone, location, id]
         );
         
         res.json({ department: result.rows[0] });
@@ -458,7 +499,26 @@ router.put('/departments/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// Получение подразделения по ID
+router.get('/departments/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(
+            `SELECT * FROM departments WHERE id = $1`,
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Подразделение не найдено' });
+        }
+        
+        res.json({ department: result.rows[0] });
+    } catch (error) {
+        console.error('Get department error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Удаление подразделения
 router.delete('/departments/:id', authMiddleware, async (req, res) => {
     try {
@@ -483,17 +543,34 @@ router.delete('/departments/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// Получение сотрудников отдела
+router.get('/departments/:id/employees', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(`
+            SELECT u.id, u.surname, u.name, u.patronymic 
+            FROM users u
+            WHERE u.department_id = $1 AND u.deleted_at IS NULL
+            ORDER BY u.surname, u.name
+        `, [id]);
+        
+        res.json({ employees: result.rows });
+    } catch (error) {
+        console.error('Get department employees error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // ========== УПРАВЛЕНИЕ ДОЛЖНОСТЯМИ ==========
-
 // Получение всех должностей
 router.get('/posts', authMiddleware, async (req, res) => {
     try {
-        const result = await query(
-            `SELECT p.id, p.name, p.department_id, d.name as department_name 
-             FROM posts p
-             LEFT JOIN departments d ON p.department_id = d.id
-             ORDER BY p.id`
-        );
+        const result = await query(`
+            SELECT p.id, p.name, p.department_id, d.name as department_name
+            FROM posts p
+            LEFT JOIN departments d ON p.department_id = d.id
+            ORDER BY d.name, p.name
+        `);
         res.json({ posts: result.rows });
     } catch (error) {
         console.error('Get posts error:', error);
@@ -539,5 +616,26 @@ router.delete('/posts/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+
+// Получение должностей по отделу
+router.get('/posts/department/:departmentId', authMiddleware, async (req, res) => {
+    try {
+        const { departmentId } = req.params;
+        
+        const result = await query(
+            `SELECT id, name FROM posts WHERE department_id = $1 ORDER BY name`,
+            [departmentId]
+        );
+        
+        res.json({ posts: result.rows });
+    } catch (error) {
+        console.error('Get posts by department error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 
 module.exports = router;

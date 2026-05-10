@@ -920,6 +920,94 @@
             </div>
         </div>
     </div>
+    <!-- Модальное окно редактирования сотрудника -->
+    <div id="editEmployeeModal" class="admin-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>✏️ Редактирование сотрудника</h2>
+                <button class="modal-close" onclick="closeModal('editEmployeeModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editEmployeeForm">
+                    <input type="hidden" id="editEmployeeId">
+                    
+                    <div class="form-section">
+                        <h3>Личная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Фамилия</label>
+                                <input type="text" id="editEmployeeSurname" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Имя</label>
+                                <input type="text" id="editEmployeeName" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Отчество</label>
+                                <input type="text" id="editEmployeePatronymic" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Дата рождения</label>
+                                <input type="date" id="editEmployeeBirthday" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Контактная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="editEmployeeEmail" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Телефон</label>
+                                <input type="tel" id="editEmployeePhone" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Рабочая информация</h3>
+                        <div class="form-group">
+                            <label>Подразделение</label>
+                            <select id="editEmployeeDepartment" class="form-select" required>
+                                <option value="">— Выберите подразделение —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Должность</label>
+                            <select id="editEmployeePost" class="form-select">
+                                <option value="">— Не выбрана —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Роль в системе</label>
+                            <select id="editEmployeeRole" class="form-select">
+                                <option value="1">Администратор</option>
+                                <option value="2">Пользователь</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Статус</label>
+                            <select id="editEmployeeStatus" class="form-select">
+                                <option value="active">🟢 Активен</option>
+                                <option value="away">🌙 Не беспокоить</option>
+                                <option value="offline">⚫ Не в сети</option>
+                                <option value="blocked">🔴 Заблокирован</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('editEmployeeModal')">Отмена</button>
+                <button class="buttonbase" onclick="saveEmployeeEdit()">Сохранить</button>
+            </div>
+        </div>
+    </div>
     <div id="addDepartmentModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -929,41 +1017,31 @@
             
             <div class="modal-body">
                 <form id="addDepartmentForm" class="modal-form">
+                    <input type="hidden" id="departmentEditId">
+                    
                     <!-- Основная информация -->
                     <div class="form-section">
                         <h3>Основная информация</h3>
                         <div class="form-group">
                             <label for="departmentName">Название подразделения *</label>
-                            <input type="text" id="departmentName" name="name" 
-                                placeholder="Например, Отдел аналитики" required>
+                            <input type="text" id="departmentName" name="name" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="departmentParent">Родительское подразделение *</label>
-                            <select id="departmentParent" name="parent" required>
-                                <option value="">Выберите родительское подразделение</option>
-                                <option value="company">ООО "ТехноПрогресс" (корневой уровень)</option>
-                                <option value="dev">Отдел разработки</option>
-                                <option value="finance">Финансовый отдел</option>
-                                <option value="marketing">Отдел маркетинга</option>
-                                <option value="hr">HR отдел</option>
-                                <option value="sales">Отдел продаж</option>
+                            <label for="departmentParent">Родительское подразделение</label>
+                            <select id="departmentParent" name="parent">
+                                <option value="">— Нет (корневое) —</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
                             <label for="departmentCode">Код подразделения</label>
-                            <input type="text" id="departmentCode" name="code" 
-                                placeholder="Например, DEV-ANALYTICS" 
-                                pattern="[A-Z0-9-]+" title="Только латинские буквы, цифры и дефис">
-                            <small class="form-hint">Уникальный код для идентификации в системе</small>
+                            <input type="text" id="departmentCode" name="code" placeholder="DEV-01">
                         </div>
                         
                         <div class="form-group">
                             <label for="departmentDescription">Описание</label>
-                            <textarea id="departmentDescription" name="description" 
-                                    placeholder="Опишите функции и задачи подразделения..." 
-                                    rows="3"></textarea>
+                            <textarea id="departmentDescription" name="description" rows="2"></textarea>
                         </div>
                     </div>
 
@@ -971,21 +1049,15 @@
                     <div class="form-section">
                         <h3>Руководство</h3>
                         <div class="form-group">
-                            <label for="departmentManagerPosition">Должность руководителя *</label>
-                            <input type="text" id="departmentManagerPosition" name="managerPosition" 
-                                placeholder="Например, Руководитель отдела аналитики" required>
+                            <label for="departmentManagerPosition">Должность руководителя</label>
+                            <input type="text" id="departmentManagerPosition" name="managerPosition" placeholder="Начальник отдела">
                         </div>
                         
                         <div class="form-group">
                             <label for="departmentManager">Руководитель</label>
                             <select id="departmentManager" name="manager">
-                                <option value="">Не назначен</option>
-                                <option value="user1">Иванов Иван Иванович</option>
-                                <option value="user2">Петрова Мария Сергеевна</option>
-                                <option value="user3">Сидоров Алексей Владимирович</option>
-                                <option value="user4">Козлова Елена Владимировна</option>
+                                <option value="">— Не назначен —</option>
                             </select>
-                            <small class="form-hint">Можно назначить позже</small>
                         </div>
                     </div>
 
@@ -994,43 +1066,34 @@
                         <h3>Контактная информация</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="departmentEmail">Email подразделения</label>
-                                <input type="email" id="departmentEmail" name="email" 
-                                    placeholder="analytics@company.ru">
+                                <label for="departmentEmail">Email</label>
+                                <input type="email" id="departmentEmail" name="email">
                             </div>
                             <div class="form-group">
-                                <label for="departmentPhone">Телефон подразделения</label>
-                                <input type="tel" id="departmentPhone" name="phone" 
-                                    placeholder="+7 XXX XXX-XX-XX">
+                                <label for="departmentPhone">Телефон</label>
+                                <input type="tel" id="departmentPhone" name="phone">
                             </div>
                         </div>
                         
                         <div class="form-group">
                             <label for="departmentLocation">Местоположение</label>
-                            <input type="text" id="departmentLocation" name="location" 
-                                placeholder="Например, 5 этаж, левое крыло">
+                            <input type="text" id="departmentLocation" name="location" placeholder="5 этаж, каб. 501">
                         </div>
                     </div>
 
                     <!-- Настройки -->
                     <div class="form-section">
                         <h3>Настройки</h3>
-                        <div class="form-checkboxes">
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="autoAssign" checked> 
+                        <div class="form-checkbox">
+                            <label>
+                                <input type="checkbox" id="autoAssign" name="autoAssign" checked> 
                                 Автоматически назначать сотрудников в это подразделение
                             </label>
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="notifyManager" checked> 
+                        </div>
+                        <div class="form-checkbox">
+                            <label>
+                                <input type="checkbox" id="notifyManager" name="notifyManager" checked> 
                                 Уведомить руководителя о назначении
-                            </label>
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="createChat"> 
-                                Создать групповой чат подразделения
-                            </label>
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="createFolder"> 
-                                Создать общую папку для документов
                             </label>
                         </div>
                     </div>
@@ -1039,7 +1102,7 @@
             
             <div class="modal-footer">
                 <button type="button" class="buttonbase" onclick="closeModal('addDepartmentModal')">Отмена</button>
-                <button type="submit" form="addDepartmentForm" class="buttonbase">🏢 Создать подразделение</button>
+                <button type="submit" form="addDepartmentForm" class="buttonbase">💾 Сохранить</button>
             </div>
         </div>
     </div>
@@ -1648,7 +1711,85 @@
             </div>
         </div>
     </div>
-    
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="confirmDeleteModal" class="admin-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="confirmDeleteTitle">🗑️ Подтверждение удаления</h2>
+                <button class="modal-close" onclick="closeModal('confirmDeleteModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmDeleteMessage">Вы уверены, что хотите удалить этот элемент?</p>
+                <p style="font-size: 12px; color: #999; margin-top: 10px;">Это действие нельзя отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('confirmDeleteModal')">Отмена</button>
+                <button class="buttonbase" id="confirmDeleteBtn" style="background-color: #dc3545;">Удалить</button>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно перемещения сотрудника -->
+    <div id="moveEmployeeModal" class="admin-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>↷ Перемещение сотрудника</h2>
+                <button class="modal-close" onclick="closeModal('moveEmployeeModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="moveEmployeeForm">
+                    <input type="hidden" id="moveEmployeeId">
+                    
+                    <div class="form-group">
+                        <label>Сотрудник</label>
+                        <input type="text" id="moveEmployeeName" class="form-input" readonly disabled>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Новое подразделение *</label>
+                        <select id="moveDepartmentId" class="form-select" required>
+                            <option value="">— Выберите подразделение —</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Новая должность (необязательно)</label>
+                        <select id="movePostId" class="form-select">
+                            <option value="">— Оставить текущую —</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('moveEmployeeModal')">Отмена</button>
+                <button class="buttonbase" onclick="confirmMoveEmployee()">Переместить</button>
+            </div>
+        </div>
+    </div>
+    <!-- Модальное окно управления должностями -->
+    <div id="managePostsModal" class="admin-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="managePostsTitle">📋 Управление должностями</h2>
+                <button class="modal-close" onclick="closeModal('managePostsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="managePostsDepartmentId">
+                <div class="form-group">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="newPostName" class="form-input" placeholder="Название должности" style="flex: 1;">
+                        <button class="buttonbase" onclick="addPost()">+ Добавить</button>
+                    </div>
+                </div>
+                <div class="posts-list" id="postsList" style="max-height: 300px; overflow-y: auto;">
+                    <div style="text-align: center; padding: 20px;">Загрузка...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('managePostsModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="../scripts/admin.js"></script>
 </body>

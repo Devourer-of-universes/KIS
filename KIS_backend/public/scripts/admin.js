@@ -36,6 +36,7 @@ btn_structure.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('structure-section');
     setActiveNavButton(this);
+    loadStructure();
 })
 
 btn_roles.addEventListener('click', function(e){
@@ -1919,47 +1920,59 @@ function renderStructureTree(departments, level = 0) {
                         <span class="structure-group-number-employe">${dept.employees.length} сотрудников</span>
                     </div>
                     <div class="group-manager">
-                        <h4 class="structure-employe-post manager-post">Руководитель</h4>
-                        <h5 class="structure-employe-role manager-role">—</h5>
-                        <h5 class="structure-employe-person manager-name">—</h5>
-                        <span class="structure-employe-status manager-status status-inactive">—</span>
+                        ${dept.manager ? `
+                            <h4 class="structure-employe-post manager-post">${escapeHtml(dept.manager.post_name || '—')}</h4>
+                            <h5 class="structure-employe-role manager-role">${escapeHtml(dept.manager.role_name || '—')}</h5>
+                            <h5 class="structure-employe-person manager-name">${escapeHtml(dept.manager.surname)} ${escapeHtml(dept.manager.name)} ${escapeHtml(dept.manager.patronymic || '')}</h5>
+                            <span class="structure-employe-status manager-status status-${dept.manager.status === 'active' ? 'active' : 'inactive'}">
+                                ${dept.manager.status === 'active' ? 'Активен' : 'Неактивен'}
+                            </span>
+                        ` : `
+                            <h4 class="structure-employe-post manager-post">—</h4>
+                            <h5 class="structure-employe-role manager-role">—</h5>
+                            <h5 class="structure-employe-person manager-name">Не назначен</h5>
+                            <span class="structure-employe-status manager-status status-inactive">—</span>
+                        `}
                     </div>
                     <div class="structure-group-actionbuttons">
                         <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
                         <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
-                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id})" title="Удалить" style="color:#dc3545;">🗑️</button>
+                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;">🗑️</button>
+                        <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями">📋</button>
                     </div>
                 </div>
         `;
         
-        // Сотрудники
-        if (hasEmployees) {
-            html += `<ul class="structure-employees" id="employees-${dept.id}">`;
-            for (const emp of dept.employees) {
-                html += `
-                    <li class="structure-employee-item">
-                        <div class="employee-card">
-                            <div class="employee-avatar">
-                                <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
-                            </div>
-                            <div class="employee-info">
-                                <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
-                                <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
-                                <h5 class="structure-employe-person">${escapeHtml(emp.patronymic || '')}</h5>
-                                <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
-                                    ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
-                                </span>
-                            </div>
-                            <div class="employee-actions">
-                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
-                                <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
-                            </div>
-                        </div>
-                    </li>
-                `;
-            }
-            html += `</ul>`;
-        }
+        // Сотрудники (исключая руководителя)
+        const regularEmployees = dept.employees.filter(emp => emp.id !== dept.manager_id);
+
+if (regularEmployees.length > 0) {
+    html += `<ul class="structure-employees" id="employees-${dept.id}">`;
+    for (const emp of regularEmployees) {
+        html += `
+            <li class="structure-employee-item">
+                <div class="employee-card">
+                    <div class="employee-avatar">
+                        <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
+                    </div>
+                    <div class="employee-info">
+                        <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
+                        <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
+                        <h5 class="structure-employe-person">${escapeHtml(emp.patronymic || '')}</h5>
+                        <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
+                            ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
+                        </span>
+                    </div>
+                    <div class="employee-actions">
+                        <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
+                        <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                    </div>
+                </div>
+            </li>
+        `;
+    }
+    html += `</ul>`;
+}
         
         // Дочерние подразделения
         if (hasChildren) {
@@ -2001,29 +2014,35 @@ function renderSubtree(departments) {
                     <div class="structure-group-actionbuttons">
                         <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
                         <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
-                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id})" title="Удалить" style="color:#dc3545;">🗑️</button>
+                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;">🗑️</button>
+                        <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями">📋</button>
                     </div>
                 </div>
         `;
         
-        if (hasEmployees) {
+        // Сотрудники (исключая руководителя)
+        const regularEmployees = dept.employees.filter(emp => emp.id !== dept.manager_id);
+
+        if (regularEmployees.length > 0) {
             html += `<ul class="structure-employees" id="employees-${dept.id}">`;
-            for (const emp of dept.employees) {
+            for (const emp of regularEmployees) {
                 html += `
                     <li class="structure-employee-item">
                         <div class="employee-card">
                             <div class="employee-avatar">
-                                <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}">
+                                <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
                             </div>
                             <div class="employee-info">
                                 <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
                                 <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
+                                <h5 class="structure-employe-person">${escapeHtml(emp.patronymic || '')}</h5>
                                 <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
                                     ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
                                 </span>
                             </div>
                             <div class="employee-actions">
                                 <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
+                                <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
                             </div>
                         </div>
                     </li>
@@ -2090,4 +2109,616 @@ function expandAllNodes() {
     document.querySelectorAll('.toggle-icon').forEach(icon => {
         icon.textContent = '▼';
     });
+}
+async function loadDepartmentTreeForSelect(selectId, excludeId = null) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/departments/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load departments');
+        
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        
+        if (!select) {
+            console.error(`Select with id "${selectId}" not found`);
+            return;
+        }
+        
+        select.innerHTML = '<option value="">— Нет (корневое) —</option>';
+        
+        for (const dept of data.departments) {
+            if (excludeId && dept.id == excludeId) continue;
+            const prefix = '—'.repeat(dept.level) + ' ';
+            select.innerHTML += `<option value="${dept.id}">${prefix}${escapeHtml(dept.name)}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+    }
+}
+// Открытие модалки добавления подразделения
+async function openAddDepartmentModal(parentId = null) {
+    const modal = document.getElementById('addDepartmentModal');
+    const title = modal.querySelector('.modal-header h2');
+    
+    title.textContent = '🏢 Добавление подразделения';
+    document.getElementById('departmentEditId').value = '';
+    document.getElementById('departmentName').value = '';
+    document.getElementById('departmentCode').value = '';
+    document.getElementById('departmentDescription').value = '';
+    document.getElementById('departmentManagerPosition').value = '';
+    document.getElementById('departmentEmail').value = '';
+    document.getElementById('departmentPhone').value = '';
+    document.getElementById('departmentLocation').value = '';
+    document.getElementById('autoAssign').checked = true;
+    document.getElementById('notifyManager').checked = true;
+    
+    await loadDepartmentTreeForSelect('departmentParent', parentId);
+    
+    if (parentId) {
+        document.getElementById('departmentParent').value = parentId;
+    }
+    
+    openModal('addDepartmentModal');
+}
+async function openEditDepartmentModal(deptId, deptName) {
+    const modal = document.getElementById('addDepartmentModal');
+    const title = modal.querySelector('.modal-header h2');
+    
+    title.textContent = '✏️ Редактирование подразделения';
+    document.getElementById('departmentEditId').value = deptId;
+    document.getElementById('departmentName').value = deptName;
+    
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Загружаем данные подразделения
+        const deptResponse = await fetch(`/api/admin/departments/${deptId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!deptResponse.ok) throw new Error('Failed to load department');
+        
+        const deptData = await deptResponse.json();
+        const dept = deptData.department;
+        
+        document.getElementById('departmentCode').value = dept.code || '';
+        document.getElementById('departmentDescription').value = dept.description || '';
+        document.getElementById('departmentManagerPosition').value = dept.manager_position || '';
+        document.getElementById('departmentEmail').value = dept.email || '';
+        document.getElementById('departmentPhone').value = dept.phone || '';
+        document.getElementById('departmentLocation').value = dept.location || '';
+        
+        // Загружаем список сотрудников отдела для выбора руководителя
+        await loadDepartmentEmployeesForSelect(deptId, dept.manager_id);
+        
+        // Загружаем дерево подразделений для выбора родителя
+        await loadDepartmentTreeForSelect('departmentParent', deptId);
+        if (dept.parent_department_id) {
+            document.getElementById('departmentParent').value = dept.parent_department_id;
+        }
+        
+        openModal('addDepartmentModal');
+    } catch (error) {
+        console.error('Error loading department:', error);
+        showToast('Ошибка загрузки данных подразделения', 'error');
+        closeModal('addDepartmentModal');
+    }
+}
+
+// Загрузка сотрудников отдела для селекта руководителя
+async function loadDepartmentEmployeesForSelect(departmentId, selectedManagerId = null) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/departments/${departmentId}/employees`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load employees');
+        
+        const data = await response.json();
+        const select = document.getElementById('departmentManager');
+        
+        if (!select) {
+            console.error('Select "departmentManager" not found');
+            return;
+        }
+        
+        select.innerHTML = '<option value="">— Не назначен —</option>';
+        
+        for (const emp of data.employees) {
+            const selected = selectedManagerId == emp.id ? 'selected' : '';
+            select.innerHTML += `<option value="${emp.id}" ${selected}>${escapeHtml(emp.surname)} ${escapeHtml(emp.name)} ${escapeHtml(emp.patronymic || '')}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading department employees:', error);
+    }
+}
+// Сохранение подразделения
+document.getElementById('addDepartmentForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const editId = document.getElementById('departmentEditId').value;
+    const name = document.getElementById('departmentName').value.trim();
+    const parentId = document.getElementById('departmentParent').value || null;
+    const code = document.getElementById('departmentCode').value;
+    const description = document.getElementById('departmentDescription').value;
+    const managerPosition = document.getElementById('departmentManagerPosition').value;
+    const managerId = document.getElementById('departmentManager').value || null;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
+    const email = document.getElementById('departmentEmail').value;
+    const phone = document.getElementById('departmentPhone').value;
+    const location = document.getElementById('departmentLocation').value;
+    
+    if (!name) {
+        showToast('Введите название подразделения', 'error');
+        return;
+    }
+    
+    const data = {
+        name, 
+        parentDepartmentId: parentId, 
+        code, 
+        description,
+        managerPosition, 
+        managerId,
+        email, 
+        phone, 
+        location
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        let response;
+        
+        if (editId) {
+            response = await fetch(`/api/admin/departments/${editId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+        } else {
+            response = await fetch('/api/admin/departments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+        }
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save department');
+        }
+        
+        closeModal('addDepartmentModal');
+        loadStructure();
+        showToast(editId ? 'Подразделение обновлено' : 'Подразделение создано', 'success');
+    } catch (error) {
+        console.error('Error saving department:', error);
+        showToast(error.message, 'error');
+    }
+});
+
+// ========== УНИВЕРСАЛЬНАЯ МОДАЛКА ПОДТВЕРЖДЕНИЯ ==========
+
+let pendingDeleteAction = null;
+
+function showConfirmDelete(title, message, onConfirm) {
+    document.getElementById('confirmDeleteTitle').textContent = title;
+    document.getElementById('confirmDeleteMessage').textContent = message;
+    pendingDeleteAction = onConfirm;
+    openModal('confirmDeleteModal');
+}
+
+document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
+    if (pendingDeleteAction) {
+        pendingDeleteAction();
+        pendingDeleteAction = null;
+    }
+    closeModal('confirmDeleteModal');
+});
+// Удаление подразделения
+function deleteDepartment(deptId, deptName) {
+    showConfirmDelete(
+        '🗑️ Удаление подразделения',
+        `Вы уверены, что хотите удалить подразделение "${deptName}"? Все дочерние подразделения и сотрудники останутся без отдела.`,
+        async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/departments/${deptId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error);
+                }
+                
+                loadStructure();
+                showToast('Подразделение удалено', 'success');
+            } catch (error) {
+                console.error('Error deleting department:', error);
+                showToast(error.message, 'error');
+            }
+        }
+    );
+}// ========== ПЕРЕМЕЩЕНИЕ СОТРУДНИКОВ ==========
+
+let currentMoveEmployee = null;
+
+// Открытие модалки перемещения
+async function openMoveEmployeeModal(employeeId, currentDeptId) {
+    currentMoveEmployee = { id: employeeId, currentDeptId };
+    
+    // Загружаем данные сотрудника
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${employeeId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load employee');
+        
+        const data = await response.json();
+        const user = data.user;
+        document.getElementById('moveEmployeeId').value = employeeId;
+        // При изменении отдела обновляем список должностей
+        document.getElementById('moveDepartmentId').addEventListener('change', async () => {
+            const deptId = document.getElementById('moveDepartmentId').value;
+            if (deptId) {
+                await loadPostsForDepartmentSelect('movePostId', deptId);
+            } else {
+                document.getElementById('movePostId').innerHTML = '<option value="">— Сначала выберите отдел —</option>';
+            }
+        });
+        document.getElementById('moveEmployeeName').value = `${user.surname} ${user.name} ${user.patronymic || ''}`;
+        
+        // Загружаем список подразделений
+        await loadDepartmentsForSelect('moveDepartmentId', currentDeptId);
+        
+        // Загружаем список должностей
+        await loadPostsForSelect('movePostId');
+        
+        openModal('moveEmployeeModal');
+    } catch (error) {
+        console.error('Error loading employee:', error);
+        showToast('Ошибка загрузки данных сотрудника', 'error');
+    }
+}
+
+// Загрузка списка подразделений для селекта
+async function loadDepartmentsForSelect(selectId, excludeId = null) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/departments/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load departments');
+        
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        
+        select.innerHTML = '<option value="">— Выберите подразделение —</option>';
+        
+        for (const dept of data.departments) {
+            if (excludeId && dept.id == excludeId) continue;
+            const indent = dept.level ? '—'.repeat(dept.level) + ' ' : '';
+            select.innerHTML += `<option value="${dept.id}">${indent}${escapeHtml(dept.name)}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+    }
+}
+
+// Загрузка списка должностей
+async function loadPostsForSelect(selectId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/posts', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load posts');
+        
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        
+        select.innerHTML = '<option value="">— Оставить текущую —</option>';
+        
+        for (const post of data.posts) {
+            select.innerHTML += `<option value="${post.id}">${escapeHtml(post.name)} (${escapeHtml(post.department_name || '—')})</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading posts:', error);
+    }
+}
+
+// Подтверждение перемещения
+async function confirmMoveEmployee() {
+    const employeeId = document.getElementById('moveEmployeeId').value;
+    const departmentId = document.getElementById('moveDepartmentId').value;
+    const postId = document.getElementById('movePostId').value || null;
+    
+    if (!departmentId) {
+        showToast('Выберите подразделение', 'error');
+        return;
+    }
+    
+    if (!employeeId) {
+        showToast('Ошибка: ID сотрудника не найден', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/employees/${employeeId}/move`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ departmentId: parseInt(departmentId), postId: postId ? parseInt(postId) : null })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to move employee');
+        }
+        
+        closeModal('moveEmployeeModal');
+        loadStructure();
+        showToast('Сотрудник перемещён', 'success');
+    } catch (error) {
+        console.error('Error moving employee:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+
+
+// ========== РЕДАКТИРОВАНИЕ СОТРУДНИКА ==========
+
+// Открытие модалки редактирования сотрудника
+async function openEditEmployeeModal(employeeId) {
+    const modal = document.getElementById('editEmployeeModal');
+    if (!modal) return;
+    
+    document.getElementById('editEmployeeId').value = employeeId;
+    
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Загружаем данные сотрудника
+        const userResponse = await fetch(`/api/admin/users/${employeeId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!userResponse.ok) throw new Error('Failed to load user');
+        const userData = await userResponse.json();
+        const user = userData.user;
+        
+        // Заполняем форму
+        document.getElementById('editEmployeeSurname').value = user.surname || '';
+        document.getElementById('editEmployeeName').value = user.name || '';
+        document.getElementById('editEmployeePatronymic').value = user.patronymic || '';
+        document.getElementById('editEmployeeBirthday').value = user.birthday ? user.birthday.split('T')[0] : '';
+        document.getElementById('editEmployeeEmail').value = user.email || '';
+        document.getElementById('editEmployeePhone').value = user.tel_num || '';
+        document.getElementById('editEmployeeRole').value = user.role_id || 2;
+        document.getElementById('editEmployeeStatus').value = user.status || 'active';
+        
+        // Загружаем список подразделений
+        await loadDepartmentsForSelect('editEmployeeDepartment', user.department_id);
+        
+        // Загружаем список должностей для выбранного отдела
+        await loadPostsForDepartmentSelect('editEmployeePost', user.department_id, user.post_id);
+        
+        // При изменении отдела обновляем список должностей
+        document.getElementById('editEmployeeDepartment').onchange = () => {
+            const deptId = document.getElementById('editEmployeeDepartment').value;
+            loadPostsForDepartmentSelect('editEmployeePost', deptId);
+        };
+        
+        openModal('editEmployeeModal');
+    } catch (error) {
+        console.error('Error loading employee:', error);
+        showToast('Ошибка загрузки данных сотрудника', 'error');
+    }
+}
+
+// Загрузка подразделений для селекта
+async function loadDepartmentsForSelect(selectId, selectedId = null) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/departments/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load departments');
+        
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        
+        select.innerHTML = '<option value="">— Выберите подразделение —</option>';
+        
+        for (const dept of data.departments) {
+            const prefix = '—'.repeat(dept.level) + ' ';
+            const selected = selectedId == dept.id ? 'selected' : '';
+            select.innerHTML += `<option value="${dept.id}" ${selected}>${prefix}${escapeHtml(dept.name)}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+    }
+}
+
+// Загрузка должностей для выбранного отдела
+async function loadPostsForDepartmentSelect(selectId, departmentId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/posts/department/${departmentId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load posts');
+        
+        const data = await response.json();
+        const select = document.getElementById(selectId);
+        
+        select.innerHTML = '<option value="">— Не выбрана —</option>';
+        
+        for (const post of data.posts) {
+            select.innerHTML += `<option value="${post.id}">${escapeHtml(post.name)}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading posts for select:', error);
+    }
+}
+
+// Сохранение изменений сотрудника
+async function saveEmployeeEdit() {
+    const employeeId = document.getElementById('editEmployeeId').value;
+    
+    const formData = {
+        surname: document.getElementById('editEmployeeSurname').value,
+        name: document.getElementById('editEmployeeName').value,
+        patronymic: document.getElementById('editEmployeePatronymic').value,
+        birthday: document.getElementById('editEmployeeBirthday').value,
+        email: document.getElementById('editEmployeeEmail').value,
+        telNum: document.getElementById('editEmployeePhone').value,
+        departmentId: document.getElementById('editEmployeeDepartment').value || null,
+        postId: document.getElementById('editEmployeePost').value || null,
+        roleId: document.getElementById('editEmployeeRole').value,
+        status: document.getElementById('editEmployeeStatus').value
+    };
+    
+    if (!formData.surname || !formData.name || !formData.email || !formData.telNum) {
+        showToast('Заполните все обязательные поля', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${employeeId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) throw new Error('Failed to update employee');
+        
+        closeModal('editEmployeeModal');
+        loadStructure();
+        loadUsers(currentPage, currentSearchTerm);
+        showToast('Данные сотрудника обновлены', 'success');
+    } catch (error) {
+        console.error('Error saving employee:', error);
+        showToast('Ошибка сохранения', 'error');
+    }
+}
+
+// ========== УПРАВЛЕНИЕ ДОЛЖНОСТЯМИ ==========
+
+let currentDepartmentPosts = null;
+
+// Открытие модалки управления должностями
+async function openManagePostsModal(departmentId, departmentName) {
+    document.getElementById('managePostsTitle').textContent = `📋 Должности: ${departmentName}`;
+    document.getElementById('managePostsDepartmentId').value = departmentId;
+    document.getElementById('newPostName').value = '';
+    
+    await loadPostsForDepartment(departmentId);
+    openModal('managePostsModal');
+}
+
+// Загрузка должностей для отдела
+async function loadPostsForDepartment(departmentId) {
+    const container = document.getElementById('postsList');
+    container.innerHTML = '<div style="text-align: center; padding: 20px;">Загрузка...</div>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/posts/department/${departmentId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load posts');
+        
+        const data = await response.json();
+        const posts = data.posts || [];
+        
+        if (posts.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Нет должностей</div>';
+            return;
+        }
+        
+        container.innerHTML = posts.map(post => `
+            <div class="post-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eef2f6;">
+                <span>📌 ${escapeHtml(post.name)}</span>
+                <button class="btn-icon buttonbase" onclick="deletePost(${post.id})" style="color: #dc3545;" title="Удалить">🗑️</button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading posts:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Ошибка загрузки</div>';
+    }
+}
+
+// Добавление должности
+async function addPost() {
+    const departmentId = document.getElementById('managePostsDepartmentId').value;
+    const name = document.getElementById('newPostName').value.trim();
+    
+    if (!name) {
+        showToast('Введите название должности', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ name, departmentId })
+        });
+        
+        if (!response.ok) throw new Error('Failed to add post');
+        
+        document.getElementById('newPostName').value = '';
+        await loadPostsForDepartment(departmentId);
+        showToast('Должность добавлена', 'success');
+    } catch (error) {
+        console.error('Error adding post:', error);
+        showToast('Ошибка добавления должности', 'error');
+    }
+}
+
+// Удаление должности
+async function deletePost(postId) {
+    if (!confirm('Удалить эту должность? Сотрудники с этой должностью останутся без должности.')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to delete post');
+        
+        const departmentId = document.getElementById('managePostsDepartmentId').value;
+        await loadPostsForDepartment(departmentId);
+        showToast('Должность удалена', 'success');
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        showToast('Ошибка удаления должности', 'error');
+    }
 }

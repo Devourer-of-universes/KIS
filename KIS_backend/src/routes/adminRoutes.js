@@ -91,6 +91,7 @@ router.post('/users', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Заполните все обязательные поля' });
         }
         
+        // Проверка уникальности
         const existingEmail = await query('SELECT id FROM users WHERE email = $1', [email]);
         if (existingEmail.rows.length > 0) {
             return res.status(400).json({ error: 'Email уже используется' });
@@ -109,11 +110,12 @@ router.post('/users', authMiddleware, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
         
+        // Исправленный INSERT — используем переданные departmentId и postId
         const result = await query(
             `INSERT INTO users (username, surname, name, patronymic, birthday, post_id, department_id, email, tel_num, password_hash, role_id, status)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active')
              RETURNING id, username, surname, name, email, tel_num, status, role_id`,
-            [username, surname, name, patronymic || null, birthday, postId, departmentId, email, telNum, passwordHash, roleId]
+            [username, surname, name, patronymic || null, birthday, postId || null, departmentId || null, email, telNum, passwordHash, roleId]
         );
         
         res.status(201).json({ success: true, user: result.rows[0] });
@@ -150,9 +152,13 @@ router.put('/users/:id', authMiddleware, async (req, res) => {
         values.push(id);
         
         const result = await query(
-            `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, username, surname, name, email, tel_num, status, role_id`,
+            `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, username, surname, name, email, tel_num, status, role_id, post_id, department_id`,
             values
         );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
         
         res.json({ success: true, user: result.rows[0] });
     } catch (error) {
@@ -309,15 +315,10 @@ router.delete('/roles/:id', authMiddleware, async (req, res) => {
 });
 
 // ========== УПРАВЛЕНИЕ ПОДРАЗДЕЛЕНИЯМИ ==========
-// Получение структуры организации (дерево подразделений + сотрудники)
 router.get('/structure', authMiddleware, async (req, res) => {
     try {
         // Получаем все подразделения
-        const departments = await query(`
-            SELECT d.* 
-            FROM departments d
-            ORDER BY d.id
-        `);
+        const departments = await query(`SELECT * FROM departments ORDER BY id`);
         
         // Получаем всех пользователей с их должностями и ролями
         const users = await query(`
@@ -350,10 +351,14 @@ router.get('/structure', authMiddleware, async (req, res) => {
             });
         }
         
-        // Добавляем сотрудников в отделы
+        // Добавляем сотрудников в отделы и отдельно собираем "без отдела"
+        const unassignedEmployees = [];
+        
         for (const user of users.rows) {
-            if (deptMap.has(user.department_id)) {
+            if (user.department_id && deptMap.has(user.department_id)) {
                 deptMap.get(user.department_id).employees.push(user);
+            } else {
+                unassignedEmployees.push(user);
             }
         }
         
@@ -366,7 +371,13 @@ router.get('/structure', authMiddleware, async (req, res) => {
             }
         }
         
-        res.json({ structure: roots });
+        // Добавляем виртуальную секцию "Без отдела"
+        const result = {
+            structure: roots,
+            unassigned: unassignedEmployees
+        };
+        
+        res.json(result);
     } catch (error) {
         console.error('Get structure error:', error);
         res.status(500).json({ error: error.message });
@@ -482,15 +493,39 @@ router.get('/departments/list', authMiddleware, async (req, res) => {
 router.put('/departments/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, parentDepartmentId, code, description, managerId, email, phone, location } = req.body;
+        const { name, parentDepartmentId, code, description, managerId, managerPosition, email, phone, location } = req.body;
         
+        // Если назначен руководитель, обновляем его должность
+        if (managerId && managerPosition) {
+            // Ищем или создаём должность с указанным названием
+            let postResult = await query(
+                `SELECT id FROM posts WHERE name = $1 AND department_id = $2`,
+                [managerPosition, id]
+            );
+            
+            let postId = null;
+            if (postResult.rows.length === 0) {
+                const newPost = await query(
+                    `INSERT INTO posts (name, department_id) VALUES ($1, $2) RETURNING id`,
+                    [managerPosition, id]
+                );
+                postId = newPost.rows[0].id;
+            } else {
+                postId = postResult.rows[0].id;
+            }
+            
+            // Обновляем должность пользователя
+            await query(`UPDATE users SET post_id = $1 WHERE id = $2`, [postId, managerId]);
+        }
+        
+        // Обновляем подразделение (сохраняем managerPosition в отдельном поле для отображения)
         const result = await query(
             `UPDATE departments 
              SET name = $1, parent_department_id = $2, code = $3, description = $4, 
-                 manager_id = $5, email = $6, phone = $7, location = $8
-             WHERE id = $9 
+                 manager_id = $5, manager_position = $6, email = $7, phone = $8, location = $9
+             WHERE id = $10 
              RETURNING *`,
-            [name, parentDepartmentId || null, code, description, managerId || null, email, phone, location, id]
+            [name, parentDepartmentId || null, code, description, managerId || null, managerPosition || null, email, phone, location, id]
         );
         
         res.json({ department: result.rows[0] });
@@ -524,20 +559,35 @@ router.delete('/departments/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Проверяем наличие дочерних подразделений
+        // 1. Проверяем дочерние подразделения
         const children = await query(`SELECT id FROM departments WHERE parent_department_id = $1`, [id]);
         if (children.rows.length > 0) {
             return res.status(400).json({ error: 'Сначала удалите дочерние подразделения' });
         }
         
-        // Проверяем наличие сотрудников
+        // 2. Получаем сотрудников отдела
         const employees = await query(`SELECT id FROM users WHERE department_id = $1`, [id]);
+        
         if (employees.rows.length > 0) {
-            return res.status(400).json({ error: 'Сначала переместите или удалите сотрудников' });
+            // Убираем department_id у сотрудников
+            await query(`UPDATE users SET department_id = NULL WHERE department_id = $1`, [id]);
         }
         
+        // 3. Получаем должности этого отдела
+        const posts = await query(`SELECT id FROM posts WHERE department_id = $1`, [id]);
+        
+        if (posts.rows.length > 0) {
+            const postIds = posts.rows.map(p => p.id);
+            // Сначала отвязываем пользователей от этих должностей
+            await query(`UPDATE users SET post_id = NULL WHERE post_id = ANY($1::int[])`, [postIds]);
+            // Затем удаляем должности
+            await query(`DELETE FROM posts WHERE department_id = $1`, [id]);
+        }
+        
+        // 4. Удаляем само подразделение
         await query(`DELETE FROM departments WHERE id = $1`, [id]);
-        res.json({ success: true });
+        
+        res.json({ success: true, message: 'Подразделение удалено' });
     } catch (error) {
         console.error('Delete department error:', error);
         res.status(500).json({ error: error.message });

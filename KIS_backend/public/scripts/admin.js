@@ -251,8 +251,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-    document.body.style.overflow = 'hidden';
+    // Закрываем все открытые модалки
+    document.querySelectorAll('.admin-modal.active').forEach(modal => {
+        modal.classList.remove('active');
+    });
+    
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 function closeModal(modalId) {
@@ -273,15 +281,6 @@ function generateCredentials() {
         // Генерация пароля
         generatePassword();
     }
-}
-
-function generatePassword() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    document.getElementById('userPassword').value = password;
 }
 document.getElementById('userLastName').addEventListener('blur', generateCredentials);
 document.getElementById('userFirstName').addEventListener('blur', generateCredentials);
@@ -304,28 +303,6 @@ document.addEventListener('keydown', function(e) {
 
 let currentEditingUserId = null;
 
-function openUserModal(userId = null) {
-    currentEditingUserId = userId;
-    
-    const modal = document.getElementById('addUserModal');
-    const title = modal.querySelector('.modal-header h2');
-    const submitBtn = modal.querySelector('.modal-footer button[type="submit"]');
-    
-    if (userId) {
-        title.textContent = '✏️ Редактирование сотрудника';
-        submitBtn.textContent = 'Сохранить изменения';
-        loadUserDataToForm(userId);
-    } else {
-        title.textContent = '👤 Добавление сотрудника';
-        submitBtn.textContent = 'Добавить сотрудника';
-        clearForm();
-        generateCredentials();
-    }
-    
-    openModal('addUserModal');
-}
-
-// Загрузка данных пользователя в форму (для редактирования)
 async function loadUserDataToForm(userId) {
     try {
         const token = localStorage.getItem('token');
@@ -338,44 +315,207 @@ async function loadUserDataToForm(userId) {
         const data = await response.json();
         const user = data.user;
         
+        // Основные данные
+        document.getElementById('editUserId').value = user.id;
         document.getElementById('userLastName').value = user.surname || '';
         document.getElementById('userFirstName').value = user.name || '';
         document.getElementById('userMiddleName').value = user.patronymic || '';
         document.getElementById('userBirthDate').value = user.birthday ? user.birthday.split('T')[0] : '';
-        document.getElementById('userPhone').value = user.tel_num || '';
         document.getElementById('userEmail').value = user.email || '';
-        document.getElementById('userPosition').value = user.post_name || '';
-        document.getElementById('userDepartment').value = user.department_id || '';
-        document.getElementById('userStartDate').value = user.created_at ? user.created_at.split('T')[0] : '';
+        document.getElementById('userPhone').value = user.tel_num || '';
         document.getElementById('userLogin').value = user.username || '';
         document.getElementById('userPassword').value = '••••••••';
         
+        // Дата приёма
+        if (user.start_date) {
+            document.getElementById('userStartDate').value = user.start_date.split('T')[0];
+        }
+        
+        // Загружаем подразделения
+        await loadDepartmentsForSelect('userDepartmentId', user.department_id);
+        
+        // Принудительно устанавливаем выбранное подразделение
+        const deptSelect = document.getElementById('userDepartmentId');
+        if (user.department_id && deptSelect) {
+            deptSelect.value = user.department_id;
+        }
+        
+        // Загружаем роли
+        await loadRolesForUserForm();
+        document.getElementById('userRoleId').value = user.role_id || 2;
+        
+        // Если есть отдел, загружаем должности и устанавливаем выбранную
+        if (user.department_id) {
+            await loadPostsForDepartmentSelect('userPostId', user.department_id, user.post_id);
+            
+            // Принудительно устанавливаем должность
+            const postSelect = document.getElementById('userPostId');
+            if (user.post_id && postSelect) {
+                postSelect.value = user.post_id;
+            }
+        }
+        
+        // Обработчик изменения отдела
+        deptSelect.onchange = () => {
+            const deptId = deptSelect.value;
+            if (deptId) {
+                loadPostsForDepartmentSelect('userPostId', deptId);
+            } else {
+                const postSelect = document.getElementById('userPostId');
+                postSelect.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
+            }
+        };
+        
     } catch (error) {
-        console.error('Error loading user for edit:', error);
-        showToast('Ошибка загрузки данных', 'error');
+        console.error('Error loading user:', error);
+        showToast('Ошибка загрузки данных пользователя', 'error');
         closeModal('addUserModal');
     }
 }
 
-// Очистка формы
-function clearForm() {
+// Открытие модалки (создание или редактирование)
+function openUserModal(userId = null) {
+    currentEditingUserId = userId;
+    const modal = document.getElementById('addUserModal');
+    const title = modal.querySelector('.modal-header h2');
+    const submitBtn = document.getElementById('saveUserBtn');
+    
+    // Очищаем форму
     document.getElementById('addUserForm').reset();
-    currentEditingUserId = null;
+    document.getElementById('editUserId').value = '';
+    
+    // Сбрасываем select должностей
+    const postSelect = document.getElementById('userPostId');
+    if (postSelect) {
+        postSelect.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
+    }
+    
+    if (userId) {
+        title.textContent = '✏️ Редактирование пользователя';
+        submitBtn.textContent = 'Сохранить изменения';
+        loadUserDataToForm(userId);
+    } else {
+        title.textContent = '👤 Добавление пользователя';
+        submitBtn.textContent = 'Добавить пользователя';
+        
+        // Загружаем подразделения
+        loadDepartmentTreeForSelect('userDepartmentId').then(() => {
+            const deptSelect = document.getElementById('userDepartmentId');
+            deptSelect.onchange = () => {
+                const deptId = deptSelect.value;
+                if (deptId) {
+                    loadPostsForDepartmentSelect('userPostId', deptId);
+                } else {
+                    const postSelect = document.getElementById('userPostId');
+                    postSelect.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
+                }
+            };
+        });
+        
+        // Загружаем роли
+        loadRolesForUserForm();
+        
+        // Генерируем пароль и логин
+        generateRandomPassword();
+        generateLogin();
+    }
+    
+    openModal('addUserModal');
 }
 
-// Генерация логина и пароля
-function generateCredentials() {
-    const lastName = document.getElementById('userLastName').value;
-    const firstName = document.getElementById('userFirstName').value;
-    
-    if (lastName && firstName) {
-        const login = `${lastName.toLowerCase()}.${firstName.charAt(0).toLowerCase()}`;
-        document.getElementById('userLogin').value = login;
-        generatePassword();
+// Загрузка списка подразделений для формы
+async function loadDepartmentsForUserForm() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/departments/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load departments');
+        
+        const data = await response.json();
+        const select = document.getElementById('userDepartmentId');
+        
+        select.innerHTML = '<option value="">— Выберите подразделение —</option>';
+        
+        for (const dept of data.departments) {
+            const prefix = '—'.repeat(dept.level) + ' ';
+            select.innerHTML += `<option value="${dept.id}">${prefix}${escapeHtml(dept.name)}</option>`;
+        }
+        
+        // При изменении отдела обновляем список должностей
+        select.onchange = () => {
+            const deptId = select.value;
+            if (deptId) {
+                loadPostsForUserForm(deptId);
+            } else {
+                document.getElementById('userPostId').innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
+            }
+        };
+    } catch (error) {
+        console.error('Error loading departments:', error);
     }
 }
 
-function generatePassword() {
+// Загрузка списка должностей для формы
+async function loadPostsForUserForm(departmentId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/posts/department/${departmentId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load posts');
+        
+        const data = await response.json();
+        const select = document.getElementById('userPostId');
+        
+        select.innerHTML = '<option value="">— Выберите должность —</option>';
+        
+        for (const post of data.posts) {
+            select.innerHTML += `<option value="${post.id}">${escapeHtml(post.name)}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading posts:', error);
+    }
+}
+
+// Загрузка списка ролей
+async function loadRolesForUserForm() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/roles', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load roles');
+        
+        const data = await response.json();
+        const select = document.getElementById('userRoleId');
+        
+        select.innerHTML = '<option value="">— Выберите роль —</option>';
+        
+        for (const role of data.roles) {
+            select.innerHTML += `<option value="${role.id}">${escapeHtml(role.name)}</option>`;
+        }
+    } catch (error) {
+        console.error('Error loading roles:', error);
+    }
+}
+
+// Генерация логина
+function generateLogin() {
+    const surname = document.getElementById('userLastName').value.trim();
+    const name = document.getElementById('userFirstName').value.trim();
+    
+    if (surname && name) {
+        const login = `${surname.toLowerCase()}.${name.charAt(0).toLowerCase()}`;
+        document.getElementById('userLogin').value = login;
+    }
+}
+
+// Генерация пароля
+function generateRandomPassword() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
     let password = '';
     for (let i = 0; i < 12; i++) {
@@ -384,32 +524,50 @@ function generatePassword() {
     document.getElementById('userPassword').value = password;
 }
 
-// Получение данных из формы
-function getFormData() {
+// Автогенерация логина при вводе имени/фамилии
+document.getElementById('userLastName').addEventListener('input', generateLogin);
+document.getElementById('userFirstName').addEventListener('input', generateLogin);
+
+// Сбор данных из формы
+function getUserFormData() {
     return {
         username: document.getElementById('userLogin').value,
         surname: document.getElementById('userLastName').value,
         name: document.getElementById('userFirstName').value,
         patronymic: document.getElementById('userMiddleName').value,
-        birthday: document.getElementById('userBirthDate').value,
+        birthday: document.getElementById('userBirthDate').value || null,
         email: document.getElementById('userEmail').value,
         telNum: document.getElementById('userPhone').value,
         password: document.getElementById('userPassword').value,
-        postId: 1, // временно, потом можно доработать
-        departmentId: 1, // временно
-        roleId: 2 // по умолчанию пользователь
+        departmentId: document.getElementById('userDepartmentId').value ? parseInt(document.getElementById('userDepartmentId').value) : null,
+        postId: document.getElementById('userPostId').value ? parseInt(document.getElementById('userPostId').value) : null,
+        roleId: parseInt(document.getElementById('userRoleId').value) || 2
     };
 }
 
-// Отправка формы
-document.getElementById('addUserForm').addEventListener('submit', async function(e) {
+// Валидация формы
+function validateUserForm(data) {
+    if (!data.surname) return 'Фамилия обязательна';
+    if (!data.name) return 'Имя обязательно';
+    if (!data.email) return 'Email обязателен';
+    if (!data.telNum) return 'Телефон обязателен';
+    if (!data.username) return 'Логин не сгенерирован';
+    if (!currentEditingUserId && !data.password) return 'Пароль обязателен';
+    if (!data.departmentId) return 'Выберите подразделение';
+    if (!data.postId) return 'Выберите должность';
+    if (!data.roleId) return 'Выберите роль';
+    return null;
+}
+
+// Сохранение пользователя
+document.getElementById('addUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const formData = getFormData();
+    const formData = getUserFormData();
+    const validationError = validateUserForm(formData);
     
-    // Валидация
-    if (!formData.username || !formData.surname || !formData.name || !formData.email || !formData.telNum || !formData.password) {
-        showToast('Заполните все обязательные поля', 'error');
+    if (validationError) {
+        showToast(validationError, 'error');
         return;
     }
     
@@ -425,17 +583,38 @@ document.getElementById('addUserForm').addEventListener('submit', async function
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    surname: formData.surname,
+                    name: formData.name,
+                    patronymic: formData.patronymic,
+                    email: formData.email,
+                    telNum: formData.telNum,
+                    roleId: parseInt(formData.roleId),
+                    departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
+                    postId: formData.postId ? parseInt(formData.postId) : null
+                })
             });
         } else {
-            // Создание нового пользователя
+            // Создание
             response = await fetch('/api/admin/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    username: formData.username,
+                    surname: formData.surname,
+                    name: formData.name,
+                    patronymic: formData.patronymic,
+                    birthday: formData.birthday,
+                    email: formData.email,
+                    telNum: formData.telNum,
+                    password: formData.password,
+                    departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
+                    postId: formData.postId ? parseInt(formData.postId) : null,
+                    roleId: parseInt(formData.roleId)
+                })
             });
         }
         
@@ -447,39 +626,12 @@ document.getElementById('addUserForm').addEventListener('submit', async function
         closeModal('addUserModal');
         loadUsers(currentPage, currentSearchTerm);
         showToast(currentEditingUserId ? 'Пользователь обновлён' : 'Пользователь создан', 'success');
-        clearForm();
         
     } catch (error) {
         console.error('Error saving user:', error);
         showToast(error.message, 'error');
     }
 });
-
-// Автогенерация при вводе имени/фамилии
-document.getElementById('userLastName').addEventListener('blur', generateCredentials);
-document.getElementById('userFirstName').addEventListener('blur', generateCredentials);
-
-function fillFormWithUserData(userId) {
-    const userData = getUserDataById(userId);
-    document.getElementById('userLastName').value = userData.lastName;
-    document.getElementById('userFirstName').value = userData.firstName;
-}
-
-function clearForm() {
-    document.getElementById('addUserForm').reset();
-    currentEditingUserId = null;
-}
-
-document.getElementById('addUserForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (currentEditingUserId) {
-        updateUser(currentEditingUserId, getFormData());
-    } else {
-        createUser(getFormData());
-    }
-});
-
 
 
 
@@ -639,28 +791,28 @@ function formatDateTime(date) {
         minute: '2-digit'
     });
 }
-document.getElementById('historyPeriod').addEventListener('change', function() {
-    const period = this.value;
+// document.getElementById('historyPeriod').addEventListener('change', function() {
+//     const period = this.value;
     
-    if (period === 'custom') {
-        document.getElementById('customPeriod').style.display = 'flex';
-    } else {
-        document.getElementById('customPeriod').style.display = 'none';
-        loadUserHistory(currentViewedUserId, parseInt(period));
-    }
-});
+//     if (period === 'custom') {
+//         document.getElementById('customPeriod').style.display = 'flex';
+//     } else {
+//         document.getElementById('customPeriod').style.display = 'none';
+//         loadUserHistory(currentViewedUserId, parseInt(period));
+//     }
+// });
 
-function applyCustomPeriod() {
-    const start = document.getElementById('periodStart').value;
-    const end = document.getElementById('periodEnd').value;
+// function applyCustomPeriod() {
+//     const start = document.getElementById('periodStart').value;
+//     const end = document.getElementById('periodEnd').value;
     
-    if (start && end) {
-        console.log('Загрузка истории с', start, 'по', end);
-    }
-}
-document.getElementById('loadMoreHistory').addEventListener('click', function() {
-    console.log('Загрузка дополнительной истории...');
-});
+//     if (start && end) {
+//         console.log('Загрузка истории с', start, 'по', end);
+//     }
+// }
+// document.getElementById('loadMoreHistory').addEventListener('click', function() {
+//     console.log('Загрузка дополнительной истории...');
+// });
 
 function generateUserReport() {
     console.log('Генерация отчёта для пользователя:', currentViewedUserId);
@@ -2110,7 +2262,7 @@ function expandAllNodes() {
         icon.textContent = '▼';
     });
 }
-async function loadDepartmentTreeForSelect(selectId, excludeId = null) {
+async function loadDepartmentTreeForSelect(selectId, selectedId = null) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -2130,12 +2282,15 @@ async function loadDepartmentTreeForSelect(selectId, excludeId = null) {
         select.innerHTML = '<option value="">— Нет (корневое) —</option>';
         
         for (const dept of data.departments) {
-            if (excludeId && dept.id == excludeId) continue;
             const prefix = '—'.repeat(dept.level) + ' ';
-            select.innerHTML += `<option value="${dept.id}">${prefix}${escapeHtml(dept.name)}</option>`;
+            const selected = selectedId == dept.id ? 'selected' : '';
+            select.innerHTML += `<option value="${dept.id}" ${selected}>${prefix}${escapeHtml(dept.name)}</option>`;
         }
+        
+        return Promise.resolve();
     } catch (error) {
         console.error('Error loading departments:', error);
+        return Promise.reject(error);
     }
 }
 // Открытие модалки добавления подразделения
@@ -2318,11 +2473,13 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
     }
     closeModal('confirmDeleteModal');
 });
-// Удаление подразделения
 function deleteDepartment(deptId, deptName) {
+    // Закрываем текущую модалку (если открыта)
+    closeModal('managePostsModal');
+    
     showConfirmDelete(
         '🗑️ Удаление подразделения',
-        `Вы уверены, что хотите удалить подразделение "${deptName}"? Все дочерние подразделения и сотрудники останутся без отдела.`,
+        `Вы уверены, что хотите удалить подразделение "${deptName}"? Все сотрудники будут перемещены в "Без отдела".`,
         async () => {
             try {
                 const token = localStorage.getItem('token');
@@ -2344,7 +2501,41 @@ function deleteDepartment(deptId, deptName) {
             }
         }
     );
-}// ========== ПЕРЕМЕЩЕНИЕ СОТРУДНИКОВ ==========
+}
+
+function deletePostWithConfirm(postId, postName) {
+    showConfirmDelete(
+        '🗑️ Удаление должности',
+        `Вы уверены, что хотите удалить должность "${postName}"? Сотрудники с этой должностью останутся без должности.`,
+        async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete post');
+                }
+                
+                // Обновляем список должностей в открытой модалке
+                const departmentId = document.getElementById('managePostsDepartmentId').value;
+                await loadPostsForDepartment(departmentId);
+                
+                // Обновляем структуру
+                loadStructure();
+                
+                showToast('Должность удалена', 'success');
+            } catch (error) {
+                console.error('Error deleting post:', error);
+                showToast(error.message, 'error');
+            }
+        }
+    );
+}
+// ========== ПЕРЕМЕЩЕНИЕ СОТРУДНИКОВ ==========
 
 let currentMoveEmployee = null;
 
@@ -2389,7 +2580,7 @@ async function openMoveEmployeeModal(employeeId, currentDeptId) {
 }
 
 // Загрузка списка подразделений для селекта
-async function loadDepartmentsForSelect(selectId, excludeId = null) {
+async function loadDepartmentsForSelect(selectId, selectedId = null) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -2401,18 +2592,23 @@ async function loadDepartmentsForSelect(selectId, excludeId = null) {
         const data = await response.json();
         const select = document.getElementById(selectId);
         
+        if (!select) return;
+        
         select.innerHTML = '<option value="">— Выберите подразделение —</option>';
         
         for (const dept of data.departments) {
-            if (excludeId && dept.id == excludeId) continue;
-            const indent = dept.level ? '—'.repeat(dept.level) + ' ' : '';
-            select.innerHTML += `<option value="${dept.id}">${indent}${escapeHtml(dept.name)}</option>`;
+            const prefix = '—'.repeat(dept.level) + ' ';
+            select.innerHTML += `<option value="${dept.id}">${prefix}${escapeHtml(dept.name)}</option>`;
+        }
+        
+        // Устанавливаем выбранное значение после загрузки
+        if (selectedId) {
+            select.value = selectedId;
         }
     } catch (error) {
         console.error('Error loading departments:', error);
     }
 }
-
 // Загрузка списка должностей
 async function loadPostsForSelect(selectId) {
     try {
@@ -2481,7 +2677,6 @@ async function confirmMoveEmployee() {
 
 // ========== РЕДАКТИРОВАНИЕ СОТРУДНИКА ==========
 
-// Открытие модалки редактирования сотрудника
 async function openEditEmployeeModal(employeeId) {
     const modal = document.getElementById('editEmployeeModal');
     if (!modal) return;
@@ -2500,26 +2695,34 @@ async function openEditEmployeeModal(employeeId) {
         const userData = await userResponse.json();
         const user = userData.user;
         
-        // Заполняем форму
-        document.getElementById('editEmployeeSurname').value = user.surname || '';
-        document.getElementById('editEmployeeName').value = user.name || '';
-        document.getElementById('editEmployeePatronymic').value = user.patronymic || '';
-        document.getElementById('editEmployeeBirthday').value = user.birthday ? user.birthday.split('T')[0] : '';
-        document.getElementById('editEmployeeEmail').value = user.email || '';
-        document.getElementById('editEmployeePhone').value = user.tel_num || '';
-        document.getElementById('editEmployeeRole').value = user.role_id || 2;
-        document.getElementById('editEmployeeStatus').value = user.status || 'active';
-        
-        // Загружаем список подразделений
+        // Заполняем карточку пользователя
+        document.getElementById('editEmployeeFullName').textContent = `${user.surname || ''} ${user.name || ''} ${user.patronymic || ''}`;
+        document.getElementById('editEmployeeUsername').textContent = `@${user.username || ''}`;
+
+        // Загружаем список подразделений и устанавливаем текущее значение
         await loadDepartmentsForSelect('editEmployeeDepartment', user.department_id);
         
-        // Загружаем список должностей для выбранного отдела
-        await loadPostsForDepartmentSelect('editEmployeePost', user.department_id, user.post_id);
+        // Загружаем список должностей для выбранного отдела и устанавливаем текущее значение
+        if (user.department_id) {
+            await loadPostsForDepartmentSelect('editEmployeePost', user.department_id, user.post_id);
+        } else {
+            const postSelect = document.getElementById('editEmployeePost');
+            postSelect.innerHTML = '<option value="">— Сначала выберите отдел —</option>';
+        }
         
         // При изменении отдела обновляем список должностей
-        document.getElementById('editEmployeeDepartment').onchange = () => {
-            const deptId = document.getElementById('editEmployeeDepartment').value;
-            loadPostsForDepartmentSelect('editEmployeePost', deptId);
+        const departmentSelect = document.getElementById('editEmployeeDepartment');
+        const newDepartmentSelect = departmentSelect.cloneNode(true);
+        departmentSelect.parentNode.replaceChild(newDepartmentSelect, departmentSelect);
+        
+        newDepartmentSelect.onchange = () => {
+            const deptId = newDepartmentSelect.value;
+            if (deptId) {
+                loadPostsForDepartmentSelect('editEmployeePost', deptId);
+            } else {
+                const postSelect = document.getElementById('editEmployeePost');
+                postSelect.innerHTML = '<option value="">— Сначала выберите отдел —</option>';
+            }
         };
         
         openModal('editEmployeeModal');
@@ -2529,7 +2732,6 @@ async function openEditEmployeeModal(employeeId) {
     }
 }
 
-// Загрузка подразделений для селекта
 async function loadDepartmentsForSelect(selectId, selectedId = null) {
     try {
         const token = localStorage.getItem('token');
@@ -2542,6 +2744,8 @@ async function loadDepartmentsForSelect(selectId, selectedId = null) {
         const data = await response.json();
         const select = document.getElementById(selectId);
         
+        if (!select) return;
+        
         select.innerHTML = '<option value="">— Выберите подразделение —</option>';
         
         for (const dept of data.departments) {
@@ -2553,9 +2757,13 @@ async function loadDepartmentsForSelect(selectId, selectedId = null) {
         console.error('Error loading departments:', error);
     }
 }
-
-// Загрузка должностей для выбранного отдела
-async function loadPostsForDepartmentSelect(selectId, departmentId) {
+async function loadPostsForDepartmentSelect(selectId, departmentId, selectedPostId = null) {
+    if (!departmentId) {
+        const select = document.getElementById(selectId);
+        if (select) select.innerHTML = '<option value="">— Сначала выберите отдел —</option>';
+        return;
+    }
+    
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/posts/department/${departmentId}`, {
@@ -2567,10 +2775,13 @@ async function loadPostsForDepartmentSelect(selectId, departmentId) {
         const data = await response.json();
         const select = document.getElementById(selectId);
         
+        if (!select) return;
+        
         select.innerHTML = '<option value="">— Не выбрана —</option>';
         
         for (const post of data.posts) {
-            select.innerHTML += `<option value="${post.id}">${escapeHtml(post.name)}</option>`;
+            const selected = selectedPostId == post.id ? 'selected' : '';
+            select.innerHTML += `<option value="${post.id}" ${selected}>${escapeHtml(post.name)}</option>`;
         }
     } catch (error) {
         console.error('Error loading posts for select:', error);
@@ -2580,24 +2791,8 @@ async function loadPostsForDepartmentSelect(selectId, departmentId) {
 // Сохранение изменений сотрудника
 async function saveEmployeeEdit() {
     const employeeId = document.getElementById('editEmployeeId').value;
-    
-    const formData = {
-        surname: document.getElementById('editEmployeeSurname').value,
-        name: document.getElementById('editEmployeeName').value,
-        patronymic: document.getElementById('editEmployeePatronymic').value,
-        birthday: document.getElementById('editEmployeeBirthday').value,
-        email: document.getElementById('editEmployeeEmail').value,
-        telNum: document.getElementById('editEmployeePhone').value,
-        departmentId: document.getElementById('editEmployeeDepartment').value || null,
-        postId: document.getElementById('editEmployeePost').value || null,
-        roleId: document.getElementById('editEmployeeRole').value,
-        status: document.getElementById('editEmployeeStatus').value
-    };
-    
-    if (!formData.surname || !formData.name || !formData.email || !formData.telNum) {
-        showToast('Заполните все обязательные поля', 'error');
-        return;
-    }
+    const departmentId = document.getElementById('editEmployeeDepartment').value || null;
+    const postId = document.getElementById('editEmployeePost').value || null;
     
     try {
         const token = localStorage.getItem('token');
@@ -2607,7 +2802,10 @@ async function saveEmployeeEdit() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify({ 
+                departmentId: departmentId,
+                postId: postId
+            })
         });
         
         if (!response.ok) throw new Error('Failed to update employee');
@@ -2660,7 +2858,7 @@ async function loadPostsForDepartment(departmentId) {
         container.innerHTML = posts.map(post => `
             <div class="post-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eef2f6;">
                 <span>📌 ${escapeHtml(post.name)}</span>
-                <button class="btn-icon buttonbase" onclick="deletePost(${post.id})" style="color: #dc3545;" title="Удалить">🗑️</button>
+                <button class="btn-icon buttonbase" onclick="deletePostWithConfirm(${post.id}, '${escapeHtml(post.name)}')" style="color: #dc3545;" title="Удалить">🗑️</button>
             </div>
         `).join('');
     } catch (error) {

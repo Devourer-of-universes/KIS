@@ -516,7 +516,7 @@
         </main>
     </div>
     <div id="addUserModal" class="admin-modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
                 <h2>👤 Добавление сотрудника</h2>
                 <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
@@ -524,28 +524,29 @@
             
             <div class="modal-body">
                 <form id="addUserForm" class="modal-form">
+                    <input type="hidden" id="editUserId">
+                    
                     <!-- Личная информация -->
                     <div class="form-section">
                         <h3>Личная информация</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="userLastName">Фамилия </label>
-                                <input type="text" id="userLastName" name="lastName" required>
+                                <label for="userLastName">Фамилия *</label>
+                                <input type="text" id="userLastName" required>
                             </div>
                             <div class="form-group">
-                                <label for="userFirstName">Имя </label>
-                                <input type="text" id="userFirstName" name="firstName" required>
+                                <label for="userFirstName">Имя *</label>
+                                <input type="text" id="userFirstName" required>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="userMiddleName">Отчество</label>
-                                <input type="text" id="userMiddleName" name="middleName">
+                                <input type="text" id="userMiddleName">
                             </div>
                             <div class="form-group">
                                 <label for="userBirthDate">Дата рождения</label>
-                                <input type="date" id="userBirthDate" name="birthDate">
+                                <input type="date" id="userBirthDate">
                             </div>
                         </div>
                     </div>
@@ -555,12 +556,12 @@
                         <h3>Контактная информация</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="userPhone">Номер телефона </label>
-                                <input type="tel" id="userPhone" name="phone" placeholder="+7 XXX XXX-XX-XX" required>
+                                <label for="userEmail">Email *</label>
+                                <input type="email" id="userEmail" required>
                             </div>
                             <div class="form-group">
-                                <label for="userEmail">Email </label>
-                                <input type="email" id="userEmail" name="email" placeholder="user@company.ru" required>
+                                <label for="userPhone">Телефон *</label>
+                                <input type="tel" id="userPhone" required>
                             </div>
                         </div>
                     </div>
@@ -568,28 +569,27 @@
                     <!-- Рабочая информация -->
                     <div class="form-section">
                         <h3>Рабочая информация</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="userPosition">Должность </label>
-                                <input type="text" id="userPosition" name="position" placeholder="Например, Менеджер проектов" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="userDepartment">Подразделение </label>
-                                <select id="userDepartment" name="department" required>
-                                    <option value="">Выберите подразделение</option>
-                                    <option value="dev">Отдел разработки</option>
-                                    <option value="finance">Финансовый отдел</option>
-                                    <option value="marketing">Отдел маркетинга</option>
-                                    <option value="hr">HR отдел</option>
-                                </select>
-                            </div>
+                        <div class="form-group">
+                            <label for="userDepartmentId">Подразделение *</label>
+                            <select id="userDepartmentId" required>
+                                <option value="">— Выберите подразделение —</option>
+                            </select>
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="userStartDate">Дата приёма *</label>
-                                <input type="date" id="userStartDate" name="startDate" required>
-                            </div>
+                        <div class="form-group">
+                            <label for="userPostId">Должность *</label>
+                            <select id="userPostId" required>
+                                <option value="">— Сначала выберите подразделение —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userRoleId">Роль в системе *</label>
+                            <select id="userRoleId" required>
+                                <option value="">— Выберите роль —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userStartDate">Дата приёма</label>
+                            <input type="date" id="userStartDate">
                         </div>
                     </div>
 
@@ -598,21 +598,22 @@
                         <h3>Учётные данные</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="userLogin">Логин </label>
-                                <input type="text" id="userLogin" name="login" placeholder="Будет сгенерирован автоматически" readonly>
+                                <label for="userLogin">Логин</label>
+                                <input type="text" id="userLogin" readonly>
+                                <small style="color: #999;">Генерируется автоматически</small>
                             </div>
                             <div class="form-group">
-                                <label for="userPassword">Пароль </label>
-                                <div class="password-field">
-                                    <input type="password" id="userPassword" name="password" placeholder="Будет сгенерирован автоматически" readonly>
-                                    <button type="button" class="generate-password-btn" onclick="generatePassword()">🎲</button>
+                                <label for="userPassword">Пароль</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="userPassword" readonly style="flex: 1;">
+                                    <button type="button" class="buttonbase" onclick="generateRandomPassword()">🎲 Сгенерировать</button>
                                 </div>
+                                <small style="color: #999;">Генерируется автоматически</small>
                             </div>
                         </div>
-                        
                         <div class="form-checkbox">
                             <label>
-                                <input type="checkbox" name="sendCredentials" checked> 
+                                <input type="checkbox" id="sendCredentials" checked> 
                                 Отправить учётные данные на email
                             </label>
                         </div>
@@ -622,175 +623,25 @@
             
             <div class="modal-footer">
                 <button type="button" class="buttonbase" onclick="closeModal('addUserModal')">Отмена</button>
-                <button type="submit" form="addUserForm" class="buttonbase">Добавить сотрудника</button>
+                <button type="submit" form="addUserForm" class="buttonbase" id="saveUserBtn">Добавить сотрудника</button>
             </div>
         </div>
     </div>
     <div id="userInfoModal" class="admin-modal">
-        <div class="modal-content user-info-modal">
+        <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h2>👤 Информация о сотруднике</h2>
+                <h2>ℹ️ Информация о пользователе</h2>
                 <button class="modal-close" onclick="closeModal('userInfoModal')">&times;</button>
             </div>
-            
-            <div class="modal-body">
-                <!-- Основная информация -->
-                <div class="user-info-section">
-                    <div class="user-profile-header">
-                        <div class="user-avatar-large">
-                            <img src="../materials/avatar_for_profile.png" alt="Аватар">
-                            <span class="user-status-badge status-active">Активен</span>
-                        </div>
-                        <div class="user-main-info">
-                            <h3 class="user-fullname" id="info-user-name">Иванов Иван Иванович</h3>
-                            <p class="user-position" id="info-user-position">Системный администратор</p>
-                            <div class="user-contacts">
-                                <span class="contact-item" id="info-user-email">📧 ivanov@company.ru</span>
-                                <span class="contact-item" id="info-user-phone">📞 +7 (000) 000-00-00</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Детальная информация в табличном виде -->
-                <div class="user-details-grid">
-                    <div class="detail-group">
-                        <h4>Личная информация</h4>
-                        <div class="detail-item">
-                            <span class="detail-label">Дата рождения:</span>
-                            <span class="detail-value" id="info-user-birthdate">15.03.1985</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Возраст:</span>
-                            <span class="detail-value" id="info-user-age">38 лет</span>
-                        </div>
-                    </div>
-
-                    <div class="detail-group">
-                        <h4>Рабочая информация</h4>
-                        <div class="detail-item">
-                            <span class="detail-label">Отдел:</span>
-                            <span class="detail-value" id="info-user-department">ИТ отдел</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Дата приёма:</span>
-                            <span class="detail-value" id="info-user-hiredate">10.01.2020</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Стаж:</span>
-                            <span class="detail-value" id="info-user-experience">4 года 2 месяца</span>
-                        </div>
-                    </div>
-
-                    <div class="detail-group">
-                        <h4>Учётные данные</h4>
-                        <div class="detail-item">
-                            <span class="detail-label">Логин:</span>
-                            <span class="detail-value" id="info-user-login">ivanov.i</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Роль:</span>
-                            <span class="detail-value" id="info-user-role">
-                                <select class="role-select-small">
-                                    <option value="user">Пользователь</option>
-                                    <option value="admin" selected>Администратор</option>
-                                    <option value="manager">Менеджер</option>
-                                </select>
-                            </span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Последний вход:</span>
-                            <span class="detail-value" id="info-user-lastlogin">20.01.2024, 14:30</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Статистика активности -->
-                <div class="user-stats-section">
-                    <h4>📊 Статистика активности</h4>
-                    <div class="stats-grid">
-                        <div class="stats-item">
-                            <span class="stats-number" id="info-docs-created">24</span>
-                            <span class="stats-label">Создано документов</span>
-                        </div>
-                        <div class="stats-item">
-                            <span class="stats-number" id="info-tasks-completed">156</span>
-                            <span class="stats-label">Выполнено задач</span>
-                        </div>
-                        <div class="stats-item">
-                            <span class="stats-number" id="info-approvals-done">89</span>
-                            <span class="stats-label">Согласований</span>
-                        </div>
-                        <div class="stats-item">
-                            <span class="stats-number" id="info-active-processes">5</span>
-                            <span class="stats-label">Активных процессов</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- История действий -->
-                <div class="user-history-section">
-                    <div class="section-header">
-                        <h4>📋 История действий</h4>
-                        <div class="history-filters">
-                            <select class="period-select" id="historyPeriod">
-                                <option value="7">За 7 дней</option>
-                                <option value="30" selected>За 30 дней</option>
-                                <option value="90">За 3 месяца</option>
-                                <option value="365">За год</option>
-                                <option value="custom">Произвольный период</option>
-                            </select>
-                            <div class="custom-period" id="customPeriod" style="display: none;">
-                                <span>c</span>
-                                <input type="date" id="periodStart">
-                                <span>по</span>
-                                <input type="date" id="periodEnd">
-                                <button class="buttonbase" onclick="applyCustomPeriod()">Применить</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="history-timeline" id="userHistoryTimeline">
-                        <!-- История будет загружаться динамически -->
-                        <div class="history-item">
-                            <div class="history-time">20.01.2024 14:25</div>
-                            <div class="history-action">
-                                <span class="action-icon">📄</span>
-                                <span class="action-text">Создал документ "Отчёт за 4 квартал 2023"</span>
-                                <span class="action-doc">№ D-000245</span>
-                            </div>
-                        </div>
-                        <div class="history-item">
-                            <div class="history-time">20.01.2024 11:30</div>
-                            <div class="history-action">
-                                <span class="action-icon">✅</span>
-                                <span class="action-text">Завершил задачу "Подготовка презентации"</span>
-                                <span class="action-doc">№ T-001567</span>
-                            </div>
-                        </div>
-                        <div class="history-item">
-                            <div class="history-time">19.01.2024 16:45</div>
-                            <div class="history-action">
-                                <span class="action-icon">🔄</span>
-                                <span class="action-text">Отправил на согласование документ</span>
-                                <span class="action-doc">Договор с ООО "ТехноПрогресс"</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="history-load-more">
-                        <button class="buttonbase" id="loadMoreHistory">Загрузить ещё</button>
-                    </div>
-                </div>
+            <div class="modal-body" id="userInfoBody">
+                <div style="text-align: center; padding: 20px;">Загрузка...</div>
             </div>
-
             <div class="modal-footer">
-                <button class="buttonbase" onclick="openModal('addUserModal')">✎ Редактировать</button>
-                <button class="buttonbase" onclick="generateUserReport()">📊 Отчёт по активности</button>
                 <button class="buttonbase" onclick="closeModal('userInfoModal')">Закрыть</button>
+                <button class="buttonbase" onclick="openUserModal(currentUserId)" id="editFromInfoBtn">✏️ Редактировать</button>
             </div>
         </div>
-    </div>    
+    </div>   
     <div id="addEmployeeModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -920,87 +771,41 @@
             </div>
         </div>
     </div>
-    <!-- Модальное окно редактирования сотрудника -->
     <div id="editEmployeeModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>✏️ Редактирование сотрудника</h2>
                 <button class="modal-close" onclick="closeModal('editEmployeeModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="editEmployeeForm">
-                    <input type="hidden" id="editEmployeeId">
-                    
-                    <div class="form-section">
-                        <h3>Личная информация</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Фамилия</label>
-                                <input type="text" id="editEmployeeSurname" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Имя</label>
-                                <input type="text" id="editEmployeeName" class="form-input" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Отчество</label>
-                                <input type="text" id="editEmployeePatronymic" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label>Дата рождения</label>
-                                <input type="date" id="editEmployeeBirthday" class="form-input">
-                            </div>
-                        </div>
+                <input type="hidden" id="editEmployeeId">
+                
+                <!-- Карточка пользователя -->
+                <div class="employee-profile-card" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--c_bg); border-radius: 12px; margin-bottom: 20px;">
+                    <div class="employee-avatar" style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden;">
+                        <img id="editEmployeeAvatar" src="../materials/avatar_for_profile.png" alt="Аватар" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
-
-                    <div class="form-section">
-                        <h3>Контактная информация</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="editEmployeeEmail" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Телефон</label>
-                                <input type="tel" id="editEmployeePhone" class="form-input" required>
-                            </div>
-                        </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 16px;" id="editEmployeeFullName">—</div>
+                        <div style="font-size: 12px; color: var(--c_surf_txt);" id="editEmployeeUsername">@—</div>
                     </div>
-
-                    <div class="form-section">
-                        <h3>Рабочая информация</h3>
-                        <div class="form-group">
-                            <label>Подразделение</label>
-                            <select id="editEmployeeDepartment" class="form-select" required>
-                                <option value="">— Выберите подразделение —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Должность</label>
-                            <select id="editEmployeePost" class="form-select">
-                                <option value="">— Не выбрана —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Роль в системе</label>
-                            <select id="editEmployeeRole" class="form-select">
-                                <option value="1">Администратор</option>
-                                <option value="2">Пользователь</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Статус</label>
-                            <select id="editEmployeeStatus" class="form-select">
-                                <option value="active">🟢 Активен</option>
-                                <option value="away">🌙 Не беспокоить</option>
-                                <option value="offline">⚫ Не в сети</option>
-                                <option value="blocked">🔴 Заблокирован</option>
-                            </select>
-                        </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>Рабочая информация</h3>
+                    <div class="form-group">
+                        <label>Подразделение</label>
+                        <select id="editEmployeeDepartment" class="form-select" required>
+                            <option value="">— Выберите подразделение —</option>
+                        </select>
                     </div>
-                </form>
+                    <div class="form-group">
+                        <label>Должность</label>
+                        <select id="editEmployeePost" class="form-select">
+                            <option value="">— Не выбрана —</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="buttonbase" onclick="closeModal('editEmployeeModal')">Отмена</button>
@@ -1789,7 +1594,6 @@
             </div>
         </div>
     </div>
-
 
     <script src="../scripts/admin.js"></script>
 </body>

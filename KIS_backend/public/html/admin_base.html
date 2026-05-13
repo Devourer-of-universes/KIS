@@ -516,9 +516,9 @@
         </main>
     </div>
     <div id="addUserModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h2>👤 Добавление сотрудника</h2>
+                <h2>👤 Добавление пользователя</h2>
                 <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
             </div>
             
@@ -566,30 +566,14 @@
                         </div>
                     </div>
 
-                    <!-- Рабочая информация -->
+                    <!-- Роль в системе -->
                     <div class="form-section">
-                        <h3>Рабочая информация</h3>
+                        <h3>Роль в системе</h3>
                         <div class="form-group">
-                            <label for="userDepartmentId">Подразделение *</label>
-                            <select id="userDepartmentId" required>
-                                <option value="">— Выберите подразделение —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="userPostId">Должность *</label>
-                            <select id="userPostId" required>
-                                <option value="">— Сначала выберите подразделение —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="userRoleId">Роль в системе *</label>
+                            <label for="userRoleId">Роль *</label>
                             <select id="userRoleId" required>
                                 <option value="">— Выберите роль —</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="userStartDate">Дата приёма</label>
-                            <input type="date" id="userStartDate">
                         </div>
                     </div>
 
@@ -611,19 +595,13 @@
                                 <small style="color: #999;">Генерируется автоматически</small>
                             </div>
                         </div>
-                        <div class="form-checkbox">
-                            <label>
-                                <input type="checkbox" id="sendCredentials" checked> 
-                                Отправить учётные данные на email
-                            </label>
-                        </div>
                     </div>
                 </form>
             </div>
             
             <div class="modal-footer">
                 <button type="button" class="buttonbase" onclick="closeModal('addUserModal')">Отмена</button>
-                <button type="submit" form="addUserForm" class="buttonbase" id="saveUserBtn">Добавить сотрудника</button>
+                <button type="submit" form="addUserForm" class="buttonbase" id="saveUserBtn">Добавить пользователя</button>
             </div>
         </div>
     </div>

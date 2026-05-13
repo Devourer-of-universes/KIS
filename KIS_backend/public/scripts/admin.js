@@ -315,8 +315,8 @@ async function loadUserDataToForm(userId) {
         const data = await response.json();
         const user = data.user;
         
-        // Основные данные
-        document.getElementById('editUserId').value = user.id;
+        // Заполняем только существующие поля
+        document.getElementById('editUserId').value = user.id || '';
         document.getElementById('userLastName').value = user.surname || '';
         document.getElementById('userFirstName').value = user.name || '';
         document.getElementById('userMiddleName').value = user.patronymic || '';
@@ -326,45 +326,12 @@ async function loadUserDataToForm(userId) {
         document.getElementById('userLogin').value = user.username || '';
         document.getElementById('userPassword').value = '••••••••';
         
-        // Дата приёма
-        if (user.start_date) {
-            document.getElementById('userStartDate').value = user.start_date.split('T')[0];
-        }
-        
-        // Загружаем подразделения
-        await loadDepartmentsForSelect('userDepartmentId', user.department_id);
-        
-        // Принудительно устанавливаем выбранное подразделение
-        const deptSelect = document.getElementById('userDepartmentId');
-        if (user.department_id && deptSelect) {
-            deptSelect.value = user.department_id;
-        }
-        
         // Загружаем роли
         await loadRolesForUserForm();
-        document.getElementById('userRoleId').value = user.role_id || 2;
-        
-        // Если есть отдел, загружаем должности и устанавливаем выбранную
-        if (user.department_id) {
-            await loadPostsForDepartmentSelect('userPostId', user.department_id, user.post_id);
-            
-            // Принудительно устанавливаем должность
-            const postSelect = document.getElementById('userPostId');
-            if (user.post_id && postSelect) {
-                postSelect.value = user.post_id;
-            }
+        const roleSelect = document.getElementById('userRoleId');
+        if (roleSelect && user.role_id) {
+            roleSelect.value = user.role_id;
         }
-        
-        // Обработчик изменения отдела
-        deptSelect.onchange = () => {
-            const deptId = deptSelect.value;
-            if (deptId) {
-                loadPostsForDepartmentSelect('userPostId', deptId);
-            } else {
-                const postSelect = document.getElementById('userPostId');
-                postSelect.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
-            }
-        };
         
     } catch (error) {
         console.error('Error loading user:', error);
@@ -372,8 +339,8 @@ async function loadUserDataToForm(userId) {
         closeModal('addUserModal');
     }
 }
-
 // Открытие модалки (создание или редактирование)
+
 function openUserModal(userId = null) {
     currentEditingUserId = userId;
     const modal = document.getElementById('addUserModal');
@@ -384,12 +351,6 @@ function openUserModal(userId = null) {
     document.getElementById('addUserForm').reset();
     document.getElementById('editUserId').value = '';
     
-    // Сбрасываем select должностей
-    const postSelect = document.getElementById('userPostId');
-    if (postSelect) {
-        postSelect.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
-    }
-    
     if (userId) {
         title.textContent = '✏️ Редактирование пользователя';
         submitBtn.textContent = 'Сохранить изменения';
@@ -397,20 +358,6 @@ function openUserModal(userId = null) {
     } else {
         title.textContent = '👤 Добавление пользователя';
         submitBtn.textContent = 'Добавить пользователя';
-        
-        // Загружаем подразделения
-        loadDepartmentTreeForSelect('userDepartmentId').then(() => {
-            const deptSelect = document.getElementById('userDepartmentId');
-            deptSelect.onchange = () => {
-                const deptId = deptSelect.value;
-                if (deptId) {
-                    loadPostsForDepartmentSelect('userPostId', deptId);
-                } else {
-                    const postSelect = document.getElementById('userPostId');
-                    postSelect.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
-                }
-            };
-        });
         
         // Загружаем роли
         loadRolesForUserForm();
@@ -424,7 +371,7 @@ function openUserModal(userId = null) {
 }
 
 // Загрузка списка подразделений для формы
-async function loadDepartmentsForUserForm() {
+async function loadDepartmentsForSelect(selectId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -434,7 +381,8 @@ async function loadDepartmentsForUserForm() {
         if (!response.ok) throw new Error('Failed to load departments');
         
         const data = await response.json();
-        const select = document.getElementById('userDepartmentId');
+        const select = document.getElementById(selectId);
+        if (!select) return;
         
         select.innerHTML = '<option value="">— Выберите подразделение —</option>';
         
@@ -442,16 +390,6 @@ async function loadDepartmentsForUserForm() {
             const prefix = '—'.repeat(dept.level) + ' ';
             select.innerHTML += `<option value="${dept.id}">${prefix}${escapeHtml(dept.name)}</option>`;
         }
-        
-        // При изменении отдела обновляем список должностей
-        select.onchange = () => {
-            const deptId = select.value;
-            if (deptId) {
-                loadPostsForUserForm(deptId);
-            } else {
-                document.getElementById('userPostId').innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
-            }
-        };
     } catch (error) {
         console.error('Error loading departments:', error);
     }
@@ -493,6 +431,8 @@ async function loadRolesForUserForm() {
         const data = await response.json();
         const select = document.getElementById('userRoleId');
         
+        if (!select) return;
+        
         select.innerHTML = '<option value="">— Выберите роль —</option>';
         
         for (const role of data.roles) {
@@ -531,17 +471,16 @@ document.getElementById('userFirstName').addEventListener('input', generateLogin
 // Сбор данных из формы
 function getUserFormData() {
     return {
-        username: document.getElementById('userLogin').value,
-        surname: document.getElementById('userLastName').value,
-        name: document.getElementById('userFirstName').value,
-        patronymic: document.getElementById('userMiddleName').value,
-        birthday: document.getElementById('userBirthDate').value || null,
-        email: document.getElementById('userEmail').value,
-        telNum: document.getElementById('userPhone').value,
-        password: document.getElementById('userPassword').value,
-        departmentId: document.getElementById('userDepartmentId').value ? parseInt(document.getElementById('userDepartmentId').value) : null,
-        postId: document.getElementById('userPostId').value ? parseInt(document.getElementById('userPostId').value) : null,
-        roleId: parseInt(document.getElementById('userRoleId').value) || 2
+        username: document.getElementById('userLogin')?.value || '',
+        surname: document.getElementById('userLastName')?.value || '',
+        name: document.getElementById('userFirstName')?.value || '',
+        patronymic: document.getElementById('userMiddleName')?.value || '',
+        birthday: document.getElementById('userBirthDate')?.value || null,
+        email: document.getElementById('userEmail')?.value || '',
+        telNum: document.getElementById('userPhone')?.value || '',
+        password: document.getElementById('userPassword')?.value || '',
+        roleId: parseInt(document.getElementById('userRoleId')?.value) || 2
+        // Убрали departmentId, postId, startDate
     };
 }
 
@@ -553,8 +492,6 @@ function validateUserForm(data) {
     if (!data.telNum) return 'Телефон обязателен';
     if (!data.username) return 'Логин не сгенерирован';
     if (!currentEditingUserId && !data.password) return 'Пароль обязателен';
-    if (!data.departmentId) return 'Выберите подразделение';
-    if (!data.postId) return 'Выберите должность';
     if (!data.roleId) return 'Выберите роль';
     return null;
 }
@@ -2040,7 +1977,7 @@ async function loadStructure() {
         if (!response.ok) throw new Error('Failed to load structure');
         
         const data = await response.json();
-        renderStructureTree(data.structure);
+        renderStructureTree(data.structure || [], data.unassigned || []);
     } catch (error) {
         console.error('Error loading structure:', error);
         container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">❌ Ошибка загрузки структуры</div>';
@@ -2048,95 +1985,140 @@ async function loadStructure() {
 }
 
 // Отрисовка дерева структуры
-function renderStructureTree(departments, level = 0) {
+function renderStructureTree(departments, unassignedEmployees = []) {
     const container = document.getElementById('structureContent');
-    if (!departments || departments.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px;">📭 Нет подразделений</div>';
-        return;
-    }
+    if (!container) return;
     
-    let html = '<ul class="structure-group root-group">';
+    let html = '';
     
-    for (const dept of departments) {
-        const hasChildren = dept.children && dept.children.length > 0;
-        const hasEmployees = dept.employees && dept.employees.length > 0;
+    // Отрисовка подразделений (если есть)
+    if (departments && departments.length > 0) {
+        html += '<ul class="structure-group root-group">';
         
-        html += `
-            <li class="structure-group-item" data-dept-id="${dept.id}">
-                <div class="group-header">
-                    <button class="toggle-btn" onclick="toggleDepartmentNode(${dept.id})">
-                        <span class="toggle-icon">▼</span>
-                    </button>
-                    <div class="group-info">
-                        <h3 class="structure-group-name">${escapeHtml(dept.name)}</h3>
-                        <span class="structure-group-number-employe">${dept.employees.length} сотрудников</span>
+        for (const dept of departments) {
+            const hasChildren = dept.children && dept.children.length > 0;
+            const hasEmployees = dept.employees && dept.employees.length > 0;
+            
+            html += `
+                <li class="structure-group-item" data-dept-id="${dept.id}">
+                    <div class="group-header">
+                        <button class="toggle-btn" onclick="toggleDepartmentNode(${dept.id})">
+                            <span class="toggle-icon">▼</span>
+                        </button>
+                        <div class="group-info">
+                            <h3 class="structure-group-name">${escapeHtml(dept.name)}</h3>
+                            <span class="structure-group-number-employe">${dept.employees.length} сотрудников</span>
+                        </div>
+                        <div class="group-manager">
+                            ${dept.manager ? `
+                                <h4 class="structure-employe-post manager-post">${escapeHtml(dept.manager.post_name || '—')}</h4>
+                                <h5 class="structure-employe-role manager-role">${escapeHtml(dept.manager.role_name || '—')}</h5>
+                                <h5 class="structure-employe-person manager-name">${escapeHtml(dept.manager.surname)} ${escapeHtml(dept.manager.name)}</h5>
+                                <span class="structure-employe-status manager-status status-${dept.manager.status === 'active' ? 'active' : 'inactive'}">
+                                    ${dept.manager.status === 'active' ? 'Активен' : 'Неактивен'}
+                                </span>
+                            ` : `
+                                <h4 class="structure-employe-post manager-post">—</h4>
+                                <h5 class="structure-employe-role manager-role">—</h5>
+                                <h5 class="structure-employe-person manager-name">Не назначен</h5>
+                                <span class="structure-employe-status manager-status status-inactive">—</span>
+                            `}
+                        </div>
+                        <div class="structure-group-actionbuttons">
+                            <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
+                            <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
+                            <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;">🗑️</button>
+                            <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями">📋</button>
+                        </div>
                     </div>
-                    <div class="group-manager">
-                        ${dept.manager ? `
-                            <h4 class="structure-employe-post manager-post">${escapeHtml(dept.manager.post_name || '—')}</h4>
-                            <h5 class="structure-employe-role manager-role">${escapeHtml(dept.manager.role_name || '—')}</h5>
-                            <h5 class="structure-employe-person manager-name">${escapeHtml(dept.manager.surname)} ${escapeHtml(dept.manager.name)} ${escapeHtml(dept.manager.patronymic || '')}</h5>
-                            <span class="structure-employe-status manager-status status-${dept.manager.status === 'active' ? 'active' : 'inactive'}">
-                                ${dept.manager.status === 'active' ? 'Активен' : 'Неактивен'}
-                            </span>
-                        ` : `
-                            <h4 class="structure-employe-post manager-post">—</h4>
-                            <h5 class="structure-employe-role manager-role">—</h5>
-                            <h5 class="structure-employe-person manager-name">Не назначен</h5>
-                            <span class="structure-employe-status manager-status status-inactive">—</span>
-                        `}
-                    </div>
-                    <div class="structure-group-actionbuttons">
-                        <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
-                        <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
-                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;">🗑️</button>
-                        <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями">📋</button>
-                    </div>
-                </div>
-        `;
-        
-        // Сотрудники (исключая руководителя)
-        const regularEmployees = dept.employees.filter(emp => emp.id !== dept.manager_id);
-
-if (regularEmployees.length > 0) {
-    html += `<ul class="structure-employees" id="employees-${dept.id}">`;
-    for (const emp of regularEmployees) {
-        html += `
-            <li class="structure-employee-item">
-                <div class="employee-card">
-                    <div class="employee-avatar">
-                        <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
-                    </div>
-                    <div class="employee-info">
-                        <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
-                        <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
-                        <h5 class="structure-employe-person">${escapeHtml(emp.patronymic || '')}</h5>
-                        <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
-                            ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
-                        </span>
-                    </div>
-                    <div class="employee-actions">
-                        <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
-                        <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
-                    </div>
-                </div>
-            </li>
-        `;
-    }
-    html += `</ul>`;
-}
-        
-        // Дочерние подразделения
-        if (hasChildren) {
-            html += `<div class="structure-subgroups" id="subdepartments-${dept.id}">`;
-            html += renderSubtree(dept.children);
-            html += `</div>`;
+            `;
+            
+            // Сотрудники отдела
+            if (hasEmployees) {
+                html += `<ul class="structure-employees" id="employees-${dept.id}">`;
+                for (const emp of dept.employees) {
+                    html += `
+                        <li class="structure-employee-item">
+                            <div class="employee-card">
+                                <div class="employee-avatar">
+                                    <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
+                                </div>
+                                <div class="employee-info">
+                                    <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
+                                    <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
+                                    <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
+                                        ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
+                                    </span>
+                                </div>
+                                <div class="employee-actions">
+                                    <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
+                                    <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                }
+                html += `</ul>`;
+            }
+            
+            // Дочерние подразделения
+            if (hasChildren) {
+                html += `<div class="structure-subgroups" id="subdepartments-${dept.id}">`;
+                html += renderSubtree(dept.children);
+                html += `</div>`;
+            }
+            
+            html += `</li>`;
         }
         
-        html += `</li>`;
+        html += `</ul>`;
     }
     
-    html += `</ul>`;
+    // ===== СЕКЦИЯ "БЕЗ ОТДЕЛА" =====
+    if (unassignedEmployees && unassignedEmployees.length > 0) {
+        html += `
+            <div class="unassigned-section" style="margin-top: 20px; border-top: 2px dashed var(--c_surf_txt); padding-top: 15px;">
+                <div class="section-header" style="margin-bottom: 15px;">
+                    <h3 style="color: var(--c_surf_txt);">👥 Без отдела</h3>
+                    <span class="unassigned-count">${unassignedEmployees.length} сотрудников</span>
+                </div>
+                <ul class="structure-employees unassigned-list">
+        `;
+        
+        for (const emp of unassignedEmployees) {
+            html += `
+                <li class="structure-employee-item">
+                    <div class="employee-card">
+                        <div class="employee-avatar">
+                            <img src="${emp.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
+                        </div>
+                        <div class="employee-info">
+                            <h4 class="structure-employe-post">${escapeHtml(emp.post_name || '—')}</h4>
+                            <h5 class="structure-employe-role">${escapeHtml(emp.surname)} ${escapeHtml(emp.name)}</h5>
+                            <h5 class="structure-employe-person">${escapeHtml(emp.patronymic || '')}</h5>
+                            <span class="structure-employe-status status-${emp.status === 'active' ? 'active' : 'inactive'}">
+                                ${emp.status === 'active' ? 'Активен' : 'Неактивен'}
+                            </span>
+                        </div>
+                        <div class="employee-actions">
+                            <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, null)" title="Переместить">↷</button>
+                            <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                        </div>
+                    </div>
+                </li>
+            `;
+        }
+        
+        html += `
+                </ul>
+            </div>
+        `;
+    }
+    
+    if (html === '') {
+        html = '<div style="text-align: center; padding: 40px;">📭 Нет подразделений и сотрудников</div>';
+    }
+    
     container.innerHTML = html;
 }
 
@@ -2601,9 +2583,18 @@ async function loadDepartmentsForSelect(selectId, selectedId = null) {
             select.innerHTML += `<option value="${dept.id}">${prefix}${escapeHtml(dept.name)}</option>`;
         }
         
-        // Устанавливаем выбранное значение после загрузки
+        // ПРИНУДИТЕЛЬНО устанавливаем значение ПОСЛЕ заполнения
         if (selectedId) {
             select.value = selectedId;
+            console.log('Department select set to:', select.value, 'expected:', selectedId);
+            
+            // Проверка: если не установилось, пробуем через setTimeout
+            if (select.value != selectedId) {
+                setTimeout(() => {
+                    select.value = selectedId;
+                    console.log('Department select retry set to:', select.value);
+                }, 100);
+            }
         }
     } catch (error) {
         console.error('Error loading departments:', error);
@@ -2757,10 +2748,12 @@ async function loadDepartmentsForSelect(selectId, selectedId = null) {
         console.error('Error loading departments:', error);
     }
 }
-async function loadPostsForDepartmentSelect(selectId, departmentId, selectedPostId = null) {
+async function loadPostsForDepartmentSelect(selectId, departmentId) {
     if (!departmentId) {
         const select = document.getElementById(selectId);
-        if (select) select.innerHTML = '<option value="">— Сначала выберите отдел —</option>';
+        if (select) {
+            select.innerHTML = '<option value="">— Сначала выберите подразделение —</option>';
+        }
         return;
     }
     
@@ -2774,14 +2767,12 @@ async function loadPostsForDepartmentSelect(selectId, departmentId, selectedPost
         
         const data = await response.json();
         const select = document.getElementById(selectId);
-        
         if (!select) return;
         
         select.innerHTML = '<option value="">— Не выбрана —</option>';
         
         for (const post of data.posts) {
-            const selected = selectedPostId == post.id ? 'selected' : '';
-            select.innerHTML += `<option value="${post.id}" ${selected}>${escapeHtml(post.name)}</option>`;
+            select.innerHTML += `<option value="${post.id}">${escapeHtml(post.name)}</option>`;
         }
     } catch (error) {
         console.error('Error loading posts for select:', error);

@@ -57,6 +57,7 @@ router.get('/users/:id', authMiddleware, async (req, res) => {
         const result = await query(
             `SELECT u.id, u.username, u.surname, u.name, u.patronymic, 
                     u.email, u.tel_num, u.status, u.created_at, u.birthday,
+                    u.start_date,
                     r.name as role_name, r.id as role_id,
                     p.name as post_name, d.name as department_name
              FROM users u
@@ -84,7 +85,8 @@ router.post('/users', authMiddleware, async (req, res) => {
     try {
         const { 
             username, surname, name, patronymic, birthday, 
-            postId, departmentId, email, telNum, password, roleId = 2 
+            postId, departmentId, email, telNum, password, roleId = 2,
+            startDate
         } = req.body;
         
         if (!username || !surname || !name || !email || !telNum || !password) {
@@ -110,12 +112,11 @@ router.post('/users', authMiddleware, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
         
-        // Исправленный INSERT — используем переданные departmentId и postId
         const result = await query(
-            `INSERT INTO users (username, surname, name, patronymic, birthday, post_id, department_id, email, tel_num, password_hash, role_id, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active')
+            `INSERT INTO users (username, surname, name, patronymic, birthday, post_id, department_id, email, tel_num, password_hash, role_id, status, start_date)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12)
              RETURNING id, username, surname, name, email, tel_num, status, role_id`,
-            [username, surname, name, patronymic || null, birthday, postId || null, departmentId || null, email, telNum, passwordHash, roleId]
+            [username, surname, name, patronymic || null, birthday, postId || null, departmentId || null, email, telNum, passwordHash, roleId, startDate || null]
         );
         
         res.status(201).json({ success: true, user: result.rows[0] });
@@ -125,11 +126,11 @@ router.post('/users', authMiddleware, async (req, res) => {
     }
 });
 
-// Обновление пользователя
+// Обновление пользователя (только личные данные, контакты, роль, статус)
 router.put('/users/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { surname, name, patronymic, email, telNum, roleId, status, postId, departmentId } = req.body;
+        const { surname, name, patronymic, email, telNum, roleId, status } = req.body;
         
         const updates = [];
         const values = [];
@@ -142,8 +143,8 @@ router.put('/users/:id', authMiddleware, async (req, res) => {
         if (telNum !== undefined) { updates.push(`tel_num = $${idx++}`); values.push(telNum); }
         if (roleId !== undefined) { updates.push(`role_id = $${idx++}`); values.push(roleId); }
         if (status !== undefined) { updates.push(`status = $${idx++}`); values.push(status); }
-        if (postId !== undefined) { updates.push(`post_id = $${idx++}`); values.push(postId); }
-        if (departmentId !== undefined) { updates.push(`department_id = $${idx++}`); values.push(departmentId); }
+        
+        // НЕ ОБНОВЛЯЕМ department_id и post_id
         
         if (updates.length === 0) {
             return res.status(400).json({ error: 'Нет данных для обновления' });

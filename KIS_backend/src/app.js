@@ -38,6 +38,40 @@ app.use('/api/admin', adminRoutes);
 const uploadsPath = path.join(__dirname, '../uploads');
 console.log('Uploads path:', uploadsPath); // Для проверки
 app.use('/uploads', express.static(uploadsPath));
+// Middleware для логирования действий
+app.use('/api', async (req, res, next) => {
+    // Сохраняем оригинальный метод send
+    const originalSend = res.send;
+    
+    res.send = function(data) {
+        // Логируем только успешные запросы, которые изменяют данные
+        if (res.statusCode >= 200 && res.statusCode < 300 && 
+            ['POST', 'PUT', 'DELETE'].includes(req.method)) {
+            
+            const logData = {
+                user_id: req.userId || null,
+                action: `${req.method} ${req.route?.path || req.path}`,
+                entity_type: req.path.split('/')[1],
+                old_data: req.body ? JSON.stringify(req.body).substring(0, 500) : null,
+                ip_address: req.ip,
+                user_agent: req.headers['user-agent']
+            };
+            
+            // Асинхронно сохраняем лог (не блокируем ответ)
+            const { query } = require('./config/database');
+            query(
+                `INSERT INTO audit_logs (user_id, action, entity_type, old_data, ip_address, user_agent)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [logData.user_id, logData.action, logData.entity_type, logData.old_data, logData.ip_address, logData.user_agent]
+            ).catch(err => console.error('Logging error:', err));
+        }
+        
+        originalSend.call(this, data);
+    };
+    
+    next();
+});
+
 // 404 обработчик
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found', path: req.originalUrl });

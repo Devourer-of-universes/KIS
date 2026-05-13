@@ -135,7 +135,12 @@ const login = async (req, res) => {
              VALUES ($1, $2, $3, $4, $5)`,
             [foundUser.id, token, 'web', req.ip || 'unknown', req.headers['user-agent'] || 'unknown']
         );
-
+        // После успешного логина
+        await query(
+            `INSERT INTO audit_logs (user_id, action, ip_address, user_agent)
+            VALUES ($1, 'LOGIN', $2, $3)`,
+            [user.id, req.ip, req.headers['user-agent']]
+        );
         // Убираем пароль из ответа
         delete foundUser.password_hash;
 
@@ -194,13 +199,20 @@ const logout = async (req, res) => {
         if (token) {
             await query(`UPDATE sessions SET is_current = false WHERE token = $1`, [token]);
         }
-
+        // После логаута
+        await query(
+            `INSERT INTO audit_logs (user_id, action, ip_address, user_agent)
+            VALUES ($1, 'LOGOUT', $2, $3)`,
+            [userId, req.ip, req.headers['user-agent']]
+        );
         res.json({ success: true, message: 'Выход выполнен' });
     } catch (error) {
         console.error('❌ Logout error:', error);
         res.status(500).json({ error: 'Ошибка при выходе' });
     }
 };
+
+
 
 module.exports = {
     register,

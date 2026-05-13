@@ -574,182 +574,271 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
 
 
 
-let currentViewedUserId = null;
+let currentUserId = null;
+let currentHistoryPage = 1;
+let historyTotal = 0;
+let isLoadingHistory = false;
 
-function openUserInfo(userId) {
-    currentViewedUserId = userId;
-    const userData = getUserData(userId);
-    populateUserInfo(userData);
-    loadUserHistory(userId, 30);
+async function openUserInfoModal(userId) {
+    currentUserId = userId;
+    currentHistoryPage = 1;
+    const body = document.getElementById('userInfoBody');
+    body.innerHTML = '<div style="text-align: center; padding: 20px;">Загрузка...</div>';
     openModal('userInfoModal');
-}
-
-function getUserData(userId) {
-    return {
-        id: userId,
-        fullName: "Иванов Иван Иванович",
-        position: "Системный администратор",
-        department: "ИТ отдел",
-        email: "ivanov@company.ru",
-        phone: "+7 (000) 000-00-00",
-        birthDate: "1985-03-15",
-        hireDate: "2020-01-10",
-        login: "ivanov.i",
-        role: "admin",
-        lastLogin: "2024-01-20 14:30",
-        status: "active",
-        stats: {
+    
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Загружаем данные пользователя
+        const userResponse = await fetch(`/api/admin/users/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!userResponse.ok) throw new Error('Failed to load user');
+        const userData = await userResponse.json();
+        const user = userData.user;
+        
+        // Загружаем статистику (оставим пока заглушкой)
+        const stats = {
             documentsCreated: 24,
             tasksCompleted: 156,
             approvalsDone: 89,
             activeProcesses: 5
-        }
-    };
-}
-
-function populateUserInfo(userData) {
-    document.getElementById('info-user-name').textContent = userData.fullName;
-    document.getElementById('info-user-position').textContent = userData.position;
-    document.getElementById('info-user-email').textContent = `📧 ${userData.email}`;
-    document.getElementById('info-user-phone').textContent = `📞 ${userData.phone}`;
-    const age = calculateAge(userData.birthDate);
-    const experience = calculateExperience(userData.hireDate);
-    document.getElementById('info-user-birthdate').textContent = formatDate(userData.birthDate);
-    document.getElementById('info-user-age').textContent = `${age} лет`;
-    document.getElementById('info-user-department').textContent = userData.department;
-    document.getElementById('info-user-hiredate').textContent = formatDate(userData.hireDate);
-    document.getElementById('info-user-experience').textContent = experience;
-    document.getElementById('info-user-login').textContent = userData.login;
-    document.getElementById('info-user-lastlogin').textContent = userData.lastLogin;
-    const roleSelect = document.querySelector('.role-select-small');
-    roleSelect.value = userData.role;
-    document.getElementById('info-docs-created').textContent = userData.stats.documentsCreated;
-    document.getElementById('info-tasks-completed').textContent = userData.stats.tasksCompleted;
-    document.getElementById('info-approvals-done').textContent = userData.stats.approvalsDone;
-    document.getElementById('info-active-processes').textContent = userData.stats.activeProcesses;
-    const statusBadge = document.querySelector('.user-status-badge');
-    statusBadge.className = `user-status-badge status-${userData.status}`;
-    statusBadge.textContent = userData.status === 'active' ? 'Активен' : 
-                              userData.status === 'inactive' ? 'Неактивен' : 'В отпуске';
-}
-function loadUserHistory(userId, days) {
-    const timeline = document.getElementById('userHistoryTimeline');
-    timeline.innerHTML = '<div class="loading">Загрузка истории...</div>';
-    setTimeout(() => {
-        const historyData = generateMockHistory(days);
-        renderHistoryTimeline(historyData);
-    }, 500);
-}
-function generateMockHistory(days) {
-    const actions = [
-        { icon: '📄', text: 'Создал документ', doc: 'Отчёт за квартал' },
-        { icon: '✅', text: 'Завершил задачу', doc: 'Подготовка презентации' },
-        { icon: '🔄', text: 'Отправил на согласование', doc: 'Договор с поставщиком' },
-        { icon: '👥', text: 'Назначил исполнителя', doc: 'Задача T-001234' },
-        { icon: '📊', text: 'Сгенерировал отчёт', doc: 'Статистика за месяц' }
-    ];
-    
-    const history = [];
-    const now = new Date();
-    
-    for (let i = 0; i < 15; i++) {
-        const randomDaysAgo = Math.floor(Math.random() * days);
-        const randomAction = actions[Math.floor(Math.random() * actions.length)];
-        const date = new Date(now);
-        date.setDate(date.getDate() - randomDaysAgo);
+        };
         
-        history.push({
-            time: formatDateTime(date),
-            action: randomAction
-        });
-    }
-    
-    return history.sort((a, b) => new Date(b.time) - new Date(a.time));
-}
-function renderHistoryTimeline(history) {
-    const timeline = document.getElementById('userHistoryTimeline');
-    timeline.innerHTML = '';
-    
-    history.forEach(item => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        historyItem.innerHTML = `
-            <div class="history-time">${item.time}</div>
-            <div class="history-action">
-                <span class="action-icon">${item.action.icon}</span>
-                <span class="action-text">${item.action.text}</span>
-                <span class="action-doc">${item.action.doc}</span>
+        // Сначала создаём HTML структуру
+        body.innerHTML = `
+            <!-- ВИЗИТНАЯ КАРТОЧКА -->
+            <div class="user-visit-card">
+                <div class="user-card-header">
+                    <div class="user-card-avatar">
+                        <img src="${user.avatar_uri || '../materials/avatar_for_profile.png'}" alt="Аватар">
+                        <div class="user-card-status status-${user.status === 'active' ? 'active' : 'inactive'}"></div>
+                    </div>
+                    <div class="user-card-info">
+                        <h2 class="user-card-name">${escapeHtml(user.surname)} ${escapeHtml(user.name)} ${escapeHtml(user.patronymic || '')}</h2>
+                        <div class="user-card-badges">
+                            <span class="badge role-badge">${escapeHtml(user.role_name) || 'Пользователь'}</span>
+                            <span class="badge status-badge status-${user.status === 'active' ? 'active' : 'inactive'}">
+                                ${user.status === 'active' ? '🟢 Активен' : '🔴 Заблокирован'}
+                            </span>
+                        </div>
+                        <p class="user-card-position">${escapeHtml(user.post_name) || 'Должность не указана'}</p>
+                        <p class="user-card-department">${escapeHtml(user.department_name) || 'Отдел не указан'}</p>
+                    </div>
+                </div>
+                
+                <div class="user-card-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">👤</span>
+                        <span class="detail-label">Логин:</span>
+                        <span class="detail-value">${escapeHtml(user.username)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📧</span>
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">${escapeHtml(user.email)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📞</span>
+                        <span class="detail-label">Телефон:</span>
+                        <span class="detail-value">${escapeHtml(user.tel_num)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📅</span>
+                        <span class="detail-label">Дата рождения:</span>
+                        <span class="detail-value">${user.birthday ? new Date(user.birthday).toLocaleDateString('ru-RU') : '—'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📆</span>
+                        <span class="detail-label">Дата регистрации:</span>
+                        <span class="detail-value">${new Date(user.created_at).toLocaleDateString('ru-RU')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">🕐</span>
+                        <span class="detail-label">Последний вход:</span>
+                        <span class="detail-value">${user.last_seen_at ? new Date(user.last_seen_at).toLocaleString('ru-RU') : '—'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- СТАТИСТИКА АКТИВНОСТИ -->
+            <div class="user-stats-section">
+                <h3>📊 Статистика активности</h3>
+                <div class="stats-grid">
+                    <div class="stats-card">
+                        <div class="stats-number">${stats.documentsCreated}</div>
+                        <div class="stats-label">Создано документов</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${stats.tasksCompleted}</div>
+                        <div class="stats-label">Выполнено задач</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${stats.approvalsDone}</div>
+                        <div class="stats-label">Согласований</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${stats.activeProcesses}</div>
+                        <div class="stats-label">Активных процессов</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ИСТОРИЯ ДЕЙСТВИЙ -->
+            <div class="user-history-section">
+                <h3>📋 История действий</h3>
+                <div class="history-timeline" id="userHistoryTimeline">
+                    <div style="text-align: center; padding: 20px;">Загрузка истории...</div>
+                </div>
+                <div class="history-load-more" id="historyLoadMoreBtn" style="display: none;">
+                    <button class="buttonbase" onclick="loadMoreHistory()">Загрузить ещё</button>
+                </div>
             </div>
         `;
-        timeline.appendChild(historyItem);
-    });
-}
-function calculateAge(birthDate) {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
+        
+        // Теперь загружаем историю (элемент уже существует)
+        await loadUserHistory(userId, 1);
+        
+    } catch (error) {
+        console.error('Error loading user info:', error);
+        body.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">❌ Ошибка загрузки данных</div>';
     }
-    
-    return age;
 }
 
-function calculateExperience(hireDate) {
-    const today = new Date();
-    const hire = new Date(hireDate);
-    const years = today.getFullYear() - hire.getFullYear();
-    const months = today.getMonth() - hire.getMonth();
+// Загрузка истории пользователя
+async function loadUserHistory(userId, page) {
+    if (isLoadingHistory) return;
+    isLoadingHistory = true;
     
-    let experience = '';
-    if (years > 0) {
-        experience += `${years} год${years > 1 ? 'а' : ''} `;
-    }
-    if (months > 0) {
-        experience += `${months} месяц${months > 1 ? 'а' : ''}`;
-    }
+    const limit = 20;
+    const offset = (page - 1) * limit;
     
-    return experience.trim();
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/users/${userId}/history?limit=${limit}&offset=${offset}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load history');
+        
+        const data = await response.json();
+        historyTotal = data.total;
+        
+        const timeline = document.getElementById('userHistoryTimeline');
+        const loadMoreBtn = document.getElementById('historyLoadMoreBtn');
+        
+        if (page === 1) {
+            timeline.innerHTML = '';
+        }
+        
+        if (data.history.length === 0 && page === 1) {
+            timeline.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Нет действий</div>';
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            return;
+        }
+        
+        for (const item of data.history) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `
+                <div class="history-time">${item.created_at}</div>
+                <div class="history-action">
+                    <span class="action-icon">${getActionIcon(item.action)}</span>
+                    <span class="action-text">${formatActionText(item.action, item.entity_type)}</span>
+                    ${item.entity_id ? `<span class="action-doc">ID: ${item.entity_id}</span>` : ''}
+                </div>
+            `;
+            timeline.appendChild(historyItem);
+        }
+        
+        // Показываем кнопку "Загрузить ещё", если есть ещё записи
+        if (offset + limit < historyTotal) {
+            if (loadMoreBtn) loadMoreBtn.style.display = 'block';
+        } else {
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        }
+        
+        currentHistoryPage = page;
+        
+    } catch (error) {
+        console.error('Error loading history:', error);
+        const timeline = document.getElementById('userHistoryTimeline');
+        if (timeline && timeline.innerHTML === '') {
+            timeline.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Ошибка загрузки истории</div>';
+        }
+    } finally {
+        isLoadingHistory = false;
+    }
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU');
+// Загрузка следующей страницы истории
+function loadMoreHistory() {
+    if (!isLoadingHistory && currentHistoryPage * 20 < historyTotal) {
+        loadUserHistory(currentUserId, currentHistoryPage + 1);
+    }
 }
+
+// Иконка для действия
+function getActionIcon(action) {
+    if (action.includes('POST')) return '➕';
+    if (action.includes('PUT')) return '✏️';
+    if (action.includes('DELETE')) return '🗑️';
+    if (action.includes('login')) return '🔐';
+    if (action.includes('logout')) return '🚪';
+    return '📌';
+}
+
+// Форматирование текста действия
+function formatActionText(action, entityType) {
+    const map = {
+        'users': 'пользователь',
+        'departments': 'подразделение',
+        'roles': 'роль',
+        'chats': 'чат',
+        'messages': 'сообщение'
+    };
+    
+    const entity = map[entityType] || entityType;
+    
+    if (action.includes('POST')) return `Создал ${entity}`;
+    if (action.includes('PUT')) return `Изменил ${entity}`;
+    if (action.includes('DELETE')) return `Удал��л ${entity}`;
+    return action;
+}
+
+// Вспомогательная функция для отрисовки истории
+function renderHistoryItems(history) {
+    if (!history || history.length === 0) {
+        return '<div style="text-align: center; padding: 20px; color: #999;">Нет действий</div>';
+    }
+    
+    return history.map(item => `
+        <div class="history-item">
+            <div class="history-time">${item.time}</div>
+            <div class="history-action">
+                <span class="action-icon">${item.icon}</span>
+                <span class="action-text">${escapeHtml(item.text)}</span>
+                ${item.doc ? `<span class="action-doc">${escapeHtml(item.doc)}</span>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+
 
 function formatDateTime(date) {
     return date.toLocaleString('ru-RU', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
     });
 }
-// document.getElementById('historyPeriod').addEventListener('change', function() {
-//     const period = this.value;
-    
-//     if (period === 'custom') {
-//         document.getElementById('customPeriod').style.display = 'flex';
-//     } else {
-//         document.getElementById('customPeriod').style.display = 'none';
-//         loadUserHistory(currentViewedUserId, parseInt(period));
-//     }
-// });
 
-// function applyCustomPeriod() {
-//     const start = document.getElementById('periodStart').value;
-//     const end = document.getElementById('periodEnd').value;
-    
-//     if (start && end) {
-//         console.log('Загрузка истории с', start, 'по', end);
-//     }
-// }
-// document.getElementById('loadMoreHistory').addEventListener('click', function() {
-//     console.log('Загрузка дополнительной истории...');
-// });
+function loadMoreHistory() {
+    console.log('Загрузка дополнительной истории...');
+    // TODO: загрузка следующих страниц истории
+}
 
 function generateUserReport() {
     console.log('Генерация отчёта для пользователя:', currentViewedUserId);
@@ -1456,7 +1545,11 @@ function renderUsersTable(users) {
             <td>
                 <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})">ℹ️</button>
                 <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})">✏️</button>
-                <button class="btn-icon buttonbase" title="Сменить статус" onclick="openChangeStatusModal(${user.id}, '${user.status}')">🔄</button>
+                <button class="btn-icon buttonbase" 
+                    title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" 
+                    onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')">
+                    ${user.status === 'blocked' ? '🔓' : '🔒'}
+                </button>
                 <button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')">🔑</button>
                 <button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;">🗑️</button>
             </td>
@@ -1470,24 +1563,28 @@ function renderUsersTable(users) {
     document.getElementById('showingTo').textContent = end;
     document.getElementById('totalCount').textContent = totalUsers;
 }
-async function deleteUser(userId) {
-    if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.')) return;
-    
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/admin/users/${userId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!response.ok) throw new Error('Failed to delete user');
-        
-        loadUsers(currentPage, currentSearchTerm);
-        showToast('Пользователь удалён', 'success');
-    } catch (error) {
-        console.error('Error deleting user:', error);
-        showToast('Ошибка удаления', 'error');
-    }
+function deleteUser(userId) {
+    showConfirmDelete(
+        '🗑️ Удаление пользователя',
+        'Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.',
+        async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete user');
+                
+                loadUsers(currentPage, currentSearchTerm);
+                showToast('Пользователь удалён', 'success');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showToast('Ошибка удаления', 'error');
+            }
+        }
+    );
 }
 // Отрисовка пагинации
 function renderPagination() {
@@ -1571,32 +1668,58 @@ async function updateUserRole(userId, roleId) {
     }
 }
 
-// Изменение статуса
-async function toggleUserStatus(userId, currentStatus) {
-    const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
-    const action = newStatus === 'active' ? 'разблокировать' : 'заблокировать';
+let blockUserId = null;
+let blockUserName = '';
+let isBlocking = true;
+
+function openBlockUserModal(userId, userName, currentStatus) {
+    blockUserId = userId;
+    blockUserName = userName;
+    isBlocking = currentStatus !== 'blocked';
     
-    if (!confirm(`Вы уверены, что хотите ${action} этого пользователя?`)) return;
+    const modal = document.getElementById('blockUserModal');
+    const title = modal.querySelector('#blockUserTitle');
+    const message = modal.querySelector('#blockUserMessage');
+    const confirmBtn = document.getElementById('confirmBlockBtn');
     
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/admin/users/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ status: newStatus })
-        });
-        
-        if (!response.ok) throw new Error('Failed to update status');
-        
-        loadUsers(currentPage, currentSearchTerm);
-        showToast(`Пользователь ${action}н`, 'success');
-    } catch (error) {
-        console.error('Error updating status:', error);
-        showToast('Ошибка изменения статуса', 'error');
+    if (isBlocking) {
+        title.textContent = '🔒 Блокировка пользователя';
+        message.textContent = `Вы уверены, что хотите заблокировать пользователя "${userName}"?`;
+        confirmBtn.textContent = 'Заблокировать';
+        confirmBtn.style.backgroundColor = '#dc3545';
+    } else {
+        title.textContent = '🔓 Разблокировка пользователя';
+        message.textContent = `Вы уверены, что хотите разблокировать пользователя "${userName}"?`;
+        confirmBtn.textContent = 'Разблокировать';
+        confirmBtn.style.backgroundColor = '#10b981';
     }
+    
+    openModal('blockUserModal');
+    
+    document.getElementById('confirmBlockBtn').onclick = async () => {
+        const newStatus = isBlocking ? 'blocked' : 'active';
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/admin/users/${blockUserId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+            
+            if (!response.ok) throw new Error('Failed to update status');
+            
+            closeModal('blockUserModal');
+            loadUsers(currentPage, currentSearchTerm);
+            showToast(isBlocking ? 'Пользователь заблокирован' : 'Пользователь разблокирован', 'success');
+        } catch (error) {
+            console.error('Error updating status:', error);
+            showToast('Ошибка изменения статуса', 'error');
+        }
+    };
 }
 
 // Всплывающие уведомления
@@ -1617,6 +1740,56 @@ function showToast(message, type = 'info') {
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+}
+
+let currentResetUserId = null;
+
+function openResetPasswordModal(userId, username) {
+    currentResetUserId = userId;
+    document.getElementById('resetUserName').textContent = username;
+    document.getElementById('resetNewPassword').value = generateRandomPasswordString();
+    openModal('resetPasswordModal');
+    
+    document.getElementById('confirmResetPasswordBtn').onclick = async () => {
+        const newPassword = document.getElementById('resetNewPassword').value.trim();
+        if (!newPassword || newPassword.length < 6) {
+            showToast('Пароль должен содержать минимум 6 символов', 'error');
+            return;
+        }
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/admin/users/${currentResetUserId}/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ newPassword })
+            });
+            
+            if (!response.ok) throw new Error('Failed to reset password');
+            
+            closeModal('resetPasswordModal');
+            showToast('Пароль успешно изменён', 'success');
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            showToast('Ошибка сброса пароля', 'error');
+        }
+    };
+}
+
+function generateRandomPasswordString() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+}
+
+function generateNewPassword() {
+    document.getElementById('resetNewPassword').value = generateRandomPasswordString();
 }
 
 

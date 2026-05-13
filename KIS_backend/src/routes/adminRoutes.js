@@ -79,7 +79,37 @@ router.get('/users/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// Получение истории действий пользователя
+router.get('/users/:id/history', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { limit = 50, offset = 0 } = req.query;
+        
+        const result = await query(
+            `SELECT id, action, entity_type, entity_id, 
+                    to_char(created_at, 'DD.MM.YYYY HH24:MI:SS') as created_at,
+                    ip_address, user_agent
+             FROM audit_logs
+             WHERE user_id = $1
+             ORDER BY created_at DESC
+             LIMIT $2 OFFSET $3`,
+            [id, parseInt(limit), parseInt(offset)]
+        );
+        
+        const countResult = await query(
+            `SELECT COUNT(*) FROM audit_logs WHERE user_id = $1`,
+            [id]
+        );
+        
+        res.json({ 
+            history: result.rows,
+            total: parseInt(countResult.rows[0].count)
+        });
+    } catch (error) {
+        console.error('Get user history error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Создание пользователя (админом)
 router.post('/users', authMiddleware, async (req, res) => {
     try {

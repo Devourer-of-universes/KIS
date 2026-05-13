@@ -606,9 +606,9 @@
         </div>
     </div>
     <div id="userInfoModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 750px;">
             <div class="modal-header">
-                <h2>ℹ️ Информация о пользователе</h2>
+                <h2>ℹ️ Карточка сотрудника</h2>
                 <button class="modal-close" onclick="closeModal('userInfoModal')">&times;</button>
             </div>
             <div class="modal-body" id="userInfoBody">
@@ -616,10 +616,46 @@
             </div>
             <div class="modal-footer">
                 <button class="buttonbase" onclick="closeModal('userInfoModal')">Закрыть</button>
-                <button class="buttonbase" onclick="openUserModal(currentUserId)" id="editFromInfoBtn">✏️ Редактировать</button>
+                <button class="buttonbase" onclick="openUserModal(currentUserId)">✏️ Редактировать</button>
             </div>
         </div>
-    </div>   
+    </div>
+    <div id="resetPasswordModal" class="admin-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>🔑 Сброс пароля</h2>
+                <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Пользователь: <strong id="resetUserName"></strong></p>
+                <div class="form-group">
+                    <label>Новый пароль</label>
+                    <input type="text" id="resetNewPassword" class="form-input">
+                    <button class="buttonbase" style="margin-top: 8px;" onclick="generateNewPassword()">🎲 Сгенерировать</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('resetPasswordModal')">Отмена</button>
+                <button class="buttonbase" id="confirmResetPasswordBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+    <div id="blockUserModal" class="admin-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="blockUserTitle">🔒 Блокировка пользователя</h2>
+                <button class="modal-close" onclick="closeModal('blockUserModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="blockUserMessage">Вы уверены, что хотите заблокировать этого пользователя?</p>
+                <p style="font-size: 12px; color: #999;">Заблокированный пользователь не сможет войти в систему.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('blockUserModal')">Отмена</button>
+                <button class="buttonbase" id="confirmBlockBtn" style="background-color: #dc3545;">Заблокировать</button>
+            </div>
+        </div>
+    </div>  
     <div id="addEmployeeModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">

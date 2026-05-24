@@ -25,8 +25,6 @@
             <button class="buttonbase log_page_button" id="loginBtn">Войти</button>
             
             <div id="errorMessage" style="color: red; display: none; margin-top: 10px;"></div>
-            
-            <!-- <a href="/html/register.html" id="registerLink">Зарегистрироваться</a> -->
         </div>
     </div>
 
@@ -37,9 +35,29 @@
         const passwordInput = document.getElementById('passwordInput');
         const errorDiv = document.getElementById('errorMessage');
 
+        // Проверяем параметры URL при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorType = urlParams.get('error');
+            
+            if (errorType === 'blocked') {
+                errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#dc3545';
+            } else if (errorType === 'unauthorized') {
+                errorDiv.textContent = '⏰ Сессия истекла. Пожалуйста, войдите заново.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#f59e0b';
+            }
+        });
+
         loginBtn.addEventListener('click', async () => {
             const emailOrUsername = loginInput.value.trim();
             const password = passwordInput.value.trim();
+
+            // Очищаем предыдущие ошибки
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
 
             if (!emailOrUsername || !password) {
                 errorDiv.textContent = 'Заполните все поля';
@@ -47,7 +65,6 @@
                 return;
             }
 
-            errorDiv.style.display = 'none';
             loginBtn.disabled = true;
             loginBtn.textContent = 'Вход...';
 
@@ -56,13 +73,20 @@
                 if (result.success) {
                     // Перенаправляем на главную страницу
                     window.location.href = '/html/admin_base.html';
-                } else {
-                    errorDiv.textContent = result.error || 'Ошибка входа';
-                    errorDiv.style.display = 'block';
                 }
             } catch (error) {
-                errorDiv.textContent = error.message;
+                console.error('Login error:', error);
+                
+                // Показываем сообщение об ошибке от сервера
+                if (error.message && error.message.includes('заблокирована')) {
+                    errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                } else {
+                    errorDiv.textContent = error.message || 'Неверный логин или пароль';
+                }
                 errorDiv.style.display = 'block';
+                
+                // Очищаем поле пароля
+                passwordInput.value = '';
             } finally {
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Войти';

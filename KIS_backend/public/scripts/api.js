@@ -26,23 +26,44 @@ async function request(endpoint, options = {}) {
         headers['Authorization'] = `Bearer ${authToken}`;
     }
     
-    const response = await fetch(url, {
-        ...options,
-        headers
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-        throw new Error(data.error || 'Request failed');
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Если аккаунт заблокирован
+            if (response.status === 403 && data.error && data.error.includes('заблокирована')) {
+                setToken(null);
+                // Редирект на страницу логина с сообщением
+                window.location.href = '/html/login.html?error=blocked';
+                return Promise.reject(new Error(data.error));
+            }
+            
+            // Если неавторизован
+            if (response.status === 401) {
+                setToken(null);
+                if (!window.location.pathname.includes('/login.html')) {
+                    window.location.href = '/html/login.html?error=unauthorized';
+                }
+                return Promise.reject(new Error('Сессия истекла'));
+            }
+            
+            throw new Error(data.error || 'Request failed');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Request error:', error);
+        throw error;
     }
-    
-    return data;
 }
 
 // API методы
 const api = {
-    // Аутентификация
     auth: {
         register: (userData) => request('/auth/register', {
             method: 'POST',
@@ -50,25 +71,29 @@ const api = {
         }),
         
         login: async (emailOrUsername, password) => {
-            const result = await request('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ emailOrUsername, password })
-            });
-            if (result.token) {
-                setToken(result.token);
+            try {
+                const result = await request('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ emailOrUsername, password })
+                });
+                if (result.token) {
+                    setToken(result.token);
+                }
+                return result;
+            } catch (error) {
+                // Пробрасываем ошибку дальше
+                throw error;
             }
-            return result;
         },
         
         logout: () => {
             setToken(null);
-            return request('/auth/logout', { method: 'POST' });
+            return request('/auth/logout', { method: 'POST' }).catch(() => ({}));
         },
         
         getMe: () => request('/auth/me')
     },
     
-    // Пользователи
     users: {
         getAll: (search = '') => request(`/users${search ? `?search=${search}` : ''}`),
         getById: (id) => request(`/users/${id}`),
@@ -77,7 +102,6 @@ const api = {
         removeContact: (userId) => request(`/users/contacts/${userId}`, { method: 'DELETE' })
     },
     
-    // Чаты
     chats: {
         getAll: () => request('/chats'),
         getById: (chatId) => request(`/chats/${chatId}`),
@@ -96,7 +120,6 @@ const api = {
 
 // Проверяем токен при загрузке
 if (authToken) {
-    // Можно проверить валидность токена
     api.auth.getMe().catch(() => {
         setToken(null);
     });

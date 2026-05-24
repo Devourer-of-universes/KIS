@@ -293,21 +293,7 @@ function closeModal(modalId) {
 }
 
 
-function generateCredentials() {
-    const lastName = document.getElementById('userLastName').value;
-    const firstName = document.getElementById('userFirstName').value;
-    
-    if (lastName && firstName) {
-       
-        const login = `${lastName.toLowerCase()}.${firstName.charAt(0).toLowerCase()}`;
-        document.getElementById('userLogin').value = login;
-        
-        // Генерация пароля
-        generatePassword();
-    }
-}
-document.getElementById('userLastName').addEventListener('blur', generateCredentials);
-document.getElementById('userFirstName').addEventListener('blur', generateCredentials);
+
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('admin-modal')) {
         closeModal(e.target.id);
@@ -379,16 +365,22 @@ function openUserModal(userId = null) {
         title.textContent = '✏️ Редактирование пользователя';
         submitBtn.textContent = 'Сохранить изменения';
         loadUserDataToForm(userId);
+        // При редактировании скрываем поле пароля или делаем необязательным
+        const passwordGroup = document.querySelector('#userPassword').closest('.form-group');
+        if (passwordGroup) passwordGroup.style.display = 'none';
     } else {
         title.textContent = '👤 Добавление пользователя';
         submitBtn.textContent = 'Добавить пользователя';
         
+        // Показываем поле пароля
+        const passwordGroup = document.querySelector('#userPassword').closest('.form-group');
+        if (passwordGroup) passwordGroup.style.display = 'block';
+        
+        // Генерируем пароль
+        generateRandomPasswordField();
+        
         // Загружаем роли
         loadRolesForUserForm();
-        
-        // Генерируем пароль и логин
-        generateRandomPassword();
-        generateLogin();
     }
     
     openModal('addUserModal');
@@ -467,30 +459,60 @@ async function loadRolesForUserForm() {
     }
 }
 
-// Генерация логина
 function generateLogin() {
     const surname = document.getElementById('userLastName').value.trim();
     const name = document.getElementById('userFirstName').value.trim();
     
     if (surname && name) {
-        const login = `${surname.toLowerCase()}.${name.charAt(0).toLowerCase()}`;
+        const login = generateLoginFromName(surname, name);
         document.getElementById('userLogin').value = login;
     }
 }
 
-// Генерация пароля
-function generateRandomPassword() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
+// Функция для генерации логина из имени и фамилии
+function generateLoginFromName(surname, name) {
+    if (!surname || !name) return '';
+    
+    // Транслитерация
+    const translitMap = {
+        'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z',
+        'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
+        'с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh',
+        'щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'
+    };
+    
+    let surnameLat = '';
+    for (let char of surname.toLowerCase()) {
+        surnameLat += translitMap[char] || char;
     }
-    document.getElementById('userPassword').value = password;
+    
+    let nameFirstLat = '';
+    const firstChar = name.charAt(0).toLowerCase();
+    nameFirstLat += translitMap[firstChar] || firstChar;
+    
+    let login = `${surnameLat}.${nameFirstLat}`;
+    login = login.replace(/[^a-z0-9.]/g, '').toLowerCase();
+    if (login.length > 50) login = login.substring(0, 50);
+    
+    return login;
 }
 
-// Автогенерация логина при вводе имени/фамилии
-document.getElementById('userLastName').addEventListener('input', generateLogin);
-document.getElementById('userFirstName').addEventListener('input', generateLogin);
+// // Генерация пароля
+// function generateRandomPassword() {
+//     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+//     let password = '';
+//     for (let i = 0; i < 12; i++) {
+//         password += chars.charAt(Math.floor(Math.random() * chars.length));
+//     }
+//     document.getElementById('userPassword').value = password;
+// }
+
+// Навешиваем обработчики на поля ввода
+document.getElementById('userLastName')?.addEventListener('input', generateLoginFromFields);
+document.getElementById('userFirstName')?.addEventListener('input', generateLoginFromFields);
+
+// Кнопка генерации пароля
+document.getElementById('generatePasswordBtn')?.addEventListener('click', generateRandomPasswordField);
 
 // Сбор данных из формы
 function getUserFormData() {
@@ -537,7 +559,7 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
         let response;
         
         if (currentEditingUserId) {
-            // Редактирование
+            // Редактирование (не меняем пароль)
             response = await fetch(`/api/admin/users/${currentEditingUserId}`, {
                 method: 'PUT',
                 headers: {
@@ -550,13 +572,11 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
                     patronymic: formData.patronymic,
                     email: formData.email,
                     telNum: formData.telNum,
-                    roleId: parseInt(formData.roleId),
-                    departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
-                    postId: formData.postId ? parseInt(formData.postId) : null
+                    roleId: parseInt(formData.roleId)
                 })
             });
         } else {
-            // Создание
+            // Создание пользователя — отправляем пароль
             response = await fetch('/api/admin/users', {
                 method: 'POST',
                 headers: {
@@ -571,9 +591,7 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
                     birthday: formData.birthday,
                     email: formData.email,
                     telNum: formData.telNum,
-                    password: formData.password,
-                    departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
-                    postId: formData.postId ? parseInt(formData.postId) : null,
+                    password: formData.password,  // ← ОТПРАВЛЯЕМ ПАРОЛЬ
                     roleId: parseInt(formData.roleId)
                 })
             });
@@ -587,6 +605,10 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
         closeModal('addUserModal');
         loadUsers(currentPage, currentSearchTerm);
         showToast(currentEditingUserId ? 'Пользователь обновлён' : 'Пользователь создан', 'success');
+        
+        // Очищаем форму
+        document.getElementById('addUserForm').reset();
+        currentEditingUserId = null;
         
     } catch (error) {
         console.error('Error saving user:', error);
@@ -1770,7 +1792,14 @@ function openBlockUserModal(userId, userName, currentStatus) {
             
             closeModal('blockUserModal');
             loadUsers(currentPage, currentSearchTerm);
-            showToast(isBlocking ? 'Пользователь заблокирован' : 'Пользователь разблокирован', 'success');
+            
+            // Если заблокировали пользователя — показываем уведомление
+            if (isBlocking) {
+                showToast(`Пользователь "${userName}" заблокирован`, 'warning');
+            } else {
+                showToast(`Пользователь "${userName}" разблокирован`, 'success');
+            }
+            
         } catch (error) {
             console.error('Error updating status:', error);
             showToast('Ошибка изменения статуса', 'error');
@@ -1803,7 +1832,7 @@ let currentResetUserId = null;
 function openResetPasswordModal(userId, username) {
     currentResetUserId = userId;
     document.getElementById('resetUserName').textContent = username;
-    document.getElementById('resetNewPassword').value = generateRandomPasswordString();
+    document.getElementById('resetNewPassword').value = generateRandomPassword(12);
     openModal('resetPasswordModal');
     
     document.getElementById('confirmResetPasswordBtn').onclick = async () => {
@@ -1824,21 +1853,25 @@ function openResetPasswordModal(userId, username) {
                 body: JSON.stringify({ newPassword })
             });
             
-            if (!response.ok) throw new Error('Failed to reset password');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error);
+            }
             
             closeModal('resetPasswordModal');
-            showToast('Пароль успешно изменён', 'success');
+            showToast(`Пароль успешно изменён на: ${newPassword}`, 'success');
+            
         } catch (error) {
             console.error('Error resetting password:', error);
-            showToast('Ошибка сброса пароля', 'error');
+            showToast(error.message, 'error');
         }
     };
 }
 
-function generateRandomPasswordString() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+function generateRandomPassword(length = 12) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%';
     let password = '';
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < length; i++) {
         password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return password;
@@ -1847,7 +1880,54 @@ function generateRandomPasswordString() {
 function generateNewPassword() {
     document.getElementById('resetNewPassword').value = generateRandomPasswordString();
 }
+// Генерация и вставка пароля в поле
+function generateRandomPasswordField() {
+    const passwordField = document.getElementById('userPassword');
+    if (passwordField) {
+        const newPassword = generateRandomPassword(12);
+        passwordField.value = newPassword;
+        showToast('Пароль сгенерирован', 'success');
+    } else {
+        console.error('Password field not found');
+    }
+}
 
+// Автогенерация логина при вводе имени/фамилии
+function generateLoginFromFields() {
+    const surname = document.getElementById('userLastName')?.value.trim();
+    const name = document.getElementById('userFirstName')?.value.trim();
+    const loginField = document.getElementById('userLogin');
+    
+    if (surname && name && loginField) {
+        // Транслитерация
+        const translitMap = {
+            'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z',
+            'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
+            'с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh',
+            'щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
+            'А':'a','Б':'b','В':'v','Г':'g','Д':'d','Е':'e','Ё':'e','Ж':'zh','З':'z',
+            'И':'i','Й':'y','К':'k','Л':'l','М':'m','Н':'n','О':'o','П':'p','Р':'r',
+            'С':'s','Т':'t','У':'u','Ф':'f','Х':'h','Ц':'ts','Ч':'ch','Ш':'sh',
+            'Щ':'sch','Ъ':'','Ы':'y','Ь':'','Э':'e','Ю':'yu','Я':'ya'
+        };
+        
+        let surnameLat = '';
+        for (let char of surname) {
+            surnameLat += translitMap[char] || char;
+        }
+        
+        let nameFirstLat = '';
+        const firstChar = name.charAt(0);
+        nameFirstLat += translitMap[firstChar] || firstChar;
+        
+        let login = `${surnameLat}.${nameFirstLat}`.toLowerCase();
+        login = login.replace(/[^a-z0-9.]/g, '');
+        
+        if (login.length > 50) login = login.substring(0, 50);
+        
+        loginField.value = login;
+    }
+}
 
 
 

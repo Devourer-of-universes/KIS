@@ -277,13 +277,19 @@ router.put('/users/:id', authMiddleware, async (req, res) => {
 });
 
 // Сброс пароля
-router.post('/users/:id/reset-password', authMiddleware, async (req, res) => {
+router.post('/users/:id/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { newPassword } = req.body;
         
         if (!newPassword || newPassword.length < 6) {
             return res.status(400).json({ error: 'Пароль должен содержать минимум 6 символов' });
+        }
+        
+        // Проверяем, не супер-админ ли
+        const targetUser = await query(`SELECT is_super_admin FROM users WHERE id = $1`, [id]);
+        if (targetUser.rows.length > 0 && targetUser.rows[0].is_super_admin && req.userId != id) {
+            return res.status(403).json({ error: 'Нельзя изменить пароль супер-администратора' });
         }
         
         const salt = await bcrypt.genSalt(10);

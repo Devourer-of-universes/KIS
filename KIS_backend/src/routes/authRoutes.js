@@ -91,6 +91,15 @@ router.post('/login', async (req, res) => {
 
         const foundUser = user.rows[0];
 
+        // ★★★ ПРОВЕРКА СТАТУСА ★★★
+        if (foundUser.status === 'blocked') {
+            return res.status(403).json({ error: 'Учетная запись заблокирована' });
+        }
+
+        if (foundUser.status !== 'active') {
+            return res.status(403).json({ error: 'Учетная запись неактивна' });
+        }
+
         // Проверяем пароль
         const isValid = await bcrypt.compare(password, foundUser.password_hash);
         if (!isValid) {

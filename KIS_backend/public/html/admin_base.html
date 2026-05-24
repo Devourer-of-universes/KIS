@@ -6,6 +6,7 @@
     <title>Панель администратора - ИС</title>
     <link rel="stylesheet" type="text/css" href="../styles/main.css">
     <link rel="stylesheet" type="text/css" href="../styles/admin_base.css">
+    <script src="/scripts/translit.js"></script>
 </head>
 <body>
     <div class="left-menu">
@@ -300,7 +301,7 @@
                                 <label for="userPassword">Пароль</label>
                                 <div style="display: flex; gap: 8px;">
                                     <input type="text" id="userPassword" readonly style="flex: 1;">
-                                    <button type="button" class="buttonbase" onclick="generateRandomPassword()">🎲 Сгенерировать</button>
+                                    <button type="button" class="buttonbase" id="generatePasswordBtn" onclick="generateRandomPasswordField()">🎲 Сгенерировать</button>
                                 </div>
                                 <small style="color: #999;">Генерируется автоматически</small>
                             </div>

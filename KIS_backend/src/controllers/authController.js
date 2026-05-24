@@ -100,8 +100,8 @@ const login = async (req, res) => {
         const foundUser = user.rows[0];
 
         // Проверяем статус
-        if (foundUser.status !== 'active') {
-            return res.status(403).json({ error: 'Учетная запись заблокирована' });
+        if (foundUser.status === 'blocked') {
+            return res.status(403).json({ error: 'Ваша учетная запись заблокирована. Обратитесь к администратору.' });
         }
 
         // Проверяем пароль

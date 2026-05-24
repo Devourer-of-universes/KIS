@@ -8,8 +8,8 @@ const validateRegistration = (data) => {
         name: Joi.string().min(2).max(50).required(),
         patronymic: Joi.string().max(50).allow('', null),
         birthday: Joi.date().required(),
-        postId: Joi.number().integer().required(),
-        departmentId: Joi.number().integer().required(),
+        postId: Joi.number().integer().allow(null).optional(),  // ← изменено
+        departmentId: Joi.number().integer().allow(null).optional(),  // ← изменено
         email: Joi.string().email().required(),
         telNum: Joi.string().pattern(/^\+?[0-9]{10,15}$/).required(),
         password: Joi.string().min(6).required(),

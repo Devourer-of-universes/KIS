@@ -24,7 +24,9 @@ btn_system.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('system-section');
     setActiveNavButton(this);
-})
+    loadSystemSettings();
+    initSystemSettingsHandlers();
+});
 
 btn_reports.addEventListener('click', function(e){ 
     e.stopPropagation();
@@ -107,7 +109,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
+// В начале файла admin.js, после загрузки страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const response = await fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                window.currentUser = data.user;
+                console.log('Current user:', window.currentUser);
+            }
+        }
+        
+        // Загружаем пользователей
+        if (typeof loadUsers === 'function') {
+            loadUsers();
+        }
+    } catch (error) {
+        console.error('Error loading current user:', error);
+    }
+});
 
 class OrganizationStructure {
     constructor() {
@@ -1521,6 +1545,8 @@ function getStatusBadge(status) {
 }
 // Отрисовка таблицы пользователей
 function renderUsersTable(users) {
+    console.log('Rendering users, currentUser:', window.currentUser);
+    console.log('is_super_admin:', window.currentUser?.is_super_admin);
     const tbody = document.querySelector('#users-section .admin-table tbody');
     if (!tbody) return;
     
@@ -1529,39 +1555,69 @@ function renderUsersTable(users) {
         return;
     }
     
-    tbody.innerHTML = users.map(user => `
-        <tr>
-            <td>${user.id}</td>
-            <td><strong>${escapeHtml(user.surname)} ${escapeHtml(user.name)}</strong>${user.patronymic ? ` ${escapeHtml(user.patronymic)}` : ''}<br><small style="color:#999;">@${escapeHtml(user.username)}</small></td>
-            <td>${escapeHtml(user.post_name || '-')}</td>
-            <td>${escapeHtml(user.department_name || '-')}</td>
-            <td>
-                <select class="role-select" data-user-id="${user.id}" onchange="updateUserRole(${user.id}, this.value)">
-                    <option value="1" ${user.role_id === 1 ? 'selected' : ''}>👑 Администратор</option>
-                    <option value="2" ${user.role_id === 2 ? 'selected' : ''}>👤 Пользователь</option>
-                </select>
-            </td>
-            <td>${getStatusBadge(user.status)}</td>
-            <td>
-                <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})">ℹ️</button>
-                <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})">✏️</button>
-                <button class="btn-icon buttonbase" 
-                    title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" 
-                    onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')">
-                    ${user.status === 'blocked' ? '🔓' : '🔒'}
-                </button>
-                <button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')">🔑</button>
-                <button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;">🗑️</button>
-            </td>
-        </tr>
-    `).join('');
+    const currentUser = window.currentUser;
+    const isSuperAdmin = currentUser?.is_super_admin === true;
     
-    // Обновляем информацию о пагинации
+    console.log('Is super admin:', isSuperAdmin);
+    
+    // Фильтруем: супер-админ видит всех, остальные не видят супер-админов
+    let filteredUsers = users;
+    if (!isSuperAdmin) {
+        filteredUsers = users.filter(user => !user.is_super_admin);
+        console.log('Filtered users count:', filteredUsers.length);
+    }
+    // Супер-админ видит всех, включая себя
+    
+    if (filteredUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">📭 Нет пользователей</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filteredUsers.map(user => {
+        // Дополнительная проверка: если это супер-админ, показываем специальную метку
+        const isSuperAdminUser = user.is_super_admin === true;
+        const roleBadge = isSuperAdminUser ? '<span class="role-badge super-admin">👑 Супер-админ</span>' : '';
+        
+        return `
+            <tr ${isSuperAdminUser ? 'style="background: rgba(255, 215, 0, 0.1);"' : ''}>
+                <td>${user.id}</td>
+                <td>
+                    <strong>${escapeHtml(user.surname)} ${escapeHtml(user.name)}</strong>
+                    ${user.patronymic ? ` ${escapeHtml(user.patronymic)}` : ''}
+                    <br><small style="color:#999;">@${escapeHtml(user.username)}</small>
+                    ${roleBadge}
+                </td>
+                <td>${escapeHtml(user.post_name || '-')}</td>
+                <td>${escapeHtml(user.department_name || '-')}</td>
+                <td>
+                    <select class="role-select" data-user-id="${user.id}" onchange="updateUserRole(${user.id}, this.value)" ${isSuperAdminUser ? 'disabled' : ''}>
+                        <option value="1" ${user.role_id === 1 ? 'selected' : ''}>👑 Администратор</option>
+                        <option value="2" ${user.role_id === 2 ? 'selected' : ''}>👤 Пользователь</option>
+                    </select>
+                </td>
+                <td>${getStatusBadge(user.status)}</td>
+                <td>
+                    <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})">ℹ️</button>
+                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})" ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>✏️</button>
+                    <button class="btn-icon buttonbase" 
+                        title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" 
+                        onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')"
+                        ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>
+                        ${user.status === 'blocked' ? '🔓' : '🔒'}
+                    </button>
+                    <button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')" ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>🔑</button>
+                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;" ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Обновляем информацию о пагинации с учётом фильтрации
     const start = (currentPage - 1) * usersPerPage + 1;
-    const end = Math.min(currentPage * usersPerPage, totalUsers);
-    document.getElementById('showingFrom').textContent = totalUsers === 0 ? 0 : start;
+    const end = Math.min(currentPage * usersPerPage, filteredUsers.length);
+    document.getElementById('showingFrom').textContent = filteredUsers.length === 0 ? 0 : start;
     document.getElementById('showingTo').textContent = end;
-    document.getElementById('totalCount').textContent = totalUsers;
+    document.getElementById('totalCount').textContent = filteredUsers.length;
 }
 function deleteUser(userId) {
     showConfirmDelete(
@@ -2172,8 +2228,13 @@ function renderStructureTree(departments, unassignedEmployees = []) {
             const hasChildren = dept.children && dept.children.length > 0;
             const hasEmployees = dept.employees && dept.employees.length > 0;
             
+            // ОПРЕДЕЛЯЕМ, ЯВЛЯЕТСЯ ЛИ ПОДРАЗДЕЛЕНИЕ КОРНЕВЫМ
+            // Корневое — у которого нет parent_department_id
+            const isRootDepartment = !dept.parent_department_id;
+            const rootClass = isRootDepartment ? 'root-department' : '';
+            
             html += `
-                <li class="structure-group-item" data-dept-id="${dept.id}">
+                <li class="structure-group-item ${rootClass}" data-dept-id="${dept.id}">
                     <div class="group-header">
                         <button class="toggle-btn" onclick="toggleDepartmentNode(${dept.id})">
                             <span class="toggle-icon">▼</span>
@@ -2296,15 +2357,20 @@ function renderStructureTree(departments, unassignedEmployees = []) {
 }
 
 // Рендер дочерних подразделений (рекурсия)
-function renderSubtree(departments) {
+function renderSubtree(children) {
     let html = '<ul class="structure-group">';
     
-    for (const dept of departments) {
-        const hasChildren = dept.children && dept.children.length > 0;
-        const hasEmployees = dept.employees && dept.employees.length > 0;
+    for (const child of children) {
+        const hasChildren = child.children && child.children.length > 0;
+        const hasEmployees = child.employees && child.employees.length > 0;
+        
+        // Корневое подразделение — только на верхнем уровне, в дочерних эта проверка не нужна,
+        // но оставим для единообразия
+        const isRootDepartment = !child.parent_department_id;
+        const rootClass = isRootDepartment ? 'root-department' : '';
         
         html += `
-            <li class="structure-group-item" data-dept-id="${dept.id}">
+            <li class="structure-group-item ${rootClass}" data-dept-id="${child.id}">
                 <div class="group-header">
                     <button class="toggle-btn" onclick="toggleDepartmentNode(${dept.id})">
                         <span class="toggle-icon">▼</span>
@@ -3082,5 +3148,949 @@ async function deletePost(postId) {
     } catch (error) {
         console.error('Error deleting post:', error);
         showToast('Ошибка удаления должности', 'error');
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ========== СИСТЕМНЫЕ НАСТРОЙКИ ==========
+
+let currentSettings = {};
+
+// Загрузка настроек
+async function loadSystemSettings() {
+    const container = document.getElementById('settingsContainer');
+    container.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка...</div>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/settings', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load settings');
+        
+        const data = await response.json();
+        currentSettings = data.settings;
+        renderSettingsForm();
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">❌ Ошибка загрузки настроек</div>';
+    }
+}
+
+// Отрисовка формы настроек
+function renderSettingsForm() {
+    const container = document.getElementById('settingsContainer');
+    
+    container.innerHTML = `
+        <!-- Общие настройки -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">🏢</div>
+                <div>
+                    <h3 class="settings-card-title">Общие настройки</h3>
+                    <p class="settings-card-description">Основные параметры системы</p>
+                </div>
+            </div>
+            <div class="settings-card-content">
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Название организации *</span>
+                        <span class="settings-card-hint">Отображается в системе и документах. Также используется как название головного подразделения.</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="text" id="org_name" class="setting-input" value="${escapeHtml(currentSettings.org_name || '')}" style="width: 250px;" required>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Автонумерация документов</span>
+                        <span class="settings-card-hint">Автоматическая генерация номеров документов</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <select id="auto_numbering" class="setting-select">
+                            <option value="auto" ${currentSettings.auto_numbering === 'auto' ? 'selected' : ''}>Автоматическая</option>
+                            <option value="manual" ${currentSettings.auto_numbering === 'manual' ? 'selected' : ''}>Ручная</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Контактный email</span>
+                        <span class="settings-card-hint">Для связи с поддержкой</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="email" id="org_email" class="setting-input" value="${escapeHtml(currentSettings.org_email || 'info@company.ru')}" style="width: 250px;">
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Контактный телефон</span>
+                        <span class="settings-card-hint">Для связи с поддержкой</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="text" id="org_phone" class="setting-input" value="${escapeHtml(currentSettings.org_phone || '+7 (495) 000-00-00')}" style="width: 250px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Документооборот -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">📄</div>
+                <div>
+                    <h3 class="settings-card-title">Документооборот</h3>
+                    <p class="settings-card-description">Настройки работы с документами и файлами</p>
+                </div>
+            </div>
+            <div class="settings-card-content">
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Автоархивация документов</span>
+                        <span class="settings-card-hint">Документы автоматически архивируются через указанное количество дней</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="number" id="auto_archive_days" class="setting-input" value="${currentSettings.auto_archive_days || 365}" min="30" max="3650" style="width: 100px;">
+                        <span class="setting-unit">дней</span>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Максимальный размер файла</span>
+                        <span class="settings-card-hint">Ограничение размера загружаемых файлов</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="number" id="max_file_size" class="setting-input" value="${currentSettings.max_file_size || 50}" min="1" max="500" style="width: 100px;">
+                        <span class="setting-unit">МБ</span>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Разрешенные типы файлов</span>
+                        <span class="settings-card-hint">Форматы файлов, разрешенные для загрузки</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <select id="allowed_file_types" class="setting-select" multiple size="5" style="width: 200px;">
+                            <option value="pdf" ${currentSettings.allowed_file_types?.includes('pdf') ? 'selected' : ''}>PDF</option>
+                            <option value="doc" ${currentSettings.allowed_file_types?.includes('doc') ? 'selected' : ''}>Word</option>
+                            <option value="xls" ${currentSettings.allowed_file_types?.includes('xls') ? 'selected' : ''}>Excel</option>
+                            <option value="jpg" ${currentSettings.allowed_file_types?.includes('jpg') ? 'selected' : ''}>Изображения</option>
+                            <option value="txt" ${currentSettings.allowed_file_types?.includes('txt') ? 'selected' : ''}>Текстовые файлы</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Хранилище</span>
+                        <span class="settings-card-hint">Путь к хранилищу файлов</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="text" id="storage_path" class="setting-input" value="${escapeHtml(currentSettings.storage_path || './uploads')}" style="width: 250px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Безопасность -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">🔒</div>
+                <div>
+                    <h3 class="settings-card-title">Безопасность</h3>
+                    <p class="settings-card-description">Настройки безопасности и доступа</p>
+                </div>
+            </div>
+            <div class="settings-card-content">
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Срок действия сессии</span>
+                        <span class="settings-card-hint">Время бездействия до автоматического выхода</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="number" id="session_timeout" class="setting-input" value="${currentSettings.session_timeout || 8}" min="1" max="24" style="width: 80px;">
+                        <span class="setting-unit">часов</span>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Минимальная длина пароля</span>
+                        <span class="settings-card-hint">Безопасность учетных записей</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="number" id="password_min_length" class="setting-input" value="${currentSettings.password_min_length || 6}" min="6" max="20" style="width: 80px;">
+                        <span class="setting-unit">символов</span>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Требовать спецсимволы</span>
+                        <span class="settings-card-hint">!@#$% в пароле</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <label class="switch">
+                            <input type="checkbox" id="password_require_special" ${currentSettings.password_require_special ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Двухфакторная аутентификация</span>
+                        <span class="settings-card-hint">Дополнительный уровень защиты</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <label class="switch">
+                            <input type="checkbox" id="enable_2fa" ${currentSettings.enable_2fa ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Резервное копирование -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">💾</div>
+                <div>
+                    <h3 class="settings-card-title">Резервное копирование</h3>
+                    <p class="settings-card-description">Настройки автоматического резервного копирования данных</p>
+                </div>
+            </div>
+            <div class="settings-card-content">
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Автоматическое копирование</span>
+                        <span class="settings-card-hint">Периодичность создания резервных копий</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <select id="backup_schedule" class="setting-select">
+                            <option value="disabled" ${currentSettings.backup_schedule === 'disabled' ? 'selected' : ''}>Отключено</option>
+                            <option value="daily" ${currentSettings.backup_schedule === 'daily' ? 'selected' : ''}>Ежедневно</option>
+                            <option value="weekly" ${currentSettings.backup_schedule === 'weekly' ? 'selected' : ''}>Еженедельно</option>
+                            <option value="monthly" ${currentSettings.backup_schedule === 'monthly' ? 'selected' : ''}>Ежемесячно</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Время создания бэкапа</span>
+                        <span class="settings-card-hint">Время для автоматического создания копий</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="time" id="backup_time" class="setting-input" value="${currentSettings.backup_time || '02:00'}" style="width: 120px;">
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Хранить бэкапы</span>
+                        <span class="settings-card-hint">Срок хранения резервных копий</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="number" id="backup_retention_days" class="setting-input" value="${currentSettings.backup_retention_days || 30}" min="7" max="365" style="width: 80px;">
+                        <span class="setting-unit">дней</span>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Создать новый бэкап</span>
+                        <span class="settings-card-hint">Создаёт полную копию базы данных</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <button class="buttonbase" id="createBackupBtn">➕ Создать бэкап</button>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Список бэкапов</span>
+                        <span class="settings-card-hint">Доступные резервные копии</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <button class="buttonbase" id="viewBackupsBtn">📋 Показать бэкапы</button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Системные уведомления -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">🔔</div>
+                <div>
+                    <h3 class="settings-card-title">Системные уведомления</h3>
+                    <p class="settings-card-description">Настройки оповещений о системных событиях</p>
+                </div>
+            </div>
+            <div class="settings-card-content">
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Email для уведомлений</span>
+                        <span class="settings-card-hint">Адрес для получения системных оповещений</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="email" id="notify_email" class="setting-input" value="${escapeHtml(currentSettings.notify_email || 'admin@company.ru')}" style="width: 250px;">
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Критические ошибки</span>
+                        <span class="settings-card-hint">Уведомлять о критических сбоях системы</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <label class="switch">
+                            <input type="checkbox" id="notify_critical_errors" ${currentSettings.notify_critical_errors !== false ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Подозрительная активность</span>
+                        <span class="settings-card-hint">Оповещения о необычных действиях пользователей</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <label class="switch">
+                            <input type="checkbox" id="notify_suspicious" ${currentSettings.notify_suspicious !== false ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Логи и мониторинг -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">📊</div>
+                <div>
+                    <h3 class="settings-card-title">Логи и мониторинг</h3>
+                    <p class="settings-card-description">Настройки логирования и отслеживания системы</p>
+                </div>
+            </div>
+            <div class="settings-card-content">
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Уровень логирования</span>
+                        <span class="settings-card-hint">Детализация информации в системных логах</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <select id="log_level" class="setting-select">
+                            <option value="error" ${currentSettings.log_level === 'error' ? 'selected' : ''}>Только ошибки</option>
+                            <option value="warn" ${currentSettings.log_level === 'warn' ? 'selected' : ''}>Предупреждения и ошибки</option>
+                            <option value="info" ${currentSettings.log_level === 'info' ? 'selected' : ''}>Вся информация</option>
+                            <option value="debug" ${currentSettings.log_level === 'debug' ? 'selected' : ''}>Отладочная информация</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Хранить логи</span>
+                        <span class="settings-card-hint">Срок хранения системных логов</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <input type="number" id="log_retention_days" class="setting-input" value="${currentSettings.log_retention_days || 90}" min="7" max="365" style="width: 80px;">
+                        <span class="setting-unit">дней</span>
+                    </div>
+                </div>
+                <div class="settings-card-item">
+                    <div class="settings-card-info">
+                        <span class="settings-card-label">Статус мониторинга</span>
+                        <span class="settings-card-hint">Текущее состояние системы мониторинга</span>
+                    </div>
+                    <div class="settings-card-control">
+                        <span class="settings-status status-active">Активен</span>
+                    </div>
+                </div>
+                <div class="settings-card-actions">
+                    <button class="buttonbase" id="viewLogsBtn">📋 Просмотр логов</button>
+                    <button class="buttonbase" id="viewStatsBtn">📈 Статистика</button>
+                </div>
+            </div>
+        </div>
+    `;
+    initSettingsButtons();
+}
+
+// Сохранение настроек
+async function saveSystemSettings() {
+    const settings = {
+        // Общие
+        org_name: document.getElementById('org_name')?.value || '',
+        auto_numbering: document.getElementById('auto_numbering')?.value || 'auto',
+        org_email: document.getElementById('org_email')?.value || '',
+        org_phone: document.getElementById('org_phone')?.value || '',
+        
+        // Документооборот
+        auto_archive_days: parseInt(document.getElementById('auto_archive_days')?.value) || 365,
+        max_file_size: parseInt(document.getElementById('max_file_size')?.value) || 50,
+        allowed_file_types: Array.from(document.getElementById('allowed_file_types')?.selectedOptions || []).map(opt => opt.value),
+        storage_path: document.getElementById('storage_path')?.value || './uploads',
+        
+        // Безопасность
+        session_timeout: parseInt(document.getElementById('session_timeout')?.value) || 8,
+        password_min_length: parseInt(document.getElementById('password_min_length')?.value) || 6,
+        password_require_special: document.getElementById('password_require_special')?.checked || false,
+        enable_2fa: document.getElementById('enable_2fa')?.checked || false,
+        
+        // Резервное копирование
+        backup_schedule: document.getElementById('backup_schedule')?.value || 'disabled',
+        backup_time: document.getElementById('backup_time')?.value || '02:00',
+        backup_retention_days: parseInt(document.getElementById('backup_retention_days')?.value) || 30,
+        
+        // Уведомления
+        notify_email: document.getElementById('notify_email')?.value || '',
+        notify_critical_errors: document.getElementById('notify_critical_errors')?.checked || false,
+        notify_suspicious: document.getElementById('notify_suspicious')?.checked || false,
+        
+        // Логи
+        log_level: document.getElementById('log_level')?.value || 'info',
+        log_retention_days: parseInt(document.getElementById('log_retention_days')?.value) || 90
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/settings', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (!response.ok) throw new Error('Failed to save settings');
+        
+        showToast('Настройки сохранены', 'success');
+        loadSystemSettings(); // Перезагружаем для обновления
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showToast('Ошибка сохранения настроек', 'error');
+    }
+}
+
+// Сброс настроек
+async function resetSystemSettings() {
+    if (!confirm('Сбросить все настройки к значениям по умолчанию?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/settings/reset', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to reset settings');
+        
+        showToast('Настройки сброшены', 'success');
+        loadSystemSettings();
+    } catch (error) {
+        console.error('Error resetting settings:', error);
+        showToast('Ошибка сброса настроек', 'error');
+    }
+}
+
+// Создание бэкапа (заглушка)
+async function createBackupNow() {
+    showToast('Функция в разработке', 'info');
+}
+
+// Инициализация обработчиков для системных настроек
+function initSystemSettingsHandlers() {
+    const saveBtn = document.getElementById('saveSystemSettings');
+    const resetBtn = document.getElementById('resetSettingsBtn');
+    const backupBtn = document.getElementById('createBackupNowBtn');
+    
+    if (saveBtn) saveBtn.onclick = saveSystemSettings;
+    if (resetBtn) resetBtn.onclick = resetSystemSettings;
+    if (backupBtn) backupBtn.onclick = createBackupNow;
+}
+// Инициализация головного подразделения при первом запуске
+async function initRootDepartment() {
+    // Проверяем, есть ли уже подразделения
+    const { query } = require('../config/database');
+
+    const check = await query(`SELECT COUNT(*) FROM departments`);
+    if (parseInt(check.rows[0].count) === 0) {
+        // Получаем название организации из настроек
+        const orgNameResult = await query(
+            `SELECT setting_value FROM system_settings WHERE setting_key = 'org_name'`
+        );
+        const orgName = orgNameResult.rows[0]?.setting_value || 'Головной офис';
+        
+        // Создаём корневое подразделение
+        await query(
+            `INSERT INTO departments (name, parent_department_id) VALUES ($1, NULL)`,
+            [orgName]
+        );
+        console.log('✅ Создано головное подразделение:', orgName);
+    }
+}
+function initSettingsButtons() {
+    // Кнопка сохранения настроек
+    const saveSettingsBtn = document.getElementById('saveSystemSettings');
+    if (saveSettingsBtn) {
+        // Удаляем старый обработчик, чтобы не дублировать
+        const newSaveBtn = saveSettingsBtn.cloneNode(true);
+        saveSettingsBtn.parentNode.replaceChild(newSaveBtn, saveSettingsBtn);
+        newSaveBtn.onclick = saveSystemSettings;
+    }
+    
+    // Кнопка "Создать бэкап"
+    const createBackupBtn = document.getElementById('createBackupBtn');
+    if (createBackupBtn) {
+        const newBtn = createBackupBtn.cloneNode(true);
+        createBackupBtn.parentNode.replaceChild(newBtn, createBackupBtn);
+        newBtn.onclick = async () => {
+            showToast('Создание резервной копии...', 'info');
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/admin/backup/create', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to create backup');
+                
+                const data = await response.json();
+                showToast(`Бэкап создан: ${data.filename} (${data.size})`, 'success');
+            } catch (error) {
+                console.error('Backup error:', error);
+                showToast('Ошибка создания бэкапа', 'error');
+            }
+        };
+    }
+    
+    // Кнопка "Показать бэкапы"
+    const viewBackupsBtn = document.getElementById('viewBackupsBtn');
+    if (viewBackupsBtn) {
+        const newBtn = viewBackupsBtn.cloneNode(true);
+        viewBackupsBtn.parentNode.replaceChild(newBtn, viewBackupsBtn);
+        newBtn.onclick = openBackupsModal;
+    }
+    
+    // Кнопка "Просмотр логов"
+    const viewLogsBtn = document.getElementById('viewLogsBtn');
+    if (viewLogsBtn) {
+        const newBtn = viewLogsBtn.cloneNode(true);
+        viewLogsBtn.parentNode.replaceChild(newBtn, viewLogsBtn);
+        newBtn.onclick = openLogsModal;
+    }
+    
+    // Кнопка "Статистика"
+    const viewStatsBtn = document.getElementById('viewStatsBtn');
+    if (viewStatsBtn) {
+        const newBtn = viewStatsBtn.cloneNode(true);
+        viewStatsBtn.parentNode.replaceChild(newBtn, viewStatsBtn);
+        newBtn.onclick = openStatsModal;
+    }
+}
+async function openLogsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px; max-height: 80vh;">
+            <div class="modal-header">
+                <h2>📋 Системные логи</h2>
+                <button class="modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <div class="logs-filters">
+                    <select id="logFilter" class="log-filter-select">
+                        <option value="all">📋 Все</option>
+                        <option value="error">❌ Ошибки</option>
+                        <option value="warn">⚠️ Предупреждения</option>
+                        <option value="info">ℹ️ Информация</option>
+                    </select>
+                    <div class="logs-actions">
+                        <button class="buttonbase" id="refreshLogsBtn" style="padding: 6px 12px;">🔄 Обновить</button>
+                        <button class="buttonbase" id="exportLogsBtn" style="padding: 6px 12px;">📎 Экспорт</button>
+                    </div>
+                </div>
+                <div class="logs-container" id="logsContainer">
+                    <div class="empty-logs">
+                        <div class="empty-icon">📭</div>
+                        <p>Загрузка логов...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()">Закрыть</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    await loadLogs();
+    
+    document.getElementById('refreshLogsBtn').onclick = () => loadLogs();
+    document.getElementById('exportLogsBtn').onclick = () => exportLogs();
+    document.getElementById('logFilter').onchange = () => loadLogs();
+}
+
+async function loadLogs() {
+    const container = document.getElementById('logsContainer');
+    const filter = document.getElementById('logFilter')?.value || 'all';
+    
+    container.innerHTML = '<div class="empty-logs"><div class="empty-icon">⏳</div><p>Загрузка...</p></div>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/logs?filter=${filter}&limit=200`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load logs');
+        
+        const data = await response.json();
+        const logs = data.logs || [];
+        
+        if (logs.length === 0) {
+            container.innerHTML = '<div class="empty-logs"><div class="empty-icon">📭</div><p>Нет записей</p></div>';
+            return;
+        }
+        
+        container.innerHTML = logs.map(log => {
+            let levelClass = '';
+            let levelIcon = '📌';
+            
+            if (log.action === 'LOGIN') {
+                levelClass = 'log-info';
+                levelIcon = '🔐';
+            } else if (log.action === 'LOGOUT') {
+                levelClass = 'log-info';
+                levelIcon = '🚪';
+            } else if (log.action.includes('DELETE')) {
+                levelClass = 'log-warn';
+                levelIcon = '🗑️';
+            } else if (log.action.includes('ERROR')) {
+                levelClass = 'log-error';
+                levelIcon = '❌';
+            } else if (log.action.includes('UPDATE')) {
+                levelClass = 'log-info';
+                levelIcon = '✏️';
+            } else if (log.action.includes('CREATE') || log.action.includes('POST')) {
+                levelClass = 'log-info';
+                levelIcon = '➕';
+            }
+            
+            return `
+                <div class="log-entry ${levelClass}">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span class="log-level">${levelIcon}</span>
+                        <span class="log-time">${new Date(log.created_at).toLocaleString()}</span>
+                        <span class="log-message">
+                            <strong>${escapeHtml(log.action)}</strong>
+                            ${log.entity_type ? `<span style="color: #666;"> — ${escapeHtml(log.entity_type)}</span>` : ''}
+                            ${log.entity_id ? `<span style="color: #999;"> (ID: ${log.entity_id})</span>` : ''}
+                        </span>
+                        ${log.user_id ? `<span style="color: #999; font-size: 11px;">user: ${log.user_id}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error loading logs:', error);
+        container.innerHTML = '<div class="empty-logs"><div class="empty-icon">❌</div><p>Ошибка загрузки логов</p></div>';
+    }
+}
+
+function exportLogs() {
+    const logsContainer = document.getElementById('logsContainer');
+    const logsText = logsContainer.innerText;
+    const blob = new Blob([logsText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logs_${new Date().toISOString().slice(0, 19)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Логи экспортированы', 'success');
+}
+async function openStatsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h2>📈 Системная статистика</h2>
+                <button class="modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="statsContainer" style="min-height: 300px;">
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="empty-icon">⏳</div>
+                        <p>Загрузка статистики...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()">Закрыть</button>
+                <button class="buttonbase" id="refreshStatsBtn">🔄 Обновить</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    await loadStats();
+    
+    document.getElementById('refreshStatsBtn').onclick = () => loadStats();
+}
+
+async function loadStats() {
+    const container = document.getElementById('statsContainer');
+    
+    container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="empty-icon">⏳</div><p>Загрузка статистики...</p></div>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/stats', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load stats');
+        
+        const data = await response.json();
+        
+        container.innerHTML = `
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-number">${data.total_users || 0}</div>
+                    <div class="stats-label">Всего пользователей</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">${data.active_users || 0}</div>
+                    <div class="stats-label">Активных сегодня</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">${data.total_chats || 0}</div>
+                    <div class="stats-label">Всего чатов</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">${data.total_messages || 0}</div>
+                    <div class="stats-label">Сообщений</div>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <h4>📊 Детальная статистика</h4>
+                <div class="stats-detail-row">
+                    <span class="stats-detail-label">👥 Групповые чаты</span>
+                    <span class="stats-detail-value">${data.group_chats || 0}</span>
+                </div>
+                <div class="stats-detail-row">
+                    <span class="stats-detail-label">💬 Личные чаты</span>
+                    <span class="stats-detail-value">${data.private_chats || 0}</span>
+                </div>
+                <div class="stats-detail-row">
+                    <span class="stats-detail-label">📎 Всего файлов</span>
+                    <span class="stats-detail-value">${data.total_files || 0}</span>
+                </div>
+                <div class="stats-detail-row">
+                    <span class="stats-detail-label">👥 Заблокированных пользователей</span>
+                    <span class="stats-detail-value">${data.blocked_users || 0}</span>
+                </div>
+                <div class="stats-detail-row">
+                    <span class="stats-detail-label">📅 Новых пользователей за месяц</span>
+                    <span class="stats-detail-value">${data.new_users_month || 0}</span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">❌ Ошибка загрузки статистики</div>';
+    }
+}
+// Вызываем при старте сервера (после подключения к БД)
+initRootDepartment().catch(console.error);
+
+
+
+
+
+
+
+// ========== УПРАВЛЕНИЕ БЭКАПАМИ ==========
+
+// Создание бэкапа
+document.getElementById('createBackupBtn')?.addEventListener('click', async () => {
+    try {
+        showToast('Создание резервной копии...', 'info');
+        
+        const response = await fetch('/api/admin/backup/create', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(`Бэкап создан: ${data.filename} (${data.size})`, 'success');
+            // Обновляем список бэкапов
+            if (typeof loadBackupsList === 'function') {
+                loadBackupsList();
+            }
+        } else {
+            showToast(data.error || 'Ошибка создания бэкапа', 'error');
+        }
+    } catch (error) {
+        console.error('Backup error:', error);
+        showToast('Ошибка создания бэкапа', 'error');
+    }
+});
+
+// Просмотр списка бэкапов
+document.getElementById('viewBackupsBtn')?.addEventListener('click', async () => {
+    await openBackupsModal();
+});
+
+async function openBackupsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px; max-height: 80vh;">
+            <div class="modal-header">
+                <h2>💾 Список резервных копий</h2>
+                <button class="modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <div id="backupsListContainer">
+                    <div style="text-align: center; padding: 40px;">Загрузка...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()">Закрыть</button>
+                <button class="buttonbase" id="refreshBackupsBtn">🔄 Обновить</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    await loadBackupsList();
+    
+    document.getElementById('refreshBackupsBtn').onclick = () => loadBackupsList();
+}
+
+async function loadBackupsList() {
+    const container = document.getElementById('backupsListContainer');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/backup/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load backups');
+        
+        const data = await response.json();
+        const backups = data.backups || [];
+        
+        if (backups.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">📭 Нет резервных копий</div>';
+            return;
+        }
+        
+        container.innerHTML = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Имя файла</th>
+                        <th>Размер</th>
+                        <th>Кто создал</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${backups.map(backup => `
+                        <tr>
+                            <td>${new Date(backup.created_at).toLocaleString()}</td>
+                            <td>${escapeHtml(backup.filename)}</td>
+                            <td>${backup.size_formatted || '—'}</td>
+                            <td>${escapeHtml(backup.surname || '')} ${escapeHtml(backup.name || '')}</td>
+                            <td>
+                                <button class="btn-icon buttonbase" onclick="downloadBackup(${backup.id})" title="Скачать">📥</button>
+                                <button class="btn-icon buttonbase" onclick="restoreBackup(${backup.id})" title="Восстановить" style="color:#ffc107;">🔄</button>
+                                <button class="btn-icon buttonbase" onclick="deleteBackup(${backup.id})" title="Удалить" style="color:#dc3545;">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (error) {
+        console.error('Error loading backups:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">❌ Ошибка загрузки</div>';
+    }
+}
+
+async function downloadBackup(backupId) {
+    try {
+        const token = localStorage.getItem('token');
+        window.open(`/api/admin/backup/download/${backupId}?token=${token}`, '_blank');
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Ошибка скачивания', 'error');
+    }
+}
+
+async function deleteBackup(backupId) {
+    if (!confirm('Удалить эту резервную копию?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/backup/${backupId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to delete backup');
+        
+        showToast('Бэкап удалён', 'success');
+        loadBackupsList();
+    } catch (error) {
+        console.error('Delete backup error:', error);
+        showToast('Ошибка удаления', 'error');
+    }
+}
+
+async function restoreBackup(backupId) {
+    if (!confirm('Восстановить базу данных из этого бэкапа? Все текущие данные будут заменены!')) return;
+    
+    showToast('Восстановление...', 'info');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/backup/restore/${backupId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to restore backup');
+        
+        showToast('База данных восстановлена! Перезагрузите страницу.', 'success');
+    } catch (error) {
+        console.error('Restore error:', error);
+        showToast('Ошибка восстановления', 'error');
     }
 }

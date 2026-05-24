@@ -1,19 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth'); // Убираем adminMiddleware
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { query } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 // ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==========
 
 // Получение всех пользователей (с пагинацией и поиском)
-router.get('/users', authMiddleware, async (req, res) => {  // Убрали adminMiddleware
-    try {
+router.get('/users', authMiddleware, async (req, res) => {
+    console.log('🔍 Current user:', JSON.stringify(req.user, null, 2));
+    console.log('🔍 is_super_admin:', req.user?.is_super_admin);
+     try {
         const { search = '', limit = 50, offset = 0 } = req.query;
+        const currentUser = req.user;
+        
+        console.log('Current user is_super_admin:', currentUser.is_super_admin);
         
         let queryText = `
             SELECT u.id, u.username, u.surname, u.name, u.patronymic, 
                    u.email, u.tel_num, u.status, u.created_at, u.last_seen_at,
+                   u.is_super_admin,
                    r.name as role_name, r.id as role_id,
                    p.name as post_name, d.name as department_name
             FROM users u
@@ -24,8 +30,13 @@ router.get('/users', authMiddleware, async (req, res) => {  // Убрали admi
         `;
         const params = [];
         
+        // Только если пользователь НЕ супер-админ — скрываем других супер-админов
+        if (!currentUser.is_super_admin) {
+            queryText += ` AND u.is_super_admin = false`;
+        }
+        
         if (search) {
-            queryText += ` AND (u.surname ILIKE $1 OR u.name ILIKE $1 OR u.username ILIKE $1 OR u.email ILIKE $1)`;
+            queryText += ` AND (u.surname ILIKE $${params.length + 1} OR u.name ILIKE $${params.length + 1} OR u.username ILIKE $${params.length + 1} OR u.email ILIKE $${params.length + 1})`;
             params.push(`%${search}%`);
         }
         
@@ -34,10 +45,12 @@ router.get('/users', authMiddleware, async (req, res) => {  // Убрали admi
         
         const result = await query(queryText, params);
         
-        const countResult = await query(
-            `SELECT COUNT(*) FROM users WHERE deleted_at IS NULL`,
-            []
-        );
+        // Подсчёт общего количества
+        let countQuery = `SELECT COUNT(*) FROM users WHERE deleted_at IS NULL`;
+        if (!currentUser.is_super_admin) {
+            countQuery += ` AND is_super_admin = false`;
+        }
+        const countResult = await query(countQuery);
         
         res.json({ 
             users: result.rows, 
@@ -53,11 +66,12 @@ router.get('/users', authMiddleware, async (req, res) => {  // Убрали admi
 router.get('/users/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
+        const currentUser = req.user;
         
         const result = await query(
             `SELECT u.id, u.username, u.surname, u.name, u.patronymic, 
                     u.email, u.tel_num, u.status, u.created_at, u.birthday,
-                    u.start_date,
+                    u.start_date, u.is_super_admin,
                     r.name as role_name, r.id as role_id,
                     p.name as post_name, d.name as department_name
              FROM users u
@@ -72,8 +86,15 @@ router.get('/users/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
         
-        delete result.rows[0].password_hash;
-        res.json({ user: result.rows[0] });
+        const user = result.rows[0];
+        
+        // Если запрашивают супер-админа, а текущий пользователь не супер-админ
+        if (user.is_super_admin && !currentUser.is_super_admin) {
+            return res.status(403).json({ error: 'Доступ запрещён' });
+        }
+        
+        delete user.password_hash;
+        res.json({ user });
     } catch (error) {
         console.error('Get user error:', error);
         res.status(500).json({ error: error.message });
@@ -155,12 +176,69 @@ router.post('/users', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// POST /users/change-password — для смены своего пароля
+router.post('/users/change-password', authMiddleware, async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.userId;
+        
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ error: 'Укажите старый и новый пароль' });
+        }
+        
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'Новый пароль должен быть не менее 6 символов' });
+        }
+        
+        // Получаем пользователя
+        const userResult = await query(`SELECT password_hash FROM users WHERE id = $1`, [userId]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        
+        // Проверяем старый пароль
+        const isValid = await bcrypt.compare(oldPassword, userResult.rows[0].password_hash);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Неверный старый пароль' });
+        }
+        
+        // Хэшируем и сохраняем новый пароль
+        const salt = await bcrypt.genSalt(10);
+        const newHash = await bcrypt.hash(newPassword, salt);
+        
+        await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, userId]);
+        
+        res.json({ success: true, message: 'Пароль успешно изменён' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Обновление пользователя (только личные данные, контакты, роль, статус)
 router.put('/users/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
+        const currentUser = req.user;
         const { surname, name, patronymic, email, telNum, roleId, status } = req.body;
+        
+        // Получаем информацию о редактируемом пользователе
+        const targetUser = await query(`SELECT is_super_admin FROM users WHERE id = $1`, [id]);
+        if (targetUser.rows.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        
+        const isSuperAdmin = targetUser.rows[0].is_super_admin;
+        
+        // Запрещаем редактирование супер-админа (кроме него самого)
+        if (isSuperAdmin && !currentUser.is_super_admin) {
+            return res.status(403).json({ error: 'Нельзя редактировать супер-администратора' });
+        }
+        
+        // Если это супер-админ редактирует себя — разрешаем только пароль
+        if (currentUser.is_super_admin && parseInt(id) === currentUser.id) {
+            // Можно обновлять только пароль через отдельный эндпоинт
+            return res.status(400).json({ error: 'Изменение данных через этот эндпоинт запрещено. Используйте /profile для смены пароля' });
+        }
         
         const updates = [];
         const values = [];
@@ -221,9 +299,15 @@ router.post('/users/:id/reset-password', authMiddleware, async (req, res) => {
 });
 
 // Удаление пользователя (мягкое удаление)
-router.delete('/users/:id', authMiddleware, async (req, res) => {
+router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // Проверяем, не супер-админ ли
+        const targetUser = await query(`SELECT is_super_admin FROM users WHERE id = $1`, [id]);
+        if (targetUser.rows.length > 0 && targetUser.rows[0].is_super_admin) {
+            return res.status(403).json({ error: 'Нельзя удалить супер-администратора' });
+        }
         
         await query(`UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1`, [id]);
         
@@ -484,7 +568,9 @@ router.post('/departments', authMiddleware, async (req, res) => {
         if (!name || name.trim() === '') {
             return res.status(400).json({ error: 'Укажите название подразделения' });
         }
-        
+        if (parentDepartmentId && parentDepartmentId == id) {
+            return res.status(400).json({ error: 'Нельзя назначить подразделение родителем самого себя' });
+        }
         const result = await query(
             `INSERT INTO departments (name, parent_department_id) VALUES ($1, $2) RETURNING *`,
             [name.trim(), parentDepartmentId || null]
@@ -499,22 +585,23 @@ router.post('/departments', authMiddleware, async (req, res) => {
 // Получение плоского списка подразделений (для селекта)
 router.get('/departments/list', authMiddleware, async (req, res) => {
     try {
-        // Простой запрос без рекурсии
         const result = await query(`
-            SELECT id, name, parent_department_id 
-            FROM departments 
-            ORDER BY name
+            WITH RECURSIVE dept_tree AS (
+                SELECT id, name, parent_department_id, 0 as level, ARRAY[id] as path
+                FROM departments 
+                WHERE parent_department_id IS NULL
+                
+                UNION ALL
+                
+                SELECT d.id, d.name, d.parent_department_id, dt.level + 1, dt.path || d.id
+                FROM departments d
+                JOIN dept_tree dt ON d.parent_department_id = dt.id
+                WHERE NOT (d.id = ANY(dt.path))  -- Защита от циклов
+            )
+            SELECT id, name, level FROM dept_tree ORDER BY level, name
         `);
         
-        // Строим дерево с уровнями на клиенте или просто возвращаем плоский список
-        // Для селекта достаточно простого списка
-        const departments = result.rows.map(dept => ({
-            id: dept.id,
-            name: dept.name,
-            level: 0 // временно, для отступа
-        }));
-        
-        res.json({ departments });
+        res.json({ departments: result.rows });
     } catch (error) {
         console.error('Get departments list error:', error);
         res.status(500).json({ error: error.message });
@@ -525,7 +612,9 @@ router.put('/departments/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, parentDepartmentId, code, description, managerId, managerPosition, email, phone, location } = req.body;
-        
+        if (parentDepartmentId && parentDepartmentId == id) {
+            return res.status(400).json({ error: 'Нельзя назначить подразделение родителем самого себя' });
+        }
         // Если назначен руководитель, обновляем его должность
         if (managerId && managerPosition) {
             // Ищем или создаём должность с указанным названием
@@ -718,5 +807,396 @@ router.get('/posts/department/:departmentId', authMiddleware, async (req, res) =
 });
 
 
+
+
+
+
+// ========== СИСТЕМНЫЕ НАСТРОЙКИ ==========
+
+// Получение всех настроек
+router.get('/settings', authMiddleware, async (req, res) => {
+    try {
+        const result = await query(`SELECT * FROM system_settings ORDER BY setting_key`);
+        
+        // Преобразуем массив в объект { key: value }
+        const settings = {};
+        for (const row of result.rows) {
+            let value = row.setting_value;
+            if (row.setting_type === 'boolean') {
+                value = value === 'true';
+            } else if (row.setting_type === 'number') {
+                value = parseInt(value);
+            }
+            settings[row.setting_key] = value;
+        }
+        
+        res.json({ settings });
+    } catch (error) {
+        console.error('Get settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Обновление настроек
+router.put('/settings', authMiddleware, async (req, res) => {
+    try {
+        const updates = req.body;
+        const userId = req.userId;
+        
+        for (const [key, value] of Object.entries(updates)) {
+            // Определяем тип значения
+            let settingType = 'string';
+            let settingValue = value;
+            
+            if (typeof value === 'boolean') {
+                settingType = 'boolean';
+                settingValue = value ? 'true' : 'false';
+            } else if (typeof value === 'number') {
+                settingType = 'number';
+                settingValue = String(value);
+            } else if (typeof value === 'object' && Array.isArray(value)) {
+                settingType = 'json';
+                settingValue = JSON.stringify(value);
+            }
+            
+            await query(
+                `UPDATE system_settings 
+                 SET setting_value = $1, setting_type = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $3
+                 WHERE setting_key = $4`,
+                [settingValue, settingType, userId, key]
+            );
+        }
+        
+        // Если изменилось название организации, обновляем головное подразделение
+        if (updates.org_name) {
+            const rootDept = await query(
+                `SELECT id FROM departments WHERE parent_department_id IS NULL LIMIT 1`
+            );
+            
+            if (rootDept.rows.length > 0) {
+                await query(
+                    `UPDATE departments SET name = $1 WHERE id = $2`,
+                    [updates.org_name, rootDept.rows[0].id]
+                );
+                console.log('✅ Название головного подразделения обновлено:', updates.org_name);
+            }
+        }
+        
+        // Логируем изменение настроек
+        await query(
+            `INSERT INTO audit_logs (user_id, action, entity_type, old_data, new_data, ip_address, user_agent)
+             VALUES ($1, 'UPDATE settings', 'system', $2, $3, $4, $5)`,
+            [userId, null, JSON.stringify(updates), req.ip, req.headers['user-agent']]
+        );
+        
+        res.json({ success: true, message: 'Настройки сохранены' });
+    } catch (error) {
+        console.error('Update settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Сброс настроек по умолчанию
+router.post('/settings/reset', authMiddleware, async (req, res) => {
+    try {
+        await query(`UPDATE system_settings SET setting_value = DEFAULT`);
+        res.json({ success: true, message: 'Настройки сброшены' });
+    } catch (error) {
+        console.error('Reset settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
+
+
+
+
+
+
+// ========== ЛОГИ И СТАТИСТИКА ==========
+
+// Получение логов
+router.get('/logs', authMiddleware, async (req, res) => {
+    try {
+        const { limit = 100, offset = 0 } = req.query;
+        
+        const result = await query(
+            `SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+            [parseInt(limit), parseInt(offset)]
+        );
+        
+        res.json({ logs: result.rows });
+    } catch (error) {
+        console.error('Get logs error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Получение статистики
+router.get('/stats', authMiddleware, async (req, res) => {
+    try {
+        const stats = {};
+        
+        // Всего пользователей
+        const totalUsers = await query(`SELECT COUNT(*) FROM users WHERE deleted_at IS NULL`);
+        stats.total_users = parseInt(totalUsers.rows[0].count);
+        
+        // Активных сегодня (last_seen_at > now() - interval '1 day')
+        const activeUsers = await query(`
+            SELECT COUNT(*) FROM users 
+            WHERE last_seen_at > NOW() - INTERVAL '1 day' AND deleted_at IS NULL
+        `);
+        stats.active_users = parseInt(activeUsers.rows[0].count);
+        
+        // Всего чатов
+        const totalChats = await query(`SELECT COUNT(*) FROM chats`);
+        stats.total_chats = parseInt(totalChats.rows[0].count);
+        
+        // Групповые и личные чаты
+        const groupChats = await query(`SELECT COUNT(*) FROM chats WHERE is_group = true`);
+        stats.group_chats = parseInt(groupChats.rows[0].count);
+        const privateChats = await query(`SELECT COUNT(*) FROM chats WHERE is_group = false`);
+        stats.private_chats = parseInt(privateChats.rows[0].count);
+        
+        // Всего сообщений
+        const totalMessages = await query(`SELECT COUNT(*) FROM messages WHERE is_deleted = false`);
+        stats.total_messages = parseInt(totalMessages.rows[0].count);
+        
+        // Всего файлов
+        const totalFiles = await query(`SELECT COUNT(*) FROM message_attachments`);
+        stats.total_files = parseInt(totalFiles.rows[0].count);
+        // Заблокированные пользователи
+        const blockedUsers = await query(`SELECT COUNT(*) FROM users WHERE status = 'blocked' AND deleted_at IS NULL`);
+        stats.blocked_users = parseInt(blockedUsers.rows[0].count);
+
+        // Новые пользователи за месяц
+        const newUsersMonth = await query(`
+            SELECT COUNT(*) FROM users 
+            WHERE created_at > NOW() - INTERVAL '30 days' AND deleted_at IS NULL
+        `);
+        stats.new_users_month = parseInt(newUsersMonth.rows[0].count);
+        res.json(stats);
+    } catch (error) {
+        console.error('Get stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
+
+
+
+// ========== РЕЗЕРВНОЕ КОПИРОВАНИЕ ==========
+
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
+
+// Создание резервной копии
+router.post('/backup/create', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const backupDir = path.join(__dirname, '../../backups');
+        
+        // Создаём папку для бэкапов, если её нет
+        if (!fs.existsSync(backupDir)) {
+            fs.mkdirSync(backupDir, { recursive: true });
+        }
+        
+        const dbName = process.env.DB_NAME || 'corporate_messenger';
+        const dbUser = process.env.DB_USER || 'messenger_user';
+        const dbHost = process.env.DB_HOST || 'localhost';
+        const dbPort = process.env.DB_PORT || 5432;
+        
+        const backupFilename = `backup_${timestamp}.sql`;
+        const backupPath = path.join(backupDir, backupFilename);
+        
+        // Оптимальные параметры pg_dump для надёжного восстановления
+        // --clean - добавляет DROP TABLE перед CREATE TABLE
+        // --if-exists - не падает, если таблицы нет
+        // --no-owner - убирает владельцев
+        // --no-privileges - убирает права доступа
+        const dumpCmd = `pg_dump -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} \
+            --clean --if-exists \
+            --no-owner --no-privileges \
+            --exclude-table-data='*backups*' \
+            -f "${backupPath}"`;
+        
+        process.env.PGPASSWORD = process.env.DB_PASSWORD;
+        
+        console.log('📦 Creating backup...');
+        const { stdout, stderr } = await execPromise(dumpCmd);
+        
+        if (stderr && !stderr.includes('set_config')) {
+            console.error('Backup stderr:', stderr);
+        }
+        
+        const stats = fs.statSync(backupPath);
+        const fileSize = stats.size;
+        
+        // Сохраняем информацию о бэкапе
+        await query(
+            `INSERT INTO backups (filename, filepath, size_bytes, created_by, status)
+             VALUES ($1, $2, $3, $4, 'completed')`,
+            [backupFilename, backupPath, fileSize, userId]
+        );
+        
+        console.log(`✅ Backup created: ${backupFilename} (${formatFileSize(fileSize)})`);
+        
+        res.json({ 
+            success: true, 
+            filename: backupFilename,
+            size: formatFileSize(fileSize),
+            created_at: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('Backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Получение списка бэкапов
+router.get('/backup/list', authMiddleware, async (req, res) => {
+    try {
+        const result = await query(
+            `SELECT b.*, u.surname, u.name 
+             FROM backups b
+             LEFT JOIN users u ON b.created_by = u.id
+             ORDER BY b.created_at DESC`
+        );
+        
+        const backups = result.rows.map(b => ({
+            ...b,
+            size_formatted: formatFileSize(b.size_bytes)
+        }));
+        
+        res.json({ backups });
+    } catch (error) {
+        console.error('Get backups error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Скачивание бэкапа
+router.get('/backup/download/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(`SELECT * FROM backups WHERE id = $1`, [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Бэкап не найден' });
+        }
+        
+        const backup = result.rows[0];
+        
+        if (!fs.existsSync(backup.filepath)) {
+            return res.status(404).json({ error: 'Файл бэкапа не найден' });
+        }
+        
+        res.download(backup.filepath, backup.filename);
+    } catch (error) {
+        console.error('Download backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Удаление бэкапа
+router.delete('/backup/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(`SELECT * FROM backups WHERE id = $1`, [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Бэкап не найден' });
+        }
+        
+        const backup = result.rows[0];
+        
+        // Удаляем файл
+        if (fs.existsSync(backup.filepath)) {
+            fs.unlinkSync(backup.filepath);
+        }
+        
+        // Удаляем запись из БД
+        await query(`DELETE FROM backups WHERE id = $1`, [id]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Восстановление из бэкапа
+router.post('/backup/restore/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // 1. Получаем информацию о бэкапе
+        const result = await query(`SELECT * FROM backups WHERE id = $1`, [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Бэкап не найден' });
+        }
+        
+        const backup = result.rows[0];
+        
+        if (!fs.existsSync(backup.filepath)) {
+            return res.status(404).json({ error: 'Файл бэкапа не найден' });
+        }
+        
+        const dbName = process.env.DB_NAME || 'corporate_messenger';
+        const dbUser = process.env.DB_USER || 'messenger_user';
+        const dbHost = process.env.DB_HOST || 'localhost';
+        const dbPort = process.env.DB_PORT || 5432;
+        
+        process.env.PGPASSWORD = process.env.DB_PASSWORD;
+        
+        // 2. Восстанавливаем через psql с флагом --clean
+        console.log('🔄 Restoring backup...');
+        const restoreCmd = `psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${backup.filepath}" 2>&1`;
+        
+        const { stdout, stderr } = await execPromise(restoreCmd);
+        
+        if (stderr && !stderr.includes('WARNING') && !stderr.includes('ERROR')) {
+            console.error('Restore stderr:', stderr);
+        }
+        
+        console.log('✅ Database restored from backup');
+        
+        // 3. Очищаем старые сессии
+        await query(`TRUNCATE sessions CASCADE`);
+        
+        // 4. Обновляем последнюю активность админа
+        await query(
+            `UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [req.userId]
+        );
+        
+        res.json({ 
+            success: true, 
+            message: 'База данных восстановлена из бэкапа. Пожалуйста, войдите заново.'
+        });
+        
+    } catch (error) {
+        console.error('Restore backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Форматирование размера файла
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 module.exports = router;

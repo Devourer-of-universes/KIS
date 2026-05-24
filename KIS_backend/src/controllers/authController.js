@@ -5,29 +5,20 @@ const jwt = require('jsonwebtoken');
 // Регистрация
 const register = async (req, res) => {
     try {
-        console.log('📝 Headers:', req.headers['content-type']);
-        console.log('📝 Body:', req.body);
-        console.log('📝 Body keys:', Object.keys(req.body || {}));
+        console.log('📝 Registration request:', req.body);
 
         const { username, surname, name, patronymic, birthday, postId, departmentId, email, telNum, password } = req.body;
 
-        // Проверка, что body не пустой
-        if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({ error: 'Тело запроса пустое. Убедитесь, что вы отправили JSON с Content-Type: application/json' });
-        }
-
-        // Проверка обязательных полей
+        // Проверка обязательных полей (postId и departmentId теперь НЕ обязательны)
         if (!username) return res.status(400).json({ error: 'username обязателен' });
         if (!surname) return res.status(400).json({ error: 'surname обязателен' });
         if (!name) return res.status(400).json({ error: 'name обязателен' });
         if (!birthday) return res.status(400).json({ error: 'birthday обязателен' });
-        if (!postId) return res.status(400).json({ error: 'postId обязателен' });
-        if (!departmentId) return res.status(400).json({ error: 'departmentId обязателен' });
         if (!email) return res.status(400).json({ error: 'email обязателен' });
         if (!telNum) return res.status(400).json({ error: 'telNum обязателен' });
         if (!password) return res.status(400).json({ error: 'password обязателен' });
 
-        // Проверка, существует ли пользователь
+        // Проверка существования пользователя
         const existingEmail = await query('SELECT id FROM users WHERE email = $1', [email]);
         if (existingEmail.rows.length > 0) {
             return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
@@ -47,12 +38,12 @@ const register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Создаем пользователя
+        // Создаём пользователя (без post_id и department_id)
         const result = await query(
-            `INSERT INTO users (username, surname, name, patronymic, birthday, post_id, department_id, email, tel_num, password_hash, role_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-             RETURNING id, username, surname, name, patronymic, email, tel_num, created_at`,
-            [username, surname, name, patronymic || null, birthday, parseInt(postId), parseInt(departmentId), email, telNum, passwordHash, 2]
+            `INSERT INTO users (username, surname, name, patronymic, birthday, email, tel_num, password_hash, role_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, username, surname, name, patronymic, email, tel_num, created_at`,
+            [username, surname, name, patronymic || null, birthday, email, telNum, passwordHash, 2]
         );
 
         const user = result.rows[0];

@@ -106,7 +106,14 @@ app.locals.upload = upload;
 // =====================================================
 // ЗАПУСК СЕРВЕРА
 // =====================================================
+const { initSuperAdmin } = require('./utils/initAdmin');
+const { startBackupScheduler } = require('./utils/backupScheduler');
 
+// После подключения к БД, при старте сервера
+(async () => {
+    await initSuperAdmin();
+    startBackupScheduler();
+})();
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`

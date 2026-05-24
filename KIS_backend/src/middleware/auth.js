@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { query } = require('../config/database');
 
 // Проверка JWT токена
 const authMiddleware = async (req, res, next) => {
@@ -11,11 +12,19 @@ const authMiddleware = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
+        
+        // Получаем полную информацию о пользователе
+        const result = await query(
+            `SELECT id, username, email, role_id, status, is_super_admin 
+             FROM users WHERE id = $1 AND deleted_at IS NULL`,
+            [decoded.id]
+        );
 
-        if (!user) {
+        if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Пользователь не найден' });
         }
+
+        const user = result.rows[0];
 
         if (user.status !== 'active') {
             return res.status(403).json({ error: 'Учетная запись заблокирована' });
@@ -43,9 +52,10 @@ const authMiddleware = async (req, res, next) => {
 // Проверка прав администратора
 const adminMiddleware = async (req, res, next) => {
     try {
-        const isAdmin = await User.isAdmin(req.userId);
-        if (!isAdmin) {
-            return res.status(403).json({ error: 'Требуются права администратора' });
+        // Проверяем, что пользователь существует и имеет role_id = 1 (admin)
+        const result = await query(`SELECT role_id FROM users WHERE id = $1`, [req.userId]);
+        if (result.rows.length === 0 || result.rows[0].role_id !== 1) {
+            return res.status(403).json({ error: 'Доступ запрещён. Требуются права администратора.' });
         }
         next();
     } catch (error) {
@@ -71,5 +81,17 @@ const optionalAuthMiddleware = async (req, res, next) => {
         next();
     }
 };
-
+// Проверка, что пользователь не супер-админ при редактировании
+const notSuperAdminMiddleware = async (req, res, next) => {
+    try {
+        const targetId = req.params.id;
+        const targetUser = await query(`SELECT is_super_admin FROM users WHERE id = $1`, [targetId]);
+        if (targetUser.rows.length > 0 && targetUser.rows[0].is_super_admin) {
+            return res.status(403).json({ error: 'Действие запрещено для супер-администратора' });
+        }
+        next();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 module.exports = { authMiddleware, adminMiddleware, optionalAuthMiddleware };

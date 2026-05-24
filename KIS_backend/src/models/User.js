@@ -12,9 +12,9 @@ class User {
 
         const result = await query(
             `INSERT INTO users (username, surname, name, patronymic, birthday, post_id, department_id, email, tel_num, password_hash, role_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-             RETURNING id, username, surname, name, patronymic, email, tel_num, avatar_uri, status, role_id, created_at`,
-            [username, surname, name, patronymic, birthday, postId, departmentId, email, telNum, passwordHash, roleId]
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING id, username, surname, name, patronymic, email, tel_num, avatar_uri, status, role_id, created_at`,
+            [username, surname, name, patronymic, birthday, postId || null, departmentId || null, email, telNum, passwordHash, roleId]
         );
 
         return result.rows[0];
@@ -23,18 +23,17 @@ class User {
     // Поиск по ID
     static async findById(id) {
         const result = await query(
-            `SELECT u.*, r.name as role_name, p.name as post_name, d.name as department_name,
+            `SELECT u.*, u.is_super_admin, r.name as role_name, p.name as post_name, d.name as department_name,
                     (EXTRACT(EPOCH FROM (NOW() - u.last_seen_at)) / 60) < $1 as is_online
-             FROM users u
-             LEFT JOIN roles r ON u.role_id = r.id
-             LEFT JOIN posts p ON u.post_id = p.id
-             LEFT JOIN departments d ON u.department_id = d.id
-             WHERE u.id = $2 AND u.deleted_at IS NULL`,
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            LEFT JOIN posts p ON u.post_id = p.id
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.id = $2 AND u.deleted_at IS NULL`,
             [process.env.OFFLINE_TIMEOUT_MINUTES || 5, id]
         );
         return result.rows[0];
     }
-
     // Поиск по email
     static async findByEmail(email) {
         const result = await query(

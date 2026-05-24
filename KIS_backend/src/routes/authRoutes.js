@@ -22,8 +22,8 @@ router.post('/register', async (req, res) => {
         if (!surname) return res.status(400).json({ error: 'surname required' });
         if (!name) return res.status(400).json({ error: 'name required' });
         if (!birthday) return res.status(400).json({ error: 'birthday required' });
-        if (!postId) return res.status(400).json({ error: 'postId required' });
-        if (!departmentId) return res.status(400).json({ error: 'departmentId required' });
+        // if (!postId) return res.status(400).json({ error: 'postId required' });
+        // if (!departmentId) return res.status(400).json({ error: 'departmentId required' });
         if (!email) return res.status(400).json({ error: 'email required' });
         if (!telNum) return res.status(400).json({ error: 'telNum required' });
         if (!password) return res.status(400).json({ error: 'password required' });
@@ -48,7 +48,7 @@ router.post('/register', async (req, res) => {
             `INSERT INTO users (username, surname, name, patronymic, birthday, post_id, department_id, email, tel_num, password_hash, role_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 2)
              RETURNING id, username, surname, name, email`,
-            [username, surname, name, patronymic || null, birthday, parseInt(postId), parseInt(departmentId), email, telNum, passwordHash]
+            [username, surname, name, patronymic || null, birthday, postId || null, departmentId || null, email, telNum, passwordHash]
         );
 
         const user = result.rows[0];
@@ -125,7 +125,8 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
         
         const result = await query(
-            `SELECT id, username, surname, name, email, avatar_uri, status FROM users WHERE id = $1`,
+            `SELECT id, username, surname, name, email, avatar_uri, status, role_id, is_super_admin 
+             FROM users WHERE id = $1 AND deleted_at IS NULL`,
             [decoded.id]
         );
 
@@ -133,8 +134,12 @@ router.get('/me', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        const user = result.rows[0];
+        console.log('✅ /me returning user:', { id: user.id, username: user.username, is_super_admin: user.is_super_admin });
+
         res.json({ user: result.rows[0] });
     } catch (error) {
+        console.error('❌ /me error:', error);
         res.status(401).json({ error: 'Invalid token' });
     }
 });

@@ -71,8 +71,34 @@
             try {
                 const result = await api.auth.login(emailOrUsername, password);
                 if (result.success) {
-                    // Перенаправляем на главную страницу
-                    window.location.href = '/html/admin_base.html';
+                    window.currentUser = result.user;
+                    
+                    // Загружаем права роли
+                    if (result.user.role_id && !result.user.is_super_admin) {
+                        try {
+                            const permResponse = await fetch(`/api/admin/roles/${result.user.role_id}/permissions`, {
+                                headers: { 'Authorization': `Bearer ${result.token}` }
+                            });
+                            if (permResponse.ok) {
+                                const permData = await permResponse.json();
+                                window.currentUser.permissions = permData.permissions;
+                            }
+                        } catch (e) {
+                            console.error('Failed to load permissions:', e);
+                        }
+                    } else if (result.user.is_super_admin) {
+                        window.currentUser.permissions = { admin_panel: true };
+                    }
+                    
+                    // Редирект
+                    const hasAdminAccess = result.user.is_super_admin || 
+                        (window.currentUser.permissions && window.currentUser.permissions.admin_panel === true);
+                    
+                    if (hasAdminAccess) {
+                        window.location.href = '/html/admin_base.html';
+                    } else {
+                        window.location.href = '/html/base.html';
+                    }
                 }
             } catch (error) {
                 console.error('Login error:', error);

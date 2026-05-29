@@ -75,29 +75,176 @@ function openAdminSection(sectionId) {
     }
 }
 
-function setActiveNavButton(activeButton) {
+
+
+
+// ========== ЕДИНЫЙ ОБРАБОТЧИК ИНИЦИАЛИЗАЦИИ ==========
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Admin page initializing...');
     
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    // 1. Проверка авторизации и загрузка пользователя
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/html/login.html';
+            return;
+        }
+        
+        const response = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            localStorage.removeItem('token');
+            window.location.href = '/html/login.html';
+            return;
+        }
+        
+        const data = await response.json();
+        const user = data.user;
+        window.currentUser = user;
+        
+        // Загружаем права роли
+        let hasAdminAccess = user.is_super_admin === true;
+        
+        if (!hasAdminAccess && user.role_id) {
+            try {
+                const permResponse = await fetch(`/api/admin/roles/${user.role_id}/permissions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (permResponse.ok) {
+                    const permData = await permResponse.json();
+                    window.currentUser.permissions = permData.permissions;
+                    hasAdminAccess = permData.permissions?.admin_panel === true;
+                }
+            } catch (e) {
+                console.error('Failed to load permissions:', e);
+            }
+        }
+        
+        if (!hasAdminAccess) {
+            window.location.href = '/html/base.html';
+            return;
+        }
+        
+        // 2. Загружаем права и данные
+        await loadUserPermissions();
+        
+        // 3. Устанавливаем активную секцию (ТОЛЬКО ПЕРВУЮ)
+        const firstVisibleSection = getFirstVisibleSection();
+        if (firstVisibleSection) {
+            // Скрываем ВСЕ секции
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.style.display = 'none';
+                section.classList.remove('active');
+            });
+            // Показываем только нужную
+            firstVisibleSection.style.display = 'block';
+            firstVisibleSection.classList.add('active');
+            
+            // Активируем соответствующую кнопку в навигации
+            const activeNavBtn = document.querySelector(`.nav-btn[data-section="${firstVisibleSection.id.replace('-section', '')}"]`);
+            if (activeNavBtn) {
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                activeNavBtn.classList.add('active');
+            }
+        }
+        
+        // 4. Загружаем остальные данные (асинхронно, они не влияют на отображение секций)
+        loadUsers();
+        loadStructure();
+        loadRoles();
+        loadSystemSettings();
+        
+        // 5. Инициализируем обработчики
+        initEventListeners();
+        
+    } catch (error) {
+        console.error('Admin page error:', error);
+        window.location.href = '/html/login.html';
+    }
+});
+
+// Функция для определения первой доступной секции
+function getFirstVisibleSection() {
+    const sections = [
+        { id: 'users-section', permission: hasPermission('users', 'view') },
+        { id: 'templates-section', permission: hasPermission('templates', 'view') },
+        { id: 'structure-section', permission: hasPermission('structure', 'view') },
+        { id: 'roles-section', permission: hasPermission('roles', 'view') },
+        { id: 'system-section', permission: hasPermission('settings', 'view') },
+        { id: 'reports-section', permission: hasPermission('stats', 'view') }
+    ];
     
+    for (const section of sections) {
+        if (section.permission) {
+            const element = document.getElementById(section.id);
+            if (element) return element;
+        }
+    }
     
-    activeButton.classList.add('active');
+    // Если ничего не подошло — показываем users-section как дефолт
+    return document.getElementById('users-section');
 }
 
-
-document.addEventListener('DOMContentLoaded', function() {
-    const defaultSection = document.getElementById('users-section'); 
-    if (defaultSection) {
-        defaultSection.style.display = 'block';
-        defaultSection.classList.add('active');
+// Инициализация обработчиков событий
+function initEventListeners() {
+    // Кнопки навигации
+    const btn_users = document.querySelector('#nav-btn-users');
+    const btn_templates = document.querySelector('#nav-btn-templates');
+    const btn_system = document.querySelector('#nav-btn-system');
+    const btn_reports = document.querySelector('#nav-btn-reports');
+    const btn_structure = document.querySelector('#nav-btn-structure');
+    const btn_roles = document.querySelector('#nav-btn-roles');
+    const btn_addUser = document.querySelector('#addUserBtn');
+    
+    if (btn_users) btn_users.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminSection('users-section');
+        setActiveNavButton(btn_users);
+    });
+    
+    if (btn_templates) btn_templates.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminSection('templates-section');
+        setActiveNavButton(btn_templates);
+    });
+    
+    if (btn_system) btn_system.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminSection('system-section');
+        setActiveNavButton(btn_system);
+        loadSystemSettings();
+        initSystemSettingsHandlers();
+    });
+    
+    if (btn_reports) btn_reports.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminSection('reports-section');
+        setActiveNavButton(btn_reports);
+    });
+    
+    if (btn_structure) btn_structure.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminSection('structure-section');
+        setActiveNavButton(btn_structure);
+        loadStructure();
+    });
+    
+    if (btn_roles) btn_roles.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminSection('roles-section');
+        setActiveNavButton(btn_roles);
+        loadRoles();
+    });
+    
+    if (btn_addUser) {
+        btn_addUser.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openModal('addUserModal');
+        });
     }
     
-   
-    const defaultNavBtn = document.querySelector('#nav-btn-users');
-    if (defaultNavBtn) {
-        defaultNavBtn.classList.add('active');
-    }
     // Кнопка добавления корневого подразделения
     document.getElementById('addMainDepartmentBtn')?.addEventListener('click', () => {
         openAddDepartmentModal(null);
@@ -106,32 +253,36 @@ document.addEventListener('DOMContentLoaded', function() {
     // Кнопки сворачивания/разворачивания
     document.getElementById('collapseAllBtn')?.addEventListener('click', collapseAllNodes);
     document.getElementById('expandAllBtn')?.addEventListener('click', expandAllNodes);
-});
+}
 
-
-// В начале файла admin.js, после загрузки страницы
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const token = localStorage.getItem('token');
-        if (token) {
-            const response = await fetch('/api/auth/me', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                window.currentUser = data.user;
-                console.log('Current user:', window.currentUser);
-            }
-        }
-        
-        // Загружаем пользователей
-        if (typeof loadUsers === 'function') {
-            loadUsers();
-        }
-    } catch (error) {
-        console.error('Error loading current user:', error);
+// Функция открытия секции
+function openAdminSection(sectionId) {
+    console.log('Открываем раздел:', sectionId);
+    
+    document.querySelectorAll('.admin-section').forEach(section => {
+        section.style.display = 'none';
+        section.classList.remove('active');
+    });
+    
+    const sectionElement = document.getElementById(sectionId);
+    if (sectionElement) {
+        sectionElement.style.display = 'block';
+        sectionElement.classList.add('active');
     }
-});
+}
+
+// Установка активной кнопки
+function setActiveNavButton(activeButton) {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+}
+
+
+
 
 class OrganizationStructure {
     constructor() {
@@ -889,14 +1040,7 @@ function loadMoreHistory() {
 function generateUserReport() {
     console.log('Генерация отчёта для пользователя:', currentViewedUserId);
 }
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.btn-icon[title="Инфо"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const userId = this.closest('tr').querySelector('td:first-child').textContent;
-            openUserInfo(userId);
-        });
-    });
-});
+
 
 
 class TemplateBuilder {
@@ -1489,35 +1633,6 @@ class TemplateBuilder {
 
 let templateBuilder;
 
-document.addEventListener('DOMContentLoaded', function() {
-    templateBuilder = new TemplateBuilder();
-    document.getElementById('addTemplateBtn').addEventListener('click', function() {
-        openModal('templateEditorModal');
-    });
-    document.getElementById('testTemplateBtn').addEventListener('click', function() {
-        templateBuilder.showPreview();
-    });
-    
-    document.getElementById('publishTemplateBtn').addEventListener('click', function() {
-        templateBuilder.saveTemplate();
-        closeModal('templateEditorModal');
-    });
-});
-// В конце файла, после существующего кода, добавь:
-document.addEventListener('DOMContentLoaded', function() {
-    // Загружаем пользователей
-    if (typeof loadUsers === 'function') {
-        loadUsers();
-    }
-});
-
-
-
-
-
-
-
-
 // ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==========
 
 let currentPage = 1;
@@ -1567,8 +1682,6 @@ function getStatusBadge(status) {
 }
 // Отрисовка таблицы пользователей
 function renderUsersTable(users) {
-    console.log('Rendering users, currentUser:', window.currentUser);
-    console.log('is_super_admin:', window.currentUser?.is_super_admin);
     const tbody = document.querySelector('#users-section .admin-table tbody');
     if (!tbody) return;
     
@@ -1580,25 +1693,51 @@ function renderUsersTable(users) {
     const currentUser = window.currentUser;
     const isSuperAdmin = currentUser?.is_super_admin === true;
     
-    console.log('Is super admin:', isSuperAdmin);
+    // Проверяем права на действия
+    const canEdit = hasPermission('users', 'edit');
+    const canBlock = hasPermission('users', 'block');
+    const canDelete = hasPermission('users', 'delete');
+    const canCreate = hasPermission('users', 'create');
+    const canChangeRole = hasPermission('users', 'edit');
+    const canViewAllUsers = hasPermission('users', 'view_all') || isSuperAdmin;
     
-    // Фильтруем: супер-админ видит всех, остальные не видят супер-админов
-    let filteredUsers = users;
-    if (!isSuperAdmin) {
-        filteredUsers = users.filter(user => !user.is_super_admin);
-        console.log('Filtered users count:', filteredUsers.length);
+    // Скрываем кнопку добавления, если нет прав на создание
+    const addUserBtn = document.getElementById('addUserBtn');
+    if (addUserBtn) {
+        addUserBtn.style.display = canCreate ? 'flex' : 'none';
     }
-    // Супер-админ видит всех, включая себя
+    
+    // Фильтруем пользователей в зависимости от прав
+    let filteredUsers = users;
+    if (!canViewAllUsers && !isSuperAdmin) {
+        // Показываем только пользователей из своего отдела
+        filteredUsers = users.filter(user => user.department_id === currentUser?.department_id);
+    }
+    // Если пользователь НЕ супер-админ и НЕ имеет права просмотра всех пользователей
+    if (!isSuperAdmin && !hasPermission('users', 'view_all')) {
+        // Показываем только пользователей из своего отдела
+        filteredUsers = users.filter(user => user.department_id === currentUser?.department_id);
+    }
+    
+    // Супер-админ видит всех, остальные не видят супер-админов
+    if (!isSuperAdmin) {
+        filteredUsers = filteredUsers.filter(user => !user.is_super_admin);
+    }
     
     if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">📭 Нет пользователей</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">📭 Нет доступных пользователей</td></tr>';
         return;
     }
     
     tbody.innerHTML = filteredUsers.map(user => {
-        // Дополнительная проверка: если это супер-админ, показываем специальную метку
         const isSuperAdminUser = user.is_super_admin === true;
-        const roleBadge = isSuperAdminUser ? '<span class="role-badge super-admin">👑 Супер-админ</span>' : '';
+        const isCurrentUser = user.id === currentUser?.id;
+        
+        // Права на действия
+        const canEditThisUser = canEdit && !isSuperAdminUser;
+        const canBlockThisUser = canBlock && !isSuperAdminUser && !isCurrentUser;
+        const canDeleteThisUser = canDelete && !isSuperAdminUser && !isCurrentUser;
+        const canResetPasswordUser = (hasPermission('users', 'reset_password') || isSuperAdmin) && !isSuperAdminUser;
         
         return `
             <tr ${isSuperAdminUser ? 'style="background: rgba(255, 215, 0, 0.1);"' : ''}>
@@ -1607,12 +1746,14 @@ function renderUsersTable(users) {
                     <strong>${escapeHtml(user.surname)} ${escapeHtml(user.name)}</strong>
                     ${user.patronymic ? ` ${escapeHtml(user.patronymic)}` : ''}
                     <br><small style="color:#999;">@${escapeHtml(user.username)}</small>
-                    ${roleBadge}
+                    ${isSuperAdminUser ? '<span class="role-badge super-admin">👑 Супер-админ</span>' : ''}
                 </td>
                 <td>${escapeHtml(user.post_name || '-')}</td>
                 <td>${escapeHtml(user.department_name || '-')}</td>
                 <td>
-                    <select class="role-select" data-user-id="${user.id}" onchange="updateUserRole(${user.id}, this.value)" ${isSuperAdminUser ? 'disabled' : ''}>
+                    <select class="role-select" data-user-id="${user.id}" 
+                        onchange="updateUserRole(${user.id}, this.value)" 
+                        ${!canChangeRole || isSuperAdminUser ? 'disabled' : ''}>
                         <option value="1" ${user.role_id === 1 ? 'selected' : ''}>👑 Администратор</option>
                         <option value="2" ${user.role_id === 2 ? 'selected' : ''}>👤 Пользователь</option>
                     </select>
@@ -1620,21 +1761,16 @@ function renderUsersTable(users) {
                 <td>${getStatusBadge(user.status)}</td>
                 <td>
                     <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})">ℹ️</button>
-                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})" ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>✏️</button>
-                    <button class="btn-icon buttonbase" 
-                        title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" 
-                        onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')"
-                        ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>
-                        ${user.status === 'blocked' ? '🔓' : '🔒'}
-                    </button>
-                    <button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')" ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>🔑</button>
-                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;" ${isSuperAdminUser && !isSuperAdmin ? 'disabled' : ''}>🗑️</button>
+                    ${canEditThisUser ? `<button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})">✏️</button>` : ''}
+                    ${canBlockThisUser ? `<button class="btn-icon buttonbase" title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')">${user.status === 'blocked' ? '🔓' : '🔒'}</button>` : ''}
+                    ${canResetPasswordUser ? `<button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')">🔑</button>` : ''}
+                    ${canDeleteThisUser ? `<button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;">🗑️</button>` : ''}
                 </td>
             </tr>
         `;
     }).join('');
     
-    // Обновляем информацию о пагинации с учётом фильтрации
+    // Обновляем пагинацию
     const start = (currentPage - 1) * usersPerPage + 1;
     const end = Math.min(currentPage * usersPerPage, filteredUsers.length);
     document.getElementById('showingFrom').textContent = filteredUsers.length === 0 ? 0 : start;
@@ -1966,12 +2102,13 @@ function renderRolesCards() {
     const container = document.getElementById('rolesGrid');
     if (!container) return;
     
-    console.log('Roles list:', rolesList); // Отладка
-    
     if (!rolesList || rolesList.length === 0) {
         container.innerHTML = '<div style="text-align:center; padding:40px;">📭 Нет ролей</div>';
         return;
     }
+    
+    const canEditRoles = hasPermission('roles', 'edit');
+    const canDeleteRoles = hasPermission('roles', 'delete');
     
     container.innerHTML = rolesList.map(role => {
         const isSystem = role.id === 1 || role.id === 2;
@@ -1995,12 +2132,9 @@ function renderRolesCards() {
                         <span>—</span>
                     </div>
                     <div class="role-card-actions" onclick="event.stopPropagation()">
-                        ${!isSystem ? `
-                            <button class="btn-icon buttonbase" title="Редактировать" onclick="openRoleModal(${role.id})">✏️</button>
-                            <button class="btn-icon buttonbase" title="Удалить" onclick="deleteRole(${role.id})" style="color:#dc3545;">🗑️</button>
-                        ` : `
-                            <button class="btn-icon buttonbase" title="Просмотр" onclick="openRoleModal(${role.id})">👁️</button>
-                        `}
+                        ${canEditRoles && !isSystem ? `<button class="btn-icon buttonbase" title="Редактировать" onclick="openRoleModal(${role.id})">✏️</button>` : ''}
+                        ${canDeleteRoles && !isSystem ? `<button class="btn-icon buttonbase" title="Удалить" onclick="deleteRole(${role.id})" style="color:#dc3545;">🗑️</button>` : ''}
+                        ${!canEditRoles && !canDeleteRoles && isSystem ? `<button class="btn-icon buttonbase" title="Просмотр" onclick="openRoleModal(${role.id})">👁️</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -2172,8 +2306,19 @@ function loadPermissionsToForm(permissions) {
 function getRoleFormData() {
     const permissions = {};
     
+    // Собираем права из всех select
     document.querySelectorAll('.permission-select').forEach(select => {
-        permissions[select.name] = select.value;
+        const resource = select.dataset.resource;
+        const action = select.dataset.action;
+        
+        if (!permissions[resource]) {
+            permissions[resource] = {};
+        }
+        
+        const value = select.value;
+        if (value !== 'none') {
+            permissions[resource][action] = value === 'all' ? true : value;
+        }
     });
     
     return {
@@ -2181,11 +2326,38 @@ function getRoleFormData() {
         code: document.getElementById('roleCode').value,
         description: document.getElementById('roleDescription').value,
         permissions: permissions,
+        admin_panel: document.getElementById('adminPanelAccess').checked,
         is_default: document.getElementById('roleIsDefault').checked,
-        can_delegate: document.getElementById('roleCanDelegate').checked,
-        is_system: document.getElementById('roleIsSystem').checked,
-        priority: document.getElementById('rolePriority').value
+        is_system: document.getElementById('roleIsSystem').checked
     };
+}
+
+// Загрузка данных роли в форму
+function loadRoleToForm(role) {
+    document.getElementById('roleName').value = role.name;
+    document.getElementById('roleCode').value = role.code || '';
+    document.getElementById('roleDescription').value = role.description || '';
+    document.getElementById('adminPanelAccess').checked = role.permissions?.admin_panel === true;
+    document.getElementById('roleIsDefault').checked = role.is_default || false;
+    document.getElementById('roleIsSystem').checked = role.is_system || false;
+    
+    // Загружаем права
+    const permissions = role.permissions || {};
+    document.querySelectorAll('.permission-select').forEach(select => {
+        const resource = select.dataset.resource;
+        const action = select.dataset.action;
+        const value = permissions[resource]?.[action];
+        
+        if (value === true) {
+            select.value = 'all';
+        } else if (value === false || value === 'none') {
+            select.value = 'none';
+        } else if (value === 'own') {
+            select.value = 'own';
+        } else {
+            select.value = 'none';
+        }
+    });
 }
 
 // Сохранение роли
@@ -3641,6 +3813,8 @@ async function saveSystemSettings() {
         log_retention_days: parseInt(document.getElementById('log_retention_days')?.value) || 90
     };
     
+    console.log('Saving settings:', settings);
+    
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/settings', {
@@ -3652,13 +3826,19 @@ async function saveSystemSettings() {
             body: JSON.stringify(settings)
         });
         
-        if (!response.ok) throw new Error('Failed to save settings');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save settings');
+        }
         
         showToast('Настройки сохранены', 'success');
-        loadSystemSettings(); // Перезагружаем для обновления
+        
+        // Перезагружаем настройки для обновления формы
+        await loadSystemSettings();
+        
     } catch (error) {
         console.error('Error saving settings:', error);
-        showToast('Ошибка сохранения настроек', 'error');
+        showToast('Ошибка сохранения настроек: ' + error.message, 'error');
     }
 }
 
@@ -4173,4 +4353,148 @@ async function restoreBackup(backupId) {
         console.error('Restore error:', error);
         showToast('Ошибка восстановления', 'error');
     }
+}
+
+// ========== УПРАВЛЕНИЕ ПРАВАМИ ДОСТУПА ==========
+
+let currentUserPermissions = {};
+
+// Загрузка прав текущего пользователя
+async function loadUserPermissions() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        // Получаем текущего пользователя
+        const userResponse = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (userResponse.ok) {
+            const userData = await userResponse.json();
+            window.currentUser = userData.user;
+            
+            // Если пользователь не супер-админ, загружаем его права из роли
+            if (!window.currentUser.is_super_admin && window.currentUser.role_id) {
+                const permResponse = await fetch(`/api/admin/roles/${window.currentUser.role_id}/permissions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (permResponse.ok) {
+                    const permData = await permResponse.json();
+                    currentUserPermissions = permData.permissions || {};
+                }
+            } else if (window.currentUser.is_super_admin) {
+                // Супер-админ имеет все права
+                currentUserPermissions = { admin_panel: true };
+            }
+        }
+        
+        console.log('📋 User permissions loaded:', currentUserPermissions);
+        
+        // После загрузки прав применяем их к интерфейсу
+        applyPermissionsToUI();
+        
+    } catch (error) {
+        console.error('Error loading permissions:', error);
+    }
+}
+
+// Проверка конкретного права
+function hasPermission(resource, action = 'view') {
+    // Супер-админ имеет все права
+    if (window.currentUser?.is_super_admin) return true;
+    
+    // Проверяем право в загруженных правах
+    const resourcePerm = currentUserPermissions[resource];
+    if (!resourcePerm) return false;
+    
+    // Если resourcePerm — это объект с действиями
+    if (typeof resourcePerm === 'object') {
+        return resourcePerm[action] === true;
+    }
+    
+    // Если resourcePerm — это просто true/false (полный доступ к ресурсу)
+    return resourcePerm === true;
+}
+
+// Проверка доступа к админ-панели
+function canAccessAdminPanel() {
+    if (window.currentUser?.is_super_admin) return true;
+    return currentUserPermissions.admin_panel === true;
+}
+// Применение прав доступа к интерфейсу
+function applyPermissionsToUI() {
+    console.log('🔒 Applying permissions to UI...');
+    
+    // Проверяем, есть ли у пользователя права
+    const canViewUsers = hasPermission('users', 'view');
+    const canViewTemplates = hasPermission('templates', 'view');
+    const canViewSettings = hasPermission('settings', 'view');
+    const canViewStats = hasPermission('stats', 'view');
+    const canViewStructure = hasPermission('structure', 'view');
+    const canViewRoles = hasPermission('roles', 'view');
+    
+    // Скрываем/показываем вкладки в навигации
+    const navItems = {
+        'users-section': canViewUsers,
+        'templates-section': canViewTemplates,
+        'system-section': canViewSettings,
+        'reports-section': canViewStats,
+        'structure-section': canViewStructure,
+        'roles-section': canViewRoles
+    };
+    
+    for (const [sectionId, visible] of Object.entries(navItems)) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.style.display = visible ? 'block' : 'none';
+        }
+        
+        // Также скрываем кнопки навигации
+        const navBtn = document.querySelector(`.nav-btn[data-section="${sectionId.replace('-section', '')}"]`);
+        if (navBtn) {
+            navBtn.style.display = visible ? 'flex' : 'none';
+        }
+    }
+    
+    // Если ни одного раздела не доступно — редирект
+    const hasAnyAccess = Object.values(navItems).some(v => v === true);
+    if (!hasAnyAccess && !window.currentUser?.is_super_admin) {
+        console.warn('No admin sections accessible, redirecting...');
+        window.location.href = '/html/base.html';
+        return;
+    }
+    
+    // Кнопка добавления пользователя
+    const addUserBtn = document.getElementById('addUserBtn');
+    if (addUserBtn) {
+        addUserBtn.style.display = hasPermission('users', 'create') ? 'flex' : 'none';
+    }
+    
+    // Кнопки структуры
+    const structureAddBtn = document.getElementById('addMainDepartmentBtn');
+    if (structureAddBtn) {
+        structureAddBtn.style.display = hasPermission('structure', 'edit') ? 'flex' : 'none';
+    }
+    
+    // Кнопки настроек
+    const saveSettingsBtn = document.getElementById('saveSystemSettings');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.style.display = hasPermission('settings', 'edit') ? 'flex' : 'none';
+    }
+    
+    // Кнопки бэкапов
+    const createBackupBtn = document.getElementById('createBackupBtn');
+    if (createBackupBtn) {
+        createBackupBtn.style.display = hasPermission('backup', 'create') ? 'flex' : 'none';
+    }
+    
+    // Кнопки ролей
+    const addRoleBtn = document.getElementById('addRoleBtn');
+    if (addRoleBtn) {
+        addRoleBtn.style.display = hasPermission('roles', 'create') ? 'flex' : 'none';
+    }
+    
+    console.log('✅ Permissions applied to UI');
 }

@@ -878,353 +878,265 @@
             </div>
         </div>
     </div>
-    <div id="roleEditorModal" class="admin-modal">
-        <div class="modal-content role-editor-modal">
-            <div class="modal-header">
-                <h2 id="roleModalTitle">👑 Создание новой роли</h2>
-                <button class="modal-close" onclick="closeModal('roleEditorModal')">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <form id="roleEditorForm" class="modal-form">
-                    <!-- Основная информация -->
-                    <div class="form-section">
-                        <h3>Основная информация</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="roleName">Название роли *</label>
-                                <input type="text" id="roleName" name="name" 
-                                    placeholder="Например, Менеджер проектов" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="roleCode">Системный код *</label>
-                                <input type="text" id="roleCode" name="code" 
-                                    placeholder="project_manager" 
-                                    pattern="[a-z_]+" title="Только строчные латинские буквы и подчеркивания" required>
-                                <small class="form-hint">Уникальный идентификатор для системы</small>
-                            </div>
-                        </div>
-                        
+<div id="roleEditorModal" class="admin-modal">
+    <div class="modal-content role-editor-modal">
+        <div class="modal-header">
+            <h2 id="roleModalTitle">👑 Создание новой роли</h2>
+            <button class="modal-close" onclick="closeModal('roleEditorModal')">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="roleEditorForm" class="modal-form">
+                <!-- Основная информация -->
+                <div class="form-section">
+                    <h3>Основная информация</h3>
+                    <div class="form-row">
                         <div class="form-group">
-                            <label for="roleDescription">Описание роли</label>
-                            <textarea id="roleDescription" name="description" 
-                                    placeholder="Опишите назначение и возможности этой роли..." 
-                                    rows="3"></textarea>
+                            <label for="roleName">Название роли *</label>
+                            <input type="text" id="roleName" name="name" required>
                         </div>
-                    </div>
-
-                    <!-- Настройка разрешений -->
-                    <div class="form-section">
-                        <h3>🔐 Настройка разрешений</h3>
-                        
-                        <!-- Быстрый выбор уровня доступа -->
-                        <div class="permission-presets">
-                            <h4>Быстрый выбор уровня доступа</h4>
-                            <div class="preset-buttons">
-                                <button type="button" class="buttonbase preset-btn" data-preset="readonly">👀 Только просмотр</button>
-                                <button type="button" class="buttonbase preset-btn" data-preset="user">👤 Стандартный пользователь</button>
-                                <button type="button" class="buttonbase preset-btn" data-preset="manager">📊 Менеджер</button>
-                                <button type="button" class="buttonbase preset-btn" data-preset="admin">👑 Администратор</button>
-                            </div>
-                        </div>
-
-                        <!-- Детальные разрешения -->
-                        <div class="permissions-grid">
-                            <!-- Документы -->
-                            <div class="permission-category">
-                                <div class="category-header">
-                                    <h4>📄 Документы</h4>
-                                    <label class="category-toggle">
-                                        <input type="checkbox" class="category-checkbox" data-category="documents">
-                                        Выбрать все
-                                    </label>
-                                </div>
-                                <div class="permission-items">
-                                    <div class="permission-item">
-                                        <label class="permission-label">Просмотр документов</label>
-                                        <select class="permission-select" name="documents_view">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="department">Свои и отдела</option>
-                                            <option value="all" selected>Все документы</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Создание документов</label>
-                                        <select class="permission-select" name="documents_create">
-                                            <option value="none">Запрещено</option>
-                                            <option value="limited">Ограниченно</option>
-                                            <option value="all" selected>Разрешено</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Редактирование документов</label>
-                                        <select class="permission-select" name="documents_edit">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="department">Свои и отдела</option>
-                                            <option value="all">Все документы</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Удаление документов</label>
-                                        <select class="permission-select" name="documents_delete">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="department">Свои и отдела</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Согласование документов</label>
-                                        <select class="permission-select" name="documents_approve">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="all">Все документы</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Задачи -->
-                            <div class="permission-category">
-                                <div class="category-header">
-                                    <h4>✅ Задачи</h4>
-                                    <label class="category-toggle">
-                                        <input type="checkbox" class="category-checkbox" data-category="tasks">
-                                        Выбрать все
-                                    </label>
-                                </div>
-                                <div class="permission-items">
-                                    <div class="permission-item">
-                                        <label class="permission-label">Просмотр задач</label>
-                                        <select class="permission-select" name="tasks_view">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="department" selected>Свои и отдела</option>
-                                            <option value="all">Все задачи</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Создание задач</label>
-                                        <select class="permission-select" name="tasks_create">
-                                            <option value="none">Запрещено</option>
-                                            <option value="all" selected>Разрешено</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Назначение задач</label>
-                                        <select class="permission-select" name="tasks_assign">
-                                            <option value="none">Запрещено</option>
-                                            <option value="department">В своем отделе</option>
-                                            <option value="all">Всем сотрудникам</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Изменение статусов</label>
-                                        <select class="permission-select" name="tasks_status">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="assigned" selected>Назначенные</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Процессы -->
-                            <div class="permission-category">
-                                <div class="category-header">
-                                    <h4>🔄 Процессы</h4>
-                                    <label class="category-toggle">
-                                        <input type="checkbox" class="category-checkbox" data-category="workflows">
-                                        Выбрать все
-                                    </label>
-                                </div>
-                                <div class="permission-items">
-                                    <div class="permission-item">
-                                        <label class="permission-label">Просмотр процессов</label>
-                                        <select class="permission-select" name="workflows_view">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="all" selected>Все процессы</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Создание процессов</label>
-                                        <select class="permission-select" name="workflows_create">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="all">Разрешено</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Редактирование процессов</label>
-                                        <select class="permission-select" name="workflows_edit">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="all">Все процессы</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Пользователи -->
-                            <div class="permission-category">
-                                <div class="category-header">
-                                    <h4>👥 Пользователи</h4>
-                                    <label class="category-toggle">
-                                        <input type="checkbox" class="category-checkbox" data-category="users">
-                                        Выбрать все
-                                    </label>
-                                </div>
-                                <div class="permission-items">
-                                    <div class="permission-item">
-                                        <label class="permission-label">Просмотр пользователей</label>
-                                        <select class="permission-select" name="users_view">
-                                            <option value="none">Запрещено</option>
-                                            <option value="department" selected>Только своего отдела</option>
-                                            <option value="all">Все пользователи</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Редактирование пользователей</label>
-                                        <select class="permission-select" name="users_edit">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="own">Только свой профиль</option>
-                                            <option value="department">В своем отделе</option>
-                                            <option value="all">Всех пользователей</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Создание пользователей</label>
-                                        <select class="permission-select" name="users_create">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="all">Разрешено</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Администрирование -->
-                            <div class="permission-category">
-                                <div class="category-header">
-                                    <h4>⚙️ Администрирование</h4>
-                                    <label class="category-toggle">
-                                        <input type="checkbox" class="category-checkbox" data-category="admin">
-                                        Выбрать все
-                                    </label>
-                                </div>
-                                <div class="permission-items">
-                                    <div class="permission-item">
-                                        <label class="permission-label">Доступ к админ-панели</label>
-                                        <select class="permission-select" name="admin_access">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="read">Только просмотр</option>
-                                            <option value="full">Полный доступ</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Управление ролями</label>
-                                        <select class="permission-select" name="admin_roles">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="full">Полный доступ</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Системные настройки</label>
-                                        <select class="permission-select" name="admin_settings">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="read">Только просмотр</option>
-                                            <option value="full">Полный доступ</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Просмотр системных логов</label>
-                                        <select class="permission-select" name="admin_logs">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="read">Разрешено</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Отчеты -->
-                            <div class="permission-category">
-                                <div class="category-header">
-                                    <h4>📊 Отчеты</h4>
-                                    <label class="category-toggle">
-                                        <input type="checkbox" class="category-checkbox" data-category="reports">
-                                        Выбрать все
-                                    </label>
-                                </div>
-                                <div class="permission-items">
-                                    <div class="permission-item">
-                                        <label class="permission-label">Просмотр отчетов</label>
-                                        <select class="permission-select" name="reports_view">
-                                            <option value="none">Запрещено</option>
-                                            <option value="own">Только свои</option>
-                                            <option value="department">Своего отдела</option>
-                                            <option value="all">Все отчеты</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Создание отчетов</label>
-                                        <select class="permission-select" name="reports_create">
-                                            <option value="none">Запрещено</option>
-                                            <option value="all" selected>Разрешено</option>
-                                        </select>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="permission-label">Экспорт данных</label>
-                                        <select class="permission-select" name="reports_export">
-                                            <option value="none" selected>Запрещено</option>
-                                            <option value="own">Только свои данные</option>
-                                            <option value="department">Данные отдела</option>
-                                            <option value="all">Все данные</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Дополнительные настройки -->
-                    <div class="form-section">
-                        <h3>📋 Дополнительные настройки</h3>
-                        <div class="form-checkboxes">
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="is_default" id="roleIsDefault">
-                                Сделать ролью по умолчанию для новых пользователей
-                            </label>
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="can_delegate" id="roleCanDelegate" checked>
-                                Разрешить делегирование полномочий
-                            </label>
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="is_system" id="roleIsSystem">
-                                Системная роль (нельзя удалить)
-                            </label>
-                        </div>
-                        
                         <div class="form-group">
-                            <label for="rolePriority">Приоритет роли</label>
-                            <select id="rolePriority" name="priority">
-                                <option value="low">Низкий</option>
-                                <option value="medium" selected>Средний</option>
-                                <option value="high">Высокий</option>
-                                <option value="critical">Критический</option>
-                            </select>
-                            <small class="form-hint">Влияет на порядок отображения в списках</small>
+                            <label for="roleCode">Системный код *</label>
+                            <input type="text" id="roleCode" name="code" required>
+                            <small>Только латиница и подчёркивания</small>
                         </div>
                     </div>
-                </form>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('roleEditorModal')">Отмена</button>
-                <button type="button" class="buttonbase" id="testRoleBtn">🧪 Тестировать роль</button>
-                <button type="submit" form="roleEditorForm" class="buttonbase" id="saveRoleBtn">💾 Сохранить роль</button>
-            </div>
+                    <div class="form-group">
+                        <label for="roleDescription">Описание</label>
+                        <textarea id="roleDescription" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Доступ к админ-панели -->
+                <div class="form-section">
+                    <h3>🔐 Доступ к админ-панели</h3>
+                    <div class="form-checkbox">
+                        <label>
+                            <input type="checkbox" id="adminPanelAccess">
+                            Разрешить доступ к панели администратора
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Права на разделы -->
+                <div class="form-section">
+                    <h3>📋 Права на разделы</h3>
+                    <div class="permissions-grid">
+                        <!-- Пользователи -->
+                        <div class="permission-category">
+                            <div class="category-header">
+                                <h4>👥 Пользователи</h4>
+                            </div>
+                            <div class="permission-items">
+                                <div class="permission-item">
+                                    <label>Просмотр списка</label>
+                                    <select class="permission-select" name="users_view" data-resource="users" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="own">Только свой отдел</option>
+                                        <option value="all">Всех пользователей</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Создание</label>
+                                    <select class="permission-select" name="users_create" data-resource="users" data-action="create">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Редактирование</label>
+                                    <select class="permission-select" name="users_edit" data-resource="users" data-action="edit">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Блокировка</label>
+                                    <select class="permission-select" name="users_block" data-resource="users" data-action="block">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Удаление</label>
+                                    <select class="permission-select" name="users_delete" data-resource="users" data-action="delete">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Сброс пароля</label>
+                                    <select class="permission-select" name="users_reset_password" data-resource="users" data-action="reset_password">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Структура -->
+                        <div class="permission-category">
+                            <div class="category-header">
+                                <h4>🏢 Структура</h4>
+                            </div>
+                            <div class="permission-items">
+                                <div class="permission-item">
+                                    <label>Просмотр</label>
+                                    <select class="permission-select" name="structure_view" data-resource="structure" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Редактирование</label>
+                                    <select class="permission-select" name="structure_edit" data-resource="structure" data-action="edit">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Настройки -->
+                        <div class="permission-category">
+                            <div class="category-header">
+                                <h4>⚙️ Настройки</h4>
+                            </div>
+                            <div class="permission-items">
+                                <div class="permission-item">
+                                    <label>Просмотр</label>
+                                    <select class="permission-select" name="settings_view" data-resource="settings" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Редактирование</label>
+                                    <select class="permission-select" name="settings_edit" data-resource="settings" data-action="edit">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Роли -->
+                        <div class="permission-category">
+                            <div class="category-header">
+                                <h4>👑 Роли</h4>
+                            </div>
+                            <div class="permission-items">
+                                <div class="permission-item">
+                                    <label>Просмотр</label>
+                                    <select class="permission-select" name="roles_view" data-resource="roles" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Создание</label>
+                                    <select class="permission-select" name="roles_create" data-resource="roles" data-action="create">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Редактирование</label>
+                                    <select class="permission-select" name="roles_edit" data-resource="roles" data-action="edit">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Удаление</label>
+                                    <select class="permission-select" name="roles_delete" data-resource="roles" data-action="delete">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Бэкапы -->
+                        <div class="permission-category">
+                            <div class="category-header">
+                                <h4>💾 Бэкапы</h4>
+                            </div>
+                            <div class="permission-items">
+                                <div class="permission-item">
+                                    <label>Просмотр списка</label>
+                                    <select class="permission-select" name="backup_view" data-resource="backup" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Создание</label>
+                                    <select class="permission-select" name="backup_create" data-resource="backup" data-action="create">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Восстановление</label>
+                                    <select class="permission-select" name="backup_restore" data-resource="backup" data-action="restore">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Логи и статистика -->
+                        <div class="permission-category">
+                            <div class="category-header">
+                                <h4>📊 Логи и статистика</h4>
+                            </div>
+                            <div class="permission-items">
+                                <div class="permission-item">
+                                    <label>Просмотр логов</label>
+                                    <select class="permission-select" name="logs_view" data-resource="logs" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                                <div class="permission-item">
+                                    <label>Просмотр статистики</label>
+                                    <select class="permission-select" name="stats_view" data-resource="stats" data-action="view">
+                                        <option value="none">Нет</option>
+                                        <option value="all">Да</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Дополнительные настройки -->
+                <div class="form-section">
+                    <h3>📋 Дополнительные настройки</h3>
+                    <div class="form-checkbox">
+                        <label>
+                            <input type="checkbox" name="is_default" id="roleIsDefault">
+                            Сделать ролью по умолчанию для новых пользователей
+                        </label>
+                    </div>
+                    <div class="form-checkbox">
+                        <label>
+                            <input type="checkbox" name="is_system" id="roleIsSystem">
+                            Системная роль (нельзя удалить)
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" class="buttonbase" onclick="closeModal('roleEditorModal')">Отмена</button>
+            <button type="submit" form="roleEditorForm" class="buttonbase" id="saveRoleBtn">💾 Сохранить роль</button>
         </div>
     </div>
+</div>
     <div id="roleTestModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">

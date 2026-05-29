@@ -3,11 +3,13 @@ const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { query } = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { checkPermission, adminPanelAccess } = require('../middleware/permissions');
+
 
 // ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==========
 
 // Получение всех пользователей (с пагинацией и поиском)
-router.get('/users', authMiddleware, async (req, res) => {
+router.get('/users', authMiddleware, adminPanelAccess, checkPermission('users', 'view'), async (req, res) => {
     console.log('🔍 Current user:', JSON.stringify(req.user, null, 2));
     console.log('🔍 is_super_admin:', req.user?.is_super_admin);
      try {
@@ -132,7 +134,7 @@ router.get('/users/:id/history', authMiddleware, async (req, res) => {
     }
 });
 // Создание пользователя (админом)
-router.post('/users', authMiddleware, async (req, res) => {
+router.post('/users', authMiddleware, adminPanelAccess, checkPermission('users', 'create'), async (req, res) => {
     try {
         const { 
             username, surname, name, patronymic, birthday, 
@@ -215,7 +217,7 @@ router.post('/users/change-password', authMiddleware, async (req, res) => {
     }
 });
 // Обновление пользователя (только личные данные, контакты, роль, статус)
-router.put('/users/:id', authMiddleware, async (req, res) => {
+router.put('/users/:id', authMiddleware, adminPanelAccess, checkPermission('users', 'edit'), async (req, res) => {
     try {
         const { id } = req.params;
         const currentUser = req.user;
@@ -305,7 +307,7 @@ router.post('/users/:id/reset-password', authMiddleware, adminMiddleware, async 
 });
 
 // Удаление пользователя (мягкое удаление)
-router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/users/:id', authMiddleware, adminPanelAccess, checkPermission('users', 'delete'), async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -415,7 +417,6 @@ router.put('/roles/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 // Удаление роли
 router.delete('/roles/:id', authMiddleware, async (req, res) => {
     try {
@@ -434,6 +435,27 @@ router.delete('/roles/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// Получение прав роли
+router.get('/roles/:id/permissions', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(
+            `SELECT permissions FROM roles WHERE id = $1`,
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Роль не найдена' });
+        }
+        
+        res.json({ permissions: result.rows[0].permissions || {} });
+    } catch (error) {
+        console.error('Get role permissions error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // ========== УПРАВЛЕНИЕ ПОДРАЗДЕЛЕНИЯМИ ==========
 router.get('/structure', authMiddleware, async (req, res) => {
@@ -832,10 +854,17 @@ router.get('/settings', authMiddleware, async (req, res) => {
                 value = value === 'true';
             } else if (row.setting_type === 'number') {
                 value = parseInt(value);
+            } else if (row.setting_type === 'json') {
+                try {
+                    value = JSON.parse(value);
+                } catch (e) {
+                    value = {};
+                }
             }
             settings[row.setting_key] = value;
         }
         
+        console.log('📦 Settings loaded:', Object.keys(settings));
         res.json({ settings });
     } catch (error) {
         console.error('Get settings error:', error);
@@ -849,6 +878,8 @@ router.put('/settings', authMiddleware, async (req, res) => {
         const updates = req.body;
         const userId = req.userId;
         
+        console.log('💾 Saving settings:', Object.keys(updates));
+        
         for (const [key, value] of Object.entries(updates)) {
             // Определяем тип значения
             let settingType = 'string';
@@ -860,41 +891,35 @@ router.put('/settings', authMiddleware, async (req, res) => {
             } else if (typeof value === 'number') {
                 settingType = 'number';
                 settingValue = String(value);
-            } else if (typeof value === 'object' && Array.isArray(value)) {
+            } else if (typeof value === 'object' && !Array.isArray(value)) {
+                settingType = 'json';
+                settingValue = JSON.stringify(value);
+            } else if (Array.isArray(value)) {
                 settingType = 'json';
                 settingValue = JSON.stringify(value);
             }
             
+            // Обновляем или вставляем настройку
             await query(
-                `UPDATE system_settings 
-                 SET setting_value = $1, setting_type = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $3
-                 WHERE setting_key = $4`,
-                [settingValue, settingType, userId, key]
+                `INSERT INTO system_settings (setting_key, setting_value, setting_type, updated_at, updated_by)
+                 VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)
+                 ON CONFLICT (setting_key) 
+                 DO UPDATE SET setting_value = EXCLUDED.setting_value, 
+                               setting_type = EXCLUDED.setting_type,
+                               updated_at = CURRENT_TIMESTAMP,
+                               updated_by = EXCLUDED.updated_by`,
+                [key, settingValue, settingType, userId]
             );
-        }
-        
-        // Если изменилось название организации, обновляем головное подразделение
-        if (updates.org_name) {
-            const rootDept = await query(
-                `SELECT id FROM departments WHERE parent_department_id IS NULL LIMIT 1`
-            );
-            
-            if (rootDept.rows.length > 0) {
-                await query(
-                    `UPDATE departments SET name = $1 WHERE id = $2`,
-                    [updates.org_name, rootDept.rows[0].id]
-                );
-                console.log('✅ Название головного подразделения обновлено:', updates.org_name);
-            }
         }
         
         // Логируем изменение настроек
         await query(
-            `INSERT INTO audit_logs (user_id, action, entity_type, old_data, new_data, ip_address, user_agent)
-             VALUES ($1, 'UPDATE settings', 'system', $2, $3, $4, $5)`,
-            [userId, null, JSON.stringify(updates), req.ip, req.headers['user-agent']]
+            `INSERT INTO audit_logs (user_id, action, entity_type, new_data, ip_address, user_agent)
+             VALUES ($1, 'UPDATE settings', 'system', $2, $3, $4)`,
+            [userId, JSON.stringify(updates), req.ip, req.headers['user-agent']]
         );
         
+        console.log('✅ Settings saved successfully');
         res.json({ success: true, message: 'Настройки сохранены' });
     } catch (error) {
         console.error('Update settings error:', error);

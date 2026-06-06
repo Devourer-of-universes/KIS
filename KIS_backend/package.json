@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test-db": "node -e \"require('./src/config/database').query('SELECT NOW()').then(r=>console.log('✅ DB OK:', r.rows[0])).catch(e=>console.error('❌ DB Error:', e))\""  },
+    "test-db": "node -e \"require('./src/config/database').query('SELECT NOW()').then(r=>console.log('✅ DB OK:', r.rows[0])).catch(e=>console.error('❌ DB Error:', e))\""
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -27,6 +28,7 @@
     "pg": "^8.20.0",
     "pg-pool": "^3.13.0",
     "socket.io": "^4.8.3",
+    "useragent": "^2.3.0",
     "uuid": "^13.0.0",
     "ws": "^8.20.0"
   },

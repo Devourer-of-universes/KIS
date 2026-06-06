@@ -6,56 +6,78 @@
     <title>ИС</title>
     <link rel="stylesheet" type="text/css" href="../styles/main.css" >
     <link rel="stylesheet" type="text/css" href="../styles/settings.css">
-    <link rel="stylesheet" type="text/css" href="../styles/profile.css">
 </head>
 <body>
     <div class="left-menu">
-        <div class="menu-item">
-            <button class="toggle-btn" title="Закрепить меню">
-                <img src="../materials/menu_stay.png" alt="Закрепить" class="toggle-btn-img menu-icon ">
+        <!-- Логотип/бренд сверху -->
+        <div class="menu-logo">
+            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <span class="logo-text">КИС</span>
+            <button class="toggle-btn" id="menuToggleBtn">
+                <img src="../materials/menu_stay.png" alt="toggle">
             </button>
         </div>
-              
-        <div class="menu-item">
-            <a class="left_menu_pagelink" href="../html/base.html">
-                <img src="../materials/icons8-рабочее-пространство-80.png" alt="Рабочее пространство" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Рабочее пространство</h3>
-            </a> 
-        </div>
-        <div class="menu-item">
-            <a class="left_menu_pagelink" href="../html/chat.html">
-                <img src="..//materials/icons8-чат-80.png" alt="Чаты" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Чаты</h3>
-            </a> 
-        </div>
-        <div class="menu-item">
-            <a class="left_menu_pagelink" href="../html/settings.html">
-                <img src="../materials/icons8-сервисы-80.png" alt="Настройки" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Настройки</h3>
-            </a> 
-        </div>
-        <div class="menu-item logout-item">
-            <a class="left_menu_pagelink" href="../html/login.html">
-                <img src="../materials/icons8-выход-48.png" alt="Выход" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Выход</h3>
-            </a> 
-        </div>
 
-        
-        <!-- <div class="menu-item">
+        <!-- Основные пункты навигации -->
+        <nav class="menu-nav">
+            <a href="../html/base.html" class="menu-item" data-page="base">
+                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
+                <span>Рабочее пространство</span>
+            </a>
             
-            <a href="l">Чаты</a>
+            <a href="../html/chat.html" class="menu-item" data-page="chat">
+                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <span>Чаты</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+        </nav>
+
+        <!-- Нижняя секция с аватаром -->
+        <div class="menu-footer">
+            <!-- Переключатель темы -->
+            <div class="theme-switcher">
+                <button class="theme-toggle" id="themeToggle">
+                    <span class="theme-icon">☀️</span>
+                </button>
+            </div>
+            
+            <!-- Аватар с выпадающим меню -->
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatarBtn">
+                    <img src="../materials/avatar_for_profile.png" alt="avatar">
+                </div>
+                <div class="user-info" id="userInfo">
+                    <span class="user-name" id="userName">Загрузка...</span>
+                    <span class="user-role" id="userRole"></span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-avatar">
+                            <img src="../materials/avatar_for_profile.png" alt="avatar" id="dropdownAvatar">
+                        </div>
+                        <div class="dropdown-info">
+                            <span class="dropdown-name" id="dropdownName">Загрузка...</span>
+                            <span class="dropdown-role" id="dropdownRole"></span>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="../html/settings.html" class="dropdown-item">
+                        <img style="filter: invert();" src="../materials/icons8-настройки-96.png" alt="settings">
+                        <span>Настройки</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
+                        <img src="../materials/icons8-выход-48.png" alt="logout">
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <div class="menu-item">
-            
-            <a class="left_menu_pagelink" href="">Настройки</a>
-        </div>
-        <div class="menu-spacer"></div>
-        <div class="menu-item logout-item">
-            
-            <a class="left_menu_pagelink" href="">Выход</a>
-        </div> -->
     </div>
 
     <div class="settings-container">
@@ -131,20 +153,36 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="settings-group">
-                    <h3>Внешний вид профиля</h3>
+                    <h3>Аватар</h3>
+                    <div class="avatar-upload">
+                        <img src="" alt="Аватар" class="current-avatar" id="userAvatar">
+                        <input type="file" id="avatarInput" accept="image/*" hidden>
+                        <button class="buttonbase" id="uploadAvatarBtn">Загрузить фото</button>
+                        <button class="buttonbase btn-outline" id="removeAvatarBtn">Удалить</button>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Смена пароля</h3>
                     <div class="setting-item">
                         <div class="setting-info">
-                            <span class="setting-label">Аватар</span>
-                            <span class="setting-description">JPG, PNG до 2MB</span>
+                            <span class="setting-label">Текущий пароль</span>
                         </div>
-                        <div class="avatar-upload">
-                            <img src="../materials/avatar_for_profile.png" alt="Аватар" class="current-avatar">
-                            <input type="file" id="avatar-upload" accept="image/*" hidden>
-                            <label for="avatar-upload" class="upload-btn buttonbase">Сменить</label>
-                        </div>
+                        <input type="password" id="currentPassword" placeholder="••••••••">
                     </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Новый пароль</span>
+                        </div>
+                        <input type="password" id="newPassword" placeholder="Новый пароль">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Подтверждение</span>
+                        </div>
+                        <input type="password" id="confirmPassword" placeholder="Подтвердите пароль">
+                    </div>
+                    <button class="buttonbase" id="changePasswordBtn">Сменить пароль</button>
                 </div>
             </section>
 
@@ -160,29 +198,29 @@
                             <span class="setting-description">Уведомлять о новых назначенных задачах</span>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify_new_tasks" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <span class="setting-label">Изменение статуса документов</span>
                             <span class="setting-description">Когда документ переходит на ваше согласование</span>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify_doc_status" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <span class="setting-label">Напоминания о deadline</span>
                             <span class="setting-description">За 1 день до истечения срока</span>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify_deadline" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -196,18 +234,18 @@
                             <span class="setting-description">Уведомления в системе</span>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" id="notify_internal" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <span class="setting-label">Email-уведомления</span>
                             <span class="setting-description">На рабочую почту</span>
                         </div>
                         <label class="switch">
-                            <input type="checkbox">
+                            <input type="checkbox" id="notify_email">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -219,15 +257,19 @@
                 <h2>Настройки интерфейса</h2>
                 
                 <div class="settings-group">
-                    <h3>Внешний вид</h3>
-                    <div class="theme-selector">
-                        <div class="theme-option active" data-theme="light">
-                            <div class="theme-preview light-theme"></div>
-                            <span>Светлая</span>
-                        </div>
-                        <div class="theme-option" data-theme="dark">
-                            <div class="theme-preview dark-theme"></div>
-                            <span>Тёмная</span>
+                    <h3>Акцентный цвет</h3>
+                    <p class="settings-hint">Выберите основной цвет интерфейса</p>
+                    <div class="accent-colors" id="accentColors">
+                        <button class="accent-color" data-color="#5194FF" style="background: #5194FF;" title="Синий (по умолчанию)"></button>
+                        <button class="accent-color" data-color="#F56E0F" style="background: #F56E0F;" title="Оранжевый"></button>
+                        <button class="accent-color" data-color="#00A231" style="background: #00A231;" title="Зелёный"></button>
+                        <button class="accent-color" data-color="#00CAB9" style="background: #00CAB9;" title="Бирюзовый"></button>
+                        <button class="accent-color" data-color="#9000A3" style="background: #9000A3;" title="Фиолетовый"></button>
+                        <button class="accent-color" data-color="#C0CA00" style="background: #C0CA00;" title="Жёлто-зелёный"></button>
+                        <button class="accent-color" data-color="#CA0003" style="background: #CA0003;" title="Красный"></button>
+                        <div class="custom-color-wrapper">
+                            <button class="accent-color custom" id="customAccentBtn" style="background: linear-gradient(135deg, #ff0000, #00ff00, #0000ff);" title="Пользовательский цвет">🎨</button>
+                            <input type="color" id="customColorPicker" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -240,7 +282,7 @@
                             <span class="setting-description">Уменьшить отступы и шрифты</span>
                         </div>
                         <label class="switch">
-                            <input type="checkbox">
+                            <input type="checkbox" id="compactModeToggle">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -260,41 +302,25 @@
 
             <!-- Безопасность -->
             <section id="security" class="settings-section">
-                <h2>Безопасность</h2>
+                <h2>🔐 Безопасность</h2>
                 
+                <!-- Активные сессии -->
                 <div class="settings-group">
-                    <h3>Сессии</h3>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Автоматический выход</span>
-                            <span class="setting-description">При бездействии более 2 часов</span>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
+                    <h3>🟢 Активные сессии</h3>
+                    <p class="settings-hint">Сессии, где вы сейчас авторизованы</p>
+                    <div class="sessions-list" id="activeSessionsList">
+                        <div style="text-align: center; padding: 20px; color: #999;">Загрузка...</div>
                     </div>
+                    <button class="btn-outline buttonbase" id="terminateOtherSessionsBtn">Завершить все другие сессии</button>
                 </div>
-
+                
+                <!-- История входов -->
                 <div class="settings-group">
-                    <h3>История входов</h3>
-                    <div class="sessions-list">
-                        <div class="session-item current">
-                            <div class="session-info">
-                                <span class="session-device">Chrome, Windows 10</span>
-                                <span class="session-time">Текущая сессия</span>
-                            </div>
-                            <span class="session-location">Москва, Россия</span>
-                        </div>
-                        <div class="session-item">
-                            <div class="session-info">
-                                <span class="session-device">Safari, macOS</span>
-                                <span class="session-time">2 дня назад</span>
-                            </div>
-                            <span class="session-location">Санкт-Петербург, Россия</span>
-                        </div>
+                    <h3>📜 История входов</h3>
+                    <p class="settings-hint">Последние 20 входов в систему</p>
+                    <div class="history-list" id="loginHistoryList">
+                        <div style="text-align: center; padding: 20px; color: #999;">Загрузка...</div>
                     </div>
-                    <button class="btn-outline buttonbase">Завершить все другие сессии</button>
                 </div>
             </section>
         </div>

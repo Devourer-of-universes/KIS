@@ -17,7 +17,7 @@
             
     --c_acc: #5194ff;
     --c_acchalf:#5194ff80;
-    --с_brightacc: #007bff;
+    --c_brightacc: #007bff;
 }
 body{
     background-color: var(--c_bg);
@@ -190,20 +190,9 @@ table td{
 .base-section.active {
     display: block;
 }
-.base-section-files{
-    width: 100%;
-    height: max-content;
-    color: var(--bg-main-verydarkblue);
-}
-.folder-name::before{
-    content: '🗂';
-}
-.file-name::before{
-    content: '📄';
-}
 .base-main {
     display: flex;
-    max-width: 1400px;
+    width: 100%;    
     margin: 0 auto;
     justify-content: center;
     background-color: transparent;
@@ -1553,4 +1542,624 @@ table td{
     .type-list {
         grid-template-columns: 1fr;
     }
+}
+
+
+
+
+
+
+#base-section-dashboard {
+    background: var(--c_bg);
+    min-height: calc(100vh - 120px);
+    padding: 20px;
+}
+/* Dashboard Grid - 2 колонки */
+.dashboard-grid {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+}
+
+.dashboard-col-left {
+    flex: 2;  /* 2/3 ширины */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.dashboard-col-right {
+    flex: 1;  /* 1/3 ширины */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Карточки */
+.dashboard-card {
+    background: var(--c_surf);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: all 0.2s;
+    border: 1px solid var(--c_surf_txt);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--c_acchalf);
+    border-bottom: 1px solid var(--c_surf_txt);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.card-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.card-header button:hover {
+    background: var(--c_acchalf);
+}
+
+.card-body {
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Адаптация для мобильных (если нужно) */
+@media (max-width: 992px) {
+    .dashboard-grid {
+        flex-direction: column;
+    }
+    .dashboard-col-left,
+    .dashboard-col-right {
+        flex: auto;
+    }
+}
+
+/* ========== МИНИ-КАЛЕНДАРЬ ========== */
+.calendar-mini {
+    text-align: center;
+    width: 100%;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.calendar-month-selector {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.calendar-month-selector select {
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--c_surf_txt);
+    background: var(--c_surf);
+    font-size: 12px;
+}
+
+.calendar-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.calendar-header button:hover {
+    background: var(--c_acchalf);
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.calendar-weekdays span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c_surf_txt);
+    padding: 4px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    padding: 8px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    text-align: center;
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-day:hover {
+    background: var(--c_acchalf);
+    transform: scale(1.05);
+}
+
+.calendar-day.today {
+    background: var(--c_acc);
+    color: white;
+    font-weight: bold;
+}
+
+.calendar-day.has-event {
+    background: var(--c_acchalf);
+    font-weight: bold;
+}
+
+.calendar-day.other-month {
+    color: var(--c_surf_txt);
+    opacity: 0.5;
+}
+
+.event-dot {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    background: var(--c_acc);
+    border-radius: 50%;
+}
+/* ========== ПОЛНОЭКРАННЫЙ КАЛЕНДАРЬ ========== */
+.calendar-fullscreen-container {
+    background: var(--c_surf);
+    border-radius: 20px;
+    padding: 20px;
+    min-height: calc(100vh - 120px);
+}
+
+.calendar-fullscreen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--c_acchalf);
+}
+
+.calendar-fullscreen-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--c_bg_txt);
+}
+
+.calendar-fullscreen-content {
+    display: flex;
+    gap: 24px;
+}
+
+/* Левая панель с задачами */
+.calendar-fullscreen-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--c_bg);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.calendar-fullscreen-sidebar h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--c_bg_txt);
+}
+
+.calendar-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--c_surf);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.task-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+
+.task-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.task-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+}
+
+.task-date {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+}
+
+/* Правая панель с календарём */
+.calendar-fullscreen-main {
+    flex: 1;
+}
+
+.calendar-fullscreen-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.cal-nav-btn {
+    background: var(--c_acchalf);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.cal-nav-btn:hover {
+    background: var(--c_acc);
+    color: white;
+}
+
+.today-btn {
+    background: var(--c_acc);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.today-btn:hover {
+    transform: translateY(-2px);
+}
+
+.full-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.full-calendar-weekdays span {
+    padding: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--c_surf_txt);
+}
+
+.full-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 32px;
+}
+
+.full-calendar-grid .calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    background: var(--c_bg);
+    transition: all 0.2s;
+}
+
+.full-calendar-grid .calendar-day:hover {
+    background: var(--c_acchalf);
+    transform: scale(1.02);
+}
+
+.full-calendar-grid .calendar-day.today {
+    background: var(--c_acc);
+    color: white;
+    font-weight: bold;
+}
+
+.full-calendar-grid .calendar-day.has-event {
+    background: var(--c_acchalf);
+}
+
+.full-calendar-grid .calendar-day.other-month {
+    color: var(--c_surf_txt);
+    opacity: 0.5;
+}
+
+/* Гант */
+.gantt-container {
+    background: var(--c_bg);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.gantt-container h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--c_bg_txt);
+}
+
+.gantt-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gantt-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px;
+    background: var(--c_surf);
+    border-radius: 10px;
+}
+
+.gantt-task-name {
+    width: 180px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+}
+
+.gantt-bar {
+    height: 28px;
+    border-radius: 8px;
+    transition: width 0.3s;
+}
+/* Доска заметок (школьная доска) */
+.notes-board {
+    grid-column: span 2;
+}
+
+.board-container {
+    display: flex;
+    gap: 20px;
+    background: linear-gradient(145deg, #2b5e3b 0%, #1e4a2f 100%);
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 350px;
+}
+
+[data-theme="dark"] .board-container {
+    background: linear-gradient(145deg, #1a3a25 0%, #0f2a1c 100%);
+}
+
+.board-column {
+    flex: 1;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(2px);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.board-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 2px dashed rgba(255,255,255,0.3);
+}
+
+.board-column-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 1px;
+}
+
+.column-count {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: white;
+}
+
+/* Стикеры-заметки на доске */
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.note-item {
+    background: #fffde7;
+    padding: 12px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .note-item {
+    background: #2d2d44;
+}
+
+.note-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.note-text {
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    color: var(--c_bg_txt);
+}
+
+.note-meta {
+    font-size: 10px;
+    color: var(--c_surf_txt);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.note-date {
+    font-style: italic;
+}
+
+.note-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.note-delete:hover {
+    background: rgba(239,68,68,0.2);
+    color: #ef4444;
+}
+
+.empty-notes {
+    text-align: center;
+    padding: 30px 12px;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Уведомления */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-item {
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--c_bg);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.notification-item.unread {
+    background: var(--c_acchalf);
+    border-left: 3px solid var(--c_acc);
+}
+
+.notification-item:hover {
+    transform: translateX(4px);
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.notification-text {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+}
+
+.notification-time {
+    font-size: 10px;
+    color: var(--c_surf_txt);
+    margin-top: 4px;
+}
+
+/* Статистика */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    text-align: center;
+}
+
+.stat-item {
+    padding: 12px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--c_acc);
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+}
+
+/* Пустые состояния */
+.empty-notes, .empty-notifications {
+    text-align: center;
+    padding: 30px;
+    color: var(--c_surf_txt);
+    font-size: 13px;
 }

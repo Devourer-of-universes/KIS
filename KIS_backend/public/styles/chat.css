@@ -1061,7 +1061,7 @@ body {
 
 .floating-create-btn:hover {
     transform: scale(1.05);
-    background: var(--с_brightacc);
+    background: var(--c_brightacc);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 

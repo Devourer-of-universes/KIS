@@ -7,7 +7,7 @@
     --c_surf_txt: #6c757d;
      --c_acc: #5194ff;
     --c_acchalf:rgba(81, 148, 255, 0.5);
-    --с_brightacc: #007bff;
+    --c_brightacc: #007bff;
     --c_success: #10b981;
     --c_warning: #f59e0b;
     --c_error: #ef4444;
@@ -384,7 +384,53 @@ input:checked + .slider:hover:before {
     font-weight: 500;
     color: var(--c_bg_txt);
 }
+/* Выбор акцентного цвета */
+.accent-colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-top: 10px;
+}
 
+.accent-color {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.accent-color:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.accent-color.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--c_bg_txt);
+}
+
+.accent-color.custom {
+    background: linear-gradient(135deg, #ff0000, #00ff00, #0000ff);
+    position: relative;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-color-wrapper {
+    position: relative;
+}
+
+.settings-hint {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    margin-bottom: 12px;
+}
 /* ========== ЗАГРУЗКА АВАТАРА ========== */
 .avatar-upload {
     display: flex;
@@ -440,15 +486,86 @@ input:checked + .slider:hover:before {
     margin-bottom: 20px;
 }
 
+/* Стили для активных сессий */
 .session-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 0;
-    border-bottom: 1px solid #eef2f6;
+    padding: 12px 16px;
+    background: var(--c_bg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 8px;
     transition: all var(--transition);
-    animation: sessionItemFadeIn 0.25s ease backwards;
 }
+
+.session-item.current {
+    background: linear-gradient(135deg, var(--c_acchalf), var(--c_bg));
+    border-left: 3px solid var(--c_success);
+}
+
+.session-item:hover {
+    transform: translateX(4px);
+}
+
+.session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.session-device {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--c_bg_txt);
+}
+
+.session-time {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+}
+
+.session-ip {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+    font-family: monospace;
+}
+
+.session-location-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.session-location {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    background: var(--c_acchalf);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.session-terminate-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #999;
+    transition: all 0.2s;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.session-terminate-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc3545;
+    transform: scale(1.1);
+}
+
 
 .session-item:nth-child(1) { animation-delay: 0.05s; }
 .session-item:nth-child(2) { animation-delay: 0.1s; }
@@ -464,52 +581,7 @@ input:checked + .slider:hover:before {
     }
 }
 
-.session-item:last-child {
-    border-bottom: none;
-}
 
-.session-item:hover {
-    transform: translateX(5px);
-    background: var(--c_acchalf);
-    margin: 0 -10px;
-    padding: 14px 10px;
-    border-radius: var(--border-radius-sm);
-}
-
-.session-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.session-device {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--c_bg_txt);
-}
-
-.session-time {
-    font-size: 12px;
-    color: var(--c_surf_txt);
-}
-
-.session-location {
-    font-size: 13px;
-    color: var(--c_surf_txt);
-    background: var(--c_acchalf);
-    padding: 4px 10px;
-    border-radius: 20px;
-}
-
-.session-item.current {
-    background: var(--c_acchalf);
-    padding: 14px;
-    border-radius: var(--border-radius-md);
-    margin: -14px 0 0 -14px;
-    width: calc(100% + 28px);
-    padding-left: 14px;
-    animation: currentSessionPulse 2s infinite;
-}
 
 @keyframes currentSessionPulse {
     0%, 100% {
@@ -748,7 +820,7 @@ input:checked + .slider:hover:before {
 .scale-slider {
     flex: 1;
     height: 4px;
-    -webkit-appearance: none;
+    --webkit-appearance: none;
     background: #eef2f6;
     border-radius: 2px;
 }
@@ -998,16 +1070,6 @@ input:checked + .slider:hover:before {
     transform: translateX(26px) scale(1.1);
 }
 
-/* Плавный hover для сессий */
-.session-item {
-    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-}
-
-.session-item:hover {
-    transform: translateX(4px);
-    background: var(--c_acchalf);
-    border-radius: var(--border-radius-sm);
-}
 
 /* Плавный hover для кнопки выхода */
 .btn-outline {
@@ -1031,3 +1093,61 @@ input:checked + .slider:hover:before {
 html {
     scroll-behavior: smooth;
 }
+
+
+/* Стили для истории входов */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--c_bg);
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition);
+}
+
+.history-item:hover {
+    background: var(--c_acchalf);
+    transform: translateX(4px);
+}
+
+.history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.history-device {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--c_bg_txt);
+}
+
+.history-time {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+}
+
+.history-location {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    background: var(--c_acchalf);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.settings-hint {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    margin-bottom: 15px;
+}
+

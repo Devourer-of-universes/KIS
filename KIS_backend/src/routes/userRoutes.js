@@ -75,7 +75,52 @@ const removeContact = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// ========== НАСТРОЙКИ УВЕДОМЛЕНИЙ ==========
 
+// Получение настроек уведомлений
+router.get('/notification-settings', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        
+        const result = await query(
+            `SELECT setting_key, setting_value FROM notification_settings WHERE user_id = $1`,
+            [userId]
+        );
+        
+        const settings = {};
+        for (const row of result.rows) {
+            settings[row.setting_key] = row.setting_value;
+        }
+        
+        res.json({ settings });
+    } catch (error) {
+        console.error('Get notification settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Сохранение настроек уведомлений
+router.put('/notification-settings', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { settings } = req.body;
+        
+        for (const [key, value] of Object.entries(settings)) {
+            await query(
+                `INSERT INTO notification_settings (user_id, setting_key, setting_value)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (user_id, setting_key)
+                 DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP`,
+                [userId, key, value]
+            );
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Save notification settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 router.use(authMiddleware);
 router.get('/', getUsers);
 router.get('/contacts', getContacts);

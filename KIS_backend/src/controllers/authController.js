@@ -202,7 +202,48 @@ const logout = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при выходе' });
     }
 };
+const updateProfile = async (req, res) => {
+    try {
+        const { surname, name, patronymic, email, telNum } = req.body;
+        const userId = req.userId;
+        
+        await query(
+            `UPDATE users SET surname = $1, name = $2, patronymic = $3, 
+             email = $4, tel_num = $5 WHERE id = $6`,
+            [surname, name, patronymic, email, telNum, userId]
+        );
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.userId;
+        
+        // Получаем текущий хеш
+        const user = await query(`SELECT password_hash FROM users WHERE id = $1`, [userId]);
+        
+        // Проверяем текущий пароль
+        const isValid = await bcrypt.compare(currentPassword, user.rows[0].password_hash);
+        if (!isValid) {
+            return res.status(401).json({ error: 'Неверный текущий пароль' });
+        }
+        
+        // Хэшируем новый пароль
+        const salt = await bcrypt.genSalt(10);
+        const newHash = await bcrypt.hash(newPassword, salt);
+        
+        await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, userId]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 
 module.exports = {

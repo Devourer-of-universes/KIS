@@ -463,7 +463,27 @@ const deleteMessage = async (req, res) => {
 
 
 // ========== ГРУППЫ ЧАТОВ (ПАПКИ) ==========
-
+// Получение количества непрочитанных сообщений
+router.get('/unread', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        
+        const result = await query(
+            `SELECT COUNT(*) as total_unread
+             FROM messages m
+             JOIN chat_participants cp ON cp.chat_id = m.chat_id AND cp.user_id = $1
+             WHERE m.created_at > cp.last_read_at
+               AND m.is_deleted = false
+               AND m.user_id != $1`,
+            [userId]
+        );
+        
+        res.json({ total_unread: parseInt(result.rows[0].total_unread) });
+    } catch (error) {
+        console.error('Get unread count error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Получение всех групп пользователя
 router.get('/folders', authMiddleware, async (req, res) => {
     try {
@@ -771,6 +791,7 @@ router.post('/:chatId/upload', authMiddleware, upload.single('file'), async (req
 router.use(authMiddleware);
 router.get('/', getChats);
 router.post('/', createChat);
+
 router.get('/:id/messages', getMessages);
 router.put('/messages/:id', authMiddleware, editMessage);
 router.delete('/messages/:id', authMiddleware, deleteMessage);

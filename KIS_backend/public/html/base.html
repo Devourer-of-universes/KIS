@@ -981,82 +981,76 @@
                 </section>
                 <!-- Полноэкранный календарь -->
                 <section class="base-section" id="base-section-calendar">
-                    <div class="calendar-fullscreen-container">
-                        <div class="calendar-fullscreen-header">
-                            <h2>📅 Календарь</h2>
+                    <div class="fullcalendar-container">
+                        <div class="fullcalendar-header section-header">
+                            <h2>📅 Полноэкранный календарь</h2>
                             <button class="sec-btn-close" onclick="closeWindow('base-section-calendar')">
                                 <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
                             </button>
                         </div>
                         
-                        <div class="calendar-fullscreen-content">
-                            <!-- Левая панель с задачами -->
-                            <div class="calendar-fullscreen-sidebar">
-                                <h3>📋 Задачи</h3>
-                                <div class="calendar-tasks-list" id="fullCalendarTasksList">
-                                    <div class="task-item" data-color="#5194ff">
-                                        <span class="task-color" style="background: #5194ff;"></span>
-                                        <span class="task-name">Встреча с клиентом</span>
-                                        <span class="task-date">10.06.2025</span>
+                        <!-- Строка 1: Календарь + Список задач -->
+                        <div class="fullcalendar-row">
+                            <!-- Календарь -->
+                            <div class="fullcalendar-col calendar-col">
+                                <!-- <div class="fullcalendar-card">
+                                    <div class="fullcalendar-card-header">
+                                        <h3>📅 Календарь</h3>
                                     </div>
-                                    <div class="task-item" data-color="#f59e0b">
-                                        <span class="task-color" style="background: #f59e0b;"></span>
-                                        <span class="task-name">Сдача отчёта</span>
-                                        <span class="task-date">15.06.2025</span>
+                                    <div class="fullcalendar-card-body">
+                                        <div class="calendar-mini" id="fullscreenCalendar"></div>
                                     </div>
-                                    <div class="task-item" data-color="#10b981">
-                                        <span class="task-color" style="background: #10b981;"></span>
-                                        <span class="task-name">Собеседование</span>
-                                        <span class="task-date">20.06.2025</span>
+                                </div> -->
+                                <div class="dashboard-card calendar-card">
+                                    <div class="card-header">
+                                        <h3>📅 Календарь</h3>
+                                        <!-- <button class="card-expand" onclick="openCalendarModal()">⤢</button> -->
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="calendar-mini" id="fullscreenCalendar"></div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Правая панель с календарём -->
-                            <div class="calendar-fullscreen-main">
-                                <div class="calendar-fullscreen-controls">
-                                    <button class="cal-nav-btn" onclick="fullCalendarPrevMonth()">◀</button>
-                                    <div class="calendar-month-selector">
-                                        <select id="fullMonthSelect" onchange="fullCalendarChangeMonth()">
-                                            ${getMonthOptions(currentCalendarDate.getMonth())}
-                                        </select>
-                                        <select id="fullYearSelect" onchange="fullCalendarChangeYear()">
-                                            ${getYearOptions(currentCalendarDate.getFullYear())}
-                                        </select>
+                            <!-- Список активных задач -->
+                            <div class="fullcalendar-col tasks-col">
+                                <div class="fullcalendar-card">
+                                    <div class="fullcalendar-card-header">
+                                        <h3>✅ Активные задачи</h3>
+                                        <button class="buttonbase" onclick="addFullscreenTask()">+ Добавить</button>
                                     </div>
-                                    <button class="cal-nav-btn" onclick="fullCalendarNextMonth()">▶</button>
-                                    <button class="today-btn" onclick="fullCalendarToday()">Сегодня</button>
+                                    <div class="fullcalendar-card-body">
+                                        <div class="active-tasks-list" id="fullscreenTasksList">
+                                            <!-- Задачи будут загружены динамически -->
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                <div class="full-calendar-weekdays">
-                                    <span>Понедельник</span>
-                                    <span>Вторник</span>
-                                    <span>Среда</span>
-                                    <span>Четверг</span>
-                                    <span>Пятница</span>
-                                    <span>Суббота</span>
-                                    <span>Воскресенье</span>
-                                </div>
-                                
-                                <div class="full-calendar-grid" id="fullCalendarGrid">
-                                    <!-- Календарь будет отрисован здесь -->
-                                </div>
-                                
-                                <!-- Диаграмма Ганта -->
-                                <div class="gantt-container">
+                            </div>
+                        </div>
+                        
+                        <!-- Строка 2: Диаграмма Ганта -->
+                        <div class="fullcalendar-row gantt-row">
+                            <div class="fullcalendar-card gantt-card">
+                                <div class="fullcalendar-card-header">
                                     <h3>📊 Диаграмма Ганта</h3>
-                                    <div class="gantt-chart" id="ganttChart">
-                                        <div class="gantt-row">
-                                            <div class="gantt-task-name">Встреча с клиентом</div>
-                                            <div class="gantt-bar" style="width: 20%; background: #5194ff;"></div>
+                                    <div class="gantt-controls">
+                                        <button class="gantt-nav-btn" id="ganttPrevBtn">◀</button>
+                                        <span id="ganttMonthYear"></span>
+                                        <button class="gantt-nav-btn" id="ganttNextBtn">▶</button>
+                                        <button class="gantt-today-btn" id="ganttTodayBtn">Сегодня</button>
+                                    </div>
+                                </div>
+                                <div class="fullcalendar-card-body gantt-body">
+                                    <div class="gantt-wrapper">
+                                        <!-- Заголовок шкалы времени -->
+                                        <div class="gantt-timeline-header">
+                                            <div class="gantt-tasks-header">Задачи</div>
+                                            <div class="gantt-dates-header" id="ganttDatesHeader"></div>
                                         </div>
-                                        <div class="gantt-row">
-                                            <div class="gantt-task-name">Сдача отчёта</div>
-                                            <div class="gantt-bar" style="width: 40%; background: #f59e0b;"></div>
-                                        </div>
-                                        <div class="gantt-row">
-                                            <div class="gantt-task-name">Собеседование</div>
-                                            <div class="gantt-bar" style="width: 60%; background: #10b981;"></div>
+                                        <!-- Тело диаграммы -->
+                                        <div class="gantt-chart-container">
+                                            <div class="gantt-tasks-list" id="ganttTasksList"></div>
+                                            <div class="gantt-bars-container" id="ganttBarsContainer"></div>
                                         </div>
                                     </div>
                                 </div>

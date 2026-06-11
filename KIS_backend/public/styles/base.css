@@ -2230,3 +2230,384 @@ table td{
     color: var(--c_surf_txt);
     font-size: 13px;
 }
+/* ========== КОНСТРУКТОР ШАБЛОНОВ (ПОЛНОЭКРАННЫЙ) ========== */
+.template-builder-content {
+    display: flex !important;
+    gap: 24px;
+    padding: 0 !important;
+}
+
+.builder-left-panel {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.builder-right-panel {
+    width: 380px;
+    flex-shrink: 0;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    background: var(--c_bg);
+    border-left: 1px solid var(--c_surf_txt);
+}
+
+.builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--c_surf_txt);
+}
+
+.builder-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.fields-list {
+    min-height: 200px;
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.empty-fields {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--c_surf_txt);
+}
+
+.empty-fields .empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.field-item {
+    background: var(--c_surf);
+    border: 1px solid var(--c_surf_txt);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: move;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.field-item:hover {
+    border-color: var(--c_acc);
+    box-shadow: var(--shadow-sm);
+}
+
+.field-item.dragging {
+    opacity: 0.5;
+}
+
+.field-item .field-info {
+    flex: 1;
+}
+
+.field-item .field-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--c_bg_txt);
+}
+
+.field-item .field-type {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+    margin-top: 2px;
+}
+
+.field-item .field-required {
+    color: var(--c_error);
+    font-size: 12px;
+    margin-left: 6px;
+}
+
+.field-item .field-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.field-item .field-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.field-item .field-actions button:hover {
+    background: var(--c_acchalf);
+}
+
+.template-preview {
+    background: var(--c_surf);
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.preview-field {
+    margin-bottom: 12px;
+}
+
+.preview-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+    margin-bottom: 4px;
+}
+
+.preview-field .required-star {
+    color: var(--c_error);
+}
+
+.preview-field input,
+.preview-field textarea,
+.preview-field select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--c_surf_txt);
+    border-radius: 6px;
+    font-size: 12px;
+    background: var(--c_surf);
+}
+
+.preview-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.preview-field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-field-checkbox label {
+    margin: 0;
+}
+
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.option-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.option-item input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--c_surf_txt);
+    border-radius: 6px;
+}
+
+.remove-option-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--c_error);
+    font-size: 18px;
+    padding: 4px 8px;
+}
+
+/* Адаптация */
+@media (max-width: 992px) {
+    .template-builder-content {
+        flex-direction: column;
+    }
+    
+    .builder-right-panel {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--c_surf_txt);
+    }
+}
+
+
+
+
+/* ========== УПРАВЛЕНИЕ ШАБЛОНАМИ ========== */
+.templates-manager-container {
+    background: var(--c_surf);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+}
+
+.templates-manager-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--c_acchalf);
+}
+
+.templates-manager-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.templates-manager-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.template-type-filter {
+    display: flex;
+    gap: 8px;
+    background: var(--c_bg);
+    padding: 4px;
+    border-radius: 12px;
+}
+
+.filter-btn {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 13px;
+    transition: all 0.2s;
+    color: var(--c_bg_txt);
+}
+
+.filter-btn:hover {
+    background: var(--c_acchalf);
+}
+
+.filter-btn.active {
+    background: var(--c_acc);
+    color: white;
+}
+
+.templates-grid-container {
+    min-height: 400px;
+}
+
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.template-card {
+    background: var(--c_bg);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.2s;
+    border: 1px solid var(--c_surf_txt);
+    position: relative;
+}
+
+.template-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--c_acc);
+}
+
+.template-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.template-card-icon {
+    font-size: 32px;
+}
+
+.template-card-type {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+}
+
+.template-card-title {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.template-card-desc {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.template-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--c_surf_txt);
+    padding-top: 12px;
+    border-top: 1px solid var(--c_surf_txt);
+}
+
+.template-card-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.template-card:hover .template-card-actions {
+    opacity: 1;
+}
+
+.template-card-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.template-card-actions button:hover {
+    background: var(--c_acchalf);
+}
+
+.empty-templates {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--c_surf_txt);
+}
+
+.empty-templates .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.loading-templates {
+    text-align: center;
+    padding: 60px;
+    color: var(--c_surf_txt);
+}

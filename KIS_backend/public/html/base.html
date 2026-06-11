@@ -132,6 +132,9 @@
                                 <div class="icon-tooltip" id="top-menu-btn-favourites" data-tooltip="Избранное">
                                     <img src="../materials/icons8-закладка-лента-120.png" alt="Избранное" class="instrument-icon">
                                 </div>
+                                <div class="icon-tooltip" id="top-menu-btn-templates" data-tooltip="Мои шаблоны">
+                                    <img src="../materials/icons8-шаблон-64.png" alt="Шаблоны" class="instrument-icon">
+                                </div>
                                 <div class="icon-tooltip" id="top-menu-btn-workflows" data-tooltip="Процессы">
                                     <img src="../materials/icons8-процесс-100.png" alt="Процессы" class="instrument-icon">
                                 </div>
@@ -448,45 +451,133 @@
                         </table>
                     </div>
                 </section>
-                <section class="base-section" id="base-section-task-new">
+                <section class="base-section" id="base-section-task-new-typeselector">
                     <div class="base-sec-modal">
-                       <div class="modal-content">
+                        <div class="modal-content">
                             <div class="modal-header">
-                                <h2>📄 Создание новой задачи</h2>
-                                <button  class="sec-btn-close">
+                                <h2>📄 Создание задачи</h2>
+                                <button class="sec-btn-close" onclick="closeWindow('base-section-task-new-typeselector')">
                                     <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
                                 </button>
                             </div>
                             <div class="modal-body">
                                 <div class="modal-body-top">
                                     <div class="modal-body-top-search">
-                                        <input type="text" placeholder="Поиск по типам задач...">
+                                        <input type="text" id="taskTypeSearch" placeholder="Поиск шаблонов...">
                                     </div>
                                 </div>
-                                <div class="type-list task-list">
+                                <div class="type-list task-list" id="taskTypeList">
+                                    <!-- Обычная задача (всегда есть) -->
                                     <button class="type-list-elem" data-type="simple">
                                         <div class="type-icon">📝</div>
-                                        <h4>Задача</h4>
+                                        <h4>Обычная задача</h4>
                                         <p class="type-desc">Создайте задачу с нуля</p>
                                     </button>
                                     
-                                    <button class="type-list-elem" data-type="incoming">
-                                        <div class="type-icon">📨</div>
-                                        <h4>Задача на оформление отсутствия</h4>
-                                        <p class="doc-type-desc">Оформление отсутствия</p>
-                                    </button>
-                                    
-                                    <button class="type-list-elem" data-type="contract">
-                                        <div class="type-icon">📋</div>
-                                        <h4>Задача на исполнение поручения</h4>
-                                        <p class="type-desc">-</p>
-                                    </button>
-                                    
-                                    
-                                    
-                                    
+                                    <!-- Пользовательские шаблоны будут загружены сюда -->
+                                    <div id="userTemplatesList"></div>
+                                </div>
                                 <div class="modal-body-bottom">
-                                    <button class="new-type">+ Создать пользовательский шаблон</button>
+                                    <button class="new-type" id="createTemplateBtn">+ Создать шаблон задачи</button>
+                                    <button class="new-type" id="manageTemplatesBtn" style="background: #6c757d;">📋 Управление шаблонами</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-task-new-edit">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <div class="editor-header-info">
+                                <h2>📝 Создание задачи</h2>
+                                <span class="editor-number" id="taskTypeBadge">Обычная задача</span>
+                            </div>
+                            <div class="editor-actions">
+                                <button class="buttonbase" id="saveTaskDraftBtn">💾 Сохранить черновик</button>
+                                <button class="buttonbase" id="createTaskSubmitBtn">✅ Создать задачу</button>
+                                <button class="sec-btn-close" id="closeTaskEditorBtn">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-content">
+                            <div class="editor-form">
+                                <!-- Простая форма -->
+                                <div class="form-section">
+                                    <h3>Основная информация</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Название задачи *</label>
+                                            <input type="text" class="form-input" id="taskTitle" placeholder="Введите название задачи">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Приоритет</label>
+                                            <select class="form-select" id="taskPriority">
+                                                <option value="low">🟢 Низкий</option>
+                                                <option value="medium" selected>🟡 Средний</option>
+                                                <option value="high">🟠 Высокий</option>
+                                                <option value="critical">🔴 Критический</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Срок выполнения *</label>
+                                            <input type="date" class="form-input" id="taskDeadline">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Описание</h3>
+                                    <textarea class="form-textarea" id="taskDescription" placeholder="Опишите задачу..." rows="6"></textarea>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>👥 Исполнители</h3>
+                                    <div class="form-group">
+                                        <label>Ответственный *</label>
+                                        <select class="form-select" id="taskAssignee">
+                                            <option value="">— Выберите —</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Наблюдатели</label>
+                                        <select class="form-select" id="taskObservers" multiple size="3">
+                                            <option value="">— Выберите —</option>
+                                        </select>
+                                        <small>Удерживайте Ctrl</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>📎 Файлы</h3>
+                                    <div class="file-upload-area">
+                                        <input type="file" id="taskFiles" multiple hidden>
+                                        <label for="taskFiles" class="file-upload-label">
+                                            <span class="upload-icon">📎</span>
+                                            <span>Прикрепить файлы</span>
+                                        </label>
+                                        <div class="uploaded-files-list" id="taskUploadedFiles"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="editor-sidebar">
+                                <div class="sidebar-section">
+                                    <h4>🔔 Уведомления</h4>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="notifyOnAssign" checked> Уведомить исполнителя
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="notifyOnDeadline" checked> Напоминать о дедлайне
+                                    </label>
+                                </div>
+                                
+                                <div class="sidebar-section">
+                                    <h4>🏷️ Теги</h4>
+                                    <input type="text" id="taskTags" class="form-input" placeholder="Теги через запятую">
                                 </div>
                             </div>
                         </div>
@@ -979,6 +1070,27 @@
                         </div>
                     </div>
                 </section>
+                <!-- Секция управления шаблонами -->
+                <section class="base-section" id="base-section-templates">
+                    <div class="templates-manager-container">
+                        <div class="templates-manager-header">
+                            <h2>📋 Мои шаблоны</h2>
+                            <div class="templates-manager-actions">
+                                <button class="buttonbase" id="createNewTemplateBtn">+ Создать шаблон</button>
+                                <div class="template-type-filter">
+                                    <button class="filter-btn active" data-type="all">Все</button>
+                                    <button class="filter-btn" data-type="task">📝 Задачи</button>
+                                    <button class="filter-btn" data-type="document">📄 Документы</button>
+                                    <button class="filter-btn" data-type="workflow">🔄 Процессы</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="templates-grid-container" id="templatesGridContainer">
+                            <div class="loading-templates">Загрузка шаблонов...</div>
+                        </div>
+                    </div>
+                </section>
                 <!-- Полноэкранный календарь -->
                 <section class="base-section" id="base-section-calendar">
                     <div class="fullcalendar-container">
@@ -1058,6 +1170,201 @@
                         </div>
                     </div>
                 </section>
+                <!-- Секция конструктора шаблонов задач -->
+                <section class="base-section" id="base-section-template-builder">
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <div class="editor-header-info">
+                                <h2 id="templateBuilderTitle">📋 Конструктор шаблона</h2>
+                                <span class="editor-number" id="templateBuilderId"></span>
+                            </div>
+                            <div class="editor-actions">
+                                <button class="buttonbase" id="saveTemplateDraftBtn">💾 Сохранить черновик</button>
+                                <button class="buttonbase" id="previewTemplateBtn">👁️ Предпросмотр</button>
+                                <button class="buttonbase buttonbase-primary" id="saveTemplateBtn">💾 Сохранить шаблон</button>
+                                <button class="sec-btn-close" id="closeTemplateBuilderBtn">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-content template-builder-content">
+                            <!-- Левая панель - настройки -->
+                            <div class="editor-form builder-left-panel">
+                                <div class="form-section">
+                                    <h3>Основные настройки</h3>
+                                    <div class="form-group">
+                                        <label>Название шаблона *</label>
+                                        <input type="text" id="builderTemplateName" class="form-input" placeholder="Например: Отчёт за месяц">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Описание</label>
+                                        <textarea id="builderTemplateDesc" class="form-textarea" rows="2" placeholder="Краткое описание шаблона"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Настройки по умолчанию</h3>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Приоритет</label>
+                                            <select id="builderDefaultPriority" class="form-select">
+                                                <option value="low">🟢 Низкий</option>
+                                                <option value="medium" selected>🟡 Средний</option>
+                                                <option value="high">🟠 Высокий</option>
+                                                <option value="critical">🔴 Критический</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Срок выполнения</label>
+                                            <select id="builderDeadlineType" class="form-select">
+                                                <option value="none">Не задавать</option>
+                                                <option value="relative" selected>Относительно создания</option>
+                                                <option value="fixed">Фиксированная дата</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" id="builderDeadlineDaysGroup">
+                                        <label>Через сколько дней</label>
+                                        <input type="number" id="builderDeadlineDays" class="form-input" value="7" min="1" max="365">
+                                        <small>Срок будет рассчитан как текущая дата + N дней</small>
+                                    </div>
+                                    <div class="form-group" id="builderDeadlineFixedGroup" style="display: none;">
+                                        <label>Фиксированная дата</label>
+                                        <input type="date" id="builderDeadlineFixed" class="form-input">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Уведомления по умолчанию</h3>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="builderNotifyAssignee" checked> Уведомлять исполнителя
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="builderNotifyDeadline" checked> Напоминать о дедлайне
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="builderNotifyObservers"> Уведомлять наблюдателей
+                                    </label>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Общий доступ</h3>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="builderIsShared"> Сделать общим для отдела
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Правая панель - конструктор полей -->
+                            <div class="editor-sidebar builder-right-panel">
+                                <div class="sidebar-section">
+                                    <div class="builder-header">
+                                        <h4>📋 Поля формы</h4>
+                                        <button class="buttonbase" id="addFieldBtn">+ Добавить поле</button>
+                                    </div>
+                                    
+                                    <div class="fields-list" id="templateFieldsList">
+                                        <div class="empty-fields">
+                                            <div class="empty-icon">📝</div>
+                                            <p>Нет добавленных полей</p>
+                                            <small>Нажмите "Добавить поле", чтобы создать кастомное поле</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="sidebar-section">
+                                    <h4>👁️ Предпросмотр формы</h4>
+                                    <div id="templatePreview" class="template-preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="base-section" id="base-section-templates">
+                    <div class="templates-manager-container">
+                        <div class="templates-manager-header">
+                            <h2>📋 Мои шаблоны</h2>
+                            <div class="templates-manager-actions">
+                                <button class="buttonbase" id="createNewTemplateBtn">+ Создать шаблон</button>
+                                <div class="template-type-filter">
+                                    <button class="filter-btn active" data-type="all">Все</button>
+                                    <button class="filter-btn" data-type="task">📝 Задачи</button>
+                                    <button class="filter-btn" data-type="document">📄 Документы</button>
+                                    <button class="filter-btn" data-type="workflow">🔄 Процессы</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="templates-grid-container" id="templatesGridContainer">
+                            <div class="loading-templates">Загрузка шаблонов...</div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Модалка добавления/редактирования поля (оставляем как есть) -->
+                <div id="fieldEditorModal" class="admin-modal">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h2 id="fieldEditorTitle">✏️ Добавление поля</h2>
+                            <button class="modal-close" onclick="closeFieldEditorModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="fieldEditorForm">
+                                <input type="hidden" id="editingFieldId">
+                                <div class="form-group">
+                                    <label>Тип поля</label>
+                                    <select id="fieldType" class="form-select">
+                                        <option value="text">📝 Текстовое поле</option>
+                                        <option value="textarea">📄 Текстовая область</option>
+                                        <option value="number">🔢 Число</option>
+                                        <option value="date">📅 Дата</option>
+                                        <option value="select">📋 Выпадающий список</option>
+                                        <option value="checkbox">☑️ Чекбокс</option>
+                                        <option value="user">👤 Выбор пользователя</option>
+                                        <option value="multi-user">👥 Выбор нескольких пользователей</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Название поля *</label>
+                                    <input type="text" id="fieldLabel" class="form-input" placeholder="Например: Название отчёта">
+                                </div>
+                                <div class="form-group">
+                                    <label>Ключ поля (для JSON)</label>
+                                    <input type="text" id="fieldKey" class="form-input" placeholder="report_name">
+                                    <small>Автоматически генерируется из названия</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Подсказка (placeholder)</label>
+                                    <input type="text" id="fieldPlaceholder" class="form-input" placeholder="Введите значение...">
+                                </div>
+                                <div class="form-group">
+                                    <label>Значение по умолчанию</label>
+                                    <input type="text" id="fieldDefaultValue" class="form-input" placeholder="Значение по умолчанию">
+                                </div>
+                                <div class="form-group" id="fieldOptionsGroup" style="display: none;">
+                                    <label>Варианты выбора</label>
+                                    <div id="optionsList" class="options-list">
+                                        <div class="option-item">
+                                            <input type="text" class="option-input" placeholder="Вариант 1">
+                                            <button type="button" class="remove-option-btn" style="display: none;">×</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="buttonbase btn-outline" id="addOptionBtn" style="margin-top: 8px;">+ Добавить вариант</button>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="fieldRequired"> Обязательное поле
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeFieldEditorModal()">Отмена</button>
+                            <button class="buttonbase" id="deleteFieldBtn" style="background-color: #dc3545; display: none;">🗑️ Удалить</button>
+                            <button class="buttonbase" id="saveFieldBtn">💾 Сохранить</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="createWorkflowModal" class="admin-modal">
                     <div class="modal-content workflow-editor-modal">
                         <div class="modal-header">
@@ -1344,6 +1651,205 @@
                         <div class="modal-footer">
                             <button class="buttonbase" onclick="closeConfirmModal()">Отмена</button>
                             <button class="buttonbase" id="confirmOkBtn" style="background-color: #dc3545;">Подтвердить</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Модалка с задачами на дату -->
+                <div id="dateModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h2 id="dateModalTitle">📅 Дата</h2>
+                            <button class="modal-close" onclick="closeDateModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <h3>📋 Задачи на этот день</h3>
+                            <div id="dateEventsList"></div>
+                            <div style="margin-top: 20px;">
+                                <button class="buttonbase" id="createTaskOnDateBtn">+ Создать задачу на этот день</button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeDateModal()">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модалка редактирования задачи -->
+                <div id="taskModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h2 id="taskModalTitle">✏️ Редактирование задачи</h2>
+                            <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Название</label>
+                                <input type="text" id="taskTitle" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Описание</label>
+                                <textarea id="taskDescription" class="form-textarea" rows="3"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Дата начала</label>
+                                    <input type="date" id="taskStartDate" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Дата окончания</label>
+                                    <input type="date" id="taskDueDate" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Приоритет</label>
+                                    <select id="taskPriority" class="form-select"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Статус</label>
+                                    <select id="taskStatus" class="form-select"></select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Прогресс: <span id="progressValue">0</span>%</label>
+                                <input type="range" id="taskProgress" class="form-range" min="0" max="100" value="0">
+                            </div>
+                            <hr>
+                            <h4>📝 Комментарии</h4>
+                            <div id="taskCommentsList" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
+                            <div class="form-group">
+                                <textarea id="newComment" class="form-textarea" rows="2" placeholder="Написать комментарий..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase btn-danger" id="deleteTaskBtn" style="background-color: #dc3545;">🗑️ Удалить</button>
+                            <button class="buttonbase" onclick="closeTaskModal()">Отмена</button>
+                            <button class="buttonbase" id="saveTaskBtn">💾 Сохранить</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модалка быстрого создания задачи (из календаря) -->
+                <div id="quickCreateTaskModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h2>➕ Новая задача</h2>
+                            <button class="modal-close" onclick="closeQuickCreateTaskModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Название *</label>
+                                <input type="text" id="quickTaskTitle" class="form-input" placeholder="Введите название задачи">
+                            </div>
+                            <div class="form-group">
+                                <label>Описание</label>
+                                <textarea id="quickTaskDesc" class="form-textarea" rows="3"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Дата начала</label>
+                                    <input type="date" id="quickTaskStart" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Дата окончания</label>
+                                    <input type="date" id="quickTaskDue" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Приоритет</label>
+                                <select id="quickTaskPriority" class="form-select">
+                                    <option value="low">Низкий</option>
+                                    <option value="medium" selected>Средний</option>
+                                    <option value="high">Высокий</option>
+                                    <option value="critical">Критический</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeQuickCreateTaskModal()">Отмена</button>
+                            <button class="buttonbase" id="quickCreateTaskBtn">Создать</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модалка выбора типа шаблона -->
+                <div id="templateTypeModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h2>📋 Создание шаблона</h2>
+                            <button class="modal-close" onclick="closeTemplateTypeModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Выберите тип шаблона:</p>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+                                <button class="type-list-elem" id="createTaskTemplateBtn">
+                                    <div class="type-icon">📝</div>
+                                    <h4>Шаблон задачи</h4>
+                                    <p class="type-desc">Создайте шаблон для быстрого создания задач</p>
+                                </button>
+                                <button class="type-list-elem" disabled style="opacity: 0.5;">
+                                    <div class="type-icon">📄</div>
+                                    <h4>Шаблон документа</h4>
+                                    <p class="type-desc">Скоро</p>
+                                </button>
+                                <button class="type-list-elem" disabled style="opacity: 0.5;">
+                                    <div class="type-icon">🔄</div>
+                                    <h4>Шаблон процесса</h4>
+                                    <p class="type-desc">Скоро</p>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeTemplateTypeModal()">Отмена</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модалка предпросмотра задачи -->
+                <div id="taskPreviewModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h2>👁️ Предпросмотр задачи</h2>
+                            <button class="modal-close" onclick="closeTaskPreviewModal()">&times;</button>
+                        </div>
+                        <div class="modal-body" id="taskPreviewContent"></div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeTaskPreviewModal()">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модалка предпросмотра шаблона -->
+                <div id="templateFullPreviewModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 500px; max-height: 80vh;">
+                        <div class="modal-header">
+                            <h2 id="templatePreviewTitle">👁️ Предпросмотр шаблона</h2>
+                            <button class="modal-close" onclick="closeTemplateFullPreviewModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="templatePreviewContent" class="template-preview" style="max-height: 60vh;"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeTemplateFullPreviewModal()">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Модалка управления шаблонами -->
+                <div id="manageTemplatesModal" class="admin-modal">
+                    <div class="modal-content" style="max-width: 700px;">
+                        <div class="modal-header">
+                            <h2>📋 Мои шаблоны задач</h2>
+                            <button class="modal-close" onclick="closeModal('manageTemplatesModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="templatesListContainer">
+                                <div style="text-align: center; padding: 20px;">Загрузка...</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeModal('manageTemplatesModal')">Закрыть</button>
+                            <button class="buttonbase" id="addNewTemplateFromManageBtn">+ Новый шаблон</button>
                         </div>
                     </div>
                 </div>

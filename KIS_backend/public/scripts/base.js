@@ -1481,6 +1481,7 @@ function openSimpleTaskEditor(defaultDate = null) {
 }
 // - openTaskFromTemplate()
 // Открытие задачи из шаблона
+// 8.5 - Открытие задачи из шаблона (с заполнением всех полей)
 async function openTaskFromTemplate(templateId) {
     const template = userTemplates.find(t => t.id === templateId);
     if (!template) return;
@@ -1498,24 +1499,137 @@ async function openTaskFromTemplate(templateId) {
     
     const templateData = template.template_data;
     
-    // Заполняем форму данными из шаблона
-    document.getElementById('taskTitle').value = templateData.title || '';
-    document.getElementById('taskDescription').value = templateData.description || '';
-    document.getElementById('taskPriority').value = templateData.priority || 'medium';
-    
-    if (templateData.defaultDeadlineDays) {
-        const deadline = new Date();
-        deadline.setDate(deadline.getDate() + templateData.defaultDeadlineDays);
-        document.getElementById('taskDeadline').value = deadline.toISOString().slice(0, 10);
-    }
-    
-    // Загружаем пользователей и открываем редактор
-    await loadTaskUsers();
-    
-    closeWindow('base-section-task-new-typeselector');
+    // Открываем секцию создания задачи
     openWindow('base-section-task-new-edit');
     
-    showToast(`Шаблон "${template.name}" загружен`, 'success');
+    // Заполняем стандартные поля
+    setTimeout(() => {
+        // Название
+        const titleInput = document.getElementById('taskTitle');
+        if (titleInput && templateData.defaultTitle) {
+            titleInput.value = templateData.defaultTitle;
+        }
+        
+        // Описание
+        const descTextarea = document.getElementById('taskDescription');
+        if (descTextarea && templateData.defaultDescription) {
+            descTextarea.value = templateData.defaultDescription;
+        }
+        
+        // Приоритет
+        const prioritySelect = document.getElementById('taskPriority');
+        if (prioritySelect && templateData.defaultPriority) {
+            prioritySelect.value = templateData.defaultPriority;
+        }
+        
+        // Срок выполнения
+        if (templateData.defaultDeadlineDays) {
+            const deadline = new Date();
+            deadline.setDate(deadline.getDate() + templateData.defaultDeadlineDays);
+            const deadlineInput = document.getElementById('taskDeadline');
+            if (deadlineInput) {
+                deadlineInput.value = deadline.toISOString().slice(0, 10);
+            }
+        }
+        
+        // Заполняем кастомные поля
+        if (templateData.fields && templateData.fields.length > 0) {
+            renderCustomFieldsInTaskForm(templateData.fields);
+        }
+        
+        showToast(`Шаблон "${template.name}" загружен`, 'success');
+    }, 100);
+}
+
+// Рендер кастомных полей в форме задачи
+function renderCustomFieldsInTaskForm(fields) {
+    const formContainer = document.querySelector('#base-section-task-new-edit .editor-form');
+    if (!formContainer) return;
+    
+    // Удаляем старую секцию кастомных полей, если есть
+    const oldSection = document.getElementById('customFieldsSection');
+    if (oldSection) oldSection.remove();
+    
+    if (fields.length === 0) return;
+    
+    // Создаём новую секцию
+    const section = document.createElement('div');
+    section.id = 'customFieldsSection';
+    section.className = 'form-section';
+    section.innerHTML = `
+        <h3>📋 Дополнительные поля</h3>
+        <div id="customFieldsContainer" class="custom-fields-grid"></div>
+    `;
+    formContainer.appendChild(section);
+    
+    const container = document.getElementById('customFieldsContainer');
+    
+    container.innerHTML = fields.map(field => {
+        let inputHtml = '';
+        const value = field.defaultValue || '';
+        
+        switch (field.type) {
+            case 'text':
+                inputHtml = `<input type="text" id="custom_${field.key}" class="form-input" placeholder="${escapeHtml(field.placeholder || '')}" value="${escapeHtml(value)}">`;
+                break;
+            case 'textarea':
+                inputHtml = `<textarea id="custom_${field.key}" class="form-textarea" rows="3" placeholder="${escapeHtml(field.placeholder || '')}">${escapeHtml(value)}</textarea>`;
+                break;
+            case 'number':
+                inputHtml = `<input type="number" id="custom_${field.key}" class="form-input" placeholder="${escapeHtml(field.placeholder || '0')}" value="${value}">`;
+                break;
+            case 'date':
+                inputHtml = `<input type="date" id="custom_${field.key}" class="form-input" value="${value}">`;
+                break;
+            case 'select':
+                inputHtml = `
+                    <select id="custom_${field.key}" class="form-select">
+                        <option value="">${escapeHtml(field.placeholder || 'Выберите вариант')}</option>
+                        ${(field.options || []).map(opt => `<option value="${escapeHtml(opt)}" ${value === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+                    </select>
+                `;
+                break;
+            case 'checkbox':
+                inputHtml = `
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="custom_${field.key}" ${value === true || value === 'true' ? 'checked' : ''}>
+                        ${escapeHtml(field.label)}
+                    </label>
+                `;
+                break;
+            case 'user':
+                inputHtml = `<select id="custom_${field.key}" class="form-select"><option value="">Выберите пользователя...</option></select>`;
+                break;
+            case 'multi-user':
+                inputHtml = `<select id="custom_${field.key}" class="form-select" multiple size="3"><option value="">Выберите пользователей...</option></select>`;
+                break;
+            case 'document':
+                inputHtml = `
+                    <div class="document-selector-wrapper">
+                        <div class="selected-document" id="selected_doc_${field.key}" style="display: ${value ? 'flex' : 'none'};">
+                            <span class="doc-icon">📄</span>
+                            <span class="doc-name">${escapeHtml(value)}</span>
+                            <button type="button" class="doc-remove" onclick="clearDocument('${field.key}')">✖</button>
+                        </div>
+                        <button type="button" class="buttonbase btn-outline select-doc-btn" onclick="openDocumentSelector('${field.key}')">
+                            📁 Выбрать документ
+                        </button>
+                        <input type="hidden" id="custom_${field.key}" value="${escapeHtml(value)}">
+                    </div>
+                `;
+                break;
+            default:
+                inputHtml = `<input type="text" id="custom_${field.key}" class="form-input">`;
+        }
+        
+        return `
+            <div class="form-group">
+                <label>${escapeHtml(field.label)}${field.required ? ' <span class="required-star">*</span>' : ''}</label>
+                ${inputHtml}
+                ${field.placeholder ? `<small class="form-hint">${escapeHtml(field.placeholder)}</small>` : ''}
+            </div>
+        `;
+    }).join('');
 }
 // ========== УПРАВЛЕНИЕ ШАБЛОНАМИ ЗАДАЧ ==========
 
@@ -1789,6 +1903,72 @@ async function deleteTemplate(templateId) {
 // =====================================================
 // 9. КОНСТРУКТОР ШАБЛОНОВ (ПОЛНОЭКРАННЫЙ)
 // =====================================================
+// =====================================================
+// 9.1 СТАНДАРТНЫЕ ПОЛЯ ШАБЛОНА (НЕУДАЛЯЕМЫЕ)
+// =====================================================
+
+const defaultTemplateFields = [
+    { 
+        key: 'title', 
+        label: 'Название задачи', 
+        type: 'text', 
+        required: true, 
+        builtin: true,
+        placeholder: 'Введите название задачи',
+        order: 1
+    },
+    { 
+        key: 'description', 
+        label: 'Описание', 
+        type: 'textarea', 
+        required: false, 
+        builtin: true,
+        placeholder: 'Опишите задачу...',
+        order: 2
+    },
+    { 
+        key: 'priority', 
+        label: 'Приоритет', 
+        type: 'select', 
+        required: true, 
+        builtin: true,
+        options: ['Низкий', 'Средний', 'Высокий', 'Критический'],
+        defaultValue: 'Средний',
+        order: 3
+    },
+    { 
+        key: 'start_date', 
+        label: 'Дата начала', 
+        type: 'date', 
+        required: false, 
+        builtin: true,
+        order: 4
+    },
+    { 
+        key: 'due_date', 
+        label: 'Срок выполнения', 
+        type: 'date', 
+        required: true, 
+        builtin: true,
+        order: 5
+    },
+    { 
+        key: 'assignee', 
+        label: 'Ответственный', 
+        type: 'user', 
+        required: true, 
+        builtin: true,
+        order: 6
+    },
+    { 
+        key: 'observers', 
+        label: 'Наблюдатели', 
+        type: 'multi-user', 
+        required: false, 
+        builtin: true,
+        order: 7
+    }
+];
 // - fieldTypes (константа)
 // Типы полей с иконками
 const fieldTypes = {
@@ -1799,7 +1979,9 @@ const fieldTypes = {
     select: { icon: '📋', name: 'Выпадающий список', defaultLabel: 'Выберите вариант' },
     checkbox: { icon: '☑️', name: 'Чекбокс', defaultLabel: 'Согласен' },
     user: { icon: '👤', name: 'Выбор пользователя', defaultLabel: 'Исполнитель' },
-    'multi-user': { icon: '👥', name: 'Выбор нескольких', defaultLabel: 'Наблюдатели' }
+    'multi-user': { icon: '👥', name: 'Выбор нескольких', defaultLabel: 'Наблюдатели' },
+    // В fieldTypes добавь:
+    document: { icon: '📄', name: 'Связанный документ', defaultLabel: 'Документ' },
 };
 
 // - openTemplateBuilder()
@@ -2055,7 +2237,13 @@ function renderFieldsList() {
     const container = document.getElementById('templateFieldsList');
     if (!container) return;
     
-    if (currentTemplateFields.length === 0) {
+    // Смешиваем стандартные и кастомные поля
+    const allFields = [
+        ...defaultTemplateFields.map(f => ({ ...f, isBuiltin: true, id: f.key })),
+        ...currentTemplateFields.map((f, idx) => ({ ...f, isBuiltin: false, id: `custom_${idx}` }))
+    ].sort((a, b) => (a.order || 999) - (b.order || 999));
+    
+    if (allFields.length === 0) {
         container.innerHTML = `
             <div class="empty-fields">
                 <div class="empty-icon">📝</div>
@@ -2066,23 +2254,150 @@ function renderFieldsList() {
         return;
     }
     
-    container.innerHTML = currentTemplateFields.map((field, idx) => `
-        <div class="field-item" draggable="true" data-index="${idx}">
+    container.innerHTML = allFields.map((field, idx) => `
+        <div class="field-item ${field.isBuiltin ? 'builtin-field' : ''}" 
+             data-field-key="${field.key}" 
+             data-is-builtin="${field.isBuiltin}"
+             draggable="${!field.isBuiltin}">
             <div class="field-info">
                 <div class="field-label">
-                    ${fieldTypes[field.type]?.icon || '📝'} ${escapeHtml(field.label)}
+                    ${getFieldIcon(field.type)} ${escapeHtml(field.label)}
                     ${field.required ? '<span class="field-required">*</span>' : ''}
+                    ${field.isBuiltin ? '<span class="builtin-badge">Стандартное</span>' : ''}
                 </div>
-                <div class="field-type">${fieldTypes[field.type]?.name || field.type}</div>
+                <div class="field-type">${getFieldTypeName(field.type)}</div>
             </div>
             <div class="field-actions">
-                <button onclick="openFieldEditor(${idx})" title="Редактировать">✏️</button>
-                <button onclick="deleteFieldFromList(${idx})" title="Удалить">🗑️</button>
+                ${!field.isBuiltin ? `
+                    <button onclick="openFieldEditorForCustom(${idx})" title="Редактировать">✏️</button>
+                    <button onclick="deleteCustomField(${idx})" title="Удалить">🗑️</button>
+                ` : `
+                    <button onclick="openFieldEditorForBuiltin('${field.key}')" title="Настроить">⚙️</button>
+                `}
             </div>
         </div>
     `).join('');
     
     initDragAndDrop();
+}
+
+// Иконки для типов полей
+function getFieldIcon(type) {
+    const icons = {
+        text: '📝',
+        textarea: '📄',
+        number: '🔢',
+        date: '📅',
+        select: '📋',
+        checkbox: '☑️',
+        user: '👤',
+        'multi-user': '👥'
+    };
+    return icons[type] || '📌';
+}
+
+function getFieldTypeName(type) {
+    const names = {
+        text: 'Текстовое поле',
+        textarea: 'Текстовая область',
+        number: 'Число',
+        date: 'Дата',
+        select: 'Выпадающий список',
+        checkbox: 'Чекбокс',
+        user: 'Выбор пользователя',
+        'multi-user': 'Выбор нескольких'
+    };
+    return names[type] || type;
+}
+
+// Редактирование стандартного поля
+function openFieldEditorForBuiltin(fieldKey) {
+    const field = defaultTemplateFields.find(f => f.key === fieldKey);
+    if (!field) return;
+    
+    editingFieldIndex = null;
+    editingBuiltinFieldKey = fieldKey;
+    
+    document.getElementById('fieldEditorTitle').textContent = `⚙️ Настройка: ${field.label}`;
+    document.getElementById('deleteFieldBtn').style.display = 'none';
+    document.getElementById('fieldType').value = field.type;
+    document.getElementById('fieldType').disabled = true;  // Тип нельзя менять
+    document.getElementById('fieldLabel').value = field.label;
+    document.getElementById('fieldLabel').disabled = true;  // Название нельзя менять
+    document.getElementById('fieldKey').value = field.key;
+    document.getElementById('fieldKey').disabled = true;
+    document.getElementById('fieldPlaceholder').value = field.placeholder || '';
+    document.getElementById('fieldDefaultValue').value = field.defaultValue || '';
+    document.getElementById('fieldRequired').checked = field.required || false;
+    
+    toggleOptionsVisibility(field.type);
+    if (field.type === 'select' && field.options) {
+        renderOptionsList(field.options);
+    } else {
+        renderOptionsList(['Вариант 1']);
+    }
+    
+    openModal('fieldEditorModal');
+}
+
+// Сохранение настроек стандартного поля
+function saveBuiltinFieldSettings() {
+    const fieldKey = editingBuiltinFieldKey;
+    const field = defaultTemplateFields.find(f => f.key === fieldKey);
+    if (!field) return;
+    
+    field.required = document.getElementById('fieldRequired').checked;
+    field.placeholder = document.getElementById('fieldPlaceholder').value;
+    
+    if (field.type === 'select') {
+        field.options = getCurrentOptions();
+        field.defaultValue = document.getElementById('fieldDefaultValue').value;
+    } else if (field.type === 'checkbox') {
+        field.defaultValue = document.getElementById('fieldDefaultValue').value === 'true';
+    } else {
+        field.defaultValue = document.getElementById('fieldDefaultValue').value;
+    }
+    
+    renderFieldsList();
+    renderTemplatePreview();
+    closeFieldEditorModal();
+}
+
+// Редактирование кастомного поля
+function openFieldEditorForCustom(fieldIndex) {
+    editingFieldIndex = fieldIndex;
+    editingBuiltinFieldKey = null;
+    const field = currentTemplateFields[fieldIndex];
+    
+    // Убеждаемся, что в селекте есть опция "document"
+    const typeSelect = document.getElementById('fieldType');
+    if (typeSelect && !Array.from(typeSelect.options).some(opt => opt.value === 'document')) {
+        const option = document.createElement('option');
+        option.value = 'document';
+        option.textContent = '📄 Связанный документ';
+        typeSelect.appendChild(option);
+    }
+    
+    document.getElementById('fieldEditorTitle').textContent = '✏️ Редактирование поля';
+    document.getElementById('deleteFieldBtn').style.display = 'block';
+    document.getElementById('fieldType').disabled = false;
+    document.getElementById('fieldLabel').disabled = false;
+    document.getElementById('fieldKey').disabled = false;
+    document.getElementById('fieldType').value = field.type;
+    document.getElementById('fieldLabel').value = field.label;
+    document.getElementById('fieldKey').value = field.key;
+    document.getElementById('fieldPlaceholder').value = field.placeholder || '';
+    document.getElementById('fieldDefaultValue').value = field.defaultValue || '';
+    document.getElementById('fieldRequired').checked = field.required || false;
+    
+    toggleOptionsVisibility(field.type);
+    if (field.type === 'select' && field.options) {
+        renderOptionsList(field.options);
+    } else {
+        renderOptionsList(['Вариант 1']);
+    }
+    
+    openModal('fieldEditorModal');
 }
 // - deleteFieldFromList()
 // Удаление поля из списка
@@ -2144,64 +2459,113 @@ function handleDrop(e) {
 }
 // - renderTemplatePreview()
 // Предпросмотр формы
+// 9.3 - Рендер предпросмотра (как мини-страница)
 function renderTemplatePreview() {
     const container = document.getElementById('templatePreview');
     if (!container) return;
     
-    if (currentTemplateFields.length === 0) {
-        container.innerHTML = '<div class="empty-fields" style="padding: 20px;">📭 Нет полей для отображения</div>';
+    // Собираем все поля (стандартные + кастомные)
+    const allFields = [
+        ...defaultTemplateFields,
+        ...currentTemplateFields
+    ].sort((a, b) => (a.order || 999) - (b.order || 999));
+    
+    if (allFields.length === 0) {
+        container.innerHTML = '<div class="empty-preview">📭 Нет полей для отображения</div>';
         return;
     }
     
-    container.innerHTML = currentTemplateFields.map(field => {
-        let inputHtml = '';
-        
-        switch (field.type) {
-            case 'text':
-                inputHtml = `<input type="text" placeholder="${escapeHtml(field.placeholder || 'Введите текст...')}" value="${escapeHtml(field.defaultValue || '')}">`;
-                break;
-            case 'textarea':
-                inputHtml = `<textarea placeholder="${escapeHtml(field.placeholder || 'Введите текст...')}" rows="3">${escapeHtml(field.defaultValue || '')}</textarea>`;
-                break;
-            case 'number':
-                inputHtml = `<input type="number" placeholder="${escapeHtml(field.placeholder || '0')}" value="${field.defaultValue || ''}">`;
-                break;
-            case 'date':
-                inputHtml = `<input type="date" value="${field.defaultValue || ''}">`;
-                break;
-            case 'select':
+    container.innerHTML = `
+        <div class="google-form-preview">
+            <div class="preview-header">
+                <div class="preview-title">Предпросмотр формы</div>
+                <div class="preview-url">https://forms.example.com/template</div>
+            </div>
+            <div class="preview-body">
+                ${allFields.map(field => renderPreviewField(field)).join('')}
+                <div class="preview-actions">
+                    <button class="preview-submit-btn" disabled>Отправить</button>
+                    <button class="preview-clear-btn" disabled>Очистить</button>
+                </div>
+            </div>
+            <div class="preview-footer">
+                <span class="preview-powered">Google Forms • Предпросмотр</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderPreviewField(field) {
+    let inputHtml = '';
+    const value = field.defaultValue || '';
+    
+    switch (field.type) {
+        case 'text':
+            inputHtml = `<input type="text" class="preview-input" placeholder="${escapeHtml(field.placeholder || 'Введите текст...')}" value="${escapeHtml(value)}" ${field.required ? 'required' : ''}>`;
+            break;
+        case 'textarea':
+            inputHtml = `<textarea class="preview-textarea" placeholder="${escapeHtml(field.placeholder || 'Введите текст...')}" rows="3" ${field.required ? 'required' : ''}>${escapeHtml(value)}</textarea>`;
+            break;
+        case 'number':
+            inputHtml = `<input type="number" class="preview-input" placeholder="${escapeHtml(field.placeholder || '0')}" value="${value}" ${field.required ? 'required' : ''}>`;
+            break;
+        case 'date':
+            inputHtml = `<input type="date" class="preview-input" value="${value}" ${field.required ? 'required' : ''}>`;
+            break;
+        case 'select':
+            inputHtml = `
+                <select class="preview-select" ${field.required ? 'required' : ''}>
+                    <option value="">${escapeHtml(field.placeholder || 'Выберите вариант')}</option>
+                    ${(field.options || []).map(opt => `<option value="${escapeHtml(opt)}" ${value === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+                </select>
+            `;
+            break;
+        case 'checkbox':
+            inputHtml = `
+                <label class="preview-checkbox">
+                    <input type="checkbox" ${value === true || value === 'true' ? 'checked' : ''}>
+                    <span>Да / Нет</span>
+                </label>
+            `;
+            break;
+        case 'user':
+            inputHtml = `<select class="preview-select" ${field.required ? 'required' : ''}><option value="">Выберите пользователя...</option><option value="1">Иванов И.И.</option><option value="2">Петрова М.С.</option></select>`;
+            break;
+        case 'multi-user':
+            inputHtml = `
+                <div class="preview-multiselect">
+                    <label class="preview-checkbox"><input type="checkbox" value="1"> Иванов И.И.</label>
+                    <label class="preview-checkbox"><input type="checkbox" value="2"> Петрова М.С.</label>
+                    <label class="preview-checkbox"><input type="checkbox" value="3"> Сидоров А.В.</label>
+                </div>
+            `;
+            break;
+            case 'document':
                 inputHtml = `
-                    <select>
-                        <option value="">${escapeHtml(field.placeholder || 'Выберите вариант')}</option>
-                        ${(field.options || []).map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('')}
-                    </select>
-                `;
-                break;
-            case 'checkbox':
-                inputHtml = `
-                    <div class="preview-field-checkbox">
-                        <input type="checkbox" ${field.defaultValue === 'true' ? 'checked' : ''}>
-                        <label>${escapeHtml(field.label)}</label>
+                    <div class="preview-document-attachment">
+                        <div class="attachment-preview">
+                            <span class="attachment-icon">📄</span>
+                            <span class="attachment-name">${escapeHtml(value || 'Не выбран')}</span>
+                            <button class="attachment-remove" type="button" disabled>✖</button>
+                        </div>
+                        <button class="attachment-select-btn" type="button" disabled>Выбрать документ</button>
                     </div>
                 `;
                 break;
-            case 'user':
-                inputHtml = `<select><option value="">Выберите пользователя...</option><option value="1">Иванов И.И.</option><option value="2">Петрова М.С.</option></select>`;
-                break;
-            case 'multi-user':
-                inputHtml = `<select multiple size="3"><option value="1">Иванов И.И.</option><option value="2">Петрова М.С.</option><option value="3">Сидоров А.В.</option></select>`;
-                break;
-            default:
-                inputHtml = `<input type="text">`;
-        }
-        
-        return `
-            <div class="preview-field">
-                <label>${escapeHtml(field.label)}${field.required ? '<span class="required-star"> *</span>' : ''}</label>
-                ${inputHtml}
+        default:
+            inputHtml = `<input type="text" class="preview-input">`;
+    }
+    
+    return `
+        <div class="preview-field ${field.required ? 'required' : ''}">
+            <div class="preview-field-label">
+                ${escapeHtml(field.label)}
+                ${field.required ? '<span class="preview-required-star">*</span>' : ''}
             </div>
-        `;
-    }).join('');
+            <div class="preview-field-help">${escapeHtml(field.placeholder || '')}</div>
+            <div class="preview-field-input">${inputHtml}</div>
+        </div>
+    `;
 }
 // - saveTemplateFromBuilder()
 // Сохранение шаблона из конструктора
@@ -2742,7 +3106,137 @@ function initTemplatesSection() {
         });
     });
 }
+// =====================================================
+// 12.6 ВЫБОР СВЯЗАННОГО ДОКУМЕНТА
+// =====================================================
 
+let currentDocumentFieldKey = null;
+
+// Открытие селектора документов
+async function openDocumentSelector(fieldKey) {
+    currentDocumentFieldKey = fieldKey;
+    
+    // TODO: Загрузить список документов пользователя
+    // Пока заглушка
+    const mockDocuments = [
+        { id: 1, name: 'Договор оказания услуг.pdf', type: 'contract', url: '/docs/contract.pdf' },
+        { id: 2, name: 'Приказ о приёме.docx', type: 'order', url: '/docs/order.docx' },
+        { id: 3, name: 'Служебная записка.docx', type: 'memo', url: '/docs/memo.docx' }
+    ];
+    
+    const modalHtml = `
+        <div id="documentSelectorModal" class="admin-modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>📄 Выбор документа</h2>
+                    <button class="modal-close" onclick="closeDocumentSelector()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="search-box" style="margin-bottom: 16px;">
+                        <input type="text" id="docSearchInput" class="form-input" placeholder="Поиск документов...">
+                    </div>
+                    <div id="documentsList" class="documents-list">
+                        ${mockDocuments.map(doc => `
+                            <div class="document-item" onclick="selectDocument(${doc.id}, '${escapeHtml(doc.name)}')">
+                                <div class="doc-icon">📄</div>
+                                <div class="doc-info">
+                                    <div class="doc-name">${escapeHtml(doc.name)}</div>
+                                    <div class="doc-type">${doc.type}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="createNewDocCheckbox"> 
+                            Или указать ссылку вручную
+                        </label>
+                    </div>
+                    <div id="manualDocLink" style="display: none; margin-top: 12px;">
+                        <input type="text" id="manualDocUrl" class="form-input" placeholder="https://... или /docs/...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="buttonbase" onclick="closeDocumentSelector()">Отмена</button>
+                    <button class="buttonbase" id="confirmDocumentBtn">Подтвердить</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existing = document.getElementById('documentSelectorModal');
+    if (existing) existing.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Обработчики
+    const checkbox = document.getElementById('createNewDocCheckbox');
+    checkbox.onchange = (e) => {
+        const manualDiv = document.getElementById('manualDocLink');
+        manualDiv.style.display = e.target.checked ? 'block' : 'none';
+    };
+    
+    const searchInput = document.getElementById('docSearchInput');
+    searchInput.oninput = (e) => {
+        const searchText = e.target.value.toLowerCase();
+        const items = document.querySelectorAll('#documentsList .document-item');
+        items.forEach(item => {
+            const name = item.querySelector('.doc-name')?.textContent.toLowerCase() || '';
+            item.style.display = name.includes(searchText) ? 'flex' : 'none';
+        });
+    };
+    
+    document.getElementById('confirmDocumentBtn').onclick = () => {
+        const manualCheckbox = document.getElementById('createNewDocCheckbox');
+        if (manualCheckbox.checked) {
+            const manualUrl = document.getElementById('manualDocUrl').value;
+            if (manualUrl) {
+                selectDocument(null, manualUrl);
+            } else {
+                alert('Введите ссылку на документ');
+            }
+        }
+    };
+}
+
+function closeDocumentSelector() {
+    const modal = document.getElementById('documentSelectorModal');
+    if (modal) modal.remove();
+    currentDocumentFieldKey = null;
+}
+
+function selectDocument(docId, docName) {
+    if (currentDocumentFieldKey) {
+        const hiddenInput = document.getElementById(`custom_${currentDocumentFieldKey}`);
+        const selectedDiv = document.getElementById(`selected_doc_${currentDocumentFieldKey}`);
+        
+        if (hiddenInput) hiddenInput.value = docName;
+        if (selectedDiv) {
+            selectedDiv.querySelector('.doc-name').textContent = docName;
+            selectedDiv.style.display = 'flex';
+        }
+        
+        // Скрываем кнопку выбора
+        const selectBtn = selectedDiv?.parentElement?.querySelector('.select-doc-btn');
+        if (selectBtn) selectBtn.style.display = 'none';
+    }
+    closeDocumentSelector();
+}
+
+function clearDocument(fieldKey) {
+    const hiddenInput = document.getElementById(`custom_${fieldKey}`);
+    const selectedDiv = document.getElementById(`selected_doc_${fieldKey}`);
+    const selectBtn = selectedDiv?.parentElement?.querySelector('.select-doc-btn');
+    
+    if (hiddenInput) hiddenInput.value = '';
+    if (selectedDiv) selectedDiv.style.display = 'none';
+    if (selectBtn) selectBtn.style.display = 'inline-flex';
+}
+
+window.openDocumentSelector = openDocumentSelector;
+window.closeDocumentSelector = closeDocumentSelector;
+window.selectDocument = selectDocument;
+window.clearDocument = clearDocument;
 
 
 
@@ -3010,7 +3504,238 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// =====================================================
+// 12.5 КОМПОНЕНТ ВЫБОРА ПОЛЬЗОВАТЕЛЯ
+// =====================================================
 
+let userSelectorCallback = null;
+let userSelectorMode = 'single'; // 'single' или 'multiple'
+let allUsersList = [];
+let filteredUsersList = [];
+let selectedUserIds = new Set();
+
+// Открытие селектора пользователей
+function openUserSelector(options = {}) {
+    const { 
+        mode = 'multiple',      // 'single' или 'multiple'
+        preselectedIds = [],    // массив предварительно выбранных ID
+        title = 'Выбор пользователей',
+        onConfirm = null        // колбэк с результатом
+    } = options;
+    
+    userSelectorMode = mode;
+    userSelectorCallback = onConfirm;
+    selectedUserIds = new Set(preselectedIds);
+    
+    document.getElementById('userSelectorTitle').textContent = title;
+    document.getElementById('selectedCount').textContent = `Выбрано: ${selectedUserIds.size}`;
+    
+    // Загружаем пользователей
+    loadUsersForSelector();
+    
+    openModal('userSelectorModal');
+}
+
+function closeUserSelectorModal() {
+    closeModal('userSelectorModal');
+    userSelectorCallback = null;
+}
+
+// Загрузка пользователей для селектора
+async function loadUsersForSelector() {
+    const container = document.getElementById('userSelectorList');
+    container.innerHTML = '<div class="loading-users">Загрузка пользователей...</div>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/users', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            allUsersList = data.users || [];
+            
+            // Загружаем отделы для фильтра
+            loadDepartmentsForSelector();
+            
+            // Применяем фильтры и отображаем
+            applyUserFilters();
+        } else {
+            container.innerHTML = '<div class="loading-users" style="color: red;">Ошибка загрузки пользователей</div>';
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+        container.innerHTML = '<div class="loading-users" style="color: red;">Ошибка загрузки</div>';
+    }
+}
+
+// Загрузка отделов для фильтра
+async function loadDepartmentsForSelector() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/departments/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const deptSelect = document.getElementById('userSelectorDepartment');
+            deptSelect.innerHTML = '<option value="">Все отделы</option>' + 
+                (data.departments || []).map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+    }
+}
+
+// Применение фильтров
+function applyUserFilters() {
+    const searchText = document.getElementById('userSelectorSearch')?.value.toLowerCase() || '';
+    const departmentId = document.getElementById('userSelectorDepartment')?.value;
+    const roleFilter = document.getElementById('userSelectorRole')?.value;
+    const sortBy = document.getElementById('userSelectorSort')?.value;
+    
+    filteredUsersList = allUsersList.filter(user => {
+        // Поиск по имени, email, отделу
+        const fullName = `${user.surname} ${user.name} ${user.patronymic || ''}`.toLowerCase();
+        const searchMatch = !searchText || 
+            fullName.includes(searchText) || 
+            (user.email || '').toLowerCase().includes(searchText) ||
+            (user.username || '').toLowerCase().includes(searchText);
+        
+        // Фильтр по отделу
+        const deptMatch = !departmentId || user.department_id == departmentId;
+        
+        // Фильтр по роли
+        let roleMatch = true;
+        if (roleFilter === 'admin') roleMatch = user.role_id === 1;
+        if (roleFilter === 'user') roleMatch = user.role_id === 2;
+        
+        return searchMatch && deptMatch && roleMatch;
+    });
+    
+    // Сортировка
+    filteredUsersList.sort((a, b) => {
+        switch(sortBy) {
+            case 'name_asc':
+                return (a.surname || '').localeCompare(b.surname || '');
+            case 'name_desc':
+                return (b.surname || '').localeCompare(a.surname || '');
+            case 'department':
+                return (a.department_name || '').localeCompare(b.department_name || '');
+            case 'post':
+                return (a.post_name || '').localeCompare(b.post_name || '');
+            default:
+                return (a.surname || '').localeCompare(b.surname || '');
+        }
+    });
+    
+    renderUserSelectorList();
+}
+
+// Отрисовка списка пользователей
+function renderUserSelectorList() {
+    const container = document.getElementById('userSelectorList');
+    
+    if (filteredUsersList.length === 0) {
+        container.innerHTML = '<div class="loading-users">👥 Нет пользователей</div>';
+        return;
+    }
+    
+    container.innerHTML = filteredUsersList.map(user => {
+        const isSelected = selectedUserIds.has(user.id);
+        const fullName = `${user.surname || ''} ${user.name || ''} ${user.patronymic || ''}`.trim();
+        const avatarHtml = user.avatar_uri ? 
+            `<img src="${user.avatar_uri}" class="user-avatar-small" onerror="this.src='../materials/avatar_for_profile.png'">` :
+            `<div class="user-avatar-small avatar-letter">${(user.name?.[0] || '?').toUpperCase()}</div>`;
+        
+        return `
+            <div class="user-selector-item ${isSelected ? 'selected' : ''}" data-user-id="${user.id}" onclick="toggleUserSelection(${user.id})">
+                <input type="checkbox" class="user-checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleUserSelection(${user.id})">
+                ${avatarHtml}
+                <div class="user-info">
+                    <div class="user-name">${escapeHtml(fullName)}</div>
+                    <div class="user-details">
+                        ${user.post_name ? `📌 ${escapeHtml(user.post_name)}` : ''}
+                        ${user.department_name ? ` | 🏢 ${escapeHtml(user.department_name)}` : ''}
+                        ${user.email ? ` | 📧 ${escapeHtml(user.email)}` : ''}
+                    </div>
+                </div>
+                <div class="user-badge">${user.role_id === 1 ? 'Админ' : 'Пользователь'}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Переключение выбора пользователя
+function toggleUserSelection(userId) {
+    if (userSelectorMode === 'single') {
+        selectedUserIds.clear();
+        selectedUserIds.add(userId);
+    } else {
+        if (selectedUserIds.has(userId)) {
+            selectedUserIds.delete(userId);
+        } else {
+            selectedUserIds.add(userId);
+        }
+    }
+    
+    document.getElementById('selectedCount').textContent = `Выбрано: ${selectedUserIds.size}`;
+    renderUserSelectorList();
+}
+
+// Выбрать всех
+function selectAllUsers() {
+    if (userSelectorMode === 'single') return;
+    filteredUsersList.forEach(user => selectedUserIds.add(user.id));
+    document.getElementById('selectedCount').textContent = `Выбрано: ${selectedUserIds.size}`;
+    renderUserSelectorList();
+}
+
+// Очистить всё
+function clearAllUsers() {
+    selectedUserIds.clear();
+    document.getElementById('selectedCount').textContent = `Выбрано: 0`;
+    renderUserSelectorList();
+}
+
+// Подтверждение выбора
+function confirmUserSelection() {
+    const selectedUsers = allUsersList.filter(u => selectedUserIds.has(u.id));
+    if (userSelectorCallback) {
+        userSelectorCallback(selectedUsers, Array.from(selectedUserIds));
+    }
+    closeUserSelectorModal();
+}
+
+// Инициализация обработчиков селектора (вызвать в DOMContentLoaded)
+function initUserSelectorHandlers() {
+    const searchInput = document.getElementById('userSelectorSearch');
+    if (searchInput) searchInput.addEventListener('input', applyUserFilters);
+    
+    const deptSelect = document.getElementById('userSelectorDepartment');
+    if (deptSelect) deptSelect.addEventListener('change', applyUserFilters);
+    
+    const roleSelect = document.getElementById('userSelectorRole');
+    if (roleSelect) roleSelect.addEventListener('change', applyUserFilters);
+    
+    const sortSelect = document.getElementById('userSelectorSort');
+    if (sortSelect) sortSelect.addEventListener('change', applyUserFilters);
+    
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllUsers);
+    
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllUsers);
+    
+    const confirmBtn = document.getElementById('confirmUserSelectionBtn');
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmUserSelection);
+}
+
+// Глобальные функции для вызова из onclick
+window.toggleUserSelection = toggleUserSelection;
+window.closeUserSelectorModal = closeUserSelectorModal;
 
 
 
@@ -3175,12 +3900,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
     loadCalendarEvents();
     updateTemplateButtons();
-    initTaskEditorHandlers()
-    initTemplateBuilderHandlers()
-    initTemplatesSection()
-    initCalendar()
-    loadNotes()
-    loadDashboardStats()
+    initTaskEditorHandlers();
+    initTemplateBuilderHandlers();
+    initUserSelectorHandlers();
+    initTemplatesSection();
+    initCalendar();
+    loadNotes();
+    loadDashboardStats();
     setTimeout(() => {
         if (document.getElementById('miniCalendar')) {
             renderMiniCalendar();

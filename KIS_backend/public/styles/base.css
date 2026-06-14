@@ -1799,40 +1799,64 @@ table td{
     padding: 16px;
 }
 
-/* Гант - основная структура */
-.gantt-card {
-    width: 100%;
-}
-
+/* ========== УЛУЧШЕННЫЙ ГАНТ В СТИЛЕ YOUGILE ========== */
 .gantt-controls {
     display: flex;
-    gap: 12px;
+    gap: 20px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
-.gantt-nav-btn,
-.gantt-today-btn {
-    background: var(--c_acchalf);
-    border: none;
+.gantt-zoom {
+    display: flex;
+    gap: 4px;
+    background: var(--c_bg);
     border-radius: 8px;
-    padding: 6px 12px;
+    padding: 2px;
+}
+
+.zoom-btn {
+    padding: 4px 12px;
+    border: none;
+    background: transparent;
     cursor: pointer;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 12px;
     transition: all 0.2s;
 }
 
-.gantt-nav-btn:hover,
-.gantt-today-btn:hover {
+.zoom-btn.active {
     background: var(--c_acc);
     color: white;
-    transform: translateY(-1px);
 }
 
-#ganttMonthYear {
-    font-weight: 600;
-    color: var(--c_bg_txt);
-    min-width: 140px;
-    text-align: center;
+.zoom-btn:hover:not(.active) {
+    background: var(--c_acchalf);
+}
+
+.gantt-nav {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.gantt-nav-btn, .gantt-today-btn {
+    background: var(--c_acchalf);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.gantt-export-btn {
+    background: var(--c_acchalf);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: auto;
 }
 
 .gantt-wrapper {
@@ -1853,28 +1877,25 @@ table td{
 }
 
 .gantt-tasks-header {
-    width: 200px;
+    width: 280px;
     flex-shrink: 0;
     padding: 12px 16px;
     font-weight: 600;
     font-size: 13px;
-    color: var(--c_bg_txt);
     border-right: 1px solid var(--c_surf_txt);
 }
 
 .gantt-dates-header {
     flex: 1;
     display: flex;
-    overflow-x: auto;
 }
 
 .gantt-date-header-cell {
     min-width: 40px;
     text-align: center;
-    padding: 12px 4px;
+    padding: 8px 4px;
     font-size: 11px;
     font-weight: 500;
-    color: var(--c_bg_txt);
     border-right: 1px solid var(--c_surf_txt);
     flex-shrink: 0;
 }
@@ -1884,52 +1905,100 @@ table td{
     color: var(--c_error);
 }
 
-/* Тело диаграммы */
+.gantt-date-header-cell.today {
+    background: var(--c_acc);
+    color: white;
+}
+
+/* Контейнер диаграммы */
 .gantt-chart-container {
     display: flex;
     max-height: 500px;
     overflow-y: auto;
 }
 
-/* Список задач (левая колонка) */
+/* Список задач */
 .gantt-tasks-list {
-    width: 200px;
+    width: 280px;
     flex-shrink: 0;
     background: var(--c_bg);
     border-right: 1px solid var(--c_surf_txt);
 }
 
 .gantt-task-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 12px 16px;
     border-bottom: 1px solid var(--c_surf_txt);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--c_bg_txt);
     cursor: pointer;
     transition: all 0.2s;
+    gap: 8px;
 }
 
 .gantt-task-row:hover {
     background: var(--c_acchalf);
-    transform: translateX(4px);
 }
 
-/* Контейнер с барами (правая колонка) */
+.gantt-task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.gantt-task-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gantt-task-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--c_surf_txt);
+}
+
+.gantt-task-assignee {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gantt-assignee-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.gantt-task-progress {
+    width: 40px;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c_acc);
+}
+
+/* Полосы задач */
 .gantt-bars-container {
     flex: 1;
     position: relative;
     overflow-x: auto;
 }
 
-.gantt-bars-row {
+.gantt-bar-row {
     position: relative;
-    height: 44px;
+    height: 52px;
     border-bottom: 1px solid var(--c_surf_txt);
 }
 
 .gantt-bar {
     position: absolute;
-    height: 28px;
+    height: 36px;
     top: 8px;
     border-radius: 6px;
     cursor: pointer;
@@ -1938,38 +2007,102 @@ table td{
     align-items: center;
     padding: 0 8px;
     overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .gantt-bar:hover {
-    transform: scaleY(1.1);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transform: scaleY(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     z-index: 5;
 }
 
+.gantt-bar.critical { background: #ef4444; }
+.gantt-bar.high { background: #f59e0b; }
+.gantt-bar.medium { background: #10b981; }
+.gantt-bar.low { background: #3b82f6; }
+.gantt-bar.completed { background: #9ca3af; opacity: 0.7; }
+
 .gantt-bar-label {
-    font-size: 10px;
+    font-size: 11px;
     color: white;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Адаптация для мобильных */
-@media (max-width: 768px) {
-    .gantt-tasks-header,
-    .gantt-tasks-list {
-        width: 150px;
-    }
-    
-    .gantt-date-header-cell {
-        min-width: 35px;
-        font-size: 10px;
-    }
-    
-    .gantt-task-row {
-        font-size: 11px;
-        padding: 10px 12px;
-    }
+.gantt-bar-progress {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 9px;
+    color: white;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* Легенда */
+.gantt-legend {
+    padding: 12px 16px;
+    border-top: 1px solid var(--c_surf_txt);
+    font-size: 11px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.legend-title {
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.legend-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 4px;
+}
+
+.legend-color.critical { background: #ef4444; }
+.legend-color.high { background: #f59e0b; }
+.legend-color.medium { background: #10b981; }
+.legend-color.low { background: #3b82f6; }
+
+.legend-separator {
+    color: var(--c_surf_txt);
+}
+
+.legend-status {
+    margin-right: 12px;
+}
+
+/* Tooltip */
+.gantt-tooltip {
+    position: fixed;
+    background: var(--c_surf);
+    border: 1px solid var(--c_surf_txt);
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    font-size: 12px;
+    pointer-events: none;
+    max-width: 250px;
+}
+
+.gantt-tooltip .tooltip-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.gantt-tooltip .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
 }
 
 /* Список активных задач на дашборде */
@@ -2869,4 +3002,405 @@ table td{
     text-align: center;
     padding: 40px;
     color: var(--c_surf_txt);
+}
+
+
+/* ========== GOOGLE FORMS СТИЛЬ ДЛЯ СОЗДАНИЯ ЗАДАЧИ ========== */
+.google-form-editor {
+    background: var(--c_bg);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.form-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--c_surf);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.form-editor-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-editor-title-section h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.form-editor-badge {
+    padding: 4px 12px;
+    background: var(--c_acchalf);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--c_acc);
+}
+
+.form-editor-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.google-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--c_surf);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.google-form-header {
+    background: #673ab7;
+    padding: 32px 32px 24px;
+    text-align: center;
+}
+
+.google-form-header .form-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.google-form-header .form-title {
+    font-size: 28px;
+    font-weight: 500;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.google-form-header .form-description {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+}
+
+.google-form-body {
+    padding: 32px;
+    background: white;
+}
+
+/* Поле формы в стиле Google Forms */
+.google-form-field {
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e8eaed;
+}
+
+.google-form-field:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.google-form-field .field-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.google-form-field .required-star {
+    color: #d93025;
+    font-size: 14px;
+}
+
+.google-form-field .field-help {
+    font-size: 12px;
+    color: #5f6368;
+    margin-bottom: 12px;
+}
+
+.google-form-field .field-input {
+    width: 100%;
+}
+
+.google-form-field input,
+.google-form-field textarea,
+.google-form-field select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: white;
+}
+
+.google-form-field input:focus,
+.google-form-field textarea:focus,
+.google-form-field select:focus {
+    outline: none;
+    border-color: #673ab7;
+    box-shadow: 0 0 0 2px rgba(103,58,183,0.2);
+}
+
+.google-form-field input.error,
+.google-form-field textarea.error,
+.google-form-field select.error {
+    border-color: #d93025;
+    background: #fce8e6;
+}
+
+.google-form-field textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Чекбоксы и радио в стиле Google Forms */
+.google-form-field .checkbox-group,
+.google-form-field .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.google-form-field .checkbox-option,
+.google-form-field .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.google-form-field .checkbox-option input,
+.google-form-field .radio-option input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.google-form-field .checkbox-option label,
+.google-form-field .radio-option label {
+    font-size: 14px;
+    color: #202124;
+    cursor: pointer;
+}
+
+/* Мультиселект пользователей */
+.google-form-field .users-selector {
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.google-form-field .users-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dadce0;
+}
+
+.google-form-field .selected-users-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    min-height: 60px;
+}
+
+.google-form-field .selected-user-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #e8eaed;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.google-form-field .selected-user-tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    color: #5f6368;
+}
+
+.google-form-field .select-users-btn {
+    width: 100%;
+    padding: 10px;
+    background: #f8f9fa;
+    border: none;
+    border-top: 1px solid #dadce0;
+    cursor: pointer;
+    font-size: 13px;
+    color: #673ab7;
+    font-weight: 500;
+}
+
+.google-form-field .select-users-btn:hover {
+    background: #f1f3f4;
+}
+
+/* Прикрепление документа */
+.google-form-field .document-attachment {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px dashed #dadce0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.google-form-field .document-attachment:hover {
+    border-color: #673ab7;
+    background: #f8f9fa;
+}
+
+.google-form-field .doc-icon {
+    font-size: 24px;
+}
+
+.google-form-field .doc-info {
+    flex: 1;
+}
+
+.google-form-field .doc-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+}
+
+.google-form-field .doc-placeholder {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.google-form-field .doc-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #5f6368;
+}
+
+.google-form-footer {
+    padding: 24px 32px;
+    background: #f8f9fa;
+    border-top: 1px solid #e8eaed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-required-hint {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.submit-form-btn {
+    background: #673ab7;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submit-form-btn:hover {
+    background: #5e35b1;
+}
+
+/* Адаптация */
+@media (max-width: 768px) {
+    .google-form-body {
+        padding: 20px;
+    }
+    
+    .google-form-header {
+        padding: 24px 20px;
+    }
+    
+    .google-form-header .form-title {
+        font-size: 22px;
+    }
+    
+    .form-editor-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .form-editor-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* ========== ПРИОРИТЕТЫ ЗАДАЧ ========== */
+.priority-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.priority-critical {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.priority-high {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.priority-medium {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.priority-low {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+/* Статус дедлайна */
+.deadline-overdue {
+    color: #c62828;
+    font-weight: 500;
+}
+
+.deadline-urgent {
+    color: #ef6c00;
+    font-weight: 500;
+}
+
+.deadline-normal {
+    color: #2e7d32;
+}
+
+.deadline-completed {
+    color: #757575;
+    text-decoration: line-through;
+}
+
+/* Событие в календаре */
+.date-event-item {
+    transition: all 0.2s;
+}
+
+.date-event-item:hover {
+    background: var(--c_acchalf) !important;
+    transform: translateX(4px);
 }

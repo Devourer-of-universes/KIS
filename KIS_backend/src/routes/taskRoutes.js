@@ -86,13 +86,12 @@ router.get('/tasks/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Создание задачи
 router.post('/tasks', authMiddleware, async (req, res) => {
     try {
         const { 
             title, description, assignedTo, departmentId, 
-            startDate, dueDate, priority, tags, 
-            notifyAssignee, notifyOnDeadline 
+            startDate, dueDate, priority: receivedPriority,  // ← переименовали
+            tags, notifyAssignee, notifyOnDeadline 
         } = req.body;
         const userId = req.userId;
         
@@ -100,21 +99,28 @@ router.post('/tasks', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Укажите название задачи' });
         }
         
+        // Приоритет: убедимся, что значение корректное
+        const validPriority = ['low', 'medium', 'high', 'critical'].includes(receivedPriority) 
+            ? receivedPriority 
+            : 'medium';
+        
+        console.log('📥 Creating task:', { title, priority: validPriority, dueDate, assignedTo });
+        
         const result = await query(`
             INSERT INTO tasks (title, description, created_by, assigned_to, department_id, 
                                start_date, due_date, priority, tags, status, progress)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 0)
             RETURNING *
         `, [title.trim(), description, userId, assignedTo || null, departmentId || null, 
-            startDate || null, dueDate || null, priority || 'medium', tags || []]);
+            startDate || null, dueDate || null, validPriority, tags || []]);
         
+        console.log('✅ Task created:', result.rows[0].id);
         res.status(201).json({ task: result.rows[0] });
     } catch (error) {
         console.error('Create task error:', error);
         res.status(500).json({ error: error.message });
     }
 });
-
 // Обновление задачи
 router.put('/tasks/:id', authMiddleware, async (req, res) => {
     try {
@@ -218,7 +224,7 @@ router.get('/calendar/events', authMiddleware, async (req, res) => {
                 t.title as name,
                 t.due_date as date,
                 t.status,
-                t.priority,
+                t.priority,  -- ← Убедись, что priority выбирается
                 'task' as type,
                 u.surname as assignee_surname,
                 u.name as assignee_name
@@ -250,7 +256,7 @@ router.get('/calendar/events', authMiddleware, async (req, res) => {
             title: row.name,
             date: row.date ? new Date(row.date).toISOString().split('T')[0] : null,
             type: row.type,
-            priority: row.priority,
+            priority: row.priority || 'medium',  // ← значение по умолчанию
             status: row.status,
             assignee: row.assignee_surname ? `${row.assignee_surname} ${row.assignee_name}` : null
         }));

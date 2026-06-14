@@ -901,11 +901,11 @@
                                         
                                         <div class="form-group">
                                             <label>Приоритет</label>
-                                            <select class="form-select" id="taskPriority">
-                                                <option value="low">Низкий</option>
-                                                <option value="medium">Средний</option>
-                                                <option value="high" selected>Высокий</option>
-                                                <option value="critical">Критический</option>
+                                            <select id="taskPriority" class="form-select">
+                                                <option value="low">🟢 Низкий</option>
+                                                <option value="medium" selected>🟡 Средний</option>
+                                                <option value="high">🟠 Высокий</option>
+                                                <option value="critical">🔴 Критический</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1141,30 +1141,49 @@
                         </div>
                         
                         <!-- Строка 2: Диаграмма Ганта -->
-                        <div class="fullcalendar-row gantt-row">
-                            <div class="fullcalendar-card gantt-card">
-                                <div class="fullcalendar-card-header">
-                                    <h3>📊 Диаграмма Ганта</h3>
-                                    <div class="gantt-controls">
+                        <!-- Диаграмма Ганта -->
+                        <div class="fullcalendar-card gantt-card">
+                            <div class="fullcalendar-card-header">
+                                <h3>📊 Диаграмма Ганта</h3>
+                                <div class="gantt-controls">
+                                    <div class="gantt-zoom">
+                                        <button class="zoom-btn" data-zoom="day">День</button>
+                                        <button class="zoom-btn active" data-zoom="week">Неделя</button>
+                                        <button class="zoom-btn" data-zoom="month">Месяц</button>
+                                    </div>
+                                    <div class="gantt-nav">
                                         <button class="gantt-nav-btn" id="ganttPrevBtn">◀</button>
                                         <span id="ganttMonthYear"></span>
                                         <button class="gantt-nav-btn" id="ganttNextBtn">▶</button>
                                         <button class="gantt-today-btn" id="ganttTodayBtn">Сегодня</button>
                                     </div>
+                                    <button class="gantt-export-btn" id="ganttExportBtn">📎 Экспорт</button>
                                 </div>
-                                <div class="fullcalendar-card-body gantt-body">
-                                    <div class="gantt-wrapper">
-                                        <!-- Заголовок шкалы времени -->
-                                        <div class="gantt-timeline-header">
-                                            <div class="gantt-tasks-header">Задачи</div>
-                                            <div class="gantt-dates-header" id="ganttDatesHeader"></div>
-                                        </div>
-                                        <!-- Тело диаграммы -->
-                                        <div class="gantt-chart-container">
-                                            <div class="gantt-tasks-list" id="ganttTasksList"></div>
-                                            <div class="gantt-bars-container" id="ganttBarsContainer"></div>
-                                        </div>
+                            </div>
+                            <div class="fullcalendar-card-body gantt-body">
+                                <div class="gantt-wrapper">
+                                    <!-- Заголовок шкалы времени -->
+                                    <div class="gantt-timeline-header">
+                                        <div class="gantt-tasks-header">Задачи</div>
+                                        <div class="gantt-dates-header" id="ganttDatesHeader"></div>
                                     </div>
+                                    <!-- Тело диаграммы -->
+                                    <div class="gantt-chart-container" id="ganttChartContainer">
+                                        <div class="gantt-tasks-list" id="ganttTasksList"></div>
+                                        <div class="gantt-bars-container" id="ganttBarsContainer"></div>
+                                    </div>
+                                </div>
+                                <!-- Легенда -->
+                                <div class="gantt-legend">
+                                    <span class="legend-title">Приоритеты:</span>
+                                    <span class="legend-color critical"></span> Критический
+                                    <span class="legend-color high"></span> Высокий
+                                    <span class="legend-color medium"></span> Средний
+                                    <span class="legend-color low"></span> Низкий
+                                    <span class="legend-separator">|</span>
+                                    <span class="legend-title">Статус:</span>
+                                    <span class="legend-status completed">✅ Выполнена</span>
+                                    <span class="legend-status overdue">⚠️ Просрочена</span>
                                 </div>
                             </div>
                         </div>
@@ -1298,6 +1317,41 @@
                         
                         <div class="templates-grid-container" id="templatesGridContainer">
                             <div class="loading-templates">Загрузка шаблонов...</div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Секция создания задачи по шаблону (Google Forms стиль) -->
+                <section class="base-section" id="base-section-task-from-template" style="display: none;">
+                    <div class="google-form-editor">
+                        <div class="form-editor-header">
+                            <div class="form-editor-title-section">
+                                <h2 id="templateFormTitle">📝 Создание задачи</h2>
+                                <div class="form-editor-badge" id="templateFormBadge"></div>
+                            </div>
+                            <div class="form-editor-actions">
+                                <button class="buttonbase btn-outline" id="cancelTaskFromTemplateBtn">Отмена</button>
+                                <button class="buttonbase" id="submitTaskFromTemplateBtn">✅ Создать задачу</button>
+                            </div>
+                            <button class="sec-btn-close" id="closeTaskFromTemplateBtn">
+                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                            </button>
+                        </div>
+                        
+                        <div class="google-form-container">
+                            <div class="google-form-header">
+                                <div class="form-icon">📋</div>
+                                <div class="form-title" id="googleFormTitle">Новая задача</div>
+                                <div class="form-description" id="googleFormDescription"></div>
+                            </div>
+                            
+                            <div class="google-form-body" id="googleFormBody">
+                                <div class="loading-form">Загрузка...</div>
+                            </div>
+                            
+                            <div class="google-form-footer">
+                                <div class="form-required-hint">* Обязательные поля</div>
+                                <button class="submit-form-btn" id="googleFormSubmitBtn">Отправить</button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1902,6 +1956,7 @@
                         </div>
                     </div>
                 </div>
+                
             </div>
         </main>
     </div>

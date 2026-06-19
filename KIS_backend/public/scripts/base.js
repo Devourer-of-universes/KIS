@@ -187,33 +187,117 @@ function onModalClosed() {
 // - renderNotes()
 // - addNote()
 // - deleteNote()
-async function loadNotes() {
+// =====================================================
+// ЗАМЕТКИ - СТИКЕРЫ НА ДОСКЕ
+// =====================================================
+
+let currentNoteType = 'personal';
+let currentNoteId = null;
+
+// Открытие модалки создания заметки
+function openNoteModal(type) {
+    currentNoteType = type;
+    document.getElementById('noteModalTitle').textContent = type === 'personal' ? '📌 Моя заметка' : '👥 Общая заметка';
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteContent').value = '';
+    document.getElementById('noteId').value = '';
+    openModal('noteModal');
+}
+
+// Сохранение заметки
+async function saveNote() {
+    const title = document.getElementById('noteTitle')?.value.trim() || '';
+    const content = document.getElementById('noteContent')?.value.trim();
+    const noteId = document.getElementById('noteId')?.value;
+    
+    if (!content) {
+        showToast('Введите текст заметки', 'error');
+        return;
+    }
+    
     try {
         const token = localStorage.getItem('token');
-        
-        const personalRes = await fetch('/api/notes/personal', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (personalRes.ok) {
-            const personal = await personalRes.json();
-            renderNotes('personalNotesList', personal.notes || []);
-            document.getElementById('personalNotesCount').textContent = personal.notes?.length || 0;
+        if (!token) {
+            showToast('Не авторизован', 'error');
+            return;
         }
         
-        const groupRes = await fetch('/api/notes/group', {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const url = noteId ? `/api/notes/${noteId}` : '/api/notes';
+        const method = noteId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                title: title || content.substring(0, 30) + (content.length > 30 ? '...' : ''),
+                content: content,
+                type: currentNoteType
+            })
         });
-        if (groupRes.ok) {
-            const group = await groupRes.json();
-            renderNotes('groupNotesList', group.notes || []);
-            document.getElementById('groupNotesCount').textContent = group.notes?.length || 0;
+        
+        if (response.ok) {
+            showToast(noteId ? 'Заметка обновлена' : 'Заметка добавлена', 'success');
+            closeModal('noteModal');
+            await loadNotes();
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Ошибка сохранения', 'error');
         }
     } catch (error) {
-        console.error('Error loading notes:', error);
+        console.error('Save note error:', error);
+        showToast('Ошибка сервера', 'error');
     }
 }
 
-function renderNotes(containerId, notes) {
+// Загрузка заметок
+async function loadNotes() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn('No token, skipping notes load');
+            return;
+        }
+        
+        // Загружаем личные заметки
+        const personalRes = await fetch('/api/notes/personal', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (personalRes.ok) {
+            const personal = await personalRes.json();
+            renderNotes('personalNotesList', personal.notes || [], true);
+            const countEl = document.getElementById('personalNotesCount');
+            if (countEl) countEl.textContent = personal.notes?.length || 0;
+        } else {
+            console.warn('Failed to load personal notes:', personalRes.status);
+        }
+        
+        // Загружаем общие заметки отдела
+        const groupRes = await fetch('/api/notes/group', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (groupRes.ok) {
+            const group = await groupRes.json();
+            renderNotes('groupNotesList', group.notes || [], false);
+            const countEl = document.getElementById('groupNotesCount');
+            if (countEl) countEl.textContent = group.notes?.length || 0;
+        } else {
+            console.warn('Failed to load group notes:', groupRes.status);
+        }
+    } catch (error) {
+        console.error('Error loading notes:', error);
+        // Показываем пустые состояния при ошибке
+        renderNotes('personalNotesList', [], true);
+        renderNotes('groupNotesList', [], false);
+    }
+}
+
+// Отрисовка заметок
+function renderNotes(containerId, notes, isPersonal) {
     const container = document.getElementById(containerId);
     if (!container) return;
     
@@ -222,65 +306,79 @@ function renderNotes(containerId, notes) {
         return;
     }
     
-    container.innerHTML = notes.map(note => `
-        <div class="note-item" data-note-id="${note.id}">
-            <div class="note-text">${escapeHtml(note.content)}</div>
-            <div class="note-meta">
-                <span class="note-date">${formatDate(note.created_at)}</span>
-                <button class="note-delete" onclick="deleteNote('${note.id}')">🗑️</button>
+    // Получаем текущего пользователя
+    const currentUser = window.currentUser || {};
+    const currentUserId = currentUser.id;
+    
+    container.innerHTML = notes.map(note => {
+        const isAuthor = note.user_id === currentUserId;
+        const authorName = isAuthor ? 'Вы' : `${note.surname || ''} ${note.name || ''}`.trim() || 'Пользователь';
+        
+        // Форматируем дату
+        const dateStr = formatNoteDate(note.created_at);
+        
+        return `
+            <div class="note-item" data-note-id="${note.id}">
+                <div class="pin">📌</div>
+                <div class="note-text">${escapeHtml(note.content)}</div>
+                <div class="note-meta">
+                    <span class="note-author">${isPersonal ? '' : '👤 ' + escapeHtml(authorName)}</span>
+                    <span class="note-date">${dateStr}</span>
+                </div>
+                <div style="position: absolute; bottom: 8px; right: 8px; display: flex; gap: 4px;">
+                    ${isAuthor ? `
+                        <button class="note-delete" onclick="confirmDeleteNote('${note.id}')" title="Удалить">🗑️</button>
+                    ` : ''}
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-async function addNote(type) {
-    const content = prompt('Введите текст заметки:');
-    if (!content || content.trim() === '') return;
-    
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/notes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ type, content: content.trim() })
-        });
-        
-        if (response.ok) {
-            await loadNotes();
-            showToast('Заметка добавлена', 'success');
-        } else {
-            const error = await response.json();
-            showToast(error.error || 'Ошибка', 'error');
+// Удаление заметки с подтверждением
+function confirmDeleteNote(noteId) {
+    showConfirm(
+        '🗑️ Удаление заметки',
+        'Вы уверены, что хотите удалить эту заметку?',
+        async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/notes/${noteId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    showToast('Заметка удалена', 'success');
+                    await loadNotes();
+                } else {
+                    showToast('Ошибка удаления', 'error');
+                }
+            } catch (error) {
+                console.error('Delete note error:', error);
+                showToast('Ошибка сервера', 'error');
+            }
         }
-    } catch (error) {
-        console.error('Error adding note:', error);
-        showToast('Ошибка добавления', 'error');
-    }
+    );
 }
 
-async function deleteNote(noteId) {
-    if (!confirm('Удалить заметку?')) return;
+// Форматирование даты для заметок
+function formatNoteDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
     
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/notes/${noteId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-            await loadNotes();
-            showToast('Заметка удалена', 'success');
-        } else {
-            showToast('Ошибка удаления', 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting note:', error);
-        showToast('Ошибка', 'error');
-    }
+    if (diff < 60000) return 'Только что';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} мин назад`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч назад`;
+    if (diff < 172800000) return 'Вчера';
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} дн назад`;
+    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+// Используем formatNoteDate вместо formatDate для заметок
+function formatDate(dateString) {
+    return formatNoteDate(dateString);
 }
 // =====================================================
 // 5. КАЛЕНДАРЬ И ЗАДАЧИ (ОСНОВНЫЕ)
@@ -5715,25 +5813,7 @@ window.closeUserSelectorModal = closeUserSelectorModal;
 // =====================================================
 // - loadNotes (заглушка, если нужно)
 // Заметки - заглушка
-async function loadNotes() {
-    // Тестовые данные вместо API
-    const testPersonalNotes = [
-        { id: 1, content: 'Созвониться с клиентом в 15:00', created_at: new Date().toISOString() },
-        { id: 2, content: 'Подготовить отчёт по проекту', created_at: new Date().toISOString() }
-    ];
-    const testGroupNotes = [
-        { id: 3, content: 'Общее собрание в пятницу в 10:00', created_at: new Date().toISOString() },
-        { id: 4, content: 'Сдать отчёты до 20 числа', created_at: new Date().toISOString() }
-    ];
-    
-    renderNotes('personalNotesList', testPersonalNotes);
-    renderNotes('groupNotesList', testGroupNotes);
-    
-    const personalCount = document.getElementById('personalNotesCount');
-    const groupCount = document.getElementById('groupNotesCount');
-    if (personalCount) personalCount.textContent = testPersonalNotes.length;
-    if (groupCount) groupCount.textContent = testGroupNotes.length;
-}
+
 // - loadDashboardStats()
 async function loadDashboardStats() {
     try {

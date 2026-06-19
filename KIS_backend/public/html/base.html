@@ -166,10 +166,10 @@
                             <!-- Доска заметок -->
                             <div class="dashboard-card notes-board">
                                 <div class="card-header">
-                                    <h3>📝 Доска заметок</h3>
+                                    <h3>📌 Доска заметок</h3>
                                     <div>
-                                        <button class="card-add" onclick="addNote('personal')">+ Моя</button>
-                                        <button class="card-add" onclick="addNote('group')">+ Общая</button>
+                                        <button class="buttonbase btn-sm" onclick="openNoteModal('personal')">+ Моя</button>
+                                        <button class="buttonbase btn-sm" onclick="openNoteModal('group')">+ Общая</button>
                                     </div>
                                 </div>
                                 <div class="card-body board-container">
@@ -1965,7 +1965,32 @@
                         </div>
                     </div>
                 </div>
-                
+                <!-- Модалка создания/редактирования заметки -->
+                <div id="noteModal" class="admin-modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 450px;">
+                        <div class="modal-header">
+                            <h2 id="noteModalTitle">📌 Моя заметка</h2>
+                            <button class="modal-close" onclick="closeModal('noteModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="noteForm">
+                                <input type="hidden" id="noteId">
+                                <div class="form-group">
+                                    <label>Название (необязательно)</label>
+                                    <input type="text" id="noteTitle" placeholder="Введите название..." class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Текст заметки *</label>
+                                    <textarea id="noteContent" placeholder="Что хотите запомнить?" rows="4"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="buttonbase" onclick="closeModal('noteModal')">Отмена</button>
+                            <button class="buttonbase" id="saveNoteBtn" onclick="saveNote()">💾 Сохранить</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>

@@ -25,7 +25,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const taskTemplateRoutes = require('./routes/taskTemplateRoutes');
-
+const noteRoutes = require('./routes/noteRoutes');
 // Проверка статуса
 app.get('/api/status', (req, res) => {
     res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
@@ -39,6 +39,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', taskRoutes);
 app.use('/api', taskTemplateRoutes);
+app.use('/api', noteRoutes);
 
 const uploadsPath = path.join(__dirname, '../uploads');
 console.log('Uploads path:', uploadsPath); // Для проверки

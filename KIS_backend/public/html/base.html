@@ -193,19 +193,32 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Уведомления (после доски) -->
-                            <div class="dashboard-card notifications-card">
-                                <div class="card-header">
-                                    <h3>🔔 Уведомления</h3>
-                                    <button class="card-mark-read" onclick="markAllNotificationsRead()">✓ Все</button>
+                            <div style="display: flex;flex-direction: row;">
+                                <!-- Уведомления (после доски) -->
+                                <div class="dashboard-card notifications-card">
+                                    <div class="card-header">
+                                        <h3>🔔 Уведомления</h3>
+                                        <button class="card-mark-read" onclick="markAllNotificationsRead()">✓ Все</button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="notifications-list" id="notificationsList">
+                                            <div class="empty-notifications">Нет уведомлений</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="notifications-list" id="notificationsList">
-                                        <div class="empty-notifications">Нет уведомлений</div>
+                                <div class="dashboard-card tasks-card">
+                                    <div class="card-header">
+                                        <h3>✅ Активные задачи</h3>
+                                        <button class="card-expand" onclick="openFullCalendar()">📊</button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dashboard-tasks-list" id="dashboardTasksList">
+                                            <div class="empty-tasks">Нет активных задач</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            
                         </div>
                         
                         <!-- Правая колонка (1/3) -->
@@ -1129,7 +1142,13 @@
                                 <div class="fullcalendar-card">
                                     <div class="fullcalendar-card-header">
                                         <h3>✅ Активные задачи</h3>
-                                        <button class="buttonbase" onclick="addFullscreenTask()">+ Добавить</button>
+                                        <div style="display: flex; gap: 12px; align-items: center;">
+                                            <label class="checkbox-label" style="font-size: 12px; font-weight: 400;">
+                                                <input type="checkbox" id="filterGanttPeriod" checked>
+                                                За период
+                                            </label>
+                                            <button class="buttonbase" onclick="addFullscreenTask()">+ Добавить</button>
+                                        </div>
                                     </div>
                                     <div class="fullcalendar-card-body">
                                         <div class="active-tasks-list" id="fullscreenTasksList">
@@ -1139,8 +1158,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Строка 2: Диаграмма Ганта -->
                         <!-- Диаграмма Ганта -->
                         <div class="fullcalendar-card gantt-card">
                             <div class="fullcalendar-card-header">
@@ -1157,33 +1174,25 @@
                                         <button class="gantt-nav-btn" id="ganttNextBtn">▶</button>
                                         <button class="gantt-today-btn" id="ganttTodayBtn">Сегодня</button>
                                     </div>
-                                    <button class="gantt-export-btn" id="ganttExportBtn">📎 Экспорт</button>
+                                    <button class="gantt-export-btn" id="ganttExportBtn">📎</button>
                                 </div>
                             </div>
                             <div class="fullcalendar-card-body gantt-body">
                                 <div class="gantt-wrapper">
-                                    <!-- Заголовок шкалы времени -->
-                                    <div class="gantt-timeline-header">
-                                        <div class="gantt-tasks-header">Задачи</div>
-                                        <div class="gantt-dates-header" id="ganttDatesHeader"></div>
-                                    </div>
-                                    <!-- Тело диаграммы -->
-                                    <div class="gantt-chart-container" id="ganttChartContainer">
-                                        <div class="gantt-tasks-list" id="ganttTasksList"></div>
-                                        <div class="gantt-bars-container" id="ganttBarsContainer"></div>
-                                    </div>
+                                    <!-- Заголовок с осями -->
+                                    <div id="ganttDatesHeader"></div>
+                                    <!-- Полосы задач -->
+                                    <div id="ganttBarsContainer"></div>
+                                    <!-- Скрытый список задач (не используется) -->
+                                    <div id="ganttTasksList" style="display: none;"></div>
                                 </div>
                                 <!-- Легенда -->
                                 <div class="gantt-legend">
                                     <span class="legend-title">Приоритеты:</span>
-                                    <span class="legend-color critical"></span> Критический
-                                    <span class="legend-color high"></span> Высокий
-                                    <span class="legend-color medium"></span> Средний
-                                    <span class="legend-color low"></span> Низкий
-                                    <span class="legend-separator">|</span>
-                                    <span class="legend-title">Статус:</span>
-                                    <span class="legend-status completed">✅ Выполнена</span>
-                                    <span class="legend-status overdue">⚠️ Просрочена</span>
+                                    <span class="legend-item"><span class="legend-color critical"></span> Критический</span>
+                                    <span class="legend-item"><span class="legend-color high"></span> Высокий</span>
+                                    <span class="legend-item"><span class="legend-color medium"></span> Средний</span>
+                                    <span class="legend-item"><span class="legend-color low"></span> Низкий</span>
                                 </div>
                             </div>
                         </div>

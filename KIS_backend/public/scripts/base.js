@@ -47,13 +47,29 @@ let currentTaskDraft = null;
 let confirmCallback = null;
 let currentTemplateFilter = 'all';
 let currentQuickDueDate = null;
-let ganttStartDate = new Date();
-let ganttEndDate = new Date();
-// Флаг загрузки Ганта
-let ganttInitialized = false;
-let ganttRenderTimeout = null;
-ganttStartDate.setDate(1); // устанавливаем на 1 число текущего месяца
-ganttEndDate = new Date(ganttStartDate.getFullYear(), ganttStartDate.getMonth() + 1, 0);
+
+// Настройки Ганта
+let currentZoom = 'week';     // 'day', 'week', 'month'
+let ganttCellWidth = 40;
+let ganttHourHeight = 60;
+
+// ИНИЦИАЛИЗАЦИЯ С ТЕКУЩЕЙ ДАТЫ
+const now = new Date();
+currentGanttDate = new Date(now);
+
+// Для месяца — начало текущего месяца
+ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+// Для недели — текущая неделя (понедельник)
+const dayOfWeek = now.getDay();
+const weekStart = new Date(now);
+weekStart.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+weekStart.setHours(0, 0, 0, 0);
+currentGanttDate = weekStart;
+
+// Календарь тоже синхронизируем
+currentCalendarDate = new Date(now);
 
 // =====================================================
 // 2. УПРАВЛЕНИЕ ОКНАМИ (БАЗОВОЕ)
@@ -305,9 +321,17 @@ function renderMiniCalendar() {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
     
+    // Получаем диапазон дат Ганта
+    const ganttDates = getGanttDateRange();
+    
     // Функция проверки наличия события на дату
     const hasEventOnDate = (dateStr) => {
         return calendarEvents.some(event => event.date === dateStr);
+    };
+    
+    // Функция проверки, входит ли дата в диапазон Ганта
+    const isInGanttRange = (dateStr) => {
+        return ganttDates.includes(dateStr);
     };
     
     let html = `
@@ -340,15 +364,21 @@ function renderMiniCalendar() {
         const dateStr = `${year}-${month + 1}-${day}`;
         const isToday = dateStr === todayStr;
         const hasEvent = hasEventOnDate(dateStr);
+        const inGanttRange = isInGanttRange(dateStr);
+        
+        let classes = 'calendar-day';
+        if (isToday) classes += ' today';
+        if (hasEvent) classes += ' has-event';
+        if (inGanttRange) classes += ' gantt-range';
         
         html += `
-            <div class="calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}"
+            <div class="${classes}"
                 onclick="openDateModal(${year}, ${month + 1}, ${day})">
                 ${day}
                 ${hasEvent ? '<span class="event-dot"></span>' : ''}
             </div>
         `;
-            }
+    }
     
     const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
     const nextMonthDays = totalCells - (startOffset + daysInMonth);
@@ -358,6 +388,50 @@ function renderMiniCalendar() {
     
     html += `</div>`;
     container.innerHTML = html;
+}
+function getGanttDateRange() {
+    const dates = [];
+    
+    if (currentZoom === 'day') {
+        // Режим ДЕНЬ: одна конкретная дата
+        // Используем toISOString() с учётом локального времени
+        const year = currentGanttDate.getFullYear();
+        const month = String(currentGanttDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentGanttDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        dates.push(dateStr);
+        console.log('📅 Gantt day range (fixed):', dates);
+    } else if (currentZoom === 'week') {
+        // Режим НЕДЕЛЯ: 7 дней (с понедельника по воскресенье)
+        const weekStart = new Date(currentGanttDate);
+        weekStart.setDate(weekStart.getDate() - (weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1));
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(weekStart);
+            day.setDate(weekStart.getDate() + i);
+            const year = day.getFullYear();
+            const month = String(day.getMonth() + 1).padStart(2, '0');
+            const date = String(day.getDate()).padStart(2, '0');
+            dates.push(`${year}-${month}-${date}`);
+        }
+        console.log('📅 Gantt week range:', dates);
+    } else if (currentZoom === 'month') {
+        // Режим МЕСЯЦ: все дни текущего месяца
+        if (!ganttStartDate) {
+            const now = new Date();
+            ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        }
+        const year = ganttStartDate.getFullYear();
+        const month = ganttStartDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            dates.push(dateStr);
+        }
+        console.log('📅 Gantt month range:', dates.length, 'days');
+    }
+    
+    return dates;
 }
 // - renderFullscreenCalendar()
 // Рендер полноэкранного календаря
@@ -374,56 +448,57 @@ function renderFullscreenCalendar() {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
     
-    const hasEventOnDate = (dateStr) => calendarEvents.some(event => event.date === dateStr);
+    // Получаем диапазон дат Ганта
+    const ganttDates = getGanttDateRange();
     
-    // let html = `
-    //     <div class="calendar-fullscreen-controls">
-    //         <button class="cal-nav-btn" onclick="fullscreenPrevMonth()">◀ Назад</button>
-    //         <button class="today-btn" onclick="fullscreenToday()">Сегодня</button>
-    //         <button class="cal-nav-btn" onclick="fullscreenNextMonth()">Вперёд ▶</button>
-    //     </div>
-    //     <div class="full-calendar-weekdays">
-    //         <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-    //     </div>
-    //     <div class="full-calendar-grid">
-    // `;
+    const hasEventOnDate = (dateStr) => calendarEvents.some(event => event.date === dateStr);
+    const isInGanttRange = (dateStr) => ganttDates.includes(dateStr);
+    
+    // Заголовок с навигацией
     let html = `
-        <div class="calendar-header">
-            <button onclick="prevMonth()">◀</button>
-            <div class="calendar-month-selector">
-                <select id="monthSelect" onchange="changeMonth()">
-                </select>
-                <select id="yearSelect" onchange="changeYear()">
-                </select>
-            </div>
-            <button onclick="nextMonth()">▶</button>
+        <div class="calendar-fullscreen-controls" style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+            <button class="cal-nav-btn" onclick="fullscreenPrevMonth()" style="padding: 6px 16px; border: none; border-radius: 6px; background: var(--c_acchalf); cursor: pointer;">◀</button>
+            <span style="font-weight: 600; font-size: 16px; min-width: 140px; text-align: center;">
+                ${currentCalendarDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
+            </span>
+            <button class="cal-nav-btn" onclick="fullscreenNextMonth()" style="padding: 6px 16px; border: none; border-radius: 6px; background: var(--c_acchalf); cursor: pointer;">▶</button>
+            <button class="today-btn" onclick="fullscreenToday()" style="padding: 6px 16px; border: none; border-radius: 6px; background: var(--c_acc); color: white; cursor: pointer;">Сегодня</button>
         </div>
-        <div class="calendar-weekdays">
+        <div class="full-calendar-weekdays" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 8px;">
             <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
         </div>
-        <div class="calendar-days" id="calendarDays">
+        <div class="full-calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
     `;
+    
     let startOffset = startDay === 0 ? 6 : startDay - 1;
     
+    // Дни предыдущего месяца
     for (let i = startOffset - 1; i >= 0; i--) {
         const day = prevMonthDays - i;
         html += `<div class="calendar-day other-month">${day}</div>`;
     }
     
+    // Дни текущего месяца
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${month + 1}-${day}`;
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === todayStr;
         const hasEvent = hasEventOnDate(dateStr);
+        const inGanttRange = isInGanttRange(dateStr);
+        
+        let classes = 'calendar-day';
+        if (isToday) classes += ' today';
+        if (hasEvent) classes += ' has-event';
+        if (inGanttRange) classes += ' gantt-range';
         
         html += `
-            <div class="calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}"
-                onclick="openDateModal(${year}, ${month + 1}, ${day})">
+            <div class="${classes}" onclick="openDateModal(${year}, ${month + 1}, ${day})" style="padding: 10px 4px; text-align: center; border-radius: 8px; cursor: pointer; position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 14px;">
                 ${day}
-                ${hasEvent ? '<span class="event-dot"></span>' : ''}
+                ${hasEvent ? '<span style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: var(--c_acc); border-radius: 50%;"></span>' : ''}
             </div>
         `;
     }
     
+    // Дни следующего месяца для заполнения
     const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
     const nextMonthDays = totalCells - (startOffset + daysInMonth);
     for (let day = 1; day <= nextMonthDays; day++) {
@@ -440,15 +515,42 @@ function renderFullscreenTasks() {
     if (!container) return;
     
     if (!currentTasks || currentTasks.length === 0) {
-        container.innerHTML = '<div class="empty-tasks">Нет активных задач</div>';
+        container.innerHTML = '<div class="empty-tasks">Нет задач</div>';
         return;
     }
     
-    // Фильтруем активные задачи
-    const activeTasks = currentTasks.filter(t => t.status !== 'completed');
+    const filterPeriod = document.getElementById('filterGanttPeriod')?.checked !== false;
     
-    container.innerHTML = activeTasks.map(task => {
-        // Функция для получения метки приоритета
+    let filteredTasks = currentTasks.filter(t => t.status !== 'completed');
+    
+    if (filterPeriod) {
+        // Получаем диапазон дат Ганта
+        const ganttDates = getGanttDateRange();
+        
+        // Задача попадает в период, если она пересекается с любым днём из диапазона
+        filteredTasks = filteredTasks.filter(task => {
+            if (!task.start_date && !task.due_date) return false;
+            
+            const taskStart = task.start_date ? new Date(task.start_date) : new Date(task.due_date);
+            const taskEnd = task.due_date ? new Date(task.due_date) : new Date(task.start_date);
+            
+            // Проверяем пересечение с любым днём из диапазона
+            for (const dateStr of ganttDates) {
+                const checkDate = new Date(dateStr);
+                if (checkDate >= taskStart && checkDate <= taskEnd) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+    
+    if (filteredTasks.length === 0) {
+        container.innerHTML = '<div class="empty-tasks">Нет задач' + (filterPeriod ? ' на выбранный период' : '') + '</div>';
+        return;
+    }
+    
+    container.innerHTML = filteredTasks.map(task => {
         const getPriorityLabel = (priority) => {
             const labels = {
                 'critical': 'Критический',
@@ -469,6 +571,25 @@ function renderFullscreenTasks() {
             return classes[priority] || 'priority-medium';
         };
         
+        // Статус дедлайна
+        let dueStatus = '';
+        if (task.due_date) {
+            const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysLeft < 0) dueStatus = '⚠️ Просрочена';
+            else if (daysLeft <= 3) dueStatus = `⏰ ${daysLeft} дн.`;
+            else dueStatus = `📅 ${daysLeft} дн.`;
+        }
+        
+        // Период задачи
+        let period = '';
+        if (task.start_date && task.due_date) {
+            period = `${task.start_date.slice(5)} — ${task.due_date.slice(5)}`;
+        } else if (task.due_date) {
+            period = `до ${task.due_date.slice(5)}`;
+        } else if (task.start_date) {
+            period = `с ${task.start_date.slice(5)}`;
+        }
+        
         return `
             <div class="task-item" onclick="openTaskModal(${task.id})">
                 <input type="checkbox" class="task-checkbox" 
@@ -476,7 +597,7 @@ function renderFullscreenTasks() {
                        onclick="event.stopPropagation(); toggleTaskStatus(${task.id}, event)">
                 <div class="task-info">
                     <span class="task-name">${escapeHtml(task.title)}</span>
-                    <span class="task-date">до ${task.due_date || '—'}</span>
+                    <span class="task-date">${period || dueStatus || '—'}</span>
                 </div>
                 <span class="task-priority ${getPriorityClass(task.priority)}">
                     ${getPriorityLabel(task.priority)}
@@ -512,40 +633,806 @@ function renderGanttTasks() {
 // 5.8 РЕНДЕР ГАНТА (СТИЛЬ YOUGILE)
 // =====================================================
 
-let currentZoom = 'week'; // day, week, month
-let ganttDayWidth = 40;
+// =====================================================
+// РЕНДЕР ГАНТА - ФИНАЛЬНАЯ ВЕРСИЯ
+// Ось X = ДАТА, Ось Y = ВРЕМЯ
+// =====================================================
 
 function renderGanttChart(tasks) {
-    const tasksContainer = document.getElementById('ganttTasksList');
     const barsContainer = document.getElementById('ganttBarsContainer');
-    const datesHeader = document.getElementById('ganttDatesHeader');
+    const axisHeader = document.getElementById('ganttDatesHeader');
+    const tasksContainer = document.getElementById('ganttTasksList');
     
-    if (!tasksContainer || !barsContainer) return;
+    if (!barsContainer) return;
+    
+    // Скрываем список задач
+    if (tasksContainer) tasksContainer.style.display = 'none';
+    
+    // СБРАСЫВАЕМ ВЫСОТУ перед рендером
+    barsContainer.style.height = 'auto';
+    barsContainer.style.minHeight = 'auto';
+    barsContainer.style.maxHeight = 'none';
+    barsContainer.style.overflow = 'visible';
     
     if (!tasks || tasks.length === 0) {
-        tasksContainer.innerHTML = '<div class="empty-gantt">Нет задач для отображения</div>';
-        barsContainer.innerHTML = '';
-        if (datesHeader) datesHeader.innerHTML = '';
+        barsContainer.innerHTML = '<div class="empty-gantt">Нет задач для отображения</div>';
+        barsContainer.style.width = '100%';
+        if (axisHeader) axisHeader.innerHTML = '';
         return;
     }
     
-    // Вычисляем диапазон дат только если нужно
-    const allDates = tasks.flatMap(t => [new Date(t.start), new Date(t.end)]);
-    let minDate = new Date(Math.min(...allDates));
-    let maxDate = new Date(Math.max(...allDates));
-    
-    minDate.setDate(minDate.getDate() - 3);
-    maxDate.setDate(maxDate.getDate() + 3);
-    
-    while (minDate.getDay() !== 1) minDate.setDate(minDate.getDate() - 1);
-    
-    // Отрисовываем заголовок (только если изменился диапазон)
-    renderGanttDateHeader(minDate, maxDate);
-    
-    // Отрисовываем задачи и бары
-    renderGanttTasksAndBars(tasks, minDate, maxDate);
+    switch(currentZoom) {
+        case 'day':
+            renderDayView(tasks, barsContainer, axisHeader);
+            break;
+        case 'week':
+            renderWeekView(tasks, barsContainer, axisHeader);
+            break;
+        case 'month':
+            renderMonthView(tasks, barsContainer, axisHeader);
+            break;
+    }
 }
 
+// ==================== РЕЖИМ "ДЕНЬ" ====================
+function renderDayView(tasks, barsContainer, axisHeader) {
+    const selectedDate = currentGanttDate;
+    const dateStr = selectedDate.toISOString().slice(0, 10);
+    const dayStart = new Date(selectedDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(selectedDate);
+    dayEnd.setHours(23, 59, 59, 999);
+    
+    const dayTasks = tasks.filter(task => {
+        const taskStart = new Date(task.start);
+        const taskEnd = new Date(task.end);
+        return taskStart <= dayEnd && taskEnd >= dayStart;
+    });
+    
+    // ОЧИЩАЕМ оба контейнера
+    if (axisHeader) axisHeader.innerHTML = '';
+    barsContainer.innerHTML = '';
+    
+    // Вычисляем общую высоту (24 часа + заголовок)
+    const totalHoursHeight = 24 * ganttHourHeight;
+    const headerHeight = 44;
+    const totalHeight = totalHoursHeight + headerHeight;
+    
+    // Создаём единый контейнер
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: ${totalHeight}px;
+        background: var(--c_surf);
+        border-radius: 8px;
+        border: 1px solid var(--c_surf_txt);
+        position: relative;
+        overflow: hidden;
+    `;
+    
+    // 1. ОСЬ ВРЕМЕНИ (СЛЕВА)
+    const axisWrapper = document.createElement('div');
+    axisWrapper.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        width: 80px;
+        flex-shrink: 0;
+        background: var(--c_bg);
+        border-right: 2px solid var(--c_surf_txt);
+        height: 100%;
+        overflow: hidden;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+    `;
+    
+    // Заголовок оси
+    const axisTitle = document.createElement('div');
+    axisTitle.style.cssText = `
+        padding: 8px 12px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--c_acchalf);
+        border-bottom: 1px solid var(--c_surf_txt);
+        height: ${headerHeight}px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    `;
+    axisTitle.textContent = 'Время';
+    axisWrapper.appendChild(axisTitle);
+    
+    // Часы — контейнер без ограничений
+    const timeLabels = document.createElement('div');
+    timeLabels.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        height: ${totalHoursHeight}px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+    `;
+    
+    for (let hour = 0; hour < 24; hour++) {
+        const cell = document.createElement('div');
+        cell.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--c_surf_txt);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: var(--c_bg);
+            height: ${ganttHourHeight}px;
+            min-height: ${ganttHourHeight}px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        `;
+        cell.textContent = `${hour.toString().padStart(2, '0')}:00`;
+        timeLabels.appendChild(cell);
+    }
+    axisWrapper.appendChild(timeLabels);
+    wrapper.appendChild(axisWrapper);
+    
+    // 2. ОБЛАСТЬ ЗАДАЧ (СПРАВА)
+    const tasksArea = document.createElement('div');
+    tasksArea.style.cssText = `
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--c_surf);
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    `;
+    
+    // Заголовок с датой
+    const dateHeader = document.createElement('div');
+    dateHeader.style.cssText = `
+        padding: 8px 16px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--c_acchalf);
+        border-bottom: 1px solid var(--c_surf_txt);
+        height: ${headerHeight}px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    `;
+    dateHeader.textContent = selectedDate.toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+    });
+    tasksArea.appendChild(dateHeader);
+    
+    // Контейнер для колонок задач — полная высота без ограничений
+    const columnsContainer = document.createElement('div');
+    columnsContainer.style.cssText = `
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        padding: 0 8px;
+        height: ${totalHoursHeight}px;
+        background: var(--c_surf);
+        align-items: flex-start;
+        position: relative;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+    `;
+    
+    if (dayTasks.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: var(--c_surf_txt);
+            font-size: 14px;
+        `;
+        emptyMsg.textContent = 'Нет задач на этот день';
+        columnsContainer.appendChild(emptyMsg);
+    } else {
+        // Вычисляем ширину колонки
+        const containerWidth = columnsContainer.clientWidth || 800;
+        const columnWidth = Math.max(180, (containerWidth - (dayTasks.length - 1) * 8 - 16) / dayTasks.length);
+        
+        for (let i = 0; i < dayTasks.length; i++) {
+            const task = dayTasks[i];
+            const taskStart = new Date(task.start);
+            const taskEnd = new Date(task.end);
+            
+            let startHour = taskStart.getHours() + taskStart.getMinutes() / 60;
+            let endHour = taskEnd.getHours() + taskEnd.getMinutes() / 60;
+            
+            if (taskStart < dayStart) startHour = 0;
+            if (taskEnd > dayEnd) endHour = 24;
+            
+            const topPx = startHour * ganttHourHeight;
+            const heightPx = (endHour - startHour) * ganttHourHeight;
+            
+            if (heightPx <= 2) continue;
+            
+            const hasDeadline = task.due_date === dateStr;
+            const deadlineHour = hasDeadline ? taskEnd.getHours() + taskEnd.getMinutes() / 60 : null;
+            const deadlineTop = deadlineHour ? deadlineHour * ganttHourHeight : null;
+            
+            // Колонка задачи
+            const column = document.createElement('div');
+            column.style.cssText = `
+                position: relative;
+                width: ${columnWidth}px;
+                flex-shrink: 0;
+                height: 100%;
+                background: var(--c_surf);
+                border-radius: 6px;
+                border: 1px solid var(--c_surf_txt);
+                overflow: visible;
+            `;
+            
+            // Имя задачи вверху колонки (поверх)
+            const colHeader = document.createElement('div');
+            colHeader.style.cssText = `
+                position: absolute;
+                top: -${headerHeight}px;
+                left: 0;
+                right: 0;
+                padding: 8px 8px;
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--c_bg_txt);
+                background: var(--c_acchalf);
+                border-bottom: 1px solid var(--c_surf_txt);
+                text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                cursor: pointer;
+                height: ${headerHeight}px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                box-sizing: border-box;
+            `;
+            colHeader.textContent = task.name;
+            colHeader.onclick = () => openTaskModal(task.id);
+            column.appendChild(colHeader);
+            
+            // Тело колонки (сетка времени) — полная высота
+            const colBody = document.createElement('div');
+            colBody.style.cssText = `
+                position: relative;
+                height: ${totalHoursHeight}px;
+                width: 100%;
+                background: var(--c_surf);
+                overflow: hidden;
+            `;
+            
+            // Сетка (тонкие линии)
+            for (let h = 0; h <= 24; h++) {
+                const line = document.createElement('div');
+                line.style.cssText = `
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: ${h * ganttHourHeight}px;
+                    height: 1px;
+                    background: rgba(0,0,0,0.05);
+                `;
+                // Подсветка текущего часа
+                if (h === new Date().getHours() && selectedDate.toDateString() === new Date().toDateString()) {
+                    line.style.background = 'rgba(81,148,255,0.2)';
+                    line.style.height = '2px';
+                }
+                colBody.appendChild(line);
+            }
+            
+            // Полоса задачи
+            const bar = document.createElement('div');
+            bar.className = `gantt-bar-vertical ${task.priority || 'medium'}`;
+            bar.style.cssText = `
+                position: absolute;
+                left: 4px;
+                top: ${topPx}px;
+                width: calc(100% - 8px);
+                height: ${heightPx}px;
+                min-height: 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                background-color: ${getPriorityColor(task.priority)};
+                display: flex;
+                flex-direction: column;
+                padding: 4px 6px;
+                overflow: hidden;
+                font-size: 9px;
+                color: white;
+                box-sizing: border-box;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                transition: all 0.2s ease;
+                justify-content: center;
+            `;
+            bar.innerHTML = `
+                <div style="font-weight: 600; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.name}</div>
+                <div style="font-size: 8px; opacity: 0.8;">${formatTime(taskStart)} - ${formatTime(taskEnd)}</div>
+                ${task.progress > 0 ? `<div style="font-size: 8px; opacity: 0.7; margin-top: 2px;">📊 ${task.progress}%</div>` : ''}
+            `;
+            bar.onclick = () => openTaskModal(task.id);
+            
+            bar.addEventListener('mouseenter', function() {
+                this.style.transform = 'scaleX(1.03)';
+                this.style.zIndex = '10';
+                this.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
+            });
+            bar.addEventListener('mouseleave', function() {
+                this.style.transform = 'scaleX(1)';
+                this.style.zIndex = '1';
+                this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            });
+            
+            colBody.appendChild(bar);
+            
+            // Отметка дедлайна
+            if (hasDeadline && deadlineTop !== null) {
+                const deadlineMark = document.createElement('div');
+                deadlineMark.className = 'gantt-deadline-mark';
+                deadlineMark.style.cssText = `
+                    position: absolute;
+                    left: 4px;
+                    top: ${deadlineTop}px;
+                    width: calc(100% - 8px);
+                    height: 2px;
+                    background: #ef4444;
+                    z-index: 20;
+                    box-shadow: 0 0 8px rgba(239,68,68,0.5);
+                    pointer-events: none;
+                `;
+                deadlineMark.title = `Дедлайн: ${formatTime(taskEnd)}`;
+                colBody.appendChild(deadlineMark);
+                
+                // Метка с временем дедлайна
+                const label = document.createElement('div');
+                label.style.cssText = `
+                    position: absolute;
+                    right: 6px;
+                    top: ${deadlineTop - 16}px;
+                    font-size: 8px;
+                    color: #ef4444;
+                    font-weight: 700;
+                    z-index: 21;
+                    pointer-events: none;
+                    background: rgba(255,255,255,0.95);
+                    padding: 1px 6px;
+                    border-radius: 4px;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                `;
+                label.textContent = `⚡ ${formatTime(taskEnd)}`;
+                colBody.appendChild(label);
+            }
+            
+            column.appendChild(colBody);
+            columnsContainer.appendChild(column);
+        }
+    }
+    
+    tasksArea.appendChild(columnsContainer);
+    wrapper.appendChild(tasksArea);
+    
+    // Вставляем всё в barsContainer
+    barsContainer.appendChild(wrapper);
+    barsContainer.style.width = '100%';
+    barsContainer.style.height = 'auto';
+    barsContainer.style.padding = '0';
+    barsContainer.style.overflow = 'visible';
+    barsContainer.style.background = 'transparent';
+    barsContainer.style.minHeight = totalHeight + 'px';
+}
+function formatTime(date) {
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ==================== РЕЖИМ "НЕДЕЛЯ" ====================
+function renderWeekView(tasks, barsContainer, axisHeader) {
+    const weekStart = new Date(currentGanttDate);
+    weekStart.setDate(weekStart.getDate() - (weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1));
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + i);
+        days.push(day);
+    }
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    const weekTasks = tasks.filter(task => {
+        const taskStart = new Date(task.start);
+        const taskEnd = new Date(task.end);
+        return taskStart <= weekEnd && taskEnd >= weekStart;
+    });
+    
+    // ОЧИЩАЕМ
+    if (axisHeader) axisHeader.innerHTML = '';
+    barsContainer.innerHTML = '';
+    
+    // Получаем ширину контейнера (используем родительский элемент)
+    const parentWidth = barsContainer.parentElement?.clientWidth || 800;
+    const dayWidth = Math.max(80, parentWidth / 7);
+    const rowHeight = 44;
+    const tasksHeight = Math.max(weekTasks.length * rowHeight, 60);
+    const totalHeight = tasksHeight + 44; // +44 для заголовка
+    
+    // Контейнер
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: ${totalHeight}px;
+        background: var(--c_surf);
+        border-radius: 8px;
+        border: 1px solid var(--c_surf_txt);
+        overflow: hidden;
+        min-height: 80px;
+    `;
+    
+    // 1. ОСЬ X (дни недели) — растягиваем на всю ширину
+    const axisWrapper = document.createElement('div');
+    axisWrapper.style.cssText = `
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        flex-shrink: 0;
+        background: var(--c_acchalf);
+        border-bottom: 1px solid var(--c_surf_txt);
+        height: 44px;
+    `;
+    
+    // Вычисляем ширину для каждого дня
+    const dayWidthPx = (axisWrapper.clientWidth || parentWidth) / 7;
+    
+    for (let d = 0; d < 7; d++) {
+        const dayCell = document.createElement('div');
+        dayCell.style.cssText = `
+            flex: 1;
+            min-width: ${dayWidthPx}px;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            border-right: 1px solid var(--c_surf_txt);
+            background: var(--c_acchalf);
+            color: var(--c_bg_txt);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+        `;
+        dayCell.textContent = days[d].toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' });
+        axisWrapper.appendChild(dayCell);
+    }
+    wrapper.appendChild(axisWrapper);
+    
+    if (weekTasks.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: var(--c_surf_txt);
+            font-size: 14px;
+            width: 100%;
+            height: 100%;
+        `;
+        emptyMsg.textContent = 'Нет задач на эту неделю';
+        wrapper.appendChild(emptyMsg);
+    } else {
+        // Контейнер с задачами — занимает всю ширину
+        const tasksContainer = document.createElement('div');
+        tasksContainer.style.cssText = `
+            flex: 1;
+            position: relative;
+            background: var(--c_surf);
+            overflow-y: auto;
+            overflow-x: hidden;
+            width: 100%;
+            height: ${tasksHeight}px;
+        `;
+        
+        // Пересчитываем ширину для баров (используем ширину контейнера задач)
+        const containerWidth = tasksContainer.clientWidth || parentWidth;
+        const barDayWidth = containerWidth / 7;
+        
+        for (let i = 0; i < weekTasks.length; i++) {
+            const task = weekTasks[i];
+            const taskStart = new Date(task.start);
+            const taskEnd = new Date(task.end);
+            
+            // Определяем, в какие дни попадает задача
+            const taskDays = [];
+            for (let d = 0; d < 7; d++) {
+                const dayStart = new Date(days[d]);
+                dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(days[d]);
+                dayEnd.setHours(23, 59, 59, 999);
+                
+                if (taskStart <= dayEnd && taskEnd >= dayStart) {
+                    taskDays.push(d);
+                }
+            }
+            
+            if (taskDays.length > 0) {
+                const firstDay = taskDays[0];
+                const lastDay = taskDays[taskDays.length - 1];
+                
+                const leftPx = firstDay * barDayWidth;
+                const widthPx = (lastDay - firstDay + 1) * barDayWidth - 4;
+                
+                const bar = document.createElement('div');
+                bar.className = `gantt-bar-horizontal ${task.priority || 'medium'}`;
+                bar.style.cssText = `
+                    position: absolute;
+                    left: ${leftPx + 2}px;
+                    top: ${i * rowHeight + 4}px;
+                    width: ${widthPx}px;
+                    height: ${rowHeight - 8}px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    background-color: ${getPriorityColor(task.priority)};
+                    display: flex;
+                    align-items: center;
+                    padding: 0 10px;
+                    overflow: hidden;
+                    font-size: 11px;
+                    color: white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+                    box-sizing: border-box;
+                    white-space: nowrap;
+                `;
+                bar.textContent = task.name;
+                bar.onclick = () => openTaskModal(task.id);
+                
+                // Прогресс
+                if (task.progress > 0) {
+                    const progressFill = document.createElement('div');
+                    progressFill.style.cssText = `
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        height: 100%;
+                        width: ${Math.min(task.progress, 100)}%;
+                        background: rgba(255,255,255,0.25);
+                        border-radius: 6px;
+                        pointer-events: none;
+                    `;
+                    bar.appendChild(progressFill);
+                }
+                
+                tasksContainer.appendChild(bar);
+            }
+        }
+        wrapper.appendChild(tasksContainer);
+    }
+    
+    barsContainer.appendChild(wrapper);
+    barsContainer.style.width = '100%';
+    barsContainer.style.height = 'auto';
+    barsContainer.style.padding = '0';
+    barsContainer.style.overflow = 'visible';
+    barsContainer.style.background = 'transparent';
+}
+// ==================== РЕЖИМ "МЕСЯЦ" ====================
+function renderMonthView(tasks, barsContainer, axisHeader) {
+    if (!ganttStartDate || !ganttEndDate) {
+        const now = new Date();
+        ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+    
+    const year = ganttStartDate.getFullYear();
+    const month = ganttStartDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
+    
+    const monthTasks = tasks.filter(task => {
+        const taskStart = new Date(task.start);
+        const taskEnd = new Date(task.end);
+        return taskStart <= monthEnd && taskEnd >= monthStart;
+    });
+    
+    // ОЧИЩАЕМ
+    if (axisHeader) axisHeader.innerHTML = '';
+    barsContainer.innerHTML = '';
+    
+    // Получаем ширину контейнера
+    const parentWidth = barsContainer.parentElement?.clientWidth || 800;
+    const dayWidth = Math.max(35, parentWidth / daysInMonth);
+    const rowHeight = 44;
+    const tasksHeight = Math.max(monthTasks.length * rowHeight, 60);
+    const totalHeight = tasksHeight + 44;
+    
+    // Контейнер
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: ${totalHeight}px;
+        background: var(--c_surf);
+        border-radius: 8px;
+        border: 1px solid var(--c_surf_txt);
+        overflow: hidden;
+        min-height: 80px;
+    `;
+    
+    // 1. ОСЬ X (дни месяца)
+    const axisWrapper = document.createElement('div');
+    axisWrapper.style.cssText = `
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        flex-shrink: 0;
+        background: var(--c_acchalf);
+        border-bottom: 1px solid var(--c_surf_txt);
+        height: 44px;
+        overflow-x: auto;
+    `;
+    
+    const dayWidthPx = (axisWrapper.clientWidth || parentWidth) / daysInMonth;
+    
+    for (let i = 0; i < daysInMonth; i++) {
+        const dayCell = document.createElement('div');
+        dayCell.style.cssText = `
+            flex: 1;
+            min-width: ${Math.max(35, dayWidthPx)}px;
+            padding: 10px 2px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 500;
+            border-right: 1px solid var(--c_surf_txt);
+            background: var(--c_acchalf);
+            color: var(--c_bg_txt);
+            flex-shrink: 0;
+            box-sizing: border-box;
+        `;
+        dayCell.textContent = i + 1;
+        axisWrapper.appendChild(dayCell);
+    }
+    wrapper.appendChild(axisWrapper);
+    
+    if (monthTasks.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: var(--c_surf_txt);
+            font-size: 14px;
+            width: 100%;
+            height: 100%;
+        `;
+        emptyMsg.textContent = 'Нет задач на этот месяц';
+        wrapper.appendChild(emptyMsg);
+    } else {
+        // Контейнер с задачами
+        const tasksContainer = document.createElement('div');
+        tasksContainer.style.cssText = `
+            flex: 1;
+            position: relative;
+            background: var(--c_surf);
+            overflow-y: auto;
+            overflow-x: auto;
+            width: 100%;
+            height: ${tasksHeight}px;
+        `;
+        
+        // Пересчитываем ширину для баров
+        const containerWidth = tasksContainer.clientWidth || parentWidth;
+        const barDayWidth = containerWidth / daysInMonth;
+        
+        // Устанавливаем минимальную ширину для горизонтального скролла
+        tasksContainer.style.minWidth = (daysInMonth * Math.max(35, barDayWidth)) + 'px';
+        
+        for (let i = 0; i < monthTasks.length; i++) {
+            const task = monthTasks[i];
+            const taskStart = new Date(task.start);
+            const taskEnd = new Date(task.end);
+            
+            const startDay = Math.max(1, taskStart.getDate());
+            const endDay = Math.min(daysInMonth, taskEnd.getDate());
+            
+            const leftPx = (startDay - 1) * barDayWidth;
+            const widthPx = (endDay - startDay + 1) * barDayWidth - 4;
+            
+            if (widthPx <= 2) continue;
+            
+            const bar = document.createElement('div');
+            bar.className = `gantt-bar-horizontal ${task.priority || 'medium'}`;
+            bar.style.cssText = `
+                position: absolute;
+                left: ${leftPx + 2}px;
+                top: ${i * rowHeight + 4}px;
+                width: ${widthPx}px;
+                height: ${rowHeight - 8}px;
+                border-radius: 6px;
+                cursor: pointer;
+                background-color: ${getPriorityColor(task.priority)};
+                display: flex;
+                align-items: center;
+                padding: 0 8px;
+                overflow: hidden;
+                font-size: 10px;
+                color: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+                box-sizing: border-box;
+                white-space: nowrap;
+            `;
+            bar.textContent = widthPx > 30 ? task.name : '';
+            bar.onclick = () => openTaskModal(task.id);
+            
+            if (task.progress > 0) {
+                const progressFill = document.createElement('div');
+                progressFill.style.cssText = `
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    height: 100%;
+                    width: ${Math.min(task.progress, 100)}%;
+                    background: rgba(255,255,255,0.25);
+                    border-radius: 6px;
+                    pointer-events: none;
+                `;
+                bar.appendChild(progressFill);
+            }
+            
+            tasksContainer.appendChild(bar);
+        }
+        wrapper.appendChild(tasksContainer);
+    }
+    
+    barsContainer.appendChild(wrapper);
+    barsContainer.style.width = '100%';
+    barsContainer.style.height = 'auto';
+    barsContainer.style.padding = '0';
+    barsContainer.style.overflow = 'visible';
+    barsContainer.style.background = 'transparent';
+}
+
+// Вспомогательные функции
+function getPriorityColor(priority) {
+    switch(priority) {
+        case 'critical': return '#ef4444';
+        case 'high': return '#f59e0b';
+        case 'medium': return '#10b981';
+        default: return '#3b82f6';
+    }
+}
+
+function getPriorityLabel(priority) {
+    switch(priority) {
+        case 'critical': return 'Критический';
+        case 'high': return 'Высокий';
+        case 'medium': return 'Средний';
+        default: return 'Низкий';
+    }
+}
 function renderGanttDateHeader(minDate, maxDate) {
     const container = document.getElementById('ganttDatesHeader');
     if (!container) return;
@@ -723,60 +1610,127 @@ function initGanttControls() {
     const exportBtn = document.getElementById('ganttExportBtn');
     const zoomBtns = document.querySelectorAll('.zoom-btn');
     
+    // --- КНОПКА НАЗАД ---
     if (prevBtn) {
         const newPrev = prevBtn.cloneNode(true);
         prevBtn.parentNode.replaceChild(newPrev, prevBtn);
         newPrev.onclick = () => {
-            ganttStartDate.setMonth(ganttStartDate.getMonth() - 1);
-            ganttEndDate = new Date(ganttStartDate.getFullYear(), ganttStartDate.getMonth() + 1, 0);
+            if (currentZoom === 'day') {
+                currentGanttDate.setDate(currentGanttDate.getDate() - 1);
+            } else if (currentZoom === 'week') {
+                currentGanttDate.setDate(currentGanttDate.getDate() - 7);
+            } else {
+                ganttStartDate.setMonth(ganttStartDate.getMonth() - 1);
+                ganttEndDate = new Date(ganttStartDate.getFullYear(), ganttStartDate.getMonth() + 1, 0);
+                currentGanttDate = new Date(ganttStartDate);
+            }
             renderGantt();
+            renderFullscreenTasks();
+            renderMiniCalendar();        // ← ОБНОВЛЯЕМ МИНИ-КАЛЕНДАРЬ
+            renderFullscreenCalendar();  // ← ОБНОВЛЯЕМ ПОЛНОЭКРАННЫЙ КАЛЕНДАРЬ
+            updateMonthYearDisplay();
         };
     }
     
+    // --- КНОПКА ВПЕРЁД ---
     if (nextBtn) {
         const newNext = nextBtn.cloneNode(true);
         nextBtn.parentNode.replaceChild(newNext, nextBtn);
         newNext.onclick = () => {
-            ganttStartDate.setMonth(ganttStartDate.getMonth() + 1);
-            ganttEndDate = new Date(ganttStartDate.getFullYear(), ganttStartDate.getMonth() + 1, 0);
+            if (currentZoom === 'day') {
+                currentGanttDate.setDate(currentGanttDate.getDate() + 1);
+            } else if (currentZoom === 'week') {
+                currentGanttDate.setDate(currentGanttDate.getDate() + 7);
+            } else {
+                ganttStartDate.setMonth(ganttStartDate.getMonth() + 1);
+                ganttEndDate = new Date(ganttStartDate.getFullYear(), ganttStartDate.getMonth() + 1, 0);
+                currentGanttDate = new Date(ganttStartDate);
+            }
             renderGantt();
+            renderFullscreenTasks();
+            renderMiniCalendar();        // ← ОБНОВЛЯЕМ МИНИ-КАЛЕНДАРЬ
+            renderFullscreenCalendar();  // ← ОБНОВЛЯЕМ ПОЛНОЭКРАННЫЙ КАЛЕНДАРЬ
+            updateMonthYearDisplay();
         };
     }
     
+    // --- КНОПКА СЕГОДНЯ ---
     if (todayBtn) {
         const newToday = todayBtn.cloneNode(true);
         todayBtn.parentNode.replaceChild(newToday, todayBtn);
         newToday.onclick = () => {
             const now = new Date();
+            currentGanttDate = new Date(now);
             ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
             ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            currentCalendarDate = new Date(now);
             renderGantt();
+            renderFullscreenTasks();
+            renderMiniCalendar();        // ← ОБНОВЛЯЕМ МИНИ-КАЛЕНДАРЬ
+            renderFullscreenCalendar();  // ← ОБНОВЛЯЕМ ПОЛНОЭКРАННЫЙ КАЛЕНДАРЬ
+            updateMonthYearDisplay();
         };
     }
     
-    if (exportBtn) {
-        const newExport = exportBtn.cloneNode(true);
-        exportBtn.parentNode.replaceChild(newExport, exportBtn);
-        newExport.onclick = exportGanttToPNG;
-    }
-    
+    // --- КНОПКИ ЗУМА ---
     zoomBtns.forEach(btn => {
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
         newBtn.onclick = () => {
-            zoomBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
             newBtn.classList.add('active');
+            
             currentZoom = newBtn.dataset.zoom;
             
+            // При переключении на месяц устанавливаем даты
+            if (currentZoom === 'month' && !ganttStartDate) {
+                const now = new Date();
+                ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                currentGanttDate = new Date(ganttStartDate);
+            }
+            
             switch(currentZoom) {
-                case 'day': ganttDayWidth = 80; break;
-                case 'week': ganttDayWidth = 40; break;
-                case 'month': ganttDayWidth = 20; break;
-                default: ganttDayWidth = 40;
+                case 'day': ganttCellWidth = 80; break;
+                case 'week': ganttCellWidth = 40; break;
+                case 'month': ganttCellWidth = 30; break;
+                default: ganttCellWidth = 40;
             }
             renderGantt();
+            renderFullscreenTasks();
+            renderMiniCalendar();        // ← ОБНОВЛЯЕМ МИНИ-КАЛЕНДАРЬ
+            renderFullscreenCalendar();  // ← ОБНОВЛЯЕМ ПОЛНОЭКРАННЫЙ КАЛЕНДАРЬ
+            updateMonthYearDisplay();
         };
     });
+}
+
+// Функция обновления отображения месяца/года
+function updateMonthYearDisplay() {
+    const monthYearSpan = document.getElementById('ganttMonthYear');
+    if (!monthYearSpan) return;
+    
+    if (currentZoom === 'day') {
+        monthYearSpan.textContent = currentGanttDate.toLocaleDateString('ru-RU', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric' 
+        });
+    } else if (currentZoom === 'week') {
+        const weekStart = new Date(currentGanttDate);
+        weekStart.setDate(weekStart.getDate() - (weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1));
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        monthYearSpan.textContent = 
+            `${weekStart.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} - 
+             ${weekEnd.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    } else {
+        // Месяц
+        monthYearSpan.textContent = ganttStartDate.toLocaleDateString('ru-RU', { 
+            month: 'long', 
+            year: 'numeric' 
+        });
+    }
 }
 
 // Экспорт Ганта в PNG
@@ -788,74 +1742,76 @@ async function exportGanttToPNG() {
     // TODO: Использовать html2canvas
 }
 
-// Обновляем основную функцию renderGantt
 function renderGantt() {
-    // Отменяем предыдущий таймаут, если есть
-    if (ganttRenderTimeout) {
-        clearTimeout(ganttRenderTimeout);
+    const calendarSection = document.getElementById('base-section-calendar');
+    if (!calendarSection || calendarSection.style.display !== 'block') {
+        console.log('⏸️ Calendar section not visible, skipping Gantt render');
+        return;
     }
     
-    // Делаем отложенный рендер, чтобы не блокировать UI
-    ganttRenderTimeout = setTimeout(() => {
-        console.log('🎨 renderGantt called, tasks count:', currentTasks.length);
-        
-        // Проверяем, что секция видима
-        const ganttSection = document.getElementById('base-section-calendar');
-        if (!ganttSection || ganttSection.style.display !== 'block') {
-            console.log('⏸️ Gantt section not visible, skipping render');
-            return;
-        }
-        
-        if (!ganttStartDate || !ganttEndDate) {
-            const now = new Date();
-            ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        }
-        
-        const ganttData = currentTasks
-            .filter(task => task.start_date && task.due_date)
-            .map(task => ({
-                id: task.id,
-                name: task.title,
-                start: task.start_date,
-                end: task.due_date,
-                progress: task.progress || 0,
-                priority: task.priority || 'medium',
-                status: task.status,
-                assignee_name: task.assignee_name,
-                assignee_surname: task.assignee_surname
-            }));
-        
-        // Проверяем, есть ли контейнеры
-        const tasksContainer = document.getElementById('ganttTasksList');
+    // Если даты не установлены — инициализируем текущими
+    if (!currentGanttDate) {
+        currentGanttDate = new Date();
+        const now = new Date();
+        ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+    
+    if (currentZoom === 'month' && !ganttStartDate) {
+        const now = new Date();
+        ganttStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+    
+    console.log('🎨 renderGantt called, zoom:', currentZoom, 'date:', currentGanttDate.toISOString().slice(0, 10));
+    
+    const activeTasks = currentTasks.filter(task => task.status !== 'completed');
+    const tasksWithDates = activeTasks.filter(task => task.start_date && task.due_date);
+    
+    const MAX_GANTT_TASKS = 15;
+    const ganttData = tasksWithDates.slice(0, MAX_GANTT_TASKS).map(task => ({
+        id: task.id,
+        name: task.title,
+        start: task.start_date,
+        end: task.due_date,
+        progress: task.progress || 0,
+        priority: task.priority || 'medium',
+        status: task.status,
+        assignee_name: task.assignee_name,
+        assignee_surname: task.assignee_surname
+    }));
+    
+    if (ganttData.length === 0) {
         const barsContainer = document.getElementById('ganttBarsContainer');
-        
-        if (!tasksContainer || !barsContainer) {
-            console.log('⚠️ Gantt containers not found');
-            return;
+        if (barsContainer) {
+            barsContainer.innerHTML = '<div class="empty-gantt">Нет активных задач с указанными датами</div>';
+            barsContainer.style.width = '100%';
         }
-        
-        if (ganttData.length === 0) {
-            tasksContainer.innerHTML = '<div class="empty-gantt">Нет задач с датами для отображения</div>';
-            barsContainer.innerHTML = '';
-            return;
-        }
-        
-        const activeTasks = ganttData.slice(0, 20);
-        renderGanttChart(activeTasks);
-        
-        const monthYearSpan = document.getElementById('ganttMonthYear');
-        if (monthYearSpan) {
-            monthYearSpan.textContent = `${ganttStartDate.toLocaleString('ru', { month: 'long' })} ${ganttStartDate.getFullYear()}`;
-        }
-        
-        ganttRenderTimeout = null;
-    }, 100); // Задержка 100ms
+        return;
+    }
+    
+    renderGanttChart(ganttData);
+    updateMonthYearDisplay();  // ← добавляем обновление заголовка
 }
 // Инициализация
+let ganttInitTimeout = null;
+
 function initGantt() {
-    initGanttControls();
-    renderGantt();
+    // Отменяем предыдущий таймаут
+    if (ganttInitTimeout) {
+        clearTimeout(ganttInitTimeout);
+    }
+    
+    // Инициализируем с задержкой
+    ganttInitTimeout = setTimeout(() => {
+        console.log('🎬 Initializing Gantt...');
+        initGanttControls();
+        
+        // Делаем рендер с дополнительной задержкой
+        setTimeout(() => {
+            renderGantt();
+        }, 50);
+    }, 300);
 }
 // - loadTasks()
 // Загрузка задач из БД
@@ -956,21 +1912,24 @@ function updateCalendarSelectors() {
 function openFullCalendar() {
     console.log('📅 Opening full calendar');
     
+    // Синхронизируем календарь с текущим периодом Ганта
+    if (currentZoom === 'month') {
+        currentCalendarDate = new Date(ganttStartDate);
+    } else {
+        // Для дня и недели — берём текущую дату Ганта
+        currentCalendarDate = new Date(currentGanttDate);
+    }
+    
     // Открываем секцию
     openWindow('base-section-calendar');
     
     // Рендерим календарь и задачи
     renderFullscreenCalendar();
     renderFullscreenTasks();
+    renderMiniCalendar();
     
-    // ВРЕМЕННО ОТКЛЮЧАЕМ ГАНТ
-    // initGantt();
-    
-    // Показываем заглушку
-    const ganttTasksContainer = document.getElementById('ganttTasksList');
-    if (ganttTasksContainer) {
-        ganttTasksContainer.innerHTML = '<div class="info-message">Диаграмма Ганта временно отключена для оптимизации</div>';
-    }
+    // Инициализируем Гант
+    initGantt();
 }
 
 function openCalendarModal() {
@@ -4737,7 +5696,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
-    
+    const filterCheckbox = document.getElementById('filterGanttPeriod');
+    if (filterCheckbox) {
+        filterCheckbox.addEventListener('change', () => {
+            renderFullscreenTasks();
+        });
+    }
     // Поиск по типам задач
     const searchInput = document.getElementById('taskTypeSearch');
     if (searchInput) {
@@ -4764,15 +5728,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const flowManager = new ApprovalFlowManager();
     loadTasks();
     loadCalendarEvents();
-    updateTemplateButtons();
     initTaskEditorHandlers();
     initTemplateBuilderHandlers();
     initUserSelectorHandlers();
     initTemplatesSection();
     initTaskFromTemplateHandlers();
-    // initCalendar();
+    
     loadNotes();
     loadDashboardStats();
+    
     setTimeout(() => {
         if (document.getElementById('miniCalendar')) {
             renderMiniCalendar();
@@ -4839,4 +5803,104 @@ function updateTemplateButtons() {
     document.querySelectorAll('.edit-template-btn').forEach(btn => {
         btn.onclick = () => openTemplateBuilder(parseInt(btn.dataset.id));
     });
+}
+
+// =====================================================
+// ЗАГРУЗКА ЗАДАЧ НА ДАШБОРД
+// =====================================================
+
+function renderDashboardTasks() {
+    const container = document.getElementById('dashboardTasksList');
+    if (!container) return;
+    
+    if (!currentTasks || currentTasks.length === 0) {
+        container.innerHTML = '<div class="empty-tasks">Нет активных задач</div>';
+        return;
+    }
+    
+    // Фильтруем активные задачи (не завершённые)
+    const activeTasks = currentTasks
+        .filter(task => task.status !== 'completed')
+        .sort((a, b) => {
+            const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+            return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
+        });
+        // УБИРАЕМ .slice(0, 5) — показываем все задачи
+    
+    if (activeTasks.length === 0) {
+        container.innerHTML = '<div class="empty-tasks">Нет активных задач ✅</div>';
+        return;
+    }
+    
+    // Ограничиваем высоту контейнера для скролла
+    container.style.maxHeight = '300px';
+    container.style.overflowY = 'auto';
+    
+    container.innerHTML = activeTasks.map(task => {
+        // Определяем статус дедлайна
+        let dueClass = 'ok';
+        let dueLabel = '✅ В срок';
+        if (task.due_date) {
+            const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysLeft < 0) {
+                dueClass = 'overdue';
+                dueLabel = '⚠️ Просрочена';
+            } else if (daysLeft <= 3) {
+                dueClass = 'soon';
+                dueLabel = `⏰ ${daysLeft} дн.`;
+            } else {
+                dueLabel = `📅 ${daysLeft} дн.`;
+            }
+        }
+        
+        const priorityLabels = {
+            critical: 'Критический',
+            high: 'Высокий',
+            medium: 'Средний',
+            low: 'Низкий'
+        };
+        
+        return `
+            <div class="dashboard-task-item" onclick="openTaskModal(${task.id})" style="border-left-color: ${getPriorityColor(task.priority)};">
+                <div class="task-info">
+                    <div class="task-title">${escapeHtml(task.title)}</div>
+                    <div class="task-meta">
+                        <span>👤 ${task.assignee_name || 'Не назначен'}</span>
+                        ${task.progress ? `<span>📊 ${task.progress}%</span>` : ''}
+                        ${task.due_date ? `<span>📅 ${dueLabel}</span>` : ''}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="task-priority-badge ${task.priority || 'medium'}">${priorityLabels[task.priority] || 'Средний'}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Обновляем loadTasks() — добавляем рендер на дашборд
+async function loadTasks() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            currentTasks = data.tasks || [];
+            console.log('✅ Loaded', currentTasks.length, 'tasks');
+            
+            // Обновляем все места, где отображаются задачи
+            renderDashboardTasks(); // ← НОВОЕ
+            renderFullscreenTasks();
+            
+            const calendarSection = document.getElementById('base-section-calendar');
+            if (calendarSection && calendarSection.style.display === 'block') {
+                renderGantt();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+    }
 }

@@ -1636,7 +1636,75 @@ table td{
         flex: auto;
     }
 }
+.dashboard-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
 
+.dashboard-task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--c_bg);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.dashboard-task-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard-task-item .task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dashboard-task-item .task-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dashboard-task-item .task-meta {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+    display: flex;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.dashboard-task-item .task-priority-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.dashboard-task-item .task-priority-badge.critical { background: #ef4444; color: white; }
+.dashboard-task-item .task-priority-badge.high { background: #f59e0b; color: white; }
+.dashboard-task-item .task-priority-badge.medium { background: #10b981; color: white; }
+.dashboard-task-item .task-priority-badge.low { background: #3b82f6; color: white; }
+
+.dashboard-task-item .task-due {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.dashboard-task-item .task-due.overdue { background: #fee2e2; color: #dc2626; }
+.dashboard-task-item .task-due.soon { background: #fef3c7; color: #d97706; }
+.dashboard-task-item .task-due.ok { background: #d1fae5; color: #059669; }
 /* ========== МИНИ-КАЛЕНДАРЬ ========== */
 .calendar-card{
     max-width: 300px;
@@ -1739,7 +1807,22 @@ table td{
     color: var(--c_surf_txt);
     opacity: 0.5;
 }
+/* Подсветка дат из диапазона Ганта */
+.calendar-day.gantt-range {
+    border: 2px solid var(--c_acc);
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(81, 148, 255, 0.2);
+}
 
+.calendar-day.gantt-range.today {
+    border-color: #ffffff;
+    box-shadow: 0 0 12px rgba(81, 148, 255, 0.4);
+}
+
+.calendar-day.gantt-range.has-event {
+    border-color: var(--c_acc);
+    background: rgba(81, 148, 255, 0.05);
+}
 .event-dot {
     position: absolute;
     bottom: 2px;
@@ -1798,311 +1881,542 @@ table td{
 .fullcalendar-card-body {
     padding: 16px;
 }
+/* =====================================================
+   ДИАГРАММА ГАНТА - ПОЛНОСТЬЮ НОВЫЕ СТИЛИ
+   ===================================================== */
 
-/* ========== УЛУЧШЕННЫЙ ГАНТ В СТИЛЕ YOUGILE ========== */
-.gantt-controls {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    flex-wrap: wrap;
+/* ----- Контейнеры ----- */
+.gantt-wrapper {
+    background: var(--c_surf);
+    border-radius: 12px;
+    border: 1px solid var(--c_surf_txt);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
+/* ----- Заголовок с управлением ----- */
+.gantt-controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 4px 0;
+}
+
+/* Группа зума */
 .gantt-zoom {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     background: var(--c_bg);
     border-radius: 8px;
-    padding: 2px;
+    padding: 3px;
 }
 
 .zoom-btn {
-    padding: 4px 12px;
+    padding: 5px 14px;
     border: none;
     background: transparent;
     cursor: pointer;
     border-radius: 6px;
     font-size: 12px;
-    transition: all 0.2s;
+    font-weight: 500;
+    color: var(--c_surf_txt);
+    transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+    background: rgba(81, 148, 255, 0.1);
+    color: var(--c_acc);
 }
 
 .zoom-btn.active {
     background: var(--c_acc);
     color: white;
+    box-shadow: 0 2px 8px rgba(81, 148, 255, 0.3);
 }
 
-.zoom-btn:hover:not(.active) {
-    background: var(--c_acchalf);
-}
-
+/* Навигация */
 .gantt-nav {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
 }
 
-.gantt-nav-btn, .gantt-today-btn {
-    background: var(--c_acchalf);
+.gantt-nav-btn {
+    width: 32px;
+    height: 32px;
     border: none;
+    background: var(--c_bg);
     border-radius: 6px;
-    padding: 4px 12px;
     cursor: pointer;
-    font-size: 12px;
-}
-
-.gantt-export-btn {
-    background: var(--c_acchalf);
-    border: none;
-    border-radius: 6px;
-    padding: 4px 12px;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: auto;
-}
-
-.gantt-wrapper {
-    overflow-x: auto;
-    border: 1px solid var(--c_surf_txt);
-    border-radius: 12px;
-    background: var(--c_surf);
-}
-
-/* Заголовок шкалы времени */
-.gantt-timeline-header {
+    font-size: 14px;
+    color: var(--c_bg_txt);
+    transition: all 0.2s ease;
     display: flex;
-    background: var(--c_acchalf);
-    border-bottom: 1px solid var(--c_surf_txt);
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    align-items: center;
+    justify-content: center;
 }
 
-.gantt-tasks-header {
-    width: 280px;
-    flex-shrink: 0;
-    padding: 12px 16px;
+.gantt-nav-btn:hover {
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+}
+
+#ganttMonthYear {
+    font-size: 14px;
     font-weight: 600;
-    font-size: 13px;
-    border-right: 1px solid var(--c_surf_txt);
-}
-
-.gantt-dates-header {
-    flex: 1;
-    display: flex;
-}
-
-.gantt-date-header-cell {
-    min-width: 40px;
+    color: var(--c_bg_txt);
+    min-width: 140px;
     text-align: center;
-    padding: 8px 4px;
-    font-size: 11px;
+}
+
+.gantt-today-btn {
+    padding: 5px 14px;
+    border: none;
+    background: var(--c_acchalf);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
     font-weight: 500;
-    border-right: 1px solid var(--c_surf_txt);
-    flex-shrink: 0;
+    color: var(--c_acc);
+    transition: all 0.2s ease;
 }
 
-.gantt-date-header-cell.weekend {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--c_error);
-}
-
-.gantt-date-header-cell.today {
+.gantt-today-btn:hover {
     background: var(--c_acc);
     color: white;
 }
 
-/* Контейнер диаграммы */
-.gantt-chart-container {
-    display: flex;
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-/* Список задач */
-.gantt-tasks-list {
-    width: 280px;
-    flex-shrink: 0;
-    background: var(--c_bg);
-    border-right: 1px solid var(--c_surf_txt);
-}
-
-.gantt-task-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--c_surf_txt);
+/* Кнопка экспорта */
+.gantt-export-btn {
+    padding: 5px 14px;
+    border: 1px solid var(--c_surf_txt);
+    background: transparent;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
-    gap: 8px;
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    transition: all 0.2s ease;
+    margin-left: auto;
 }
 
-.gantt-task-row:hover {
+.gantt-export-btn:hover {
+    border-color: var(--c_acc);
+    color: var(--c_acc);
     background: var(--c_acchalf);
 }
 
-.gantt-task-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.gantt-task-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--c_bg_txt);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.gantt-task-meta {
+/* ----- Основная область Ганта ----- */
+.gantt-chart-container {
     display: flex;
-    gap: 8px;
-    margin-top: 4px;
-    font-size: 10px;
-    color: var(--c_surf_txt);
-}
-
-.gantt-task-assignee {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.gantt-assignee-avatar {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.gantt-task-progress {
-    width: 40px;
-    text-align: right;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--c_acc);
-}
-
-/* Полосы задач */
-.gantt-bars-container {
-    flex: 1;
     position: relative;
+    overflow: hidden;
+}
+
+/* Скрываем старый список задач */
+#ganttTasksList {
+    display: none !important;
+}
+
+/* ----- Ось времени (заголовок) ----- */
+#ganttDatesHeader {
     overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    background: var(--c_bg);
+    border-bottom: 2px solid var(--c_surf_txt);
 }
 
-.gantt-bar-row {
-    position: relative;
-    height: 52px;
-    border-bottom: 1px solid var(--c_surf_txt);
+#ganttDatesHeader::-webkit-scrollbar {
+    height: 4px;
 }
 
-.gantt-bar {
-    position: absolute;
-    height: 36px;
-    top: 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+#ganttDatesHeader::-webkit-scrollbar-track {
+    background: var(--c_bg);
 }
 
-.gantt-bar:hover {
-    transform: scaleY(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    z-index: 5;
-}
-
-.gantt-bar.critical { background: #ef4444; }
-.gantt-bar.high { background: #f59e0b; }
-.gantt-bar.medium { background: #10b981; }
-.gantt-bar.low { background: #3b82f6; }
-.gantt-bar.completed { background: #9ca3af; opacity: 0.7; }
-
-.gantt-bar-label {
-    font-size: 11px;
-    color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.gantt-bar-progress {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 9px;
-    color: white;
-    background: rgba(0,0,0,0.3);
-    padding: 2px 4px;
+#ganttDatesHeader::-webkit-scrollbar-thumb {
+    background: var(--c_acc);
     border-radius: 4px;
 }
 
-/* Легенда */
+/* ----- Режим "ДЕНЬ" (вертикальные полосы) ----- */
+.gantt-day-axis-wrapper {
+    display: flex !important;
+    min-width: 100% !important;
+    overflow: hidden !important;
+}
+
+.gantt-day-axis {
+    width: 80px !important;
+    flex-shrink: 0 !important;
+    background: var(--c_bg) !important;
+    border-right: 2px solid var(--c_surf_txt) !important;
+}
+
+.gantt-day-header {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--c_bg) !important;
+}
+
+.gantt-day-tasks-header {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--c_surf_txt) !important;
+    font-size: 12px !important;
+    background: var(--c_bg) !important;
+}
+
+.gantt-day-column {
+    background: var(--c_surf) !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--c_surf_txt) !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+}
+
+.gantt-day-column .gantt-bar-vertical {
+    transition: all 0.2s ease !important;
+}
+
+.gantt-day-column .gantt-bar-vertical:hover {
+    transform: scaleX(1.03) !important;
+    z-index: 10 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+}
+
+/* Стили для скролла колонок */
+#ganttBarsContainer {
+    scroll-behavior: smooth !important;
+}
+
+#ganttBarsContainer::-webkit-scrollbar {
+    height: 6px !important;
+}
+
+#ganttBarsContainer::-webkit-scrollbar-track {
+    background: var(--c_bg) !important;
+    border-radius: 4px !important;
+}
+
+#ganttBarsContainer::-webkit-scrollbar-thumb {
+    background: var(--c_surf_txt) !important;
+    border-radius: 4px !important;
+}
+
+#ganttBarsContainer::-webkit-scrollbar-thumb:hover {
+    background: var(--c_acc) !important;
+}
+
+/* ----- Режимы "НЕДЕЛЯ" и "МЕСЯЦ" (горизонтальные полосы) ----- */
+.gantt-week-axis,
+.gantt-month-axis {
+    display: flex;
+    flex-direction: column;
+    min-width: 100%;
+}
+
+.gantt-week-axis .axis-days,
+.gantt-month-axis .axis-days {
+    display: flex;
+}
+
+.gantt-week-axis .axis-day-cell,
+.gantt-month-axis .axis-day-cell {
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    border-right: 1px solid var(--c_surf_txt);
+    background: var(--c_acchalf);
+    flex-shrink: 0;
+}
+
+.gantt-week-axis .axis-day-cell:last-child,
+.gantt-month-axis .axis-day-cell:last-child {
+    border-right: none;
+}
+
+.gantt-week-axis .axis-day-cell.weekend,
+.gantt-month-axis .axis-day-cell.weekend {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--c_error);
+}
+
+.gantt-week-axis .axis-day-cell.today,
+.gantt-month-axis .axis-day-cell.today {
+    background: var(--c_acc);
+    color: white;
+}
+
+/* ----- Контейнер с барами ----- */
+#ganttBarsContainer {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 500px;
+    position: relative;
+    background: var(--c_surf);
+    scrollbar-width: thin;
+}
+
+#ganttBarsContainer::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+#ganttBarsContainer::-webkit-scrollbar-track {
+    background: var(--c_bg);
+    border-radius: 4px;
+}
+
+#ganttBarsContainer::-webkit-scrollbar-thumb {
+    background: var(--c_surf_txt);
+    border-radius: 4px;
+}
+
+#ganttBarsContainer::-webkit-scrollbar-thumb:hover {
+    background: var(--c_acc);
+}
+
+/* Пустое состояние */
+.empty-gantt {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--c_surf_txt);
+    font-size: 14px;
+}
+
+/* ----- Вертикальные полосы (режим "ДЕНЬ") ----- */
+.gantt-bar-vertical {
+    position: absolute;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.gantt-bar-vertical:hover {
+    transform: scaleX(1.02);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 10;
+}
+
+.gantt-bar-vertical .bar-content {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    height: 100%;
+    justify-content: center;
+}
+
+.gantt-bar-vertical .bar-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.gantt-bar-vertical .bar-time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.8);
+}
+
+.gantt-bar-vertical .bar-progress {
+    font-size: 9px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 2px;
+}
+
+/* Отметка дедлайна */
+.gantt-deadline-mark {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.gantt-deadline-mark::after {
+    content: '⚡';
+    position: absolute;
+    right: -12px;
+    top: -10px;
+    font-size: 12px;
+}
+
+.gantt-deadline-mark .deadline-label {
+    position: absolute;
+    right: 4px;
+    top: -18px;
+    font-size: 8px;
+    color: #ef4444;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ----- Горизонтальные полосы (режимы "НЕДЕЛЯ" и "МЕСЯЦ") ----- */
+.gantt-bar-horizontal {
+    position: absolute;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.gantt-bar-horizontal:hover {
+    transform: scaleY(1.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 10;
+}
+
+.gantt-bar-horizontal .bar-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* ----- Цвета приоритетов ----- */
+.gantt-bar-vertical.critical,
+.gantt-bar-horizontal.critical {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.gantt-bar-vertical.high,
+.gantt-bar-horizontal.high {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.gantt-bar-vertical.medium,
+.gantt-bar-horizontal.medium {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.gantt-bar-vertical.low,
+.gantt-bar-horizontal.low {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* Полоса с прогрессом (для горизонтальных) */
+.gantt-bar-horizontal .bar-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+    pointer-events: none;
+}
+
+/* ----- Легенда ----- */
 .gantt-legend {
-    padding: 12px 16px;
-    border-top: 1px solid var(--c_surf_txt);
-    font-size: 11px;
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
     align-items: center;
+    padding: 12px 20px;
+    border-top: 1px solid var(--c_surf_txt);
+    background: var(--c_bg);
+    font-size: 12px;
 }
 
-.legend-title {
+.gantt-legend .legend-title {
     font-weight: 600;
     color: var(--c_bg_txt);
-}
-
-.legend-color {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
     margin-right: 4px;
 }
 
-.legend-color.critical { background: #ef4444; }
-.legend-color.high { background: #f59e0b; }
-.legend-color.medium { background: #10b981; }
-.legend-color.low { background: #3b82f6; }
-
-.legend-separator {
+.gantt-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     color: var(--c_surf_txt);
 }
 
-.legend-status {
-    margin-right: 12px;
+.gantt-legend .legend-color {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
 }
 
-/* Tooltip */
-.gantt-tooltip {
-    position: fixed;
-    background: var(--c_surf);
-    border: 1px solid var(--c_surf_txt);
-    border-radius: 8px;
-    padding: 10px 14px;
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
-    font-size: 12px;
-    pointer-events: none;
-    max-width: 250px;
+.gantt-legend .legend-color.critical { background: #ef4444; }
+.gantt-legend .legend-color.high { background: #f59e0b; }
+.gantt-legend .legend-color.medium { background: #10b981; }
+.gantt-legend .legend-color.low { background: #3b82f6; }
+
+.gantt-legend .legend-divider {
+    color: var(--c_surf_txt);
+    opacity: 0.5;
 }
 
-.gantt-tooltip .tooltip-title {
-    font-weight: 600;
-    margin-bottom: 6px;
+/* ----- Адаптивность ----- */
+@media (max-width: 768px) {
+    .gantt-controls {
+        gap: 10px;
+    }
+    
+    .gantt-zoom {
+        flex-wrap: wrap;
+    }
+    
+    .zoom-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+    
+    #ganttMonthYear {
+        font-size: 12px;
+        min-width: 100px;
+    }
+    
+    .gantt-export-btn {
+        margin-left: 0;
+    }
+    
+    .gantt-bar-vertical .bar-title {
+        font-size: 10px;
+    }
+    
+    .gantt-bar-vertical .bar-time {
+        font-size: 8px;
+    }
+    
+    .gantt-bar-horizontal .bar-label {
+        font-size: 8px;
+    }
 }
 
-.gantt-tooltip .tooltip-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 4px;
+@media (max-width: 480px) {
+    .gantt-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .gantt-nav {
+        justify-content: center;
+    }
+    
+    .gantt-legend {
+        font-size: 10px;
+        gap: 8px;
+    }
 }
 
 /* Список активных задач на дашборде */

@@ -294,22 +294,159 @@ async function loadCalendarEvents() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
+        let events = [];
+        
         if (response.ok) {
             const data = await response.json();
-            calendarEvents = data.events || [];
-            renderMiniCalendar();
-            renderFullscreenCalendar();
-            renderGanttTasks();
+            events = data.events || [];
+            console.log('📊 Raw events from API:', events.length);
+        } else {
+            console.warn('Failed to load calendar events, using empty');
         }
+        
+        // Очищаем calendarEvents
+        calendarEvents = [];
+        
+        // 1. Добавляем задачи из currentTasks на ВСЕ ДНИ длительности
+        if (currentTasks && currentTasks.length > 0) {
+            currentTasks.forEach(task => {
+                // Пропускаем завершённые
+                if (task.status === 'completed' || task.status === 'cancelled') return;
+                
+                const startDate = task.start_date ? new Date(task.start_date) : null;
+                const dueDate = task.due_date ? new Date(task.due_date) : null;
+                
+                // Если есть и start_date, и due_date — добавляем на все дни
+                if (startDate && dueDate && startDate <= dueDate) {
+                    // Проходим по каждому дню от start до due
+                    const current = new Date(startDate);
+                    while (current <= dueDate) {
+                        const dateStr = formatDateLocal(current);
+                        
+                        // Добавляем задачу на этот день
+                        calendarEvents.push({
+                            id: `task_${task.id}_${dateStr}`,
+                            title: task.title,
+                            date: dateStr,
+                            type: 'task',
+                            status: task.status || 'pending',
+                            priority: task.priority || 'medium',
+                            taskId: task.id,
+                            assignee: task.assignee_name || null,
+                            start_date: task.start_date,
+                            due_date: task.due_date
+                        });
+                        
+                        // Если это день дедлайна — добавляем отдельную отметку
+                        if (dateStr === formatDateLocal(dueDate)) {
+                            calendarEvents.push({
+                                id: `deadline_${task.id}`,
+                                title: `⚡ ${task.title}`,
+                                date: dateStr,
+                                type: 'deadline',
+                                status: task.status || 'pending',
+                                priority: task.priority || 'medium',
+                                taskId: task.id,
+                                assignee: task.assignee_name || null
+                            });
+                        }
+                        
+                        current.setDate(current.getDate() + 1);
+                    }
+                } 
+                // Если только due_date — добавляем только на эту дату
+                else if (dueDate) {
+                    const dateStr = formatDateLocal(dueDate);
+                    calendarEvents.push({
+                        id: `task_${task.id}_${dateStr}`,
+                        title: task.title,
+                        date: dateStr,
+                        type: 'task',
+                        status: task.status || 'pending',
+                        priority: task.priority || 'medium',
+                        taskId: task.id,
+                        assignee: task.assignee_name || null,
+                        start_date: task.start_date,
+                        due_date: task.due_date
+                    });
+                    
+                    calendarEvents.push({
+                        id: `deadline_${task.id}`,
+                        title: `⚡ ${task.title}`,
+                        date: dateStr,
+                        type: 'deadline',
+                        status: task.status || 'pending',
+                        priority: task.priority || 'medium',
+                        taskId: task.id,
+                        assignee: task.assignee_name || null
+                    });
+                }
+                // Если только start_date — добавляем только на эту дату
+                else if (startDate) {
+                    const dateStr = formatDateLocal(startDate);
+                    calendarEvents.push({
+                        id: `task_${task.id}_${dateStr}`,
+                        title: task.title,
+                        date: dateStr,
+                        type: 'task',
+                        status: task.status || 'pending',
+                        priority: task.priority || 'medium',
+                        taskId: task.id,
+                        assignee: task.assignee_name || null,
+                        start_date: task.start_date,
+                        due_date: task.due_date
+                    });
+                }
+            });
+        }
+        
+        // 2. Добавляем события из API (если они есть и не дублируются)
+        events.forEach(event => {
+            // Проверяем, нет ли уже такого события
+            const exists = calendarEvents.some(e => 
+                e.id === event.id && e.type === event.type
+            );
+            if (!exists && event.date) {
+                calendarEvents.push({
+                    id: event.id || `event_${Date.now()}_${Math.random()}`,
+                    title: event.title || 'Событие',
+                    date: event.date,
+                    type: event.type || 'task',
+                    status: event.status || 'pending',
+                    priority: event.priority || 'medium',
+                    assignee: event.assignee || null
+                });
+            }
+        });
+        
+        console.log('✅ Calendar events processed:');
+        console.log('  📋 Tasks:', calendarEvents.filter(e => e.type === 'task').length);
+        console.log('  ⚡ Deadlines:', calendarEvents.filter(e => e.type === 'deadline').length);
+        console.log('  📅 Total:', calendarEvents.length);
+        
+        // Отладка: сколько задач на каждую дату
+        const tasksByDate = {};
+        calendarEvents.filter(e => e.type === 'task').forEach(e => {
+            if (e.date) {
+                tasksByDate[e.date] = (tasksByDate[e.date] || 0) + 1;
+            }
+        });
+        console.log('📋 Tasks distribution:', tasksByDate);
+        
+        // Обновляем календари
+        renderMiniCalendar();
+        renderFullscreenCalendar();
+        renderGanttTasks();
+        
     } catch (error) {
         console.error('Error loading calendar events:', error);
+        calendarEvents = [];
+        renderMiniCalendar();
+        renderFullscreenCalendar();
     }
 }
-
-// - renderMiniCalendar()
-// Рендер мини-календаря
-function renderMiniCalendar() {
-    const container = document.getElementById('miniCalendar');
+function renderCalendar(containerId, isFullscreen = false) {
+    const container = document.getElementById(containerId);
     if (!container) return;
     
     const year = currentCalendarDate.getFullYear();
@@ -319,76 +456,117 @@ function renderMiniCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const prevMonthDays = new Date(year, month, 0).getDate();
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    const todayStr = formatDateLocal(today);
     
     // Получаем диапазон дат Ганта
-    const ganttDates = getGanttDateRange();
+    let ganttDates = [];
+    try {
+        ganttDates = getGanttDateRange();
+    } catch(e) {
+        console.warn('getGanttDateRange not available, skipping gantt range');
+    }
     
-    // Функция проверки наличия события на дату
-    const hasEventOnDate = (dateStr) => {
-        return calendarEvents.some(event => event.date === dateStr);
+    // Функция подсчёта задач на дату (активные, не завершённые)
+    const getTasksCount = (dateStr) => {
+        if (!calendarEvents || !Array.isArray(calendarEvents)) return 0;
+        // Используем Set для уникальных ID задач
+        const uniqueTaskIds = new Set();
+        calendarEvents.forEach(event => {
+            if (!event || !event.date) return;
+            if (event.date === dateStr && 
+                event.type === 'task' && 
+                event.status !== 'completed' && 
+                event.status !== 'cancelled') {
+                // Используем taskId или id как уникальный идентификатор
+                const taskId = event.taskId || event.id;
+                if (taskId) uniqueTaskIds.add(taskId);
+            }
+        });
+        return uniqueTaskIds.size;
     };
-    
-    // Функция проверки, входит ли дата в диапазон Ганта
-    const isInGanttRange = (dateStr) => {
-        return ganttDates.includes(dateStr);
+
+    // Функция подсчёта УНИКАЛЬНЫХ дедлайнов на дату
+    const getDeadlinesCount = (dateStr) => {
+        if (!calendarEvents || !Array.isArray(calendarEvents)) return 0;
+        const uniqueTaskIds = new Set();
+        calendarEvents.forEach(event => {
+            if (!event || !event.date) return;
+            if (event.date === dateStr && event.type === 'deadline') {
+                const taskId = event.taskId || event.id;
+                if (taskId) uniqueTaskIds.add(taskId);
+            }
+        });
+        return uniqueTaskIds.size;
     };
-    
+        
+    // Строим календарь
     let html = `
         <div class="calendar-header">
-            <button onclick="prevMonth()">◀</button>
+            <button class="cal-nav-btn" onclick="calendarPrevMonth()">◀</button>
             <div class="calendar-month-selector">
-                <select id="monthSelect" onchange="changeMonth()">
+                <select id="monthSelect" onchange="calendarChangeMonth()">
                     ${getMonthOptions(month)}
                 </select>
-                <select id="yearSelect" onchange="changeYear()">
+                <select id="yearSelect" onchange="calendarChangeYear()">
                     ${getYearOptions(year)}
                 </select>
             </div>
-            <button onclick="nextMonth()">▶</button>
+            <button class="cal-nav-btn" onclick="calendarNextMonth()">▶</button>
+            ${isFullscreen ? `<button class="today-btn" onclick="calendarToday()">Сегодня</button>` : ''}
         </div>
         <div class="calendar-weekdays">
             <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
         </div>
-        <div class="calendar-days" id="calendarDays">
+        <div class="calendar-days-grid">
     `;
     
     let startOffset = startDay === 0 ? 6 : startDay - 1;
     
+    // Дни предыдущего месяца
     for (let i = startOffset - 1; i >= 0; i--) {
         const day = prevMonthDays - i;
-        html += `<div class="calendar-day other-month">${day}</div>`;
+        html += `<div class="calendar-day other-month"><span class="day-number">${day}</span></div>`;
     }
     
+    // Дни текущего месяца
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${month + 1}-${day}`;
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === todayStr;
-        const hasEvent = hasEventOnDate(dateStr);
-        const inGanttRange = isInGanttRange(dateStr);
+        const inGanttRange = ganttDates.includes(dateStr);
+        const tasksCount = getTasksCount(dateStr);
+        const deadlinesCount = getDeadlinesCount(dateStr);
         
         let classes = 'calendar-day';
         if (isToday) classes += ' today';
-        if (hasEvent) classes += ' has-event';
         if (inGanttRange) classes += ' gantt-range';
         
         html += `
-            <div class="${classes}"
-                onclick="openDateModal(${year}, ${month + 1}, ${day})">
-                ${day}
-                ${hasEvent ? '<span class="event-dot"></span>' : ''}
+            <div class="${classes}" onclick="openDateModal(${year}, ${month + 1}, ${day})">
+                <span class="day-number">${day}</span>
+                <div class="day-indicators">
+                    ${tasksCount > 0 ? `<span class="indicator tasks">${tasksCount}</span>` : ''}
+                    ${deadlinesCount > 0 ? `<span class="indicator deadlines">${deadlinesCount}</span>` : ''}
+                </div>
             </div>
         `;
     }
     
+    // Дни следующего месяца
     const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
     const nextMonthDays = totalCells - (startOffset + daysInMonth);
     for (let day = 1; day <= nextMonthDays; day++) {
-        html += `<div class="calendar-day other-month">${day}</div>`;
+        html += `<div class="calendar-day other-month"><span class="day-number">${day}</span></div>`;
     }
     
     html += `</div>`;
     container.innerHTML = html;
 }
+// - renderMiniCalendar()
+// Рендер мини-календаря
+function renderMiniCalendar() {
+    renderCalendar('miniCalendar', false);
+}
+
 function getGanttDateRange() {
     const dates = [];
     
@@ -436,77 +614,7 @@ function getGanttDateRange() {
 // - renderFullscreenCalendar()
 // Рендер полноэкранного календаря
 function renderFullscreenCalendar() {
-    const container = document.getElementById('fullscreenCalendar');
-    if (!container) return;
-    
-    const year = currentCalendarDate.getFullYear();
-    const month = currentCalendarDate.getMonth();
-    const firstDayOfMonth = new Date(year, month, 1);
-    const startDay = firstDayOfMonth.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-    
-    // Получаем диапазон дат Ганта
-    const ganttDates = getGanttDateRange();
-    
-    const hasEventOnDate = (dateStr) => calendarEvents.some(event => event.date === dateStr);
-    const isInGanttRange = (dateStr) => ganttDates.includes(dateStr);
-    
-    // Заголовок с навигацией
-    let html = `
-        <div class="calendar-fullscreen-controls" style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
-            <button class="cal-nav-btn" onclick="fullscreenPrevMonth()" style="padding: 6px 16px; border: none; border-radius: 6px; background: var(--c_acchalf); cursor: pointer;">◀</button>
-            <span style="font-weight: 600; font-size: 16px; min-width: 140px; text-align: center;">
-                ${currentCalendarDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
-            </span>
-            <button class="cal-nav-btn" onclick="fullscreenNextMonth()" style="padding: 6px 16px; border: none; border-radius: 6px; background: var(--c_acchalf); cursor: pointer;">▶</button>
-            <button class="today-btn" onclick="fullscreenToday()" style="padding: 6px 16px; border: none; border-radius: 6px; background: var(--c_acc); color: white; cursor: pointer;">Сегодня</button>
-        </div>
-        <div class="full-calendar-weekdays" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 8px;">
-            <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-        </div>
-        <div class="full-calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
-    `;
-    
-    let startOffset = startDay === 0 ? 6 : startDay - 1;
-    
-    // Дни предыдущего месяца
-    for (let i = startOffset - 1; i >= 0; i--) {
-        const day = prevMonthDays - i;
-        html += `<div class="calendar-day other-month">${day}</div>`;
-    }
-    
-    // Дни текущего месяца
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isToday = dateStr === todayStr;
-        const hasEvent = hasEventOnDate(dateStr);
-        const inGanttRange = isInGanttRange(dateStr);
-        
-        let classes = 'calendar-day';
-        if (isToday) classes += ' today';
-        if (hasEvent) classes += ' has-event';
-        if (inGanttRange) classes += ' gantt-range';
-        
-        html += `
-            <div class="${classes}" onclick="openDateModal(${year}, ${month + 1}, ${day})" style="padding: 10px 4px; text-align: center; border-radius: 8px; cursor: pointer; position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 14px;">
-                ${day}
-                ${hasEvent ? '<span style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: var(--c_acc); border-radius: 50%;"></span>' : ''}
-            </div>
-        `;
-    }
-    
-    // Дни следующего месяца для заполнения
-    const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
-    const nextMonthDays = totalCells - (startOffset + daysInMonth);
-    for (let day = 1; day <= nextMonthDays; day++) {
-        html += `<div class="calendar-day other-month">${day}</div>`;
-    }
-    
-    html += `</div>`;
-    container.innerHTML = html;
+    renderCalendar('fullscreenCalendar', true);
 }
 // - renderFullscreenTasks()
 // Рендер задач в полноэкранном режиме
@@ -1849,42 +1957,45 @@ function getPriorityColor(priority) {
     }
 }
 // Навигация по календарю
-function prevMonth() {
+// =====================================================
+// НАВИГАЦИЯ КАЛЕНДАРЯ (ЕДИНАЯ)
+// =====================================================
+
+function calendarPrevMonth() {
     currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-    updateCalendarSelectors();
     renderMiniCalendar();
-}
-function nextMonth() {
-    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-    updateCalendarSelectors();
-    renderMiniCalendar();
-}
-function fullscreenPrevMonth() {
-    currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
     renderFullscreenCalendar();
 }
-function fullscreenNextMonth() {
+
+function calendarNextMonth() {
     currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+    renderMiniCalendar();
     renderFullscreenCalendar();
 }
-function fullscreenToday() {
+
+function calendarToday() {
     currentCalendarDate = new Date();
+    renderMiniCalendar();
     renderFullscreenCalendar();
 }
-function changeMonth() {
+
+function calendarChangeMonth() {
     const month = parseInt(document.getElementById('monthSelect')?.value);
     const year = parseInt(document.getElementById('yearSelect')?.value);
     if (!isNaN(month) && !isNaN(year)) {
         currentCalendarDate = new Date(year, month, 1);
         renderMiniCalendar();
+        renderFullscreenCalendar();
     }
 }
-function changeYear() {
+
+function calendarChangeYear() {
     const month = parseInt(document.getElementById('monthSelect')?.value);
     const year = parseInt(document.getElementById('yearSelect')?.value);
     if (!isNaN(month) && !isNaN(year)) {
         currentCalendarDate = new Date(year, month, 1);
         renderMiniCalendar();
+        renderFullscreenCalendar();
     }
 }
 // - getMonthOptions(), getYearOptions()
@@ -1950,10 +2061,20 @@ function openCalendarModal() {
 // - openDateModal()
 // Модалка информации о дате
 function openDateModal(year, month, day) {
-    const dateStr = `${year}-${month}-${day}`;
-    const eventsOnDate = calendarEvents.filter(e => e.date === dateStr);
+    // Формируем дату в правильном формате
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    console.log('📅 Opening date modal for:', dateStr);
+    console.log('📊 Available events:', calendarEvents.length);
     
-    // Функция для получения метки приоритета
+    // Фильтруем события на эту дату
+    const eventsOnDate = calendarEvents.filter(e => e.date === dateStr);
+    console.log('📋 Events on date:', eventsOnDate.length);
+    
+    // Разделяем на задачи и дедлайны
+    const tasksOnDate = eventsOnDate.filter(e => e.type === 'task' && e.status !== 'completed' && e.status !== 'cancelled');
+    const deadlinesOnDate = eventsOnDate.filter(e => e.type === 'deadline');
+    
+    // Функции для приоритетов
     function getPriorityLabel(priority) {
         const labels = {
             'critical': '🔴 Критический',
@@ -1974,19 +2095,35 @@ function openDateModal(year, month, day) {
         return classes[priority] || 'priority-medium';
     }
     
+    // Строим HTML модалки
     const modalHtml = `
         <div id="dateModal" class="admin-modal" style="display: flex;">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width: 500px; max-height: 80vh;">
                 <div class="modal-header">
                     <h2>📅 ${day}.${month}.${year}</h2>
                     <button class="modal-close" onclick="closeDateModal()">&times;</button>
                 </div>
-                <div class="modal-body">
-                    <h3>📋 Задачи на этот день</h3>
+                <div class="modal-body" style="overflow-y: auto;">
+                    <!-- Статистика -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <div style="background: rgba(81,148,255,0.1); padding: 6px 14px; border-radius: 8px; font-size: 13px;">
+                            📋 Задачи: <strong>${tasksOnDate.length}</strong>
+                        </div>
+                        <div style="background: rgba(252,121,46,0.1); padding: 6px 14px; border-radius: 8px; font-size: 13px;">
+                            ⚡ Дедлайны: <strong>${deadlinesOnDate.length}</strong>
+                        </div>
+                    </div>
+                    
+                    <h3 style="font-size: 15px; margin-bottom: 12px;">📋 События на этот день</h3>
                     <div id="dateEventsList">
-                        ${eventsOnDate.length === 0 ? '<p style="color: #999;">Нет задач на этот день</p>' : 
+                        ${eventsOnDate.length === 0 ? '<p style="color: #999; text-align: center; padding: 20px;">Нет событий на этот день</p>' : 
                             eventsOnDate.map(event => {
-                                // Вычисляем статус дедлайна
+                                const isDeadline = event.type === 'deadline';
+                                const icon = isDeadline ? '⚡' : '📋';
+                                const typeLabel = isDeadline ? 'Дедлайн' : 'Задача';
+                                const bgColor = isDeadline ? 'rgba(252,121,46,0.05)' : 'rgba(81,148,255,0.05)';
+                                
+                                // Определяем статус дедлайна
                                 const today = new Date();
                                 const dueDate = new Date(event.date);
                                 const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
@@ -2000,29 +2137,34 @@ function openDateModal(year, month, day) {
                                     deadlineStatus = '⚠️ Просрочена';
                                     deadlineClass = 'deadline-overdue';
                                 } else if (daysLeft <= 3) {
-                                    deadlineStatus = `⏰ Осталось ${daysLeft} дн.`;
+                                    deadlineStatus = `⏰ ${daysLeft} дн.`;
                                     deadlineClass = 'deadline-urgent';
                                 } else {
-                                    deadlineStatus = `📅 Осталось ${daysLeft} дн.`;
+                                    deadlineStatus = `📅 ${daysLeft} дн.`;
                                     deadlineClass = 'deadline-normal';
                                 }
                                 
+                                // Название события
+                                const displayTitle = isDeadline ? event.title.replace('⚡ ', '') : event.title;
+                                
                                 return `
-                                    <div class="date-event-item" onclick="openTaskModal(${event.id})" style="cursor: pointer; padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: #f9f9f9;">
+                                    <div class="date-event-item" onclick="closeDateModal(); openTaskModal(${event.taskId || event.id})" style="cursor: pointer; padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: ${bgColor}; transition: all 0.2s;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                            <strong>${escapeHtml(event.title)}</strong>
-                                            <span class="priority-badge ${getPriorityClass(event.priority)}">${getPriorityLabel(event.priority)}</span>
+                                            <strong>${icon} ${escapeHtml(displayTitle)}</strong>
+                                            <span style="font-size: 11px; color: ${isDeadline ? '#f97316' : 'var(--c_acc)'}; font-weight: 500;">${typeLabel}</span>
                                         </div>
                                         <div style="font-size: 12px; color: #666; margin-top: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                                             <span>${event.assignee ? '👤 ' + escapeHtml(event.assignee) : '📌 Без исполнителя'}</span>
                                             <span class="${deadlineClass}">${deadlineStatus}</span>
                                         </div>
+                                        ${event.priority ? `<div style="margin-top: 4px;"><span class="priority-badge ${getPriorityClass(event.priority)}">${getPriorityLabel(event.priority)}</span></div>` : ''}
                                     </div>
                                 `;
                             }).join('')
                         }
                     </div>
-                    <div style="margin-top: 20px;">
+                    
+                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #eee;">
                         <button class="buttonbase" onclick="closeDateModal(); openQuickCreateTaskModal('${dateStr}')">+ Создать задачу на этот день</button>
                     </div>
                 </div>
@@ -2033,10 +2175,11 @@ function openDateModal(year, month, day) {
         </div>
     `;
     
-    // Удаляем старую модалку, если есть
+    // Удаляем старую модалку
     const existingModal = document.getElementById('dateModal');
     if (existingModal) existingModal.remove();
     
+    // Добавляем новую
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
     // Закрытие по Escape
@@ -5241,10 +5384,12 @@ class ApprovalFlowManager {
 // 12. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // =====================================================
 // - formatDate()
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+// Форматирование даты в локальный формат YYYY-MM-DD
+function formatDateLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 // - escapeHtml()
 function escapeHtml(text) {

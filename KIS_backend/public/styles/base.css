@@ -1707,27 +1707,29 @@ table td{
 .dashboard-task-item .task-due.ok { background: #d1fae5; color: #059669; }
 /* ========== МИНИ-КАЛЕНДАРЬ ========== */
 .calendar-card{
-    max-width: 300px;
+    max-width: 416px;
 }
-.calendar-mini {
-    text-align: center;
-    width: 100%;
-    
-}
+/* =====================================================
+   КАЛЕНДАРЬ - ЕДИНЫЕ СТИЛИ
+   ===================================================== */
 
+/* =====================================================
+   КАЛЕНДАРЬ - ЕДИНЫЕ СТИЛИ (ДАШБОРД И ПОЛНОЭКРАННЫЙ)
+   ===================================================== */
+
+/* ----- ЗАГОЛОВОК ----- */
 .calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     gap: 8px;
     flex-wrap: wrap;
 }
 
 .calendar-month-selector {
     display: flex;
-    gap: 8px;
-    align-items: center;
+    gap: 6px;
 }
 
 .calendar-month-selector select {
@@ -1735,83 +1737,117 @@ table td{
     border-radius: 6px;
     border: 1px solid var(--c_surf_txt);
     background: var(--c_surf);
-    font-size: 12px;
+    font-size: 13px;
+    color: var(--c_bg_txt);
+    cursor: pointer;
 }
 
-.calendar-header button {
-    background: none;
+.calendar-month-selector select:hover {
+    border-color: var(--c_acc);
+}
+
+.cal-nav-btn {
+    padding: 6px 14px;
     border: none;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 10px;
     border-radius: 6px;
+    background: var(--c_acchalf);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--c_bg_txt);
     transition: all 0.2s;
 }
 
-.calendar-header button:hover {
-    background: var(--c_acchalf);
+.cal-nav-btn:hover {
+    background: var(--c_acc);
+    color: white;
 }
 
+.today-btn {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--c_acc);
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.today-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(81, 148, 255, 0.3);
+}
+
+/* ----- СЕТКА ДНЕЙ ----- */
 .calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.calendar-weekdays span {
-    font-size: 11px;
+    text-align: center;
     font-weight: 600;
+    font-size: 12px;
     color: var(--c_surf_txt);
-    padding: 4px;
+    margin-bottom: 8px;
+    padding: 0 4px;
 }
 
-.calendar-days {
+.calendar-days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
 }
 
+/* ----- ЯЧЕЙКА ДНЯ (ОБЩАЯ) ----- */
 .calendar-day {
-    padding: 8px 4px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s;
-    text-align: center;
     position: relative;
-    aspect-ratio: 1;
+    padding: 8px 4px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    aspect-ratio: 1 / 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-
+    background: var(--c_surf);
+    border: 2px solid transparent;
+    min-height: 44px;
+    box-sizing: border-box;
 }
 
 .calendar-day:hover {
     background: var(--c_acchalf);
-    transform: scale(1.05);
+    transform: scale(1.02);
+    z-index: 2;
 }
 
+.calendar-day .day-number {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+    line-height: 1.2;
+}
+
+.calendar-day.other-month .day-number {
+    color: var(--c_surf_txt);
+    opacity: 0.4;
+}
+
+/* ----- СЕГОДНЯ ----- */
 .calendar-day.today {
     background: var(--c_acc);
+    border-color: var(--c_acc);
+}
+
+.calendar-day.today .day-number {
     color: white;
-    font-weight: bold;
 }
 
-.calendar-day.has-event {
-    background: var(--c_acchalf);
-    font-weight: bold;
-}
-
-.calendar-day.other-month {
-    color: var(--c_surf_txt);
-    opacity: 0.5;
-}
-/* Подсветка дат из диапазона Ганта */
+/* ----- ПОДСВЕТКА ПЕРИОДА ГАНТА ----- */
 .calendar-day.gantt-range {
-    border: 2px solid var(--c_acc);
-    border-radius: 8px;
-    box-shadow: 0 0 8px rgba(81, 148, 255, 0.2);
+    border-color: var(--c_acc);
+    box-shadow: 0 0 8px rgba(81, 148, 255, 0.15);
 }
 
 .calendar-day.gantt-range.today {
@@ -1819,10 +1855,50 @@ table td{
     box-shadow: 0 0 12px rgba(81, 148, 255, 0.4);
 }
 
-.calendar-day.gantt-range.has-event {
-    border-color: var(--c_acc);
-    background: rgba(81, 148, 255, 0.05);
+/* ----- ИНДИКАТОРЫ ПОД ЧИСЛОМ ----- */
+.day-indicators {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    margin-top: 4px;
+    /* flex-wrap: wrap; */
+    justify-content: center;
 }
+
+.indicator {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 12px;
+    line-height: 1.4;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Задачи — синие */
+.indicator.tasks {
+    background: rgba(81, 148, 255, 0.15);
+    color: var(--c_acc);
+}
+
+/* Дедлайны — оранжевые (для контраста) */
+.indicator.deadlines {
+    background: rgba(252, 121, 46, 0.2);
+    color: #f97316;
+}
+
+/* Индикаторы на сегодняшней дате (белый текст) */
+.calendar-day.today .indicator.tasks {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.calendar-day.today .indicator.deadlines {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+/* ----- EVENT DOT (точка для событий) ----- */
 .event-dot {
     position: absolute;
     bottom: 2px;
@@ -1832,6 +1908,63 @@ table td{
     height: 5px;
     background: var(--c_acc);
     border-radius: 50%;
+}
+
+/* ----- АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ ----- */
+@media (max-width: 768px) {
+    .calendar-day {
+        min-height: 40px;
+        padding: 4px 2px;
+    }
+    
+    .calendar-day .day-number {
+        font-size: 11px;
+    }
+    
+    .indicator {
+        font-size: 7px;
+        padding: 1px 4px;
+        min-width: 14px;
+    }
+    
+    .day-indicators {
+        gap: 2px;
+        margin-top: 2px;
+    }
+    
+    .calendar-month-selector select {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+    
+    .cal-nav-btn {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+    
+    .today-btn {
+        padding: 4px 12px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day {
+        min-height: 36px;
+        padding: 2px 1px;
+        border-radius: 4px;
+    }
+    
+    .calendar-day .day-number {
+        font-size: 10px;
+    }
+    
+    .indicator {
+        font-size: 6px;
+        padding: 0 3px;
+        min-width: 10px;
+        border-radius: 8px;
+    }
 }
 /* ========== ДИАГРАММА ГАНТА ========== */
 .fullcalendar-container {

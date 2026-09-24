@@ -1,0 +1,268 @@
+/* profile.css - Страница профиля пользователя */
+
+/* =====================================================
+   СТРАНИЦА ПРОФИЛЯ
+   ===================================================== */
+
+.profile-container {
+    margin-left: 60px;
+    background: var(--c_bg);
+    min-height: 100vh;
+    padding: 24px 32px;
+    transition: margin-left 0.3s ease;
+}
+
+.left-menu.pinned ~ .profile-container {
+    margin-left: 260px;
+}
+
+.profile-page {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ----- Шапка профиля ----- */
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: var(--c_surf);
+    border-radius: 20px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.profile-avatar-section {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.profile-avatar-large {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+}
+
+.profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--c_acc);
+}
+
+.profile-avatar-status {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--c_surf);
+}
+
+.profile-avatar-status.online { background: var(--c_success); }
+.profile-avatar-status.offline { background: var(--c_surf_txt); }
+.profile-avatar-status.away { background: var(--c_warning); }
+
+.profile-name-section h1 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.profile-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-position {
+    margin: 0;
+    color: var(--c_surf_txt);
+    font-size: 14px;
+}
+
+.profile-department {
+    margin: 0;
+    color: var(--c_surf_txt);
+    font-size: 14px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ----- Тело профиля ----- */
+.profile-body {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+}
+
+/* ----- Карточки профиля ----- */
+.profile-card {
+    background: var(--c_surf);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.profile-card:last-child {
+    margin-bottom: 0;
+}
+
+.profile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--c_acchalf);
+    border-bottom: 1px solid var(--c_surf_txt);
+}
+
+.profile-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+}
+
+.profile-card-body {
+    padding: 20px;
+}
+
+/* ----- Поля профиля ----- */
+.profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.profile-field:last-child {
+    margin-bottom: 0;
+}
+
+.profile-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--c_surf_txt);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.profile-field-value {
+    font-size: 14px;
+    color: var(--c_bg_txt);
+    padding: 6px 0;
+}
+
+.profile-input {
+    padding: 8px 12px;
+    border: 1px solid var(--c_surf_txt);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--c_surf);
+    color: var(--c_bg_txt);
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: var(--c_acc);
+    box-shadow: 0 0 0 3px var(--c_acchalf);
+}
+
+/* ----- Статистика в профиле ----- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--c_bg);
+    border-radius: 8px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--c_acc);
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+}
+
+/* ----- Адаптивность ----- */
+@media (max-width: 992px) {
+    .profile-body {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .profile-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        margin-left: 56px;
+        padding: 16px;
+    }
+    
+    .left-menu.pinned ~ .profile-container {
+        margin-left: 200px;
+    }
+    
+    .profile-avatar-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-badges {
+        justify-content: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-avatar-large {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .profile-name-section h1 {
+        font-size: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой профиль - КИС</title>
+    <link rel="stylesheet" type="text/css" href="../styles/main.css">
+    <link rel="stylesheet" type="text/css" href="../styles/profile.css">
+    <link rel="stylesheet" type="text/css" href="../styles/base.css">
+
+</head>
+<body>
+    <!-- Левое меню (такое же как на других страницах) -->
+    <div class="left-menu">
+        <div class="menu-logo">
+            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <span class="logo-text">КИС</span>
+            <button class="toggle-btn" id="menuToggleBtn">
+                <img src="../materials/menu_stay.png" alt="toggle">
+            </button>
+        </div>
+
+        <nav class="menu-nav">
+            <a href="../html/base.html" class="menu-item" data-page="base">
+                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
+                <span>Рабочее пространство</span>
+            </a>
+            <a href="../html/chat.html" class="menu-item" data-page="chat">
+                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <span>Чаты</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+        </nav>
+
+        <div class="menu-footer">
+            <div class="theme-switcher">
+                <button class="theme-toggle" id="themeToggle">
+                    <span class="theme-icon">☀️</span>
+                </button>
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatarBtn">
+                    <img src="../materials/avatar_for_profile.png" alt="avatar">
+                </div>
+                <div class="user-info" id="userInfo">
+                    <span class="user-name" id="userName">Загрузка...</span>
+                    <span class="user-role" id="userRole"></span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="../html/profile.html" class="dropdown-header">
+                        <div class="dropdown-avatar">
+                            <img src="../materials/avatar_for_profile.png" alt="avatar" id="dropdownAvatar">
+                        </div>
+                        <div class="dropdown-info">
+                            <span class="dropdown-name" id="dropdownName">Загрузка...</span>
+                            <span class="dropdown-role" id="dropdownRole"></span>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="../html/settings.html" class="dropdown-item">
+                        <img src="../materials/icons8-настройки-96.png" alt="settings">
+                        <span>Настройки</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
+                        <img src="../materials/icons8-выход-48.png" alt="logout">
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="profile-container">
+        <div class="profile-page">
+            <!-- Шапка профиля -->
+            <div class="profile-header">
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar-large">
+                        <img src="../materials/avatar_for_profile.png" alt="avatar" id="profileAvatar">
+                        <div class="profile-avatar-status" id="profileStatus"></div>
+                    </div>
+                    <div class="profile-name-section">
+                        <h1 id="profileFullName">Загрузка...</h1>
+                        <div class="profile-badges">
+                            <span class="badge role-badge" id="profileRole">Пользователь</span>
+                            <span class="badge status-badge status-active" id="profileStatusBadge">🟢 Активен</span>
+                        </div>
+                        <p class="profile-position" id="profilePosition">Должность не указана</p>
+                        <p class="profile-department" id="profileDepartment">Отдел не указан</p>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="buttonbase" id="profileEditBtn">✏️ Редактировать</button>
+                    <button class="buttonbase btn-outline" id="profileSaveBtn" style="display: none;">💾 Сохранить</button>
+                    <button class="buttonbase btn-outline" id="profileCancelBtn" style="display: none;">Отмена</button>
+                </div>
+            </div>
+
+            <!-- Тело профиля -->
+            <div class="profile-body">
+                <!-- Левая колонка -->
+                <div class="profile-left">
+                    <!-- Контактная информация -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3>📋 Контактная информация</h3>
+                        </div>
+                        <div class="profile-card-body">
+                            <div class="profile-field">
+                                <label>Email</label>
+                                <div class="profile-field-value" id="profileEmail">—</div>
+                                <input type="email" id="profileEmailInput" class="profile-input" style="display: none;" value="">
+                            </div>
+                            <div class="profile-field">
+                                <label>Телефон</label>
+                                <div class="profile-field-value" id="profilePhone">—</div>
+                                <input type="tel" id="profilePhoneInput" class="profile-input" style="display: none;" value="">
+                            </div>
+                            <div class="profile-field">
+                                <label>Дата рождения</label>
+                                <div class="profile-field-value" id="profileBirthday">—</div>
+                                <input type="date" id="profileBirthdayInput" class="profile-input" style="display: none;" value="">
+                            </div>
+                            <div class="profile-field">
+                                <label>Дата регистрации</label>
+                                <div class="profile-field-value" id="profileRegistered">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Рабочая информация -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3>🏢 Рабочая информация</h3>
+                        </div>
+                        <div class="profile-card-body">
+                            <div class="profile-field">
+                                <label>Должность</label>
+                                <div class="profile-field-value" id="profileWorkPosition">—</div>
+                            </div>
+                            <div class="profile-field">
+                                <label>Отдел</label>
+                                <div class="profile-field-value" id="profileWorkDepartment">—</div>
+                            </div>
+                            <div class="profile-field">
+                                <label>Руководитель</label>
+                                <div class="profile-field-value" id="profileManager">—</div>
+                            </div>
+                            <div class="profile-field">
+                                <label>Дата начала работы</label>
+                                <div class="profile-field-value" id="profileStartDate">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Изменить пароль -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3>🔒 Смена пароля</h3>
+                        </div>
+                        <div class="profile-card-body">
+                            <div class="profile-field">
+                                <label>Текущий пароль</label>
+                                <input type="password" id="profileCurrentPassword" class="profile-input" placeholder="••••••••">
+                            </div>
+                            <div class="profile-field">
+                                <label>Новый пароль</label>
+                                <input type="password" id="profileNewPassword" class="profile-input" placeholder="Новый пароль">
+                            </div>
+                            <div class="profile-field">
+                                <label>Подтверждение</label>
+                                <input type="password" id="profileConfirmPassword" class="profile-input" placeholder="Подтвердите пароль">
+                            </div>
+                            <button class="buttonbase" id="profileChangePasswordBtn">Сменить пароль</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка -->
+                <div class="profile-right">
+
+                    <!-- Статистика -->
+                    <div class="profile-card stats-card">
+                        <div class="profile-card-header">
+                            <h3>📊 Статистика</h3>
+                        </div>
+                        <div class="profile-card-body">
+                            <div class="stats-grid" id="profileStats">
+                                <div class="stat-item">
+                                    <span class="stat-value" id="profileStatsTasks">0</span>
+                                    <span class="stat-label">Задач в работе</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="profileStatsDocs">0</span>
+                                    <span class="stat-label">Документов</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="profileStatsProcesses">0</span>
+                                    <span class="stat-label">Активных процессов</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="profileStatsUnread">0</span>
+                                    <span class="stat-label">Непрочитанных</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="profileStatsChats">0</span>
+                                    <span class="stat-label">Чатов</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="profileStatsCompleted">0</span>
+                                    <span class="stat-label">Выполнено задач</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка создания заметки -->
+    <div id="noteModal" class="admin-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="noteModalTitle">📌 Моя заметка</h2>
+                <button class="modal-close" onclick="closeModal('noteModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="noteForm">
+                    <input type="hidden" id="noteId">
+                    <div class="form-group">
+                        <label>Название (необязательно)</label>
+                        <input type="text" id="noteTitle" placeholder="Введите название..." class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Текст заметки *</label>
+                        <textarea id="noteContent" placeholder="Что хотите запомнить?" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeModal('noteModal')">Отмена</button>
+                <button class="buttonbase" id="saveNoteBtn" onclick="saveNote()">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/scripts/api.js"></script>
+    <script src="/scripts/main.js"></script>
+    <script src="/scripts/profile.js"></script>
+</body>
+</html>

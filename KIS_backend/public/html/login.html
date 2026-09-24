@@ -8,8 +8,76 @@
     <link rel="stylesheet" type="text/css" href="/styles/login.css">
 </head>
 <body>
+    <!-- ===================================================== -->
+    <!-- ОБЛАЧНЫЙ ФОН -->
+    <!-- ===================================================== -->
+    <div class="cloud-background">
+        <!-- Большие кучевые облака -->
+        <div class="cloud cloud-1">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+        
+        <div class="cloud cloud-2">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+        
+        <div class="cloud cloud-3">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+        
+        <div class="cloud cloud-4">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+        
+        <div class="cloud cloud-5">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+        
+        <!-- Маленькие облачка для глубины -->
+        <div class="cloud-small cloud-small-1">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+        
+        <div class="cloud-small cloud-small-2">
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+            <div class="cloud-part"></div>
+        </div>
+    </div>
+
+
+    <!-- Слой блюра -->
+    <div class="blur-overlay"></div>
+
+    <!-- ===================================================== -->
+    <!-- ОКНО ВХОДА -->
+    <!-- ===================================================== -->
     <div id="enterbody">
-        <div class="log_page_window" id="loginwindow">
+        <div id="loginwindow">
             <h1 class="text-header">Авторизация</h1>
             
             <div class="inputelem_container text-inner-header">
@@ -55,7 +123,6 @@
             const emailOrUsername = loginInput.value.trim();
             const password = passwordInput.value.trim();
 
-            // Очищаем предыдущие ошибки
             errorDiv.style.display = 'none';
             errorDiv.textContent = '';
 
@@ -73,7 +140,6 @@
                 if (result.success) {
                     window.currentUser = result.user;
                     
-                    // Загружаем права роли
                     if (result.user.role_id && !result.user.is_super_admin) {
                         try {
                             const permResponse = await fetch(`/api/admin/roles/${result.user.role_id}/permissions`, {
@@ -90,7 +156,6 @@
                         window.currentUser.permissions = { admin_panel: true };
                     }
                     
-                    // Редирект
                     const hasAdminAccess = result.user.is_super_admin || 
                         (window.currentUser.permissions && window.currentUser.permissions.admin_panel === true);
                     
@@ -103,7 +168,6 @@
             } catch (error) {
                 console.error('Login error:', error);
                 
-                // Показываем сообщение об ошибке от сервера
                 if (error.message && error.message.includes('заблокирована')) {
                     errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
                 } else {
@@ -111,7 +175,6 @@
                 }
                 errorDiv.style.display = 'block';
                 
-                // Очищаем поле пароля
                 passwordInput.value = '';
             } finally {
                 loginBtn.disabled = false;
@@ -119,7 +182,6 @@
             }
         });
 
-        // Enter key
         passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });

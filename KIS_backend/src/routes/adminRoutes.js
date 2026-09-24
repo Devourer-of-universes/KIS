@@ -1221,6 +1221,185 @@ router.post('/backup/restore/:id', authMiddleware, adminMiddleware, async (req, 
     }
 });
 
+// =====================================================
+// УПРАВЛЕНИЕ УВЕДОМЛЕНИЯМИ (АДМИН)
+// =====================================================
+
+// Получение всех уведомлений
+router.get('/notifications', authMiddleware, adminPanelAccess, async (req, res) => {
+    try {
+        const { limit = 50, offset = 0, category, search } = req.query;
+        
+        let sql = `
+            SELECT n.*, 
+                   u.surname as sender_surname, u.name as sender_name,
+                   ru.surname as recipient_surname, ru.name as recipient_name
+            FROM notifications n
+            LEFT JOIN users u ON n.sender_id = u.id
+            LEFT JOIN users ru ON n.user_id = ru.id
+            WHERE 1=1
+        `;
+        
+        const params = [];
+        let idx = 1;
+        
+        if (category && category !== 'all') {
+            sql += ` AND n.category = $${idx++}`;
+            params.push(category);
+        }
+        
+        if (search) {
+            sql += ` AND (n.title ILIKE $${idx} OR n.content ILIKE $${idx})`;
+            params.push(`%${search}%`);
+            idx++;
+        }
+        
+        sql += ` ORDER BY n.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
+        params.push(parseInt(limit), parseInt(offset));
+        
+        const result = await query(sql, params);
+        
+        // Форматируем имена
+        const notifications = result.rows.map(n => ({
+            ...n,
+            sender_name: n.sender_surname 
+                ? `${n.sender_surname} ${n.sender_name || ''}`.trim() 
+                : 'Система',
+            user_name: n.recipient_surname 
+                ? `${n.recipient_surname} ${n.recipient_name || ''}`.trim() 
+                : null
+        }));
+        
+        // Общее количество
+        let countSql = `SELECT COUNT(*) FROM notifications WHERE 1=1`;
+        const countParams = [];
+        let countIdx = 1;
+        
+        if (category && category !== 'all') {
+            countSql += ` AND category = $${countIdx++}`;
+            countParams.push(category);
+        }
+        
+        if (search) {
+            countSql += ` AND (title ILIKE $${countIdx} OR content ILIKE $${countIdx})`;
+            countParams.push(`%${search}%`);
+        }
+        
+        const countResult = await query(countSql, countParams);
+        
+        res.json({ 
+            notifications, 
+            total: parseInt(countResult.rows[0].count)
+        });
+    } catch (error) {
+        console.error('Get admin notifications error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Отправка уведомления
+router.post('/notifications/send', authMiddleware, adminPanelAccess, async (req, res) => {
+    try {
+        const { 
+            category = 'admin',
+            priority = 'normal',
+            title,
+            content,
+            linkType,
+            linkId,
+            expiresAt,
+            isGlobal,
+            departmentId,
+            userIds
+        } = req.body;
+        
+        const senderId = req.userId;
+        
+        if (!title || !content) {
+            return res.status(400).json({ error: 'Заголовок и текст обязательны' });
+        }
+        
+        // Определяем получателей
+        let recipients = [];
+        
+        if (isGlobal) {
+            const allUsers = await query(
+                `SELECT id FROM users WHERE deleted_at IS NULL AND status = 'active'`
+            );
+            recipients = allUsers.rows.map(r => r.id);
+        } else if (departmentId) {
+            const deptUsers = await query(
+                `SELECT id FROM users WHERE department_id = $1 AND deleted_at IS NULL AND status = 'active'`,
+                [departmentId]
+            );
+            recipients = deptUsers.rows.map(r => r.id);
+        } else if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+            recipients = userIds;
+        } else {
+            return res.status(400).json({ error: 'Не указаны получатели' });
+        }
+        
+        if (recipients.length === 0) {
+            return res.status(400).json({ error: 'Получатели не найдены' });
+        }
+        
+        // Создаём уведомления
+        let createdCount = 0;
+        
+        for (const recipientId of recipients) {
+            await query(
+                `INSERT INTO notifications 
+                 (user_id, category, priority, title, content, link_type, link_id, sender_id, expires_at, is_global)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [
+                    recipientId, 
+                    category, 
+                    priority,
+                    title.trim(), 
+                    content.trim(), 
+                    linkType || null, 
+                    linkId || null, 
+                    senderId,
+                    expiresAt || null,
+                    isGlobal || false
+                ]
+            );
+            createdCount++;
+        }
+        
+        // Логируем
+        await query(
+            `INSERT INTO audit_logs (user_id, action, entity_type, new_data, ip_address)
+             VALUES ($1, 'SEND notification', 'notification', $2, $3)`,
+            [senderId, JSON.stringify({ category, title, count: createdCount }), req.ip]
+        );
+        
+        res.status(201).json({ 
+            success: true, 
+            count: createdCount,
+            message: `Уведомление отправлено ${createdCount} получателям`
+        });
+        
+    } catch (error) {
+        console.error('Send notification error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Удаление уведомления
+router.delete('/notifications/:id', authMiddleware, adminPanelAccess, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        await query(`DELETE FROM notifications WHERE id = $1`, [id]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete notification error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Форматирование размера файла
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 B';

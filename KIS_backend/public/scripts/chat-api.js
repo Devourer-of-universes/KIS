@@ -78,13 +78,52 @@ class ChatManager {
         if (!content.trim()) return;
         
         try {
-            const result = await api.chats.sendMessage(chatId, content);
-            if (result.success) {
-                await this.loadMessages(chatId);
-                await this.loadChats();  // ← Здесь оставляем
+            // Отправляем через WebSocket (мгновенно)
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({
+                    type: 'send-message',
+                    chatId: chatId,
+                    content: content.trim()
+                }));
+                
+                // Оптимистично добавляем сообщение в UI
+                const tempMessage = {
+                    id: 'temp_' + Date.now(),
+                    chat_id: chatId,
+                    user_id: window.currentUser?.id,
+                    content: content.trim(),
+                    created_at: new Date().toISOString(),
+                    surname: window.currentUser?.surname,
+                    name: window.currentUser?.name,
+                    avatar_uri: window.currentUser?.avatar_uri,
+                    is_temp: true
+                };
+                this.messages.push(tempMessage);
+                this.renderMessages();
+                this.scrollToBottom();
+                
+                // Если WebSocket не сработает, делаем fallback через REST
+                const result = await api.chats.sendMessage(chatId, content);
+                if (result.success) {
+                    // Убираем временное сообщение и добавляем реальное
+                    this.messages = this.messages.filter(m => !m.is_temp);
+                    await this.loadMessages(chatId);
+                    await this.loadChats();
+                }
+            } else {
+                // Fallback через REST
+                const result = await api.chats.sendMessage(chatId, content);
+                if (result.success) {
+                    await this.loadMessages(chatId);
+                    await this.loadChats();
+                }
             }
         } catch (error) {
             console.error('Failed to send message:', error);
+            showToast('Ошибка отправки сообщения', 'error');
+            // Удаляем временное сообщение
+            this.messages = this.messages.filter(m => !m.is_temp);
+            this.renderMessages();
         }
     }
     
@@ -103,50 +142,85 @@ class ChatManager {
     
     // WebSocket соединение
     initWebSocket() {
-        console.log('WebSocket disabled for debugging');
-        return;
-        // const token = localStorage.getItem('token');
-        // if (!token) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn('No token, WebSocket not initialized');
+            return;
+        }
         
-        // this.ws = new WebSocket(`ws://localhost:3000?token=${token}`);
+        // Определяем URL WebSocket
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsHost = window.location.host || 'localhost:3000';
+        this.ws = new WebSocket(`${wsProtocol}//${wsHost}?token=${token}`);
         
-        // this.ws.onopen = () => {
-        //     console.log('WebSocket connected');
-        //     // Присоединяемся ко всем чатам
-        //     if (this.chats.length > 0) {
-        //         this.ws.send(JSON.stringify({
-        //             type: 'join-chats',
-        //             chatIds: this.chats.map(c => c.id)
-        //         }));
-        //     }
-        // };
+        this.ws.onopen = () => {
+            console.log('🔌 WebSocket connected');
+            // Отправляем событие подключения
+            this.ws.send(JSON.stringify({
+                type: 'connection',
+                userId: window.currentUser?.id
+            }));
+        };
         
-        // this.ws.onmessage = (event) => {
-        //     const data = JSON.parse(event.data);
-        //     this.handleWebSocketMessage(data);
-        // };
+        this.ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('📨 WebSocket message:', data);
+                this.handleWebSocketMessage(data);
+            } catch (error) {
+                console.error('WebSocket message error:', error);
+            }
+        };
         
-        // this.ws.onerror = (error) => {
-        //     console.error('WebSocket error:', error);
-        // };
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
         
-        // this.ws.onclose = () => {
-        //     console.log('WebSocket disconnected');
-        //     // Попытка переподключения через 5 секунд
-        //     setTimeout(() => this.initWebSocket(), 5000);
-        // };
+        this.ws.onclose = () => {
+            console.log('🔌 WebSocket disconnected');
+            // Попытка переподключения через 3 секунды
+            setTimeout(() => {
+                if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+                    console.log('🔄 Reconnecting WebSocket...');
+                    this.initWebSocket();
+                }
+            }, 3000);
+        };
+    }
+
+    // Присоединение к чатам после загрузки
+    async joinChats() {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const chatIds = this.chats.map(c => c.id);
+            if (chatIds.length > 0) {
+                this.ws.send(JSON.stringify({
+                    type: 'join-chats',
+                    chatIds: chatIds
+                }));
+                console.log('📡 Joined chats:', chatIds);
+            }
+        }
     }
     
     handleWebSocketMessage(data) {
+        console.log('📨 WebSocket message received:', data);
+        
         switch (data.type) {
             case 'new-message':
-                if (data.message.chat_id === this.currentChatId) {
-                    this.messages.push(data.message);
-                    this.renderMessages();
-                    this.markAsRead(this.currentChatId);
+                if (data.message) {
+                    // Добавляем сообщение в текущий чат
+                    if (data.message.chat_id === this.currentChatId) {
+                        // Проверяем, нет ли уже такого сообщения (дубликат)
+                        const exists = this.messages.some(m => m.id === data.message.id);
+                        if (!exists) {
+                            this.messages.push(data.message);
+                            this.renderMessages();
+                            this.scrollToBottom();
+                        }
+                    }
+                    // Обновляем список чатов (последнее сообщение, счётчик)
+                    this.updateChatListOnNewMessage(data.message);
                 }
-                // ОБЯЗАТЕЛЬНО: обновляем список чатов, чтобы показать последнее сообщение
-                this.loadChats();  // ← добавить await
                 break;
                 
             case 'message-edited':
@@ -157,6 +231,8 @@ class ChatManager {
                         msg.is_edited = true;
                         this.renderMessages();
                     }
+                    // Обновляем список чатов
+                    this.loadChats();
                 }
                 break;
                 
@@ -168,12 +244,56 @@ class ChatManager {
                         msg.is_deleted = true;
                         this.renderMessages();
                     }
+                    this.loadChats();
+                }
+                break;
+                
+            case 'message-read':
+                // Обновляем счётчик непрочитанных
+                if (data.chatId) {
+                    const chat = this.chats.find(c => c.id === data.chatId);
+                    if (chat) {
+                        chat.unread_count = 0;
+                        this.renderChatList();
+                    }
                 }
                 break;
                 
             case 'user-typing':
                 this.showTypingIndicator(data.userId, data.isTyping);
                 break;
+                
+            case 'connection-confirmed':
+                console.log('✅ WebSocket connection confirmed for user:', data.userId);
+                break;
+                
+            case 'error':
+                console.error('WebSocket error from server:', data.message);
+                break;
+                
+            default:
+                console.log('Unknown WebSocket message type:', data.type);
+        }
+    }
+
+    // Обновление списка чатов при новом сообщении
+    async updateChatListOnNewMessage(message) {
+        // Перезагружаем список чатов, чтобы обновить последнее сообщение и счётчик
+        await this.loadChats();
+        
+        // Если текущий чат — помечаем как прочитанное
+        if (message.chat_id === this.currentChatId) {
+            this.markAsRead(this.currentChatId);
+        }
+    }
+
+    // Прокрутка вниз
+    scrollToBottom() {
+        const container = document.getElementById('messagesContainer');
+        if (container) {
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
         }
     }
     
@@ -618,8 +738,8 @@ class ChatManager {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({
                 type: 'typing',
-                chatId,
-                isTyping
+                chatId: chatId,
+                isTyping: isTyping
             }));
         }
     }
@@ -664,22 +784,16 @@ class ChatManager {
         // Отправка сообщения по Enter
         const messageInput = document.querySelector('.message-input');
         if (messageInput) {
-            const newMessageInput = messageInput.cloneNode(true);
-            messageInput.parentNode.replaceChild(newMessageInput, messageInput);
-            
-            newMessageInput.addEventListener('keypress', async (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    const text = newMessageInput.value.trim();
-                    
-                    if (text || this.pendingAttachments.length > 0) {
-                        await this.sendMessageWithAttachments(this.currentChatId, text);
-                        newMessageInput.value = '';
-                    }
+            let typingTimeout = null;
+            messageInput.addEventListener('input', () => {
+                if (this.currentChatId) {
+                    this.sendTyping(this.currentChatId, true);
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => {
+                        this.sendTyping(this.currentChatId, false);
+                    }, 1000);
                 }
             });
-            
-            window.messageInput = newMessageInput;
         }
         // Контекстное меню для папок
         document.addEventListener('contextmenu', (e) => {

@@ -44,30 +44,31 @@ class Message {
         }
 
         const result = await query(
-            `SELECT 
-                m.id, m.chat_id, m.user_id, 
-                CASE WHEN m.is_deleted THEN '[Сообщение удалено]' ELSE m.content END as content,
-                m.created_at, m.updated_at, m.is_edited, m.is_deleted,
-                u.surname, u.name, u.avatar_uri,
-                COALESCE(
-                    (SELECT json_agg(json_build_object(
-                        'id', a.id,
-                        'file_uri', a.file_uri,
-                        'file_name', a.file_name,
-                        'file_size', a.file_size,
-                        'file_type', a.file_type
-                    )) FROM message_attachments a WHERE a.message_id = m.id),
-                    '[]'::json
-                ) as attachments
-             FROM messages m
-             JOIN users u ON m.user_id = u.id
-             WHERE m.chat_id = $1 AND m.is_deleted = false
-             ORDER BY m.created_at DESC
-             LIMIT $2 OFFSET $3`,
-            [chatId, limit, offset]
-        );
-
-        return result.rows.reverse(); // Возвращаем в хронологическом порядке
+        `SELECT 
+            m.id, m.chat_id, m.user_id, 
+            CASE WHEN m.is_deleted THEN '[Сообщение удалено]' ELSE m.content END as content,
+            m.created_at, m.updated_at, m.is_edited, m.is_deleted,
+            m.readers,  -- ← Добавляем
+            u.surname, u.name, u.avatar_uri,
+            COALESCE(
+                (SELECT json_agg(json_build_object(
+                    'id', a.id,
+                    'file_uri', a.file_uri,
+                    'file_name', a.file_name,
+                    'file_size', a.file_size,
+                    'file_type', a.file_type
+                )) FROM message_attachments a WHERE a.message_id = m.id),
+                '[]'::json
+            ) as attachments
+         FROM messages m
+         JOIN users u ON m.user_id = u.id
+         WHERE m.chat_id = $1 AND m.is_deleted = false
+         ORDER BY m.created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [chatId, limit, offset]
+    );
+    
+    return result.rows.reverse();
     }
 
     // Редактирование сообщения
@@ -170,6 +171,39 @@ class Message {
         );
         return result.rows;
     }
+    static async markAsRead(messageId, userId) {
+    return await transaction(async (client) => {
+        // Проверяем, что сообщение существует
+        const message = await client.query(
+            `SELECT readers FROM messages WHERE id = $1 AND is_deleted = false`,
+            [messageId]
+        );
+        
+        if (message.rows.length === 0) {
+            throw new Error('Message not found');
+        }
+        
+        const readers = message.rows[0].readers || [];
+        const alreadyRead = readers.some(r => r.user_id === userId);
+        
+        if (!alreadyRead) {
+            const newReader = {
+                user_id: userId,
+                read_at: new Date().toISOString()
+            };
+            
+            // Добавляем нового читателя
+            await client.query(
+                `UPDATE messages 
+                 SET readers = readers || $1::jsonb 
+                 WHERE id = $2`,
+                [JSON.stringify([newReader]), messageId]
+            );
+        }
+        
+        return true;
+    });
+}
 }
 
 module.exports = Message;

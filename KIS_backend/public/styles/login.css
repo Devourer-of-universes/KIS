@@ -1,13 +1,13 @@
-/* login.css - Страница авторизации */
+/* login.css - Страница авторизации с абстрактным фоном */
 
 :root {
     --c_bg: #f5f7fb;
     --c_bg_txt: #1a1a2e;
     --c_surf: #ffffff;
     --c_surf_txt: #6c757d;
-     --c_acc: #5194ff;
-    --c_acchalf:rgba(81, 148, 255, 0.5);
-    --с_brightacc: #007bff;
+    --c_acc: #5194ff;
+    --c_acchalf: rgba(81, 148, 255, 0.5);
+    --c_brightacc: #007bff;
     --c_error: #ef4444;
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
@@ -28,12 +28,535 @@
 body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--c_bg) 0%, #e8ecf4 100%);
     font-family: 'Inter', 'Segoe UI', 'Montserrat', system-ui, sans-serif;
+    background: var(--c_bg);
+    overflow: hidden;
+    position: relative;
 }
 
-/* Центрирование окна авторизации */
+/* =====================================================
+   ОБЛАЧНЫЙ ФОН
+   ===================================================== */
+
+.cloud-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Базовый градиентный фон */
+.cloud-background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(180deg, 
+            rgba(81, 148, 255, 0.04) 0%, 
+            rgba(255, 255, 255, 0) 50%,
+            rgba(81, 148, 255, 0.02) 100%
+        );
+}
+
+/* =====================================================
+   ОБЛАКО — КОНТЕЙНЕР
+   ===================================================== */
+
+.cloud {
+    position: absolute;
+    pointer-events: none;
+    filter: blur(10px);
+}
+
+/* Все части облака — круги */
+.cloud-part {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 40% 30%, 
+        var(--c_acc) 0%, 
+        var(--c_brightacc) 60%, 
+        transparent 100%
+    );
+    opacity: 0.18;
+}
+
+/* =====================================================
+   ОБЛАКО 1 — ВЕРХНЕЕ ПРАВОЕ (БОЛЬШОЕ)
+   ===================================================== */
+
+.cloud-1 {
+    width: 900px;
+    height: 500px;
+    top: -100px;
+    right: -200px;
+    animation: floatCloud1 40s ease-in-out infinite;
+}
+
+.cloud-1 .cloud-part:nth-child(1) {
+    /* Основное тело */
+    width: 500px;
+    height: 320px;
+    top: 100px;
+    left: 200px;
+}
+
+.cloud-1 .cloud-part:nth-child(2) {
+    /* Левый бугор */
+    width: 350px;
+    height: 280px;
+    top: 60px;
+    left: 80px;
+}
+
+.cloud-1 .cloud-part:nth-child(3) {
+    /* Правый бугор */
+    width: 380px;
+    height: 260px;
+    top: 80px;
+    left: 420px;
+}
+
+.cloud-1 .cloud-part:nth-child(4) {
+    /* Верхний центральный */
+    width: 280px;
+    height: 220px;
+    top: 0px;
+    left: 280px;
+}
+
+.cloud-1 .cloud-part:nth-child(5) {
+    /* Маленькая шапка */
+    width: 180px;
+    height: 140px;
+    top: -30px;
+    left: 340px;
+}
+
+/* =====================================================
+   ОБЛАКО 2 — НИЖНЕЕ ЛЕВОЕ (БОЛЬШОЕ)
+   ===================================================== */
+
+.cloud-2 {
+    width: 800px;
+    height: 450px;
+    bottom: -100px;
+    left: -200px;
+    animation: floatCloud2 45s ease-in-out infinite reverse;
+}
+
+.cloud-2 .cloud-part {
+    background: radial-gradient(ellipse at 40% 30%, 
+        var(--c_acc) 0%, 
+        #6c5ce7 60%, 
+        transparent 100%
+    );
+    opacity: 0.14;
+}
+
+.cloud-2 .cloud-part:nth-child(1) {
+    width: 450px;
+    height: 280px;
+    top: 80px;
+    left: 180px;
+}
+
+.cloud-2 .cloud-part:nth-child(2) {
+    width: 320px;
+    height: 240px;
+    top: 40px;
+    left: 60px;
+}
+
+.cloud-2 .cloud-part:nth-child(3) {
+    width: 340px;
+    height: 220px;
+    top: 60px;
+    left: 380px;
+}
+
+.cloud-2 .cloud-part:nth-child(4) {
+    width: 250px;
+    height: 200px;
+    top: 0px;
+    left: 240px;
+}
+
+.cloud-2 .cloud-part:nth-child(5) {
+    width: 160px;
+    height: 120px;
+    top: -20px;
+    left: 300px;
+}
+
+/* =====================================================
+   ОБЛАКО 3 — ЦЕНТРАЛЬНОЕ
+   ===================================================== */
+
+.cloud-3 {
+    width: 600px;
+    height: 350px;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: floatCloud3 50s ease-in-out infinite;
+}
+
+.cloud-3 .cloud-part {
+    background: radial-gradient(ellipse at 40% 30%, 
+        var(--c_acc) 0%, 
+        #00b894 60%, 
+        transparent 100%
+    );
+    opacity: 0.1;
+}
+
+.cloud-3 .cloud-part:nth-child(1) {
+    width: 350px;
+    height: 220px;
+    top: 60px;
+    left: 120px;
+}
+
+.cloud-3 .cloud-part:nth-child(2) {
+    width: 240px;
+    height: 180px;
+    top: 30px;
+    left: 30px;
+}
+
+.cloud-3 .cloud-part:nth-child(3) {
+    width: 260px;
+    height: 170px;
+    top: 40px;
+    left: 280px;
+}
+
+.cloud-3 .cloud-part:nth-child(4) {
+    width: 180px;
+    height: 140px;
+    top: 0px;
+    left: 180px;
+}
+
+.cloud-3 .cloud-part:nth-child(5) {
+    width: 120px;
+    height: 90px;
+    top: -20px;
+    left: 230px;
+}
+
+/* =====================================================
+   ОБЛАКО 4 — НИЖНЕЕ ПРАВОЕ
+   ===================================================== */
+
+.cloud-4 {
+    width: 500px;
+    height: 300px;
+    bottom: 5%;
+    right: 5%;
+    animation: floatCloud4 42s ease-in-out infinite 2s;
+}
+
+.cloud-4 .cloud-part {
+    background: radial-gradient(ellipse at 40% 30%, 
+        var(--c_acc) 0%, 
+        #fd79a8 60%, 
+        transparent 100%
+    );
+    opacity: 0.12;
+}
+
+.cloud-4 .cloud-part:nth-child(1) {
+    width: 280px;
+    height: 180px;
+    top: 50px;
+    left: 100px;
+}
+
+.cloud-4 .cloud-part:nth-child(2) {
+    width: 200px;
+    height: 150px;
+    top: 20px;
+    left: 20px;
+}
+
+.cloud-4 .cloud-part:nth-child(3) {
+    width: 220px;
+    height: 140px;
+    top: 30px;
+    left: 240px;
+}
+
+.cloud-4 .cloud-part:nth-child(4) {
+    width: 160px;
+    height: 120px;
+    top: 0px;
+    left: 140px;
+}
+
+.cloud-4 .cloud-part:nth-child(5) {
+    width: 100px;
+    height: 80px;
+    top: -15px;
+    left: 180px;
+}
+
+/* =====================================================
+   ОБЛАКО 5 — ВЕРХНЕЕ ЛЕВОЕ
+   ===================================================== */
+
+.cloud-5 {
+    width: 500px;
+    height: 300px;
+    top: 5%;
+    left: -100px;
+    animation: floatCloud5 48s ease-in-out infinite 1s;
+}
+
+.cloud-5 .cloud-part {
+    background: radial-gradient(ellipse at 40% 30%, 
+        var(--c_acc) 0%, 
+        #fdcb6e 60%, 
+        transparent 100%
+    );
+    opacity: 0.09;
+}
+
+.cloud-5 .cloud-part:nth-child(1) {
+    width: 280px;
+    height: 180px;
+    top: 50px;
+    left: 100px;
+}
+
+.cloud-5 .cloud-part:nth-child(2) {
+    width: 200px;
+    height: 150px;
+    top: 20px;
+    left: 20px;
+}
+
+.cloud-5 .cloud-part:nth-child(3) {
+    width: 220px;
+    height: 140px;
+    top: 30px;
+    left: 240px;
+}
+
+.cloud-5 .cloud-part:nth-child(4) {
+    width: 160px;
+    height: 120px;
+    top: 0px;
+    left: 140px;
+}
+
+.cloud-5 .cloud-part:nth-child(5) {
+    width: 100px;
+    height: 80px;
+    top: -15px;
+    left: 180px;
+}
+
+/* =====================================================
+   МАЛЕНЬКИЕ ОБЛАЧКА (для глубины)
+   ===================================================== */
+
+.cloud-small {
+    position: absolute;
+    pointer-events: none;
+    filter: blur(35px);
+}
+
+.cloud-small .cloud-part {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 40% 30%, 
+        var(--c_acc) 0%, 
+        var(--c_brightacc) 100%
+    );
+    opacity: 0.15;
+}
+
+.cloud-small-1 {
+    width: 250px;
+    height: 150px;
+    top: 20%;
+    right: 30%;
+    animation: floatSmall 25s ease-in-out infinite;
+}
+
+.cloud-small-1 .cloud-part:nth-child(1) {
+    width: 150px;
+    height: 100px;
+    top: 25px;
+    left: 50px;
+}
+
+.cloud-small-1 .cloud-part:nth-child(2) {
+    width: 110px;
+    height: 80px;
+    top: 10px;
+    left: 10px;
+}
+
+.cloud-small-1 .cloud-part:nth-child(3) {
+    width: 120px;
+    height: 75px;
+    top: 15px;
+    left: 120px;
+}
+
+.cloud-small-1 .cloud-part:nth-child(4) {
+    width: 80px;
+    height: 60px;
+    top: -5px;
+    left: 80px;
+}
+
+.cloud-small-2 {
+    width: 220px;
+    height: 130px;
+    bottom: 35%;
+    left: 15%;
+    animation: floatSmall 30s ease-in-out infinite reverse;
+}
+
+.cloud-small-2 .cloud-part:nth-child(1) {
+    width: 130px;
+    height: 85px;
+    top: 22px;
+    left: 45px;
+}
+
+.cloud-small-2 .cloud-part:nth-child(2) {
+    width: 95px;
+    height: 70px;
+    top: 8px;
+    left: 8px;
+}
+
+.cloud-small-2 .cloud-part:nth-child(3) {
+    width: 105px;
+    height: 65px;
+    top: 12px;
+    left: 105px;
+}
+
+.cloud-small-2 .cloud-part:nth-child(4) {
+    width: 70px;
+    height: 50px;
+    top: -5px;
+    left: 70px;
+}
+
+/* =====================================================
+   АНИМАЦИИ
+   ===================================================== */
+
+@keyframes floatCloud1 {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(-40px, 25px) scale(1.05);
+    }
+    50% {
+        transform: translate(25px, -20px) scale(0.96);
+    }
+    75% {
+        transform: translate(-20px, 35px) scale(1.03);
+    }
+}
+
+@keyframes floatCloud2 {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(50px, -35px) scale(1.04);
+    }
+    50% {
+        transform: translate(-35px, 25px) scale(0.97);
+    }
+    75% {
+        transform: translate(25px, -15px) scale(1.05);
+    }
+}
+
+@keyframes floatCloud3 {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    33% {
+        transform: translateX(-50%) translateY(-40px) scale(1.08);
+    }
+    66% {
+        transform: translateX(-50%) translateY(25px) scale(0.94);
+    }
+}
+
+@keyframes floatCloud4 {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(-45px, -25px) scale(1.07);
+    }
+}
+
+@keyframes floatCloud5 {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(35px, 35px) scale(1.05);
+    }
+}
+
+@keyframes floatSmall {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    33% {
+        transform: translate(25px, -30px) scale(1.12);
+    }
+    66% {
+        transform: translate(-20px, 20px) scale(0.88);
+    }
+}
+
+/* =====================================================
+   СЛОЙ БЛЮРА ПОВЕРХ ОБЛАКОВ
+   ===================================================== */
+
+/* .blur-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    background: rgba(255, 255, 255, 0.02);
+    pointer-events: none;
+} */
+
+
+/* =====================================================
+   ЦЕНТРИРОВАНИЕ ОКНА ВХОДА
+   ===================================================== */
+
 #enterbody {
+    position: relative;
+    z-index: 2;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -41,7 +564,10 @@ body {
     padding: 20px;
 }
 
-/* Окно авторизации */
+/* =====================================================
+   ОКНО АВТОРИЗАЦИИ
+   ===================================================== */
+
 #loginwindow {
     display: flex;
     flex-direction: column;
@@ -51,13 +577,43 @@ body {
     width: 100%;
     max-width: 420px;
     padding: 40px 32px;
-    background: var(--c_surf);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
-    animation: fadeInScale 0.4s ease;
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: fadeInScale 0.5s ease;
 }
 
-/* Заголовок */
+/* =====================================================
+   ТЕМНАЯ ТЕМА
+   ===================================================== */
+
+[data-theme="dark"] .blur-overlay {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] #loginwindow {
+    background: rgba(30, 30, 50, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .inputelem {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--c_bg_txt);
+}
+
+[data-theme="dark"] .inputelem:focus {
+    border-color: var(--c_acc);
+    box-shadow: 0 0 0 3px var(--c_acchalf);
+}
+
+/* =====================================================
+   ОСТАЛЬНЫЕ СТИЛИ (без изменений)
+   ===================================================== */
+
 .text-header {
     font-family: "Montserrat", sans-serif;
     font-size: 28px;
@@ -67,7 +623,6 @@ body {
     text-align: center;
 }
 
-/* Контейнер для полей ввода */
 .inputelem_container {
     width: 100%;
     display: flex;
@@ -84,8 +639,8 @@ body {
 .inputelem {
     width: 100%;
     padding: 12px 16px;
-    background: transparent;
-    border: 2px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(0, 0, 0, 0.06);
     border-radius: var(--border-radius-sm);
     font-size: 15px;
     transition: var(--transition-fast);
@@ -102,7 +657,6 @@ body {
     color: var(--c_surf_txt);
 }
 
-/* Кнопка входа */
 .log_page_button {
     width: 100%;
     margin-top: 8px;
@@ -118,7 +672,6 @@ body {
 }
 
 .log_page_button:hover {
-    /* background: var(--c_brightacc); */
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
 }
@@ -127,7 +680,6 @@ body {
     transform: translateY(0);
 }
 
-/* Ссылка "Забыли пароль" */
 #forgotten_pass_link {
     color: var(--c_acc);
     text-decoration: none;
@@ -140,7 +692,14 @@ body {
     text-decoration: underline;
 }
 
-/* Анимации */
+#errorMessage {
+    color: red;
+    display: none;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+}
+
 @keyframes fadeInScale {
     from {
         opacity: 0;
@@ -152,7 +711,9 @@ body {
     }
 }
 
-/* ========== АДАПТИВНОСТЬ ========== */
+/* =====================================================
+   АДАПТИВНОСТЬ
+   ===================================================== */
 
 @media (max-width: 768px) {
     #loginwindow {
@@ -168,6 +729,12 @@ body {
         padding: 10px 14px;
         font-size: 14px;
     }
+
+    .shape-1 { width: 300px; height: 300px; }
+    .shape-2 { width: 250px; height: 250px; }
+    .shape-3 { width: 200px; height: 200px; }
+    .shape-4 { width: 150px; height: 150px; }
+    .shape-5 { width: 200px; height: 200px; }
 }
 
 @media (max-width: 480px) {
@@ -179,4 +746,10 @@ body {
     .text-header {
         font-size: 22px;
     }
+
+    .shape-1 { width: 200px; height: 200px; top: -80px; right: -50px; }
+    .shape-2 { width: 180px; height: 180px; bottom: -60px; left: -60px; }
+    .shape-3 { width: 150px; height: 150px; }
+    .shape-4 { width: 100px; height: 100px; }
+    .shape-5 { width: 150px; height: 150px; }
 }

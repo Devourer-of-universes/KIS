@@ -5,11 +5,11 @@ const { query, transaction } = require('../config/database');
 
 // ========== ПОЛУЧЕНИЕ ЗАДАЧ ==========
 
-// Получение всех задач пользователя
+// Получение задач с фильтрацией по статусу
 router.get('/tasks', authMiddleware, async (req, res) => {
     try {
         const userId = req.userId;
-        const { status, priority, startDate, endDate } = req.query;
+        const { status, limit = 50, offset = 0 } = req.query;
         
         let sql = `
             SELECT t.*, 
@@ -27,27 +27,17 @@ router.get('/tasks', authMiddleware, async (req, res) => {
         const params = [userId];
         let paramIndex = 2;
         
+        // Фильтр по статусу (может быть несколько через запятую)
         if (status) {
-            sql += ` AND t.status = $${paramIndex++}`;
-            params.push(status);
+            const statuses = status.split(',').map(s => s.trim());
+            const placeholders = statuses.map((_, i) => `$${paramIndex + i}`).join(', ');
+            sql += ` AND t.status IN (${placeholders})`;
+            params.push(...statuses);
+            paramIndex += statuses.length;
         }
         
-        if (priority) {
-            sql += ` AND t.priority = $${paramIndex++}`;
-            params.push(priority);
-        }
-        
-        if (startDate) {
-            sql += ` AND t.due_date >= $${paramIndex++}`;
-            params.push(startDate);
-        }
-        
-        if (endDate) {
-            sql += ` AND t.due_date <= $${paramIndex++}`;
-            params.push(endDate);
-        }
-        
-        sql += ` ORDER BY t.due_date ASC NULLS LAST, t.priority DESC`;
+        sql += ` ORDER BY t.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+        params.push(parseInt(limit), parseInt(offset));
         
         const result = await query(sql, params);
         res.json({ tasks: result.rows });
@@ -56,22 +46,61 @@ router.get('/tasks', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// =====================================================
+// ПОЛУЧЕНИЕ ПОЛЬЗОВАТЕЛЕЙ ПО ID ДЛЯ КАРТОЧКИ ЗАДАЧИ
+// =====================================================
+router.get('/task/userscard', authMiddleware, async (req, res) => {
+    try {
+        const { ids } = req.query;
+        console.log('🔍 Task users request, ids:', ids);
+        
+        if (!ids) {
+            return res.json({ users: [] });
+        }
+        
+        const idArray = ids.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+        console.log('📊 Parsed IDs:', idArray);
+        
+        if (idArray.length === 0) {
+            return res.json({ users: [] });
+        }
+        
+        const MAX_USERS = 50;
+        const limitedIds = idArray.slice(0, MAX_USERS);
+        
+        const result = await query(
+            `SELECT id, surname, name, patronymic, username, avatar_uri 
+             FROM users 
+             WHERE id = ANY($1::int[]) AND deleted_at IS NULL`,
+            [limitedIds]
+        );
+        
+        console.log('👥 Users found:', result.rows.length);
+        res.json({ users: result.rows });
+    } catch (error) {
+        console.error('Get task users error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 // Получение задачи по ID
 router.get('/tasks/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.userId;
         
         const result = await query(`
-            SELECT t.*, 
-                   u.surname as assignee_surname, u.name as assignee_name,
-                   c.surname as creator_surname, c.name as creator_name,
-                   d.name as department_name
+            SELECT 
+                t.*,
+                u.surname as assignee_surname, 
+                u.name as assignee_name,
+                c.surname as creator_surname, 
+                c.name as creator_name,
+                d.name as department_name,
+                tmpl.name as template_name
             FROM tasks t
             LEFT JOIN users u ON t.assigned_to = u.id
             LEFT JOIN users c ON t.created_by = c.id
             LEFT JOIN departments d ON t.department_id = d.id
+            LEFT JOIN task_templates tmpl ON t.template_id = tmpl.id
             WHERE t.id = $1 AND t.deleted_at IS NULL
         `, [id]);
         
@@ -79,7 +108,13 @@ router.get('/tasks/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Задача не найдена' });
         }
         
-        res.json({ task: result.rows[0] });
+        const task = result.rows[0];
+        // Убедимся, что custom_fields всегда объект
+        if (!task.custom_fields) {
+            task.custom_fields = {};
+        }
+        
+        res.json({ task });
     } catch (error) {
         console.error('Get task error:', error);
         res.status(500).json({ error: error.message });
@@ -90,8 +125,9 @@ router.post('/tasks', authMiddleware, async (req, res) => {
     try {
         const { 
             title, description, assignedTo, departmentId, 
-            startDate, dueDate, priority: receivedPriority,  // ← переименовали
-            tags, notifyAssignee, notifyOnDeadline 
+            startDate, dueDate, priority, tags,
+            customFields,  // ← добавляем
+            templateId     // ← добавляем
         } = req.body;
         const userId = req.userId;
         
@@ -99,22 +135,25 @@ router.post('/tasks', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Укажите название задачи' });
         }
         
-        // Приоритет: убедимся, что значение корректное
-        const validPriority = ['low', 'medium', 'high', 'critical'].includes(receivedPriority) 
-            ? receivedPriority 
-            : 'medium';
+        const validPriority = ['low', 'medium', 'high', 'critical'].includes(priority) ? priority : 'medium';
         
-        console.log('📥 Creating task:', { title, priority: validPriority, dueDate, assignedTo });
+        // Преобразуем customFields в JSON
+        const customFieldsJson = customFields || {};
         
         const result = await query(`
-            INSERT INTO tasks (title, description, created_by, assigned_to, department_id, 
-                               start_date, due_date, priority, tags, status, progress)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 0)
+            INSERT INTO tasks (
+                title, description, created_by, assigned_to, department_id, 
+                start_date, due_date, priority, tags, status, progress,
+                custom_fields, template_id
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 0, $10, $11)
             RETURNING *
-        `, [title.trim(), description, userId, assignedTo || null, departmentId || null, 
-            startDate || null, dueDate || null, validPriority, tags || []]);
+        `, [
+            title.trim(), description, userId, assignedTo || null, departmentId || null,
+            startDate || null, dueDate || null, validPriority, tags || [],
+            customFieldsJson, templateId || null
+        ]);
         
-        console.log('✅ Task created:', result.rows[0].id);
         res.status(201).json({ task: result.rows[0] });
     } catch (error) {
         console.error('Create task error:', error);
@@ -125,7 +164,11 @@ router.post('/tasks', authMiddleware, async (req, res) => {
 router.put('/tasks/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, assignedTo, departmentId, startDate, dueDate, priority, status, progress, tags } = req.body;
+        const { 
+            title, description, assignedTo, departmentId, 
+            startDate, dueDate, priority, status, progress, tags,
+            customFields  // ← добавляем
+        } = req.body;
         
         const updates = [];
         const values = [];
@@ -141,6 +184,10 @@ router.put('/tasks/:id', authMiddleware, async (req, res) => {
         if (status !== undefined) { updates.push(`status = $${idx++}`); values.push(status); }
         if (progress !== undefined) { updates.push(`progress = $${idx++}`); values.push(progress); }
         if (tags !== undefined) { updates.push(`tags = $${idx++}`); values.push(tags); }
+        if (customFields !== undefined) { 
+            updates.push(`custom_fields = $${idx++}`); 
+            values.push(customFields); 
+        }
         
         if (status === 'completed') {
             updates.push(`completed_at = CURRENT_TIMESTAMP`);
@@ -188,6 +235,7 @@ router.delete('/tasks/:id', authMiddleware, async (req, res) => {
 });
 
 // Добавление комментария
+// Добавление комментария к задаче
 router.post('/tasks/:id/comments', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
@@ -198,14 +246,65 @@ router.post('/tasks/:id/comments', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Введите комментарий' });
         }
         
-        const result = await query(`
-            INSERT INTO task_comments (task_id, user_id, content)
-            VALUES ($1, $2, $3) RETURNING *
-        `, [id, userId, content.trim()]);
+        // Проверяем, что задача существует
+        const taskCheck = await query(
+            `SELECT id FROM tasks WHERE id = $1 AND deleted_at IS NULL`,
+            [id]
+        );
         
-        res.status(201).json({ comment: result.rows[0] });
+        if (taskCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Задача не найдена' });
+        }
+        
+        const result = await query(
+            `INSERT INTO task_comments (task_id, user_id, content)
+             VALUES ($1, $2, $3)
+             RETURNING *`,
+            [id, userId, content.trim()]
+        );
+        
+        // Получаем данные пользователя для ответа
+        const userResult = await query(
+            `SELECT surname, name FROM users WHERE id = $1`,
+            [userId]
+        );
+        
+        const comment = {
+            ...result.rows[0],
+            user_name: userResult.rows[0]?.surname 
+                ? `${userResult.rows[0].surname} ${userResult.rows[0].name}`.trim() 
+                : 'Пользователь'
+        };
+        
+        res.status(201).json({ comment });
     } catch (error) {
         console.error('Add comment error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Получение комментариев к задаче
+router.get('/tasks/:id/comments', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(
+            `SELECT tc.*, u.surname, u.name 
+             FROM task_comments tc
+             LEFT JOIN users u ON tc.user_id = u.id
+             WHERE tc.task_id = $1
+             ORDER BY tc.created_at ASC`,
+            [id]
+        );
+        
+        const comments = result.rows.map(row => ({
+            ...row,
+            user_name: row.surname ? `${row.surname} ${row.name}`.trim() : 'Пользователь'
+        }));
+        
+        res.json({ comments });
+    } catch (error) {
+        console.error('Get comments error:', error);
         res.status(500).json({ error: error.message });
     }
 });

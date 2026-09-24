@@ -1984,3 +1984,152 @@
     font-weight: bold;
     margin-left: 8px;
 }
+
+
+
+/* =====================================================
+   УВЕДОМЛЕНИЯ В АДМИН-ПАНЕЛИ
+   ===================================================== */
+
+.notifications-admin-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--c_surf);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+}
+
+.admin-filter-btn {
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    transition: all 0.2s;
+}
+
+.admin-filter-btn:hover {
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+}
+
+.admin-filter-btn.active {
+    background: var(--c_acc);
+    color: white;
+}
+
+/* Селектор типа рассылки */
+.recipient-type-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--c_bg);
+    border-radius: var(--border-radius-sm);
+}
+
+.recipient-type-selector .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+}
+
+.recipient-type-selector .radio-option:hover {
+    background: var(--c_acchalf);
+}
+
+.recipient-type-selector input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Категории в таблице */
+.notif-category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.notif-category-badge.admin { background: #fee2e2; color: #dc2626; }
+.notif-category-badge.task { background: #dbeafe; color: #2563eb; }
+.notif-category-badge.document { background: #ede9fe; color: #7c3aed; }
+.notif-category-badge.deadline { background: #fef3c7; color: #d97706; }
+.notif-category-badge.message { background: #d1fae5; color: #059669; }
+.notif-category-badge.workflow { background: #cffafe; color: #0891b2; }
+.notif-category-badge.mention { background: #fce7f3; color: #db2777; }
+.notif-category-badge.reminder { background: #f3e8ff; color: #9333ea; }
+.notif-category-badge.system { background: #e5e7eb; color: #4b5563; }
+
+/* Приоритеты */
+.notif-priority-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.notif-priority-badge.low { background: #dbeafe; color: #2563eb; }
+.notif-priority-badge.normal { background: #e5e7eb; color: #4b5563; }
+.notif-priority-badge.high { background: #fef3c7; color: #d97706; }
+.notif-priority-badge.critical { background: #fee2e2; color: #dc2626; }
+
+/* Статус прочтения */
+.notif-read-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.notif-read-status.read { color: #10b981; }
+.notif-read-status.unread { color: #f59e0b; }
+
+/* Предпросмотр уведомления */
+#notificationPreviewContent .notification-preview-card {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: var(--c_bg);
+    border-radius: var(--border-radius-md);
+    border-left: 4px solid var(--c_acc);
+}
+
+#notificationPreviewContent .notification-preview-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+#notificationPreviewContent .notification-preview-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    margin-bottom: 6px;
+}
+
+#notificationPreviewContent .notification-preview-text {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+#notificationPreviewContent .notification-preview-meta {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+}

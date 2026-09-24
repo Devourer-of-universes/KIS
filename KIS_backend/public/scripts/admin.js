@@ -253,6 +253,27 @@ function initEventListeners() {
     // Кнопки сворачивания/разворачивания
     document.getElementById('collapseAllBtn')?.addEventListener('click', collapseAllNodes);
     document.getElementById('expandAllBtn')?.addEventListener('click', expandAllNodes);
+    const btn_notifications = document.querySelector('#nav-btn-notifications');
+    
+    if (btn_notifications) {
+        btn_notifications.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('🔔 Notifications tab clicked');
+            openAdminSection('notifications-section');
+            setActiveNavButton(btn_notifications);
+            loadAdminNotifications(1);
+        });
+    } else {
+        console.warn('⚠️ Кнопка #nav-btn-notifications не найдена');
+    }
+    
+    // Кнопка создания уведомления
+    const createNotifBtn = document.getElementById('createNotificationBtn');
+    if (createNotifBtn) {
+        createNotifBtn.addEventListener('click', () => {
+            openCreateNotificationModal();
+        });
+    }
 }
 
 // Функция открытия секции
@@ -3878,27 +3899,6 @@ function initSystemSettingsHandlers() {
     if (resetBtn) resetBtn.onclick = resetSystemSettings;
     if (backupBtn) backupBtn.onclick = createBackupNow;
 }
-// Инициализация головного подразделения при первом запуске
-async function initRootDepartment() {
-    // Проверяем, есть ли уже подразделения
-    const { query } = require('../config/database');
-
-    const check = await query(`SELECT COUNT(*) FROM departments`);
-    if (parseInt(check.rows[0].count) === 0) {
-        // Получаем название организации из настроек
-        const orgNameResult = await query(
-            `SELECT setting_value FROM system_settings WHERE setting_key = 'org_name'`
-        );
-        const orgName = orgNameResult.rows[0]?.setting_value || 'Головной офис';
-        
-        // Создаём корневое подразделение
-        await query(
-            `INSERT INTO departments (name, parent_department_id) VALUES ($1, NULL)`,
-            [orgName]
-        );
-        console.log('✅ Создано головное подразделение:', orgName);
-    }
-}
 function initSettingsButtons() {
     // Кнопка сохранения настроек
     const saveSettingsBtn = document.getElementById('saveSystemSettings');
@@ -4180,7 +4180,7 @@ async function loadStats() {
     }
 }
 // Вызываем при старте сервера (после подключения к БД)
-initRootDepartment().catch(console.error);
+
 
 
 
@@ -4498,3 +4498,470 @@ function applyPermissionsToUI() {
     
     console.log('✅ Permissions applied to UI');
 }
+// =====================================================
+// УПРАВЛЕНИЕ УВЕДОМЛЕНИЯМИ В АДМИН-ПАНЕЛИ
+// =====================================================
+
+let adminNotificationsData = [];
+let adminNotificationsPage = 1;
+let adminNotificationsFilter = 'all';
+let adminNotificationsSearch = '';
+const adminNotificationsPerPage = 20;
+let selectedNotificationUsers = [];
+
+const NOTIF_ICONS = {
+    admin: '📢',
+    task: '📋',
+    document: '📄',
+    deadline: '⏰',
+    message: '💬',
+    workflow: '🔄',
+    mention: '@',
+    reminder: '🔔',
+    system: '⚙️'
+};
+
+const NOTIF_CATEGORY_LABELS = {
+    admin: 'Админ',
+    task: 'Задача',
+    document: 'Документ',
+    deadline: 'Дедлайн',
+    message: 'Сообщение',
+    workflow: 'Процесс',
+    mention: 'Упоминание',
+    reminder: 'Напоминание',
+    system: 'Система'
+};
+
+// ----- ЗАГРУЗКА УВЕДОМЛЕНИЙ -----
+async function loadAdminNotifications(page = 1) {
+    adminNotificationsPage = page;
+    const tbody = document.getElementById('adminNotificationsBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '<tr><td colspan="9" class="loading-row">Загрузка...</td></tr>';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const offset = (page - 1) * adminNotificationsPerPage;
+        
+        let url = `/api/admin/notifications?limit=${adminNotificationsPerPage}&offset=${offset}`;
+        if (adminNotificationsFilter !== 'all') {
+            url += `&category=${adminNotificationsFilter}`;
+        }
+        if (adminNotificationsSearch) {
+            url += `&search=${encodeURIComponent(adminNotificationsSearch)}`;
+        }
+        
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            adminNotificationsData = data.notifications || [];
+            renderAdminNotifications(data.notifications || []);
+            renderNotifPagination(data.total || 0);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="9" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading admin notifications:', error);
+        tbody.innerHTML = '<tr><td colspan="9" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+// ----- РЕНДЕР ТАБЛИЦЫ -----
+function renderAdminNotifications(notifications) {
+    const tbody = document.getElementById('adminNotificationsBody');
+    if (!tbody) return;
+    
+    if (notifications.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="loading-row">📭 Нет уведомлений</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = notifications.map(n => {
+        const icon = NOTIF_ICONS[n.category] || '🔔';
+        const categoryLabel = NOTIF_CATEGORY_LABELS[n.category] || n.category;
+        const recipient = n.user_name || n.recipient_name || 'Неизвестно';
+        const sender = n.sender_name || 'Система';
+        const date = n.created_at ? new Date(n.created_at).toLocaleString('ru-RU') : '—';
+        
+        return `
+            <tr>
+                <td>${n.id}</td>
+                <td>
+                    <span class="notif-category-badge ${n.category}">
+                        ${icon} ${categoryLabel}
+                    </span>
+                </td>
+                <td>
+                    <strong>${escapeHtml(n.title || '—')}</strong>
+                    <div style="font-size: 11px; color: var(--c_surf_txt); margin-top: 2px;">
+                        ${escapeHtml((n.content || '').substring(0, 50))}${(n.content || '').length > 50 ? '...' : ''}
+                    </div>
+                </td>
+                <td>${escapeHtml(recipient)}</td>
+                <td>${escapeHtml(sender)}</td>
+                <td>
+                    <span class="notif-priority-badge ${n.priority || 'normal'}">
+                        ${getPriorityLabel(n.priority)}
+                    </span>
+                </td>
+                <td>
+                    <span class="notif-read-status ${n.is_read ? 'read' : 'unread'}">
+                        ${n.is_read ? '✓ Прочитано' : '● Не прочитано'}
+                    </span>
+                </td>
+                <td>${date}</td>
+                <td>
+                    <button class="btn-icon buttonbase" onclick="deleteAdminNotification(${n.id})" title="Удалить" style="color: #dc3545;">🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getPriorityLabel(priority) {
+    const labels = {
+        low: '🟢 Низкий',
+        normal: '🔵 Обычный',
+        high: '🟠 Высокий',
+        critical: '🔴 Критический'
+    };
+    return labels[priority] || 'Обычный';
+}
+
+// ----- ПАГИНАЦИЯ -----
+function renderNotifPagination(total) {
+    const totalPages = Math.ceil(total / adminNotificationsPerPage);
+    const container = document.getElementById('notifPaginationButtons');
+    if (!container) return;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    if (adminNotificationsPage > 1) {
+        html += `<button class="pagination-btn" onclick="loadAdminNotifications(${adminNotificationsPage - 1})">← Назад</button>`;
+    }
+    
+    const startPage = Math.max(1, adminNotificationsPage - 2);
+    const endPage = Math.min(totalPages, adminNotificationsPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === adminNotificationsPage ? 'active' : ''}" 
+                 onclick="loadAdminNotifications(${i})">${i}</button>`;
+    }
+    
+    if (adminNotificationsPage < totalPages) {
+        html += `<button class="pagination-btn" onclick="loadAdminNotifications(${adminNotificationsPage + 1})">Вперёд →</button>`;
+    }
+    
+    container.innerHTML = html;
+    
+    const start = (adminNotificationsPage - 1) * adminNotificationsPerPage + 1;
+    const end = Math.min(adminNotificationsPage * adminNotificationsPerPage, total);
+    document.getElementById('notifShowingFrom').textContent = start;
+    document.getElementById('notifShowingTo').textContent = end;
+    document.getElementById('notifTotalCount').textContent = total;
+}
+
+// ----- ФИЛЬТРЫ -----
+function filterAdminNotifications(filter) {
+    adminNotificationsFilter = filter;
+    
+    document.querySelectorAll('.admin-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    
+    loadAdminNotifications(1);
+}
+
+function filterAdminNotificationsBySearch() {
+    const input = document.getElementById('adminNotificationsSearch');
+    adminNotificationsSearch = input ? input.value.trim() : '';
+    loadAdminNotifications(1);
+}
+
+// ----- СОЗДАНИЕ УВЕДОМЛЕНИЯ -----
+function openCreateNotificationModal() {
+    // Очищаем форму
+    document.getElementById('createNotificationForm').reset();
+    document.getElementById('notifUserIds').value = '';
+    document.getElementById('notifUsersTags').innerHTML = '';
+    document.getElementById('notifUsersDisplay').value = '';
+    selectedNotificationUsers = [];
+    
+    // Показываем поля по умолчанию
+    toggleRecipientType('specific');
+    toggleLinkIdField();
+    
+    // Загружаем отделы
+    loadDepartmentsForNotification();
+    
+    openModal('createNotificationModal');
+}
+
+// Переключение типа получателей
+function toggleRecipientType(type) {
+    const deptGroup = document.getElementById('recipientDepartmentGroup');
+    const usersGroup = document.getElementById('recipientUsersGroup');
+    
+    if (type === 'department') {
+        deptGroup.style.display = 'block';
+        usersGroup.style.display = 'none';
+    } else if (type === 'specific') {
+        deptGroup.style.display = 'none';
+        usersGroup.style.display = 'block';
+    } else {
+        deptGroup.style.display = 'none';
+        usersGroup.style.display = 'none';
+    }
+}
+
+// Загрузка отделов
+async function loadDepartmentsForNotification() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/departments/list', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const select = document.getElementById('notifDepartment');
+            select.innerHTML = '<option value="">— Выберите отдел —</option>' + 
+                (data.departments || []).map(d => 
+                    `<option value="${d.id}">${escapeHtml(d.name)}</option>`
+                ).join('');
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+    }
+}
+
+// Открытие выбора пользователей
+function openUserSelectorForNotification() {
+    openUserSelector({
+        mode: 'multiple',
+        preselectedIds: selectedNotificationUsers,
+        title: 'Выберите получателей',
+        onConfirm: (users, userIds) => {
+            selectedNotificationUsers = userIds;
+            
+            document.getElementById('notifUserIds').value = userIds.join(',');
+            document.getElementById('notifUsersDisplay').value = 
+                users.map(u => `${u.surname || ''} ${u.name || ''}`.trim()).join(', ');
+            
+            // Обновляем теги
+            const tagsContainer = document.getElementById('notifUsersTags');
+            tagsContainer.innerHTML = users.map(u => `
+                <span class="task-tag">
+                    ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
+                    <button class="tag-remove" onclick="removeNotifUser(${u.id})">✕</button>
+                </span>
+            `).join('');
+        }
+    });
+}
+
+function removeNotifUser(userId) {
+    selectedNotificationUsers = selectedNotificationUsers.filter(id => id !== userId);
+    document.getElementById('notifUserIds').value = selectedNotificationUsers.join(',');
+    
+    // Обновляем отображение
+    if (selectedNotificationUsers.length === 0) {
+        document.getElementById('notifUsersDisplay').value = '';
+        document.getElementById('notifUsersTags').innerHTML = '';
+    }
+}
+
+// Переключение поля ID объекта
+function toggleLinkIdField() {
+    const linkType = document.getElementById('notifLinkType').value;
+    const group = document.getElementById('linkIdGroup');
+    group.style.display = linkType ? 'block' : 'none';
+}
+
+// Предпросмотр
+function previewNotification() {
+    const category = document.getElementById('notifCategory').value;
+    const priority = document.getElementById('notifPriority').value;
+    const title = document.getElementById('notifTitle').value || 'Заголовок';
+    const content = document.getElementById('notifContent').value || 'Текст уведомления';
+    
+    const icon = NOTIF_ICONS[category] || '🔔';
+    const categoryLabel = NOTIF_CATEGORY_LABELS[category] || category;
+    
+    document.getElementById('notificationPreviewContent').innerHTML = `
+        <div class="notification-preview-card" style="border-left-color: ${getCategoryColor(category)}">
+            <div class="notification-preview-icon">${icon}</div>
+            <div style="flex: 1;">
+                <div class="notification-preview-title">${escapeHtml(title)}</div>
+                <div class="notification-preview-text">${escapeHtml(content)}</div>
+                <div class="notification-preview-meta">
+                    ${categoryLabel} • ${getPriorityLabel(priority)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    openModal('previewNotificationModal');
+}
+
+function getCategoryColor(category) {
+    const colors = {
+        admin: '#ef4444',
+        task: '#3b82f6',
+        document: '#8b5cf6',
+        deadline: '#f59e0b',
+        message: '#10b981',
+        workflow: '#06b6d4',
+        mention: '#ec4899',
+        reminder: '#a855f7',
+        system: '#6c757d'
+    };
+    return colors[category] || '#5194ff';
+}
+
+// ----- ОТПРАВКА УВЕДОМЛЕНИЯ -----
+document.getElementById('createNotificationForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const category = document.getElementById('notifCategory').value;
+    const priority = document.getElementById('notifPriority').value;
+    const title = document.getElementById('notifTitle').value.trim();
+    const content = document.getElementById('notifContent').value.trim();
+    const linkType = document.getElementById('notifLinkType').value || null;
+    const linkId = document.getElementById('notifLinkId').value ? parseInt(document.getElementById('notifLinkId').value) : null;
+    const expiresAt = document.getElementById('notifExpiresAt').value || null;
+    
+    const recipientType = document.querySelector('input[name="recipientType"]:checked')?.value;
+    
+    // Валидация
+    if (!title) {
+        showToast('Введите заголовок', 'error');
+        return;
+    }
+    
+    if (!content) {
+        showToast('Введите текст уведомления', 'error');
+        return;
+    }
+    
+    // Определяем получателей
+    const data = {
+        category,
+        priority,
+        title,
+        content,
+        linkType,
+        linkId,
+        expiresAt
+    };
+    
+    if (recipientType === 'all') {
+        data.isGlobal = true;
+    } else if (recipientType === 'department') {
+        const deptId = document.getElementById('notifDepartment').value;
+        if (!deptId) {
+            showToast('Выберите отдел', 'error');
+            return;
+        }
+        data.departmentId = parseInt(deptId);
+    } else if (recipientType === 'specific') {
+        if (selectedNotificationUsers.length === 0) {
+            showToast('Выберите получателей', 'error');
+            return;
+        }
+        data.userIds = selectedNotificationUsers;
+    }
+    
+    // Отправляем
+    const sendBtn = document.getElementById('sendNotificationBtn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = '📤 Отправка...';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/notifications/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showToast(`✅ Уведомление отправлено ${result.count} получателям`, 'success');
+            closeModal('createNotificationModal');
+            loadAdminNotifications(1);
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Ошибка отправки', 'error');
+        }
+    } catch (error) {
+        console.error('Send notification error:', error);
+        showToast('Ошибка сервера', 'error');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '📢 Отправить';
+    }
+});
+
+// ----- УДАЛЕНИЕ -----
+async function deleteAdminNotification(notifId) {
+    if (!confirm('Удалить это уведомление?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/admin/notifications/${notifId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            showToast('Уведомление удалено', 'success');
+            loadAdminNotifications(adminNotificationsPage);
+        }
+    } catch (error) {
+        console.error('Delete notification error:', error);
+        showToast('Ошибка удаления', 'error');
+    }
+}
+
+// ----- ИНИЦИАЛИЗАЦИЯ -----
+function initAdminNotifications() {
+    const btn = document.getElementById('nav-btn-notifications');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            openAdminSection('notifications-section');
+            setActiveNavButton(btn);
+            loadAdminNotifications(1);
+        });
+    }
+    
+    const createBtn = document.getElementById('createNotificationBtn');
+    if (createBtn) {
+        createBtn.addEventListener('click', openCreateNotificationModal);
+    }
+}
+
+// Экспорт
+window.openCreateNotificationModal = openCreateNotificationModal;
+window.toggleRecipientType = toggleRecipientType;
+window.openUserSelectorForNotification = openUserSelectorForNotification;
+window.removeNotifUser = removeNotifUser;
+window.toggleLinkIdField = toggleLinkIdField;
+window.previewNotification = previewNotification;
+window.filterAdminNotifications = filterAdminNotifications;
+window.filterAdminNotificationsBySearch = filterAdminNotificationsBySearch;
+window.loadAdminNotifications = loadAdminNotifications;
+window.deleteAdminNotification = deleteAdminNotification;

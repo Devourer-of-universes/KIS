@@ -11,75 +11,68 @@
 </head>
 <body>
     <div class="left-menu">
-            <!-- Логотип/бренд сверху -->
-            <div class="menu-logo">
-                <img src="../materials/logo.svg" alt="logo" class="logo-img">
-                <span class="logo-text">КИС</span>
-                <button class="toggle-btn" id="menuToggleBtn">
-                    <img src="../materials/menu_stay.png" alt="toggle">
+        <div class="menu-logo">
+            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <span class="logo-text">КИС</span>
+            <button class="toggle-btn" id="menuToggleBtn">
+                <img src="../materials/menu_stay.png" alt="toggle">
+            </button>
+        </div>
+
+        <nav class="menu-nav">
+            <a href="../html/base.html" class="menu-item" data-page="base">
+                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
+                <span>Рабочее пространство</span>
+            </a>
+            <a href="../html/chat.html" class="menu-item" data-page="chat">
+                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <span>Чаты</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+        </nav>
+
+        <div class="menu-footer">
+            <div class="theme-switcher">
+                <button class="theme-toggle" id="themeToggle">
+                    <span class="theme-icon">☀️</span>
                 </button>
             </div>
-
-            <!-- Основные пункты навигации -->
-            <nav class="menu-nav">
-                <a href="../html/base.html" class="menu-item" data-page="base">
-                    <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
-                    <span>Рабочее пространство</span>
-                </a>
-                
-                <a href="../html/chat.html" class="menu-item" data-page="chat">
-                    <img src="../materials/icons8-чат-100.png" alt="chats">
-                    <span>Чаты</span>
-                    <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
-                </a>
-                
-                <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
-                    <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
-                    <span>Администрирование</span>
-                </a>
-            </nav>
-
-            <!-- Нижняя секция с аватаром -->
-            <div class="menu-footer">
-                <!-- Переключатель темы -->
-                <div class="theme-switcher">
-                    <button class="theme-toggle" id="themeToggle">
-                        <span class="theme-icon">☀️</span>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatarBtn">
+                    <img src="../materials/avatar_for_profile.png" alt="avatar">
+                </div>
+                <div class="user-info" id="userInfo">
+                    <span class="user-name" id="userName">Загрузка...</span>
+                    <span class="user-role" id="userRole"></span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="../html/profile.html" class="dropdown-header">
+                        <div class="dropdown-avatar">
+                            <img src="../materials/avatar_for_profile.png" alt="avatar" id="dropdownAvatar">
+                        </div>
+                        <div class="dropdown-info">
+                            <span class="dropdown-name" id="dropdownName">Загрузка...</span>
+                            <span class="dropdown-role" id="dropdownRole"></span>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="../html/settings.html" class="dropdown-item">
+                        <img src="../materials/icons8-настройки-96.png" alt="settings">
+                        <span>Настройки</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
+                        <img src="../materials/icons8-выход-48.png" alt="logout">
+                        <span>Выйти</span>
                     </button>
                 </div>
-                
-                <!-- Аватар с выпадающим меню -->
-                <div class="user-menu" id="userMenu">
-                    <div class="user-avatar" id="userAvatarBtn">
-                        <img src="../materials/avatar_for_profile.png" alt="avatar">
-                    </div>
-                    <div class="user-info" id="userInfo">
-                        <span class="user-name" id="userName">Загрузка...</span>
-                        <span class="user-role" id="userRole"></span>
-                    </div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="dropdown-header">
-                            <div class="dropdown-avatar">
-                                <img src="../materials/avatar_for_profile.png" alt="avatar" id="dropdownAvatar">
-                            </div>
-                            <div class="dropdown-info">
-                                <span class="dropdown-name" id="dropdownName">Загрузка...</span>
-                                <span class="dropdown-role" id="dropdownRole"></span>
-                            </div>
-                        </div>
-                        <div class="dropdown-divider"></div>
-                        <a href="../html/settings.html" class="dropdown-item">
-                            <img style="filter: invert();" src="../materials/icons8-настройки-96.png" alt="settings">
-                            <span>Настройки</span>
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
-                            <img src="../materials/icons8-выход-48.png" alt="logout">
-                            <span>Выйти</span>
-                        </button>
-                    </div>
-                </div>
             </div>
+        </div>
     </div>
     <div class="base-container">
         <header class="base-header">
@@ -160,13 +153,33 @@
             <div class="base-content">
                 <section class="base-section" id="base-section-dashboard">
                     <div class="dashboard-grid">
-                        
+
                         <!-- Левая колонка (2/3) -->
                         <div class="dashboard-col-left">
+                            <div class="dashboard-card profile-card">
+                                <div class="profile-header">
+                                    <div class="profile-avatar-section">
+                                        <div class="profile-avatar-large">
+                                            <img src="../materials/avatar_for_profile.png" alt="avatar" id="profileAvatar">
+                                            <div class="profile-avatar-status" id="profileStatus"></div>
+                                        </div>
+                                        <div class="profile-name-section">
+                                            <h1 id="profileFullName">Загрузка...</h1>
+                                            <div class="profile-badges">
+                                                <span class="badge role-badge" id="profileRole">Пользователь</span>
+                                                <span class="badge status-badge status-active" id="profileStatusBadge">🟢 Активен</span>
+                                            </div>
+                                            <p class="profile-position" id="profilePosition">Должность не указана</p>
+                                            <p class="profile-department" id="profileDepartment">Отдел не указан</p>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
                             <!-- Доска заметок -->
                             <div class="dashboard-card notes-board">
                                 <div class="card-header">
-                                    <h3>📌 Доска заметок</h3>
+                                    <h3> Доска заметок</h3>
                                     <div>
                                         <button class="buttonbase btn-sm" onclick="openNoteModal('personal')">+ Моя</button>
                                         <button class="buttonbase btn-sm" onclick="openNoteModal('group')">+ Общая</button>
@@ -175,7 +188,7 @@
                                 <div class="card-body board-container">
                                     <div class="board-column">
                                         <div class="board-column-header">
-                                            <h4>📌 Мои заметки</h4>
+                                            <h4> Мои заметки</h4>
                                             <span class="column-count" id="personalNotesCount">0</span>
                                         </div>
                                         <div class="notes-list" id="personalNotesList">
@@ -184,7 +197,7 @@
                                     </div>
                                     <div class="board-column">
                                         <div class="board-column-header">
-                                            <h4>👥 Заметки отдела</h4>
+                                            <h4> Заметки отдела</h4>
                                             <span class="column-count" id="groupNotesCount">0</span>
                                         </div>
                                         <div class="notes-list" id="groupNotesList">
@@ -193,27 +206,33 @@
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: flex;flex-direction: row;">
-                                <!-- Уведомления (после доски) -->
-                                <div class="dashboard-card notifications-card">
-                                    <div class="card-header">
-                                        <h3>🔔 Уведомления</h3>
-                                        <button class="card-mark-read" onclick="markAllNotificationsRead()">✓ Все</button>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="notifications-list" id="notificationsList">
-                                            <div class="empty-notifications">Нет уведомлений</div>
-                                        </div>
-                                    </div>
+                            <div class="dashboard-card department-card">
+                                <div class="card-header">
+                                    <h3>🏢 Мой отдел</h3>
+                                    <button class="card-expand" onclick="openFullMyDepartment()">→</button>
                                 </div>
-                                <div class="dashboard-card tasks-card">
-                                    <div class="card-header">
-                                        <h3>✅ Активные задачи</h3>
-                                        <button class="card-expand" onclick="openFullCalendar()">📊</button>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="dashboard-tasks-list" id="dashboardTasksList">
-                                            <div class="empty-tasks">Нет активных задач</div>
+                                <div class="card-body">
+                                    <div class="department-preview">
+                                        <div class="department-info">
+                                            <div class="department-name" id="departmentName">Загрузка...</div>
+                                            <div class="department-meta">
+                                                <span id="departmentEmployeesCount">0 сотрудников</span>
+                                                <span id="departmentManager">Руководитель: —</span>
+                                            </div>
+                                        </div>
+                                        <div class="department-stats">
+                                            <div class="department-stat">
+                                                <span class="dept-stat-value" id="deptStatsActive">0</span>
+                                                <span class="dept-stat-label">Активных задач</span>
+                                            </div>
+                                            <div class="department-stat">
+                                                <span class="dept-stat-value" id="deptStatsOverdue">0</span>
+                                                <span class="dept-stat-label">Просрочено</span>
+                                            </div>
+                                            <div class="department-stat">
+                                                <span class="dept-stat-value" id="deptStatsMembers">0</span>
+                                                <span class="dept-stat-label">Сотрудников</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -223,7 +242,32 @@
                         
                         <!-- Правая колонка (1/3) -->
                         <div class="dashboard-col-right">
-                            <!-- Календарь -->
+                            <div class="dashboard-card notifications-card">
+                                <div class="card-header">
+                                    <h3>🔔 Уведомления</h3>
+                                    <div class="notifications-actions">
+                                        <button class="card-mark-read" onclick="markAllNotificationsRead()">✓ Все</button>
+                                        <button class="notifications-filter-btn" onclick="toggleNotificationsFilter()">⚙️</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Фильтр по категориям (скрыт по умолчанию) -->
+                                <div class="notifications-filter" id="notificationsFilter" style="display: none;">
+                                    <button class="filter-chip active" data-category="all" onclick="filterNotifications('all')">Все</button>
+                                    <button class="filter-chip" data-category="admin" onclick="filterNotifications('admin')">📢 Админ</button>
+                                    <button class="filter-chip" data-category="task" onclick="filterNotifications('task')">📋 Задачи</button>
+                                    <button class="filter-chip" data-category="document" onclick="filterNotifications('document')">📄 Документы</button>
+                                    <button class="filter-chip" data-category="deadline" onclick="filterNotifications('deadline')">⏰ Дедлайны</button>
+                                    <button class="filter-chip" data-category="message" onclick="filterNotifications('message')">💬 Чаты</button>
+                                </div>
+                                
+                                <div class="card-body">
+                                    <div class="notifications-list" id="notificationsList">
+                                        <div class="empty-notifications">Нет уведомлений</div>
+                                    </div>
+                                </div>
+                            </div>
+                                                        <!-- Календарь -->
                             <div class="dashboard-card calendar-card">
                                 <div class="card-header">
                                     <h3>📅 Календарь</h3>
@@ -233,33 +277,88 @@
                                     <div class="calendar-wrapper" id="miniCalendar"></div>
                                 </div>
                             </div>
-                            
-                            <!-- Статистика -->
-                            <div class="dashboard-card stats-card">
+                            <div class="dashboard-card tasks-card">
                                 <div class="card-header">
-                                    <h3>📊 Статистика</h3>
+                                    <h3>✅ Активные задачи</h3>
+                                    <button class="card-expand" onclick="openFullCalendar()">📊</button>
                                 </div>
                                 <div class="card-body">
-                                    <div class="stats-grid" id="dashboardStats">
-                                        <div class="stat-item">
-                                            <span class="stat-value" id="statsTasks">0</span>
-                                            <span class="stat-label">Задач в работе</span>
+                                    <div class="dashboard-tasks-list" id="dashboardTasksList">
+                                        <div class="empty-tasks">Нет активных задач</div>
+                                    </div>
+                                </div>
+                            </div>                            
+                            <!-- Статистика (обновлённая) -->
+                            <div class="dashboard-card stat-dashcard">
+                                <div class="card-header">
+                                    <h3>📊 Моя статистика</h3>
+                                    <span class="stat-period">За месяц</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="stat-blocks">
+                                        <!-- Прогресс-блок -->
+                                        <div class="stat-block stat-block-progress">
+                                            <div class="stat-block-icon">📈</div>
+                                            <div class="stat-block-content">
+                                                <span class="stat-block-label">Прогресс месяца</span>
+                                                <div class="stat-block-bar">
+                                                    <div class="stat-block-bar-fill" id="monthProgressBar" style="width: 0%;"></div>
+                                                </div>
+                                                <span class="stat-block-value" id="monthProgressValue">0%</span>
+                                            </div>
                                         </div>
-                                        <div class="stat-item">
-                                            <span class="stat-value" id="statsDocs">0</span>
-                                            <span class="stat-label">Документов</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-value" id="statsProcesses">0</span>
-                                            <span class="stat-label">Активных процессов</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-value" id="statsUnread">0</span>
-                                            <span class="stat-label">Непрочитанных</span>
+
+                                        <!-- Сетка показателей -->
+                                        <div class="stat-grid">
+                                            <div class="stat-item stat-item-tasks">
+                                                <div class="stat-item-icon">✅</div>
+                                                <div class="stat-item-info">
+                                                    <span class="stat-value" id="statsTasks">0</span>
+                                                    <span class="stat-label">Задач в работе</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item stat-item-completed">
+                                                <div class="stat-item-icon">🎯</div>
+                                                <div class="stat-item-info">
+                                                    <span class="stat-value" id="statsCompleted">0</span>
+                                                    <span class="stat-label">Выполнено</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item stat-item-docs">
+                                                <div class="stat-item-icon">📄</div>
+                                                <div class="stat-item-info">
+                                                    <span class="stat-value" id="statsDocs">0</span>
+                                                    <span class="stat-label">Документов</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item stat-item-processes">
+                                                <div class="stat-item-icon">🔄</div>
+                                                <div class="stat-item-info">
+                                                    <span class="stat-value" id="statsProcesses">0</span>
+                                                    <span class="stat-label">Процессов</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item stat-item-chats">
+                                                <div class="stat-item-icon">💬</div>
+                                                <div class="stat-item-info">
+                                                    <span class="stat-value" id="statsChats">0</span>
+                                                    <span class="stat-label">Чатов</span>
+                                                </div>
+                                            </div>
+                                            <div class="stat-item stat-item-unread">
+                                                <div class="stat-item-icon">🔔</div>
+                                                <div class="stat-item-info">
+                                                    <span class="stat-value" id="statsUnread">0</span>
+                                                    <span class="stat-label">Непрочитанных</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+
+
                         </div>
                         
                     </div>
@@ -408,60 +507,110 @@
                         </table>
                     </div>
                 </section>
+                <!-- Недавние задачи -->
                 <section class="base-section" id="base-section-task-last">
                     <div class="base-sec-tl-container">
                         <div class="section-header">
-                            <h2>Последние задачи</h2>
-                            <button class="sec-btn-close">
-                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
-                            </button>
+                            <h2>📋 Недавние задачи</h2>
+                            <div class="table-controls">
+                                <div class="search-box">
+                                    <input type="text" id="recentTasksSearch" placeholder="🔍 Поиск..." class="search-input" onkeyup="filterTasks('recent')">
+                                </div>
+                                <button class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
                         </div>
-                        <table>
-                            <tr>
-                                <th>№</th>
-                                <th>Имя</th>
-                                <th>Последнее использование</th>
-                            </tr>
-                            <tr>
-                                <td class="table-numer">0000000</td>
-                                <td class="table-name">План расходов на 2025 год</td>
-                                <td class="table-date">29.12.2024</td>
-                            </tr>
-                            <tr>
-                                <td class="table-numer">0000001</td>
-                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
-                                <td class="table-date">14.02.2024</td>
-                            </tr>
-                            
-                        </table>
+                        <div class="table-wrapper">
+                            <table class="tasks-table" id="recentTasksTable">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="id" onclick="sortTasks('recent', 'id')">ID <span class="sort-icon"></span></th>
+                                        <th data-sort="title" onclick="sortTasks('recent', 'title')">Название <span class="sort-icon"></span></th>
+                                        <th data-sort="priority" onclick="sortTasks('recent', 'priority')">Приоритет <span class="sort-icon"></span></th>
+                                        <th data-sort="assignee" onclick="sortTasks('recent', 'assignee')">Исполнитель <span class="sort-icon"></span></th>
+                                        <th data-sort="creator" onclick="sortTasks('recent', 'creator')">Постановщик <span class="sort-icon"></span></th>
+                                        <th data-sort="start_date" onclick="sortTasks('recent', 'start_date')">Дата начала <span class="sort-icon"></span></th>
+                                        <th data-sort="due_date" onclick="sortTasks('recent', 'due_date')">Дата окончания <span class="sort-icon"></span></th>
+                                        <th data-sort="status" onclick="sortTasks('recent', 'status')">Статус <span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTasksBody">
+                                    <tr><td colspan="8" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </section>            
+                </section>
+
+                <!-- Задачи в работе -->
                 <section class="base-section" id="base-section-task-at-work">
                     <div class="base-sec-tw-container">
                         <div class="section-header">
-                            <h2>Задачи в работе</h2>
-                            <button class="sec-btn-close">
-                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
-                            </button>
+                            <h2>🔄 Задачи в работе</h2>
+                            <div class="table-controls">
+                                <div class="search-box">
+                                    <input type="text" id="activeTasksSearch" placeholder="🔍 Поиск..." class="search-input" onkeyup="filterTasks('active')">
+                                </div>
+                                <button class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
                         </div>
-                        <table>
-                            <tr>
-                                <th>№</th>
-                                <th>Имя</th>
-                                <th>Последнее использование</th>
-                            </tr>
-                            <tr>
-                                <td class="table-numer">0000000</td>
-                                <td class="table-name">План расходов на 2025 год</td>
-                                <td class="table-date">29.12.2024</td>
-                            </tr>
-                            <tr>
-                                <td class="table-numer">0000001</td>
-                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
-                                <td class="table-date">14.02.2024</td>
-                            </tr>
-                            
-                        </table>
+                        <div class="table-wrapper">
+                            <table class="tasks-table" id="activeTasksTable">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="id" onclick="sortTasks('active', 'id')">ID <span class="sort-icon"></span></th>
+                                        <th data-sort="title" onclick="sortTasks('active', 'title')">Название <span class="sort-icon"></span></th>
+                                        <th data-sort="priority" onclick="sortTasks('active', 'priority')">Приоритет <span class="sort-icon"></span></th>
+                                        <th data-sort="assignee" onclick="sortTasks('active', 'assignee')">Исполнитель <span class="sort-icon"></span></th>
+                                        <th data-sort="creator" onclick="sortTasks('active', 'creator')">Постановщик <span class="sort-icon"></span></th>
+                                        <th data-sort="start_date" onclick="sortTasks('active', 'start_date')">Дата начала <span class="sort-icon"></span></th>
+                                        <th data-sort="due_date" onclick="sortTasks('active', 'due_date')">Дата окончания <span class="sort-icon"></span></th>
+                                        <th data-sort="progress" onclick="sortTasks('active', 'progress')">Прогресс <span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeTasksBody">
+                                    <tr><td colspan="8" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Архив задач -->
+                <section class="base-section" id="base-section-task-archive">
+                    <div class="base-sec-ta-container">
+                        <div class="section-header">
+                            <h2>📦 Архив задач</h2>
+                            <div class="table-controls">
+                                <div class="search-box">
+                                    <input type="text" id="archivedTasksSearch" placeholder="🔍 Поиск..." class="search-input" onkeyup="filterTasks('archived')">
+                                </div>
+                                <button class="sec-btn-close">
+                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="tasks-table" id="archivedTasksTable">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="id" onclick="sortTasks('archived', 'id')">ID <span class="sort-icon"></span></th>
+                                        <th data-sort="title" onclick="sortTasks('archived', 'title')">Название <span class="sort-icon"></span></th>
+                                        <th data-sort="priority" onclick="sortTasks('archived', 'priority')">Приоритет <span class="sort-icon"></span></th>
+                                        <th data-sort="assignee" onclick="sortTasks('archived', 'assignee')">Исполнитель <span class="sort-icon"></span></th>
+                                        <th data-sort="creator" onclick="sortTasks('archived', 'creator')">Постановщик <span class="sort-icon"></span></th>
+                                        <th data-sort="completed_at" onclick="sortTasks('archived', 'completed_at')">Дата выполнения <span class="sort-icon"></span></th>
+                                        <th data-sort="status" onclick="sortTasks('archived', 'status')">Статус <span class="sort-icon"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="archivedTasksBody">
+                                    <tr><td colspan="7" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
                 <section class="base-section" id="base-section-task-new-typeselector">
@@ -481,7 +630,7 @@
                                 </div>
                                 <div class="type-list task-list" id="taskTypeList">
                                     <!-- Обычная задача (всегда есть) -->
-                                    <button class="type-list-elem" data-type="simple">
+                                    <button class="type-list-elem" data-type="simple" onclick="openSimpleTaskEditor()">
                                         <div class="type-icon">📝</div>
                                         <h4>Обычная задача</h4>
                                         <p class="type-desc">Создайте задачу с нуля</p>
@@ -496,132 +645,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-                <section class="base-section" id="base-section-task-new-edit">
-                    <div class="editor-container">
-                        <div class="editor-header">
-                            <div class="editor-header-info">
-                                <h2>📝 Создание задачи</h2>
-                                <span class="editor-number" id="taskTypeBadge">Обычная задача</span>
-                            </div>
-                            <div class="editor-actions">
-                                <button class="buttonbase" id="saveTaskDraftBtn">💾 Сохранить черновик</button>
-                                <button class="buttonbase" id="createTaskSubmitBtn">✅ Создать задачу</button>
-                                <button class="sec-btn-close" id="closeTaskEditorBtn">
-                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="editor-content">
-                            <div class="editor-form">
-                                <!-- Простая форма -->
-                                <div class="form-section">
-                                    <h3>Основная информация</h3>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Название задачи *</label>
-                                            <input type="text" class="form-input" id="taskTitle" placeholder="Введите название задачи">
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Приоритет</label>
-                                            <select class="form-select" id="taskPriority">
-                                                <option value="low">🟢 Низкий</option>
-                                                <option value="medium" selected>🟡 Средний</option>
-                                                <option value="high">🟠 Высокий</option>
-                                                <option value="critical">🔴 Критический</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Срок выполнения *</label>
-                                            <input type="date" class="form-input" id="taskDeadline">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-section">
-                                    <h3>Описание</h3>
-                                    <textarea class="form-textarea" id="taskDescription" placeholder="Опишите задачу..." rows="6"></textarea>
-                                </div>
-                                
-                                <div class="form-section">
-                                    <h3>👥 Исполнители</h3>
-                                    <div class="form-group">
-                                        <label>Ответственный *</label>
-                                        <select class="form-select" id="taskAssignee">
-                                            <option value="">— Выберите —</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Наблюдатели</label>
-                                        <select class="form-select" id="taskObservers" multiple size="3">
-                                            <option value="">— Выберите —</option>
-                                        </select>
-                                        <small>Удерживайте Ctrl</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-section">
-                                    <h3>📎 Файлы</h3>
-                                    <div class="file-upload-area">
-                                        <input type="file" id="taskFiles" multiple hidden>
-                                        <label for="taskFiles" class="file-upload-label">
-                                            <span class="upload-icon">📎</span>
-                                            <span>Прикрепить файлы</span>
-                                        </label>
-                                        <div class="uploaded-files-list" id="taskUploadedFiles"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="editor-sidebar">
-                                <div class="sidebar-section">
-                                    <h4>🔔 Уведомления</h4>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="notifyOnAssign" checked> Уведомить исполнителя
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="notifyOnDeadline" checked> Напоминать о дедлайне
-                                    </label>
-                                </div>
-                                
-                                <div class="sidebar-section">
-                                    <h4>🏷️ Теги</h4>
-                                    <input type="text" id="taskTags" class="form-input" placeholder="Теги через запятую">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <section class="base-section" id="base-section-task-archive">
-                    <div class="base-sec-ta-container">
-                        <div class="section-header">
-                            <h2>Архив задач</h2>
-                            <button class="sec-btn-close">
-                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
-                            </button>
-                        </div>
-                        <table>
-                            <tr>
-                                <th>№</th>
-                                <th>Имя</th>
-                                <th>Последнее использование</th>
-                            </tr>
-                            <tr>
-                                <td class="table-numer">0000000</td>
-                                <td class="table-name">План расходов на 2025 год</td>
-                                <td class="table-date">29.12.2024</td>
-                            </tr>
-                            <tr>
-                                <td class="table-numer">0000001</td>
-                                <td class="table-name">Договор на предоставление услуг связи с ПАО МТС</td>
-                                <td class="table-date">14.02.2024</td>
-                            </tr>
-                            
-                        </table>
                     </div>
                 </section>
                 <section class="base-section" id="base-section-favourites">
@@ -874,215 +897,6 @@
                         </div>
                     </div>
                 </section>
-                <section class="base-section" id="base-section-task-edit">
-                    <div class="editor-container">
-                        <div class="editor-header">
-                            <div class="editor-header-info">
-                                <h2>Редактирование задачи</h2>
-                                <span class="editor-number">№ T000001</span>
-                            </div>
-                            <div class="editor-actions">
-                                <button class="buttonbase" id="saveTaskDraftBtn">Сохранить черновик</button>
-                                <button class="buttonbase" id="previewTaskBtn">Предпросмотр</button>
-                                <button class="buttonbase" id="registerTaskBtn">Зарегистрировать</button>
-                                <button class="buttonbase" id="closeTaskEditorBtn">Закрыть</button>
-                            </div>
-                        </div>
-                        
-                        <div class="editor-content">
-                            <div class="editor-form">
-                                <!-- Основная информация -->
-                                <div class="form-section">
-                                    <h3>Основная информация</h3>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Название задачи *</label>
-                                            <input type="text" class="form-input" id="taskTitle" placeholder="Введите название задачи" value="Подготовка отчёта за квартал">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Тип задачи</label>
-                                            <select class="form-select" id="taskType">
-                                                <option value="simple">Обычная задача</option>
-                                                <option value="urgent" selected>Срочная задача</option>
-                                                <option value="project">Проектная задача</option>
-                                                <option value="review">Задача на проверку</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label>Приоритет</label>
-                                            <select id="taskPriority" class="form-select">
-                                                <option value="low">🟢 Низкий</option>
-                                                <option value="medium" selected>🟡 Средний</option>
-                                                <option value="high">🟠 Высокий</option>
-                                                <option value="critical">🔴 Критический</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Дата начала</label>
-                                            <input type="date" class="form-input" id="taskStartDate" value="2024-01-15">
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label>Срок выполнения *</label>
-                                            <input type="date" class="form-input" id="taskDeadline" value="2024-01-30">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Описание задачи -->
-                                <div class="form-section">
-                                    <h3>Описание задачи</h3>
-                                    <div class="form-group">
-                                        <textarea class="form-textarea" id="taskDescription" placeholder="Опишите детали задачи..." rows="6">Необходимо подготовить детальный отчёт по итогам работы за 4 квартал 2023 года. Включить статистику по всем проектам, финансовые показатели и план на следующий квартал.</textarea>
-                                    </div>
-                                </div>
-                                
-                                <!-- Исполнители -->
-                                <div class="form-section">
-                                    <h3>Исполнители</h3>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label>Основной исполнитель *</label>
-                                            <select class="form-select" id="taskAssignee">
-                                                <option value="user1">Иванов И.И. (отдел аналитики)</option>
-                                                <option value="user2" selected>Петрова М.С. (финансовый отдел)</option>
-                                                <option value="user3">Сидоров А.В. (отдел разработки)</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label>Ответственный руководитель</label>
-                                            <select class="form-select" id="taskManager">
-                                                <option value="manager1">Смирнов П.К.</option>
-                                                <option value="manager2" selected>Козлова Е.В.</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Дополнительные исполнители</label>
-                                        <select class="form-select" id="taskCollaborators" multiple>
-                                            <option value="user1" selected>Иванов И.И.</option>
-                                            <option value="user3">Сидоров А.В.</option>
-                                            <option value="user4">Николаева Т.П.</option>
-                                        </select>
-                                        <small style="color: var(--text-gray); font-size: 12px;">Для выбора нескольких исполнителей удерживайте Ctrl</small>
-                                    </div>
-                                </div>
-                                
-                                <!-- Прикреплённые файлы -->
-                                <div class="form-section">
-                                    <h3>Прикреплённые файлы</h3>
-                                    <div class="file-upload-area">
-                                        <input type="file" id="taskFileUpload" multiple hidden>
-                                        <label for="taskFileUpload" class="file-upload-label">
-                                            <span class="upload-icon">📎</span>
-                                            <span>Перетащите файлы сюда или нажмите для выбора</span>
-                                        </label>
-                                        <div class="uploaded-files-list" id="taskUploadedFiles">
-                                            <div class="uploaded-file">
-                                                <div class="file-info">
-                                                    <span class="file-name">Шаблон_отчёта_квартал.docx</span>
-                                                    <span class="file-size">(2.1 MB)</span>
-                                                </div>
-                                                <button class="file-remove">🗑️</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="editor-sidebar">
-                                <!-- Статус и прогресс -->
-                                <div class="sidebar-section">
-                                    <h4>Статус выполнения</h4>
-                                    <div class="approval-flow">
-                                        <div class="approval-step completed">
-                                            <span class="step-number">1</span>
-                                            <div class="step-info">
-                                                <span class="step-role">Создана</span>
-                                                <span class="step-user">15.01.2024</span>
-                                            </div>
-                                        </div>
-                                        <div class="approval-step current">
-                                            <span class="step-number">2</span>
-                                            <div class="step-info">
-                                                <span class="step-role">В работе</span>
-                                                <span class="step-user">с 16.01.2024</span>
-                                            </div>
-                                        </div>
-                                        <div class="approval-step">
-                                            <span class="step-number">3</span>
-                                            <div class="step-info">
-                                                <span class="step-role">На проверке</span>
-                                                <span class="step-user">-</span>
-                                            </div>
-                                        </div>
-                                        <div class="approval-step">
-                                            <span class="step-number">4</span>
-                                            <div class="step-info">
-                                                <span class="step-role">Завершена</span>
-                                                <span class="step-user">-</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="progress-info" style="margin-top: 15px;">
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                            <span style="font-size: 12px; color: var(--text-gray);">Прогресс:</span>
-                                            <span style="font-size: 12px; font-weight: 600; color: var(--btn-main-brightblue);">40%</span>
-                                        </div>
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 40%;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Уведомления -->
-                                <div class="sidebar-section">
-                                    <h4>Уведомления</h4>
-                                    <div class="notification-settings">
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" checked> Уведомлять о приближении дедлайна
-                                        </label>
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" checked> Уведомлять об изменении статуса
-                                        </label>
-                                        <label class="checkbox-label">
-                                            <input type="checkbox"> Уведомлять о комментариях
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <!-- История изменений -->
-                                <div class="sidebar-section">
-                                    <h4>История изменений</h4>
-                                    <div class="change-history">
-                                        <div class="history-item">
-                                            <span class="history-action">Статус изменён на "В работе"</span>
-                                            <span class="history-time">16.01.2024, 10:30</span>
-                                        </div>
-                                        <div class="history-item">
-                                            <span class="history-action">Добавлен исполнитель: Петрова М.С.</span>
-                                            <span class="history-time">15.01.2024, 16:45</span>
-                                        </div>
-                                        <div class="history-item">
-                                            <span class="history-action">Задача создана</span>
-                                            <span class="history-time">15.01.2024, 14:20</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
                 <!-- Секция управления шаблонами -->
                 <section class="base-section" id="base-section-templates">
                     <div class="templates-manager-container">
@@ -1309,6 +1123,80 @@
                         </div>
                     </div>
                 </section>
+                <!-- Секция создания шаблона -->
+                <section class="base-section task-fullscreen-section" id="base-section-template-create">
+                    <div class="task-fullscreen-container">
+                        <!-- Шапка -->
+                        <div class="task-fullscreen-header">
+                            <div class="task-header-left">
+                                <button class="task-back-btn" onclick="closeTemplateCreate()">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                    </svg>
+                                </button>
+                                <div class="task-id-badge" style="background: var(--c_acchalf); color: var(--c_acc);">Новый шаблон</div>
+                                <input type="text" id="templateCreateName" class="task-title-input" placeholder="Введите название шаблона...">
+                            </div>
+                            <div class="task-header-right">
+                                <button class="btn-primary task-save-btn" id="templateCreateSaveBtn">💾 Сохранить</button>
+                                <button class="task-close-btn" onclick="closeTemplateCreate()">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- Тело -->
+                        <div class="task-fullscreen-body">
+                            <!-- Левая колонка -->
+                            <div class="task-left-col">
+                                <!-- Настройки -->
+                                <div class="task-section">
+                                    <div class="task-section-title">⚙️ Настройки</div>
+                                    <div class="task-props-grid">
+                                        <div class="task-prop" style="grid-column: span 2;">
+                                            <label>📝 Описание</label>
+                                            <textarea id="templateCreateDesc" class="task-textarea" placeholder="Описание шаблона..." rows="2"></textarea>
+                                        </div>
+                                        <div class="task-prop">
+                                            <label>🎯 Приоритет по умолчанию</label>
+                                            <select id="templateCreatePriority" class="task-select">
+                                                <option value="low">🟢 Низкий</option>
+                                                <option value="medium" selected>🟡 Средний</option>
+                                                <option value="high">🟠 Высокий</option>
+                                                <option value="critical">🔴 Критический</option>
+                                            </select>
+                                        </div>
+                                        <div class="task-prop">
+                                            <label> Общий доступ</label>
+                                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 400; cursor: pointer; margin-top: 4px;">
+                                                <input type="checkbox" id="templateCreateShared"> Сделать общим для отдела
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Поля -->
+                                <div class="task-section">
+                                    <div class="task-section-title" style="display: flex; justify-content: space-between;">
+                                        <span>📋 Поля шаблона</span>
+                                        <button class="btn-primary" onclick="openFieldEditorForTemplate()" style="padding: 2px 12px; font-size: 12px;">+ Добавить поле</button>
+                                    </div>
+                                    <div id="templateCreateFieldsList" class="task-fields-list">
+                                        <div class="task-empty-comments">Нет добавленных полей</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Правая колонка -->
+                            <div class="task-right-col">
+                                <div class="task-section">
+                                    <div class="task-section-title">👁️ Предпросмотр</div>
+                                    <div id="templateCreatePreview" class="template-preview-wrap">
+                                        <div class="task-empty-comments">Нет полей для отображения</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
                 <section class="base-section" id="base-section-templates">
                     <div class="templates-manager-container">
                         <div class="templates-manager-header">
@@ -1330,7 +1218,7 @@
                     </div>
                 </section>
                 <!-- Секция создания задачи по шаблону (Google Forms стиль) -->
-                <section class="base-section" id="base-section-task-from-template" style="display: none;">
+                <section class="base-section" id="base-section-task-create" style="display: none;">
                     <div class="google-form-editor">
                         <div class="form-editor-header">
                             <div class="form-editor-title-section">
@@ -1338,8 +1226,8 @@
                                 <div class="form-editor-badge" id="templateFormBadge"></div>
                             </div>
                             <div class="form-editor-actions">
-                                <button class="buttonbase btn-outline" id="cancelTaskFromTemplateBtn">Отмена</button>
-                                <button class="buttonbase" id="submitTaskFromTemplateBtn">✅ Создать задачу</button>
+                                <button class="buttonbase btn-outline" id="cancelTaskCreateBtn">Отмена</button>
+                                <button class="buttonbase" id="submitTaskCreateBtn">✅ Создать</button>
                             </div>
                             <button class="sec-btn-close" id="closeTaskFromTemplateBtn">
                                 <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
@@ -1360,6 +1248,156 @@
                             <div class="google-form-footer">
                                 <div class="form-required-hint">* Обязательные поля</div>
                                 <button class="submit-form-btn" id="googleFormSubmitBtn">Отправить</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Секция карточки задачи -->
+                <section class="base-section" id="base-section-task-view">
+                    <div class="google-form-editor">
+                        <div class="form-editor-header">
+                            <div class="form-editor-title-section">
+                                <h2 id="taskViewTitle">📋 Задача</h2>
+                                <div class="form-editor-badge" id="taskViewStatusBadge">⏳ Ожидает</div>
+                                <span class="form-editor-number" id="taskViewId">№—</span>
+                            </div>
+                            <div class="form-editor-actions">
+                                <button class="buttonbase btn-outline" id="taskViewCloseBtn">✕ Закрыть</button>
+                                <button class="buttonbase" id="taskViewSaveBtn">💾 Сохранить изменения</button>
+                            </div>
+                        </div>
+                        
+                        <div class="google-form-container">
+                            <div class="google-form-header" style="background: var(--c_surf); border-bottom: 2px solid var(--c_acchalf); padding: 20px 32px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 12px; color: var(--c_surf_txt); margin-bottom: 4px;">Название задачи</div>
+                                        <div id="taskViewTitleDisplay" style="font-size: 22px; font-weight: 600; color: var(--c_bg_txt);">—</div>
+                                    </div>
+                                    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                                        <div>
+                                            <div style="font-size: 11px; color: var(--c_surf_txt);">Статус</div>
+                                            <select id="taskViewStatus" class="task-view-select" style="min-width: 140px;">
+                                                <option value="pending">⏳ Ожидает</option>
+                                                <option value="in_progress">🔄 В работе</option>
+                                                <option value="completed">✅ Выполнена</option>
+                                                <option value="cancelled">❌ Отменена</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 11px; color: var(--c_surf_txt);">Приоритет</div>
+                                            <select id="taskViewPriority" class="task-view-select" style="min-width: 120px;">
+                                                <option value="low">🟢 Низкий</option>
+                                                <option value="medium">🟡 Средний</option>
+                                                <option value="high">🟠 Высокий</option>
+                                                <option value="critical">🔴 Критический</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="google-form-body" style="padding: 24px 32px;">
+                                <div class="task-view-grid">
+                                    <!-- Левая колонка -->
+                                    <div class="task-view-left">
+                                        <!-- Прогресс -->
+                                        <div class="task-view-section">
+                                            <div class="task-view-section-title">📊 Прогресс выполнения</div>
+                                            <div class="task-progress-wrap">
+                                                <div class="task-progress-header">
+                                                    <span id="taskViewProgressValue">0%</span>
+                                                </div>
+                                                <input type="range" id="taskViewProgress" class="task-progress-slider" min="0" max="100" value="0"
+                                                    oninput="document.getElementById('taskViewProgressValue').textContent = this.value + '%'">
+                                                <div class="task-progress-labels">
+                                                    <span>0%</span>
+                                                    <span>50%</span>
+                                                    <span>100%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Описание -->
+                                        <div class="task-view-section">
+                                            <div class="task-view-section-title">📄 Описание</div>
+                                            <div id="taskViewDescription" style="font-size: 14px; color: var(--c_bg_txt); line-height: 1.6; padding: 8px 0;">—</div>
+                                        </div>
+                                        
+                                        <!-- Свойства -->
+                                        <div class="task-view-section">
+                                            <div class="task-view-section-title">📋 Свойства</div>
+                                            <div class="task-view-props">
+                                                <div class="task-view-prop">
+                                                    <span class="prop-label">Дата начала</span>
+                                                    <span class="prop-value" id="taskViewStartDate">—</span>
+                                                </div>
+                                                <div class="task-view-prop">
+                                                    <span class="prop-label">Срок выполнения</span>
+                                                    <span class="prop-value" id="taskViewDueDate">—</span>
+                                                </div>
+                                                <div class="task-view-prop">
+                                                    <span class="prop-label">Исполнитель</span>
+                                                    <span class="prop-value" id="taskViewAssignee">—</span>
+                                                </div>
+                                                <div class="task-view-prop">
+                                                    <span class="prop-label">Создатель</span>
+                                                    <span class="prop-value" id="taskViewCreator">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Кастомные поля -->
+                                        <div id="taskViewCustomFields" class="task-view-section" style="display: none;">
+                                            <div class="task-view-section-title">📋 Дополнительные поля</div>
+                                            <div id="taskViewCustomFieldsContainer" class="task-view-props"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Правая колонка -->
+                                    <div class="task-view-right">
+                                        <!-- Комментарии -->
+                                        <div class="task-view-section">
+                                            <div class="task-view-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                                                <span>💬 Комментарии</span>
+                                                <span id="taskViewCommentsCount" style="font-size: 12px; color: var(--c_surf_txt);">0</span>
+                                            </div>
+                                            <div id="taskViewCommentsList" class="task-comments-list">
+                                                <div class="task-empty">Нет комментариев</div>
+                                            </div>
+                                            <div class="task-comment-input">
+                                                <textarea id="taskViewNewComment" class="task-textarea" rows="2" placeholder="Написать комментарий..." style="flex: 1;"></textarea>
+                                                <button class="buttonbase" id="taskViewAddCommentBtn">Отправить</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Мета -->
+                                        <div class="task-view-section task-meta" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--c_surf_txt);">
+                                            <div class="task-meta-row">
+                                                <span class="task-meta-label">Создана</span>
+                                                <span class="task-meta-value" id="taskViewCreatedDate">—</span>
+                                            </div>
+                                            <div class="task-meta-row">
+                                                <span class="task-meta-label">Обновлена</span>
+                                                <span class="task-meta-value" id="taskViewUpdatedDate">—</span>
+                                            </div>
+                                            <div class="task-meta-row">
+                                                <span class="task-meta-label">Шаблон</span>
+                                                <span class="task-meta-value" id="taskViewTemplate">—</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="google-form-footer" style="padding: 12px 32px; background: var(--c_bg); border-top: 1px solid var(--c_surf_txt);">
+                                <div style="display: flex; gap: 12px; align-items: center;">
+                                    <button class="buttonbase btn-danger" id="taskViewDeleteBtn" style="background: #dc3545;">🗑️ Удалить</button>
+                                </div>
+                                <div style="display: flex; gap: 12px;">
+                                    <button class="buttonbase btn-outline" id="taskViewCloseBtn2">Закрыть</button>
+                                    <button class="buttonbase" id="taskViewSaveBtn2">💾 Сохранить</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1738,57 +1776,126 @@
                     </div>
                 </div>
 
-                <!-- Модалка редактирования задачи -->
-                <div id="taskModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 600px;">
-                        <div class="modal-header">
-                            <h2 id="taskModalTitle">✏️ Редактирование задачи</h2>
-                            <button class="modal-close" onclick="closeTaskModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label>Название</label>
-                                <input type="text" id="taskTitle" class="form-input">
+                <!-- Модалка просмотра/редактирования задачи (полноэкранная) -->
+                <div id="taskModal" class="admin-modal task-modal-fullscreen" style="display: none;">
+                    <div class="task-modal-content">
+                        <!-- Шапка -->
+                        <div class="task-modal-header">
+                            <div class="task-modal-header-left">
+                                <button class="task-modal-back" onclick="closeTaskModal()">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                    </svg>
+                                </button>
+                                <div class="task-modal-id">№<span id="taskIdDisplay">—</span></div>
+                                <input type="text" id="taskTitleFull" class="task-modal-title-input" placeholder="Введите название задачи...">
+                                <span id="taskStatusBadgeFull" class="task-status-badge status-pending">⏳ Ожидает</span>
                             </div>
-                            <div class="form-group">
-                                <label>Описание</label>
-                                <textarea id="taskDescription" class="form-textarea" rows="3"></textarea>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Дата начала</label>
-                                    <input type="date" id="taskStartDate" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label>Дата окончания</label>
-                                    <input type="date" id="taskDueDate" class="form-input">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Приоритет</label>
-                                    <select id="taskPriority" class="form-select"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Статус</label>
-                                    <select id="taskStatus" class="form-select"></select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Прогресс: <span id="progressValue">0</span>%</label>
-                                <input type="range" id="taskProgress" class="form-range" min="0" max="100" value="0">
-                            </div>
-                            <hr>
-                            <h4>📝 Комментарии</h4>
-                            <div id="taskCommentsList" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
-                            <div class="form-group">
-                                <textarea id="newComment" class="form-textarea" rows="2" placeholder="Написать комментарий..."></textarea>
+                            <div class="task-modal-header-right">
+                                <button class="task-modal-btn task-modal-btn-primary" id="saveTaskFullBtn">💾 Сохранить</button>
+                                <button class="task-modal-btn task-modal-btn-danger" id="deleteTaskFullBtn">🗑️</button>
+                                <button class="task-modal-close" onclick="closeTaskModal()">✕</button>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button class="buttonbase btn-danger" id="deleteTaskBtn" style="background-color: #dc3545;">🗑️ Удалить</button>
-                            <button class="buttonbase" onclick="closeTaskModal()">Отмена</button>
-                            <button class="buttonbase" id="saveTaskBtn">💾 Сохранить</button>
+
+                        <!-- Тело -->
+                        <div class="task-modal-body">
+                            <!-- Левая колонка -->
+                            <div class="task-modal-left">
+                                <!-- Описание -->
+                                <div class="task-modal-section">
+                                    <div class="task-modal-section-title">📄 Описание</div>
+                                    <textarea id="taskDescriptionFull" class="task-modal-textarea" placeholder="Введите описание задачи..." rows="4"></textarea>
+                                </div>
+
+                                <!-- Свойства -->
+                                <div class="task-modal-section">
+                                    <div class="task-modal-section-title">📋 Свойства</div>
+                                    <div class="task-properties-grid">
+                                        <div class="task-property">
+                                            <label>📅 Дата начала</label>
+                                            <input type="date" id="taskStartDateFull" class="task-modal-input">
+                                        </div>
+                                        <div class="task-property">
+                                            <label>⏰ Срок выполнения</label>
+                                            <input type="date" id="taskDueDateFull" class="task-modal-input">
+                                        </div>
+                                        <div class="task-property">
+                                            <label>🎯 Приоритет</label>
+                                            <select id="taskPriorityFull" class="task-modal-select">
+                                                <option value="low">🟢 Низкий</option>
+                                                <option value="medium">🟡 Средний</option>
+                                                <option value="high">🟠 Высокий</option>
+                                                <option value="critical">🔴 Критический</option>
+                                            </select>
+                                        </div>
+                                        <div class="task-property">
+                                            <label> Статус</label>
+                                            <select id="taskStatusFull" class="task-modal-select">
+                                                <option value="pending">⏳ Ожидает</option>
+                                                <option value="in_progress">🔄 В работе</option>
+                                                <option value="completed">✅ Выполнена</option>
+                                                <option value="cancelled">❌ Отменена</option>
+                                            </select>
+                                        </div>
+                                        <div class="task-property">
+                                            <label>👤 Исполнитель</label>
+                                            <input type="text" id="taskAssigneeFull" class="task-modal-input" readonly>
+                                        </div>
+                                        <div class="task-property">
+                                            <label>👤 Создатель</label>
+                                            <input type="text" id="taskCreatorFull" class="task-modal-input" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Прогресс -->
+                                <div class="task-modal-section">
+                                    <div class="task-modal-section-title">📊 Прогресс</div>
+                                    <div class="task-progress-container">
+                                        <div class="task-progress-header">
+                                            <span id="progressValueFull">0%</span>
+                                        </div>
+                                        <input type="range" id="taskProgressFull" class="task-progress-slider" min="0" max="100" value="0"
+                                            oninput="updateProgressFull(this.value)">
+                                        <div class="task-progress-labels">
+                                            <span>0%</span>
+                                            <span>50%</span>
+                                            <span>100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Правая колонка -->
+                            <div class="task-modal-right">
+                                <!-- Комментарии -->
+                                <div class="task-modal-section">
+                                    <div class="task-modal-section-title">
+                                        💬 Комментарии
+                                        <span id="commentsCountFull" class="task-comments-count">0</span>
+                                    </div>
+                                    <div id="taskCommentsListFull" class="task-comments-list">
+                                        <div class="task-comments-empty">Нет комментариев</div>
+                                    </div>
+                                    <div class="task-comment-input">
+                                        <textarea id="newCommentFull" rows="2" placeholder="Написать комментарий..." class="task-modal-textarea"></textarea>
+                                        <button class="task-modal-btn task-modal-btn-primary" id="addCommentFullBtn">Отправить</button>
+                                    </div>
+                                </div>
+
+                                <!-- Информация -->
+                                <div class="task-modal-section task-modal-meta">
+                                    <div class="task-meta-item">
+                                        <span class="task-meta-label">📅 Создана</span>
+                                        <span id="taskCreatedDateFull" class="task-meta-value">—</span>
+                                    </div>
+                                    <div class="task-meta-item">
+                                        <span class="task-meta-label">🔄 Обновлена</span>
+                                        <span id="taskUpdatedDateFull" class="task-meta-value">—</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1969,7 +2076,7 @@
                 <div id="noteModal" class="admin-modal" style="display: none;">
                     <div class="modal-content" style="max-width: 450px;">
                         <div class="modal-header">
-                            <h2 id="noteModalTitle">📌 Моя заметка</h2>
+                            <h2 id="noteModalTitle"> Моя заметка</h2>
                             <button class="modal-close" onclick="closeModal('noteModal')">&times;</button>
                         </div>
                         <div class="modal-body">
@@ -1998,6 +2105,7 @@
     
     <script src="../scripts/admin.js"></script>
     <script src="../scripts/base.js"></script>
+    <script src="../scripts/profile.js"></script>
     <script src="../scripts/main.js"></script>
 </body>
 <script src="/scripts/api.js"></script>

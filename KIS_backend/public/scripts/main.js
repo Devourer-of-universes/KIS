@@ -339,19 +339,32 @@ function initTheme() {
 function initUserDropdown() {
     const avatarBtn = document.getElementById('userAvatarBtn');
     const dropdown = document.getElementById('userDropdown');
+    const userMenu = document.getElementById('userMenu');
     
-    if (avatarBtn && dropdown) {
+    if (avatarBtn && dropdown && userMenu) {
         avatarBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            dropdown.classList.toggle('show');
+            userMenu.classList.toggle('open');
+            dropdown.classList.toggle('show'); // для совместимости
         });
         
         // Закрываем при клике вне
         document.addEventListener('click', (e) => {
             if (!avatarBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                userMenu.classList.remove('open');
                 dropdown.classList.remove('show');
             }
         });
+        
+        // Закрываем при клике на пункты (кроме шапки — она ведёт на профиль)
+        userMenu.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                userMenu.classList.remove('open');
+                dropdown.classList.remove('show');
+            });
+        });
+        
+        // ❗ НЕ вешаем ничего на .dropdown-header — пусть браузер сам переходит по ссылке
     }
 }
 

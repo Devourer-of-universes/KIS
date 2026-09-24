@@ -28,10 +28,10 @@ btn_docs_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow
 btn_docs_at_work.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-at-work'); });
 btn_docs_new.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-new'); });
 btn_docs_archive.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-archive'); });
-btn_tasks_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-last'); });
-btn_tasks_at_work.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-at-work'); });
+btn_tasks_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-last'); loadRecentTasks();});
+btn_tasks_at_work.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-at-work'); loadActiveTasks();});
 btn_tasks_new.addEventListener('click', (e) => { e.stopPropagation(); openTaskTypeSelector();});
-btn_tasks_archive.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-archive'); });
+btn_tasks_archive.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-archive'); loadArchivedTasks();});
 btn_fav.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-favourites'); });
 btn_dashboard.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-dashboard'); });
 // - Глобальные переменные (currentCalendarDate, calendarEvents, currentTasks и т.д.)
@@ -47,7 +47,8 @@ let currentTaskDraft = null;
 let confirmCallback = null;
 let currentTemplateFilter = 'all';
 let currentQuickDueDate = null;
-
+let currentViewTaskId = null;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
+let currentViewTask = null; 
 // Настройки Ганта
 let currentZoom = 'week';     // 'day', 'week', 'month'
 let ganttCellWidth = 40;
@@ -197,7 +198,7 @@ let currentNoteId = null;
 // Открытие модалки создания заметки
 function openNoteModal(type) {
     currentNoteType = type;
-    document.getElementById('noteModalTitle').textContent = type === 'personal' ? '📌 Моя заметка' : '👥 Общая заметка';
+    document.getElementById('noteModalTitle').textContent = type === 'personal' ? ' Моя заметка' : '👥 Общая заметка';
     document.getElementById('noteTitle').value = '';
     document.getElementById('noteContent').value = '';
     document.getElementById('noteId').value = '';
@@ -319,7 +320,7 @@ function renderNotes(containerId, notes, isPersonal) {
         
         return `
             <div class="note-item" data-note-id="${note.id}">
-                <div class="pin">📌</div>
+                <div class="pin"></div>
                 <div class="note-text">${escapeHtml(note.content)}</div>
                 <div class="note-meta">
                     <span class="note-author">${isPersonal ? '' : '👤 ' + escapeHtml(authorName)}</span>
@@ -797,7 +798,7 @@ function renderFullscreenTasks() {
         }
         
         return `
-            <div class="task-item" onclick="openTaskModal(${task.id})">
+            <div class="task-item" onclick="openTaskView(${task.id})">
                 <input type="checkbox" class="task-checkbox" 
                        ${task.status === 'completed' ? 'checked' : ''}
                        onclick="event.stopPropagation(); toggleTaskStatus(${task.id}, event)">
@@ -1113,7 +1114,7 @@ function renderDayView(tasks, barsContainer, axisHeader) {
                 box-sizing: border-box;
             `;
             colHeader.textContent = task.name;
-            colHeader.onclick = () => openTaskModal(task.id);
+            colHeader.onclick = () => openTaskView(task.id);
             column.appendChild(colHeader);
             
             // Тело колонки (сетка времени) — полная высота
@@ -1174,7 +1175,7 @@ function renderDayView(tasks, barsContainer, axisHeader) {
                 <div style="font-size: 8px; opacity: 0.8;">${formatTime(taskStart)} - ${formatTime(taskEnd)}</div>
                 ${task.progress > 0 ? `<div style="font-size: 8px; opacity: 0.7; margin-top: 2px;">📊 ${task.progress}%</div>` : ''}
             `;
-            bar.onclick = () => openTaskModal(task.id);
+            bar.onclick = () => openTaskView(task.id);
             
             bar.addEventListener('mouseenter', function() {
                 this.style.transform = 'scaleX(1.03)';
@@ -1411,7 +1412,7 @@ function renderWeekView(tasks, barsContainer, axisHeader) {
                     white-space: nowrap;
                 `;
                 bar.textContent = task.name;
-                bar.onclick = () => openTaskModal(task.id);
+                bar.onclick = () => openTaskView(task.id);
                 
                 // Прогресс
                 if (task.progress > 0) {
@@ -1591,7 +1592,7 @@ function renderMonthView(tasks, barsContainer, axisHeader) {
                 white-space: nowrap;
             `;
             bar.textContent = widthPx > 30 ? task.name : '';
-            bar.onclick = () => openTaskModal(task.id);
+            bar.onclick = () => openTaskView(task.id);
             
             if (task.progress > 0) {
                 const progressFill = document.createElement('div');
@@ -1689,7 +1690,7 @@ function renderGanttTasksAndBars(tasks, minDate, maxDate) {
         const priorityClass = task.priority || 'medium';
         
         return `
-            <div class="gantt-task-row" onclick="openTaskModal(${task.id})">
+            <div class="gantt-task-row" onclick="openTaskView(${task.id})">
                 <div class="gantt-task-info">
                     <div class="gantt-task-title">${escapeHtml(task.name)}</div>
                     <div class="gantt-task-meta">
@@ -1755,7 +1756,7 @@ function renderGanttTasksAndBars(tasks, minDate, maxDate) {
         // Tooltip при наведении
         bar.addEventListener('mouseenter', (e) => showGanttTooltip(e, task));
         bar.addEventListener('mouseleave', hideGanttTooltip);
-        bar.onclick = () => openTaskModal(task.id);
+        bar.onclick = () => openTaskView(task.id);
         
         barRow.appendChild(bar);
         barsContainer.appendChild(barRow);
@@ -2246,13 +2247,13 @@ function openDateModal(year, month, day) {
                                 const displayTitle = isDeadline ? event.title.replace('⚡ ', '') : event.title;
                                 
                                 return `
-                                    <div class="date-event-item" onclick="closeDateModal(); openTaskModal(${event.taskId || event.id})" style="cursor: pointer; padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: ${bgColor}; transition: all 0.2s;">
+                                    <div class="date-event-item" onclick="closeDateModal(); openTaskView(${event.taskId || event.id})" style="cursor: pointer; padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: ${bgColor}; transition: all 0.2s;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                             <strong>${icon} ${escapeHtml(displayTitle)}</strong>
                                             <span style="font-size: 11px; color: ${isDeadline ? '#f97316' : 'var(--c_acc)'}; font-weight: 500;">${typeLabel}</span>
                                         </div>
                                         <div style="font-size: 12px; color: #666; margin-top: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                                            <span>${event.assignee ? '👤 ' + escapeHtml(event.assignee) : '📌 Без исполнителя'}</span>
+                                            <span>${event.assignee ? '👤 ' + escapeHtml(event.assignee) : ' Без исполнителя'}</span>
                                             <span class="${deadlineClass}">${deadlineStatus}</span>
                                         </div>
                                         ${event.priority ? `<div style="margin-top: 4px;"><span class="priority-badge ${getPriorityClass(event.priority)}">${getPriorityLabel(event.priority)}</span></div>` : ''}
@@ -2295,85 +2296,229 @@ function closeDateModal() {
 }
 // - openTaskModal()
 // Модалка задачи
-function openTaskModal(taskId) {
-    const task = currentTasks.find(t => t.id === taskId);
-    if (!task) {
-        showToast('Задача не найдена', 'error');
-        return;
+// =====================================================
+// ПОЛНОЭКРАННАЯ МОДАЛКА ЗАДАЧИ
+// =====================================================
+
+let currentTaskIdFull = null;
+
+function openTaskView(taskId) {
+    currentTaskIdFull = taskId;
+    openModal('taskModal');
+    
+    // Показываем индикатор загрузки
+    document.getElementById('taskTitleFull').value = 'Загрузка...';
+    document.getElementById('taskTitleFull').disabled = true;
+    
+    fetchTaskDataFull(taskId);
+}
+
+async function fetchTaskDataFull(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load task');
+        
+        const data = await response.json();
+        const task = data.task;
+        
+        // Обновляем локальный массив
+        const index = currentTasks.findIndex(t => t.id === taskId);
+        if (index !== -1) currentTasks[index] = task;
+        
+        renderTaskFull(task);
+        
+    } catch (error) {
+        console.error('Error loading task:', error);
+        const task = currentTasks.find(t => t.id === taskId);
+        if (task) {
+            renderTaskFull(task);
+        } else {
+            showToast('Ошибка загрузки задачи', 'error');
+            closeTaskModal();
+        }
     }
+}
+
+function renderTaskFull(task) {
+    console.log('🎨 Rendering full task:', task);
     
-    document.getElementById('taskModalTitle').textContent = `✏️ ${escapeHtml(task.title)}`;
-    document.getElementById('taskTitle').value = task.title;
-    document.getElementById('taskDescription').value = task.description || '';
-    document.getElementById('taskStartDate').value = task.start_date || '';
-    document.getElementById('taskDueDate').value = task.due_date || '';
+    // Основные поля
+    document.getElementById('taskTitleFull').value = task.title || '';
+    document.getElementById('taskTitleFull').disabled = false;
+    document.getElementById('taskIdDisplay').textContent = task.id;
+    document.getElementById('taskDescriptionFull').value = task.description || '';
+    document.getElementById('taskStartDateFull').value = task.start_date ? task.start_date.slice(0, 10) : '';
+    document.getElementById('taskDueDateFull').value = task.due_date ? task.due_date.slice(0, 10) : '';
     
-    // Заполняем приоритет
-    const prioritySelect = document.getElementById('taskPriority');
-    prioritySelect.innerHTML = `
-        <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Низкий</option>
-        <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>Средний</option>
-        <option value="high" ${task.priority === 'high' ? 'selected' : ''}>Высокий</option>
-        <option value="critical" ${task.priority === 'critical' ? 'selected' : ''}>Критический</option>
-    `;
+    // Приоритет
+    const prioritySelect = document.getElementById('taskPriorityFull');
+    prioritySelect.value = task.priority || 'medium';
     
-    // Заполняем статус
-    const statusSelect = document.getElementById('taskStatus');
-    statusSelect.innerHTML = `
-        <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>⏳ Ожидает</option>
-        <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 В работе</option>
-        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Завершена</option>
-        <option value="cancelled" ${task.status === 'cancelled' ? 'selected' : ''}>❌ Отменена</option>
-    `;
+    // Статус
+    const statusSelect = document.getElementById('taskStatusFull');
+    statusSelect.value = task.status || 'pending';
+    updateStatusBadgeFull(task.status || 'pending');
     
-    document.getElementById('taskProgress').value = task.progress || 0;
-    document.getElementById('progressValue').textContent = task.progress || 0;
+    // Исполнитель
+    const assigneeName = task.assignee_surname 
+        ? `${task.assignee_surname} ${task.assignee_name || ''}`.trim() 
+        : 'Не назначен';
+    document.getElementById('taskAssigneeFull').value = assigneeName;
     
-    // Комментарии
-    const commentsContainer = document.getElementById('taskCommentsList');
-    if (task.comments?.length) {
-        commentsContainer.innerHTML = task.comments.map(c => `
-            <div style="padding: 8px; border-bottom: 1px solid #eee;">
-                <strong>${escapeHtml(c.user_name)}</strong> <small style="color: #999;">${new Date(c.created_at).toLocaleString()}</small>
-                <div>${escapeHtml(c.content)}</div>
-            </div>
-        `).join('');
-    } else {
-        commentsContainer.innerHTML = '<p style="color: #999;">Нет комментариев</p>';
-    }
+    // Создатель
+    const creatorName = task.creator_surname 
+        ? `${task.creator_surname} ${task.creator_name || ''}`.trim() 
+        : '—';
+    document.getElementById('taskCreatorFull').value = creatorName;
+    
+    // Прогресс
+    const progress = task.progress || 0;
+    document.getElementById('taskProgressFull').value = progress;
+    document.getElementById('progressValueFull').textContent = progress + '%';
+    
+    // Даты
+    const createdDate = task.created_at ? new Date(task.created_at) : null;
+    document.getElementById('taskCreatedDateFull').textContent = createdDate 
+        ? createdDate.toLocaleDateString('ru-RU') + ' ' + createdDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})
+        : '—';
+    
+    const updatedDate = task.updated_at ? new Date(task.updated_at) : null;
+    document.getElementById('taskUpdatedDateFull').textContent = updatedDate 
+        ? updatedDate.toLocaleDateString('ru-RU') + ' ' + updatedDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})
+        : '—';
     
     // Обработчики
-    document.getElementById('saveTaskBtn').onclick = () => saveTask(taskId);
-    document.getElementById('deleteTaskBtn').onclick = () => deleteTask(taskId);
+    document.getElementById('saveTaskFullBtn').onclick = () => saveTaskFull(task.id);
+    document.getElementById('deleteTaskFullBtn').onclick = () => deleteTaskFull(task.id);
+    document.getElementById('addCommentFullBtn').onclick = () => addCommentFull(task.id);
     
-    // Комментарий по Enter
-    const commentField = document.getElementById('newComment');
-    commentField.onkeypress = async (e) => {
+    // Enter в комментарии
+    const commentField = document.getElementById('newCommentFull');
+    commentField.onkeydown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            await addComment(taskId);
+            addCommentFull(task.id);
         }
     };
     
-    openModal('taskModal');
-}
-// - closeTaskModal()
-function closeTaskModal() {
-    closeModal('taskModal');
-}
-// - saveTask()
-// Сохранение задачи
-async function saveTask(taskId) {
-    const title = document.getElementById('taskTitle')?.value;
-    const description = document.getElementById('taskDescription')?.value;
-    const startDate = document.getElementById('taskStartDate')?.value;
-    const dueDate = document.getElementById('taskDueDate')?.value;
-    const priority = document.getElementById('taskPriority')?.value;
-    const status = document.getElementById('taskStatus')?.value;
-    const progress = document.getElementById('taskProgress')?.value;
+    // При изменении статуса обновляем бейдж
+    statusSelect.onchange = () => updateStatusBadgeFull(statusSelect.value);
     
-    if (!title || title.trim() === '') {
+    // Загружаем комментарии
+    loadCommentsFull(task.id);
+}
+
+function updateStatusBadgeFull(status) {
+    const badge = document.getElementById('taskStatusBadgeFull');
+    const statusMap = {
+        pending: { label: '⏳ Ожидает', class: 'status-pending' },
+        in_progress: { label: '🔄 В работе', class: 'status-in_progress' },
+        completed: { label: '✅ Выполнена', class: 'status-completed' },
+        cancelled: { label: '❌ Отменена', class: 'status-cancelled' }
+    };
+    const info = statusMap[status] || statusMap.pending;
+    badge.textContent = info.label;
+    badge.className = 'task-status-badge ' + info.class;
+}
+
+function updateProgressFull(value) {
+    document.getElementById('progressValueFull').textContent = value + '%';
+}
+
+async function loadCommentsFull(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}/comments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            renderCommentsFull(data.comments || []);
+        } else {
+            renderCommentsFull([]);
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+        renderCommentsFull([]);
+    }
+}
+
+function renderCommentsFull(comments) {
+    const container = document.getElementById('taskCommentsListFull');
+    const countEl = document.getElementById('commentsCountFull');
+    
+    if (!comments || comments.length === 0) {
+        container.innerHTML = '<div class="task-comments-empty">Нет комментариев</div>';
+        if (countEl) countEl.textContent = '0';
+        return;
+    }
+    
+    if (countEl) countEl.textContent = comments.length;
+    
+    container.innerHTML = comments.map(c => {
+        const userName = c.user_name || 'Пользователь';
+        const date = c.created_at ? new Date(c.created_at).toLocaleString('ru-RU') : '';
+        return `
+            <div class="task-comment-item">
+                <div class="comment-header">
+                    <span class="comment-author">${escapeHtml(userName)}</span>
+                    <span>${date}</span>
+                </div>
+                <div class="comment-text">${escapeHtml(c.content)}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function addCommentFull(taskId) {
+    const content = document.getElementById('newCommentFull')?.value.trim();
+    if (!content) {
+        showToast('Введите текст комментария', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+        
+        if (response.ok) {
+            document.getElementById('newCommentFull').value = '';
+            await loadCommentsFull(taskId);
+            showToast('Комментарий добавлен', 'success');
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Ошибка добавления комментария', 'error');
+        }
+    } catch (error) {
+        console.error('Add comment error:', error);
+        showToast('Ошибка сервера', 'error');
+    }
+}
+
+async function saveTaskFull(taskId) {
+    const title = document.getElementById('taskTitleFull')?.value.trim();
+    const description = document.getElementById('taskDescriptionFull')?.value;
+    const startDate = document.getElementById('taskStartDateFull')?.value;
+    const dueDate = document.getElementById('taskDueDateFull')?.value;
+    const priority = document.getElementById('taskPriorityFull')?.value;
+    const status = document.getElementById('taskStatusFull')?.value;
+    const progress = parseInt(document.getElementById('taskProgressFull')?.value) || 0;
+    
+    if (!title) {
         showToast('Введите название задачи', 'error');
+        document.getElementById('taskTitleFull').focus();
         return;
     }
     
@@ -2387,20 +2532,143 @@ async function saveTask(taskId) {
             },
             body: JSON.stringify({
                 title: title.trim(),
-                description,
+                description: description || '',
                 startDate: startDate || null,
                 dueDate: dueDate || null,
-                priority,
-                status,
-                progress: parseInt(progress)
+                priority: priority || 'medium',
+                status: status || 'pending',
+                progress: progress
             })
         });
         
         if (response.ok) {
+            const data = await response.json();
             showToast('Задача сохранена', 'success');
-            closeTaskModal();
             await loadTasks();
             await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            
+            // Обновляем отображение
+            renderTaskFull(data.task);
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Ошибка сохранения', 'error');
+        }
+    } catch (error) {
+        console.error('Save task error:', error);
+        showToast('Ошибка сервера', 'error');
+    }
+}
+
+async function deleteTaskFull(taskId) {
+    if (!confirm('Удалить эту задачу?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            showToast('Задача удалена', 'success');
+            currentTasks = currentTasks.filter(t => t.id !== taskId);
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            closeTaskModal();
+        } else {
+            showToast('Ошибка удаления', 'error');
+        }
+    } catch (error) {
+        console.error('Delete task error:', error);
+        showToast('Ошибка сервера', 'error');
+    }
+}
+
+// Переопределяем closeTaskModal для новой модалки
+function closeTaskModal() {
+    closeModal('taskModal');
+    currentTaskIdFull = null;
+}
+// - saveTask()
+// Сохранение задачи
+async function saveTask(taskId) {
+    const title = document.getElementById('taskTitle')?.value.trim();
+    const description = document.getElementById('taskDescription')?.value;
+    const startDate = document.getElementById('taskStartDate')?.value;
+    const dueDate = document.getElementById('taskDueDate')?.value;
+    const priority = document.getElementById('taskPriority')?.value;
+    const status = document.getElementById('taskStatus')?.value;
+    const progress = parseInt(document.getElementById('taskProgress')?.value) || 0;
+    
+    if (!title) {
+        showToast('Введите название задачи', 'error');
+        document.getElementById('taskTitle').focus();
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                title: title.trim(),
+                description: description || '',
+                startDate: startDate || null,
+                dueDate: dueDate || null,
+                priority: priority || 'medium',
+                status: status || 'pending',
+                progress: progress
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const updatedTask = data.task;
+            
+            // Обновляем в локальном массиве
+            const index = currentTasks.findIndex(t => t.id === taskId);
+            if (index !== -1) {
+                currentTasks[index] = updatedTask;
+            }
+            
+            // Обновляем в calendarEvents
+            const eventIndex = calendarEvents.findIndex(e => e.id === taskId && e.type === 'task');
+            if (eventIndex !== -1) {
+                calendarEvents[eventIndex] = {
+                    ...calendarEvents[eventIndex],
+                    title: updatedTask.title,
+                    status: updatedTask.status,
+                    priority: updatedTask.priority,
+                    date: updatedTask.due_date ? updatedTask.due_date.slice(0, 10) : null
+                };
+            }
+            
+            showToast('Задача сохранена', 'success');
+            
+            // Перезагружаем все списки
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            
+            // Обновляем отображение в модалке
+            renderTaskModal(updatedTask);
+            
+            closeTaskModal();
         } else {
             const error = await response.json();
             showToast(error.error || 'Ошибка сохранения', 'error');
@@ -2413,8 +2681,11 @@ async function saveTask(taskId) {
 // - addComment()
 // Добавление комментария
 async function addComment(taskId) {
-    const content = document.getElementById('newComment')?.value;
-    if (!content || content.trim() === '') return;
+    const content = document.getElementById('newComment')?.value.trim();
+    if (!content) {
+        showToast('Введите текст комментария', 'error');
+        return;
+    }
     
     try {
         const token = localStorage.getItem('token');
@@ -2424,26 +2695,28 @@ async function addComment(taskId) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ content: content.trim() })
+            body: JSON.stringify({ content })
         });
         
         if (response.ok) {
+            const data = await response.json();
             document.getElementById('newComment').value = '';
-            // Перезагружаем задачу
-            const taskResponse = await fetch(`/api/tasks/${taskId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const taskData = await taskResponse.json();
-            const taskIndex = currentTasks.findIndex(t => t.id === taskId);
-            if (taskIndex !== -1) {
-                currentTasks[taskIndex] = taskData.task;
-            }
-            // Обновляем модалку
-            closeTaskModal();
-            openTaskModal(taskId);
+            
+            // Добавляем комментарий в локальный список
+            const comment = data.comment;
+            const commentsContainer = document.getElementById('taskCommentsList');
+            const currentComments = commentsContainer.querySelectorAll('.comment-item');
+            
+            // Перезагружаем комментарии с сервера
+            await loadComments(taskId);
+            showToast('Комментарий добавлен', 'success');
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Ошибка добавления комментария', 'error');
         }
     } catch (error) {
         console.error('Add comment error:', error);
+        showToast('Ошибка сервера', 'error');
     }
 }
 // - deleteTask()
@@ -2460,9 +2733,20 @@ async function deleteTask(taskId) {
         
         if (response.ok) {
             showToast('Задача удалена', 'success');
-            closeTaskModal();
+            
+            // Удаляем из локальных массивов
+            currentTasks = currentTasks.filter(t => t.id !== taskId);
+            calendarEvents = calendarEvents.filter(e => e.id !== taskId);
+            
+            // Перезагружаем все списки
             await loadTasks();
             await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            
+            closeTaskModal();
         } else {
             showToast('Ошибка удаления', 'error');
         }
@@ -2558,9 +2842,48 @@ async function toggleTaskStatus(taskId, event) {
         console.error('Toggle task error:', error);
     }
 }
-
-
-
+function updateStatusBadge(status) {
+    const badge = document.getElementById('taskStatusBadge');
+    const statusMap = {
+        pending: { label: '⏳ Ожидает', color: '#f59e0b' },
+        in_progress: { label: '🔄 В работе', color: '#3b82f6' },
+        completed: { label: '✅ Выполнена', color: '#10b981' },
+        cancelled: { label: '❌ Отменена', color: '#ef4444' }
+    };
+    const info = statusMap[status] || statusMap.pending;
+    badge.textContent = info.label;
+    badge.style.background = info.color;
+    badge.style.color = 'white';
+}
+function updateProgressDisplay(value) {
+    document.getElementById('progressValue').textContent = value + '%';
+}
+function renderComments(comments) {
+    const container = document.getElementById('taskCommentsList');
+    const countEl = document.getElementById('commentsCount');
+    
+    if (!comments || comments.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--c_surf_txt); font-size: 13px;">Нет комментариев</div>';
+        if (countEl) countEl.textContent = '0';
+        return;
+    }
+    
+    if (countEl) countEl.textContent = comments.length;
+    
+    container.innerHTML = comments.map(c => {
+        const userName = c.user_name || 'Пользователь';
+        const date = c.created_at ? new Date(c.created_at).toLocaleString('ru-RU') : '';
+        return `
+            <div style="padding: 10px 12px; background: var(--c_bg); border-radius: 8px; border-left: 3px solid var(--c_acc);">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--c_surf_txt); margin-bottom: 4px;">
+                    <strong>${escapeHtml(userName)}</strong>
+                    <span>${date}</span>
+                </div>
+                <div style="font-size: 14px; color: var(--c_bg_txt); word-wrap: break-word;">${escapeHtml(c.content)}</div>
+            </div>
+        `;
+    }).join('');
+}
 
 
 
@@ -2767,7 +3090,7 @@ async function createTaskFromEditor() {
             setTimeout(() => {
                 const goToTask = confirm(`Задача "${title}" создана. Перейти к ней?`);
                 if (goToTask && result.task) {
-                    openTaskModal(result.task.id);
+                    openTaskView(result.task.id);
                 }
             }, 500);
         } else {
@@ -3048,34 +3371,122 @@ function openTaskTypeSelector() {
 // - openSimpleTaskEditor()
 // Открытие обычной задачи
 function openSimpleTaskEditor(defaultDate = null) {
-    // Очищаем форму
-    document.getElementById('taskTitle').value = '';
-    document.getElementById('taskDescription').value = '';
-    document.getElementById('taskPriority').value = 'medium';
-    document.getElementById('taskDeadline').value = defaultDate || '';
-    document.getElementById('taskAssignee').value = '';
-    document.getElementById('taskObservers').value = '';
-    document.getElementById('taskTags').value = '';
-    document.getElementById('taskUploadedFiles').innerHTML = '';
+    // Очищаем форму — рендерим стандартные поля
+    renderSimpleTaskForm();
     
-    // Загружаем список пользователей
-    loadTaskUsers();
-    
-    // Заполняем информацию о создателе
-    const currentUser = window.currentUser;
-    const creatorSpan = document.getElementById('previewCreator');
-    if (creatorSpan && currentUser) {
-        creatorSpan.textContent = `${currentUser.surname || ''} ${currentUser.name || ''}`.trim() || currentUser.username;
+    // Если передан defaultDate — устанавливаем
+    if (defaultDate) {
+        const dueDateInput = document.getElementById('form_field_due_date');
+        if (dueDateInput) dueDateInput.value = defaultDate;
     }
     
+    // Обновляем заголовок
+    const formTitle = document.getElementById('googleFormTitle');
+    if (formTitle) formTitle.textContent = 'Новая задача';
+    
+    const formDesc = document.getElementById('googleFormDescription');
+    if (formDesc) formDesc.textContent = 'Заполните форму для создания задачи';
+    
+    const badge = document.getElementById('templateFormBadge');
+    if (badge) badge.textContent = 'Обычная задача';
+    
+    // Закрываем секцию выбора и открываем создание
     closeWindow('base-section-task-new-typeselector');
-    openWindow('base-section-task-new-edit');
+    openWindow('base-section-task-create');
+}
+// Рендер формы для обычной задачи (без шаблона)
+function renderSimpleTaskForm() {
+    const container = document.getElementById('googleFormBody');
+    if (!container) return;
+    
+    // Стандартные поля для обычной задачи
+    const defaultFields = [
+        {
+            key: 'title',
+            label: 'Название задачи',
+            type: 'text',
+            required: true,
+            placeholder: 'Введите название задачи'
+        },
+        {
+            key: 'description',
+            label: 'Описание',
+            type: 'textarea',
+            required: false,
+            placeholder: 'Опишите задачу...'
+        },
+        {
+            key: 'priority',
+            label: 'Приоритет',
+            type: 'select',
+            required: true,
+            options: ['Низкий', 'Средний', 'Высокий', 'Критический'],
+            defaultValue: 'Средний'
+        },
+        {
+            key: 'start_date',
+            label: 'Дата начала',
+            type: 'date',
+            required: false
+        },
+        {
+            key: 'due_date',
+            label: 'Срок выполнения',
+            type: 'date',
+            required: true
+        },
+        {
+            key: 'assignee',
+            label: 'Ответственный',
+            type: 'user',
+            required: true
+        },
+        {
+            key: 'observers',
+            label: 'Наблюдатели',
+            type: 'multi-user',
+            required: false
+        }
+    ];
+    
+    // Рендерим поля
+    container.innerHTML = defaultFields.map(field => renderGoogleFormField(field, {})).join('');
+    
+    // Инициализируем обработчики для динамических полей
+    initGoogleFormHandlers({});
+    
+    // Загружаем пользователей для селектов
+    loadTaskUsers();
 }
 // =====================================================
 // 8.6 ОТКРЫТИЕ ЗАДАЧИ ИЗ ШАБЛОНА (В GOOGLE FORMS СТИЛЕ)
 // =====================================================
 
-
+// Открытие создания обычной задачи (без шаблона)
+function openTaskCreate() {
+    // Очищаем форму
+    document.getElementById('googleFormTitle').textContent = 'Новая задача';
+    document.getElementById('googleFormDescription').textContent = 'Заполните форму для создания задачи';
+    document.getElementById('templateFormBadge').textContent = 'Обычная задача';
+    
+    // Очищаем все поля
+    document.getElementById('form_field_title').value = '';
+    document.getElementById('form_field_description').value = '';
+    document.getElementById('form_field_priority').value = 'medium';
+    document.getElementById('form_field_start_date').value = '';
+    document.getElementById('form_field_due_date').value = '';
+    document.getElementById('form_field_assignee').value = '';
+    document.getElementById('form_field_observers').value = '';
+    document.getElementById('selected_assignee').innerHTML = '<span class="empty-hint">Не выбран</span>';
+    document.getElementById('selected_observers').innerHTML = '<span class="empty-hint">Не выбраны</span>';
+    
+    // Скрываем кастомные поля
+    document.getElementById('taskCreateCustomFields').style.display = 'none';
+    document.getElementById('taskCreateCustomFieldsContainer').innerHTML = '';
+    
+    // Открываем секцию
+    openWindow('base-section-task-create');
+}
 async function openTaskFromTemplate(templateId) {
     console.log('📋 openTaskFromTemplate called with id:', templateId);
     
@@ -3129,13 +3540,84 @@ async function openTaskFromTemplate(templateId) {
     // Открываем форму в Google Forms стиле
     openTaskFormFromTemplate(template);
 }
+// При выборе шаблона из списка
+async function selectTemplateForCreate(templateId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/task-templates/${templateId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const template = data.template;
+            
+            // Увеличиваем счётчик использования
+            await fetch(`/api/task-templates/${templateId}/use`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            // Закрываем секцию выбора
+            closeWindow('base-section-task-new-typeselector');
+            
+            // Заполняем форму шаблоном и открываем создание
+            fillFormFromTemplate(template);
+            openWindow('base-section-task-create');
+        }
+    } catch (error) {
+        console.error('Error selecting template:', error);
+        showToast('Ошибка загрузки шаблона', 'error');
+    }
+}
 
+function fillFormFromTemplate(template) {
+    const templateData = template.template_data || {};
+    
+    // Собираем поля: стандартные + кастомные из шаблона
+    const allFields = [
+        ...defaultTemplateFields,  // стандартные поля
+        ...(templateData.fields || [])  // кастомные поля
+    ].sort((a, b) => (a.order || 999) - (b.order || 999));
+    
+    // Рендерим форму с полями
+    const container = document.getElementById('googleFormBody');
+    if (container) {
+        container.innerHTML = allFields.map(field => renderGoogleFormField(field, templateData)).join('');
+        initGoogleFormHandlers(templateData);
+    }
+    
+    // Заполняем значения из шаблона
+    if (templateData.defaultPriority) {
+        const prioritySelect = document.getElementById('form_field_priority');
+        if (prioritySelect) prioritySelect.value = templateData.defaultPriority;
+    }
+    
+    if (templateData.defaultDeadlineDays) {
+        const dueDateInput = document.getElementById('form_field_due_date');
+        if (dueDateInput) {
+            const date = new Date();
+            date.setDate(date.getDate() + templateData.defaultDeadlineDays);
+            dueDateInput.value = date.toISOString().slice(0, 10);
+        }
+    }
+    
+    // Заголовок
+    const formTitle = document.getElementById('googleFormTitle');
+    if (formTitle) formTitle.textContent = template.name;
+    
+    const formDesc = document.getElementById('googleFormDescription');
+    if (formDesc) formDesc.textContent = template.description || 'Заполните форму для создания задачи';
+    
+    const badge = document.getElementById('templateFormBadge');
+    if (badge) badge.textContent = 'Шаблон: ' + template.name;
+}
 // Открытие формы в стиле Google Forms
 function openTaskFormFromTemplate(template) {
     console.log('🎨 Opening Google Forms style for template:', template.name);
     
     // Проверяем, что секция существует
-    const formSection = document.getElementById('base-section-task-from-template');
+    const formSection = document.getElementById('base-section-task-create');
     if (!formSection) {
         console.error('Section base-section-task-from-template not found!');
         showToast('Ошибка: секция формы не найдена', 'error');
@@ -3536,7 +4018,7 @@ function openTaskFormFromTemplate(template) {
     renderGoogleForm(template);
     
     // Открываем секцию
-    openWindow('base-section-task-from-template');
+    openWindow('base-section-task-create');
 }
 
 // Рендер формы в стиле Google Forms
@@ -3864,25 +4346,43 @@ function collectFormData() {
     
     for (const field of fields) {
         const fieldKey = field.dataset.fieldKey;
-        const select = field.querySelector('select');
-        const input = field.querySelector('input:not([type="hidden"])');
-        const textarea = field.querySelector('textarea');
+        const input = field.querySelector('input, textarea, select');
         const hiddenInput = field.querySelector('input[type="hidden"]');
         
         let value = null;
+        let type = 'text';
+        let label = fieldKey;
         
-        if (select) {
-            value = select.value;  // ← здесь должно быть 'critical'
-            console.log(`🎯 Select ${fieldKey} value:`, value, 'selectedIndex:', select.selectedIndex);
-        } else if (hiddenInput) {
+        if (hiddenInput) {
             value = hiddenInput.value;
+            type = hiddenInput.dataset.fieldType || 'text';
+            label = hiddenInput.dataset.fieldLabel || fieldKey;
         } else if (input) {
-            value = input.value;
-        } else if (textarea) {
-            value = textarea.value;
+            type = input.dataset.fieldType || input.type || 'text';
+            label = input.dataset.fieldLabel || fieldKey;
+            
+            if (input.type === 'checkbox') {
+                value = input.checked;
+            } else if (input.type === 'number') {
+                value = input.value ? parseFloat(input.value) : null;
+            } else {
+                value = input.value || null;
+            }
+        }
+        
+        // Для полей с пользователями (display + hidden)
+        if (fieldKey === 'assignee' || fieldKey === 'observers') {
+            const hidden = field.querySelector('input[type="hidden"]');
+            if (hidden) {
+                value = hidden.value;
+                type = fieldKey === 'observers' ? 'multi-user' : 'user';
+                label = fieldKey === 'assignee' ? 'Исполнитель' : 'Наблюдатели';
+            }
         }
         
         formData[fieldKey] = value;
+        formData[`${fieldKey}_type`] = type;
+        formData[`${fieldKey}_label`] = label;
     }
     
     console.log('📦 Final formData:', formData);
@@ -3895,52 +4395,100 @@ async function submitTaskFromTemplate() {
     if (!formData) return;
     
     console.log('📋 Raw formData:', formData);
-    console.log('🎯 Priority from formData:', formData.priority);
     
-    // ПРЯМОЕ ПОЛУЧЕНИЕ ЗНАЧЕНИЯ ИЗ SELECT (самый надёжный способ)
+    // Получаем приоритет
     const prioritySelect = document.querySelector('#form_field_priority');
     let priorityCode = prioritySelect ? prioritySelect.value : 'medium';
     
-    console.log('🎯 Direct priority from select:', priorityCode);
-    console.log('🎯 Select selectedIndex:', prioritySelect?.selectedIndex);
-    
-    // Если вдруг пришло русское название (на всякий случай)
+    // Маппинг приоритета
     if (priorityCode === 'Низкий') priorityCode = 'low';
     else if (priorityCode === 'Средний') priorityCode = 'medium';
     else if (priorityCode === 'Высокий') priorityCode = 'high';
     else if (priorityCode === 'Критический') priorityCode = 'critical';
     
-    // Проверка на валидность
     const validPriorities = ['low', 'medium', 'high', 'critical'];
     if (!validPriorities.includes(priorityCode)) {
         console.warn('⚠️ Unknown priority:', priorityCode, 'using medium');
         priorityCode = 'medium';
     }
     
-    console.log('🎯 Final priorityCode:', priorityCode);
+    // === НОВОЕ: Собираем кастомные поля с типом ===
+    // === Собираем кастомные поля с правильным типом ===
+    const customFields = {};
+
+    // Получаем все поля из формы (кроме базовых)
+    const allFields = document.querySelectorAll('#googleFormBody .google-form-field');
+    allFields.forEach(field => {
+        const fieldKey = field.dataset.fieldKey;
+        // Пропускаем базовые поля
+        if (['title', 'description', 'priority', 'start_date', 'due_date', 'assignee', 'observers', 'linked_document'].includes(fieldKey)) {
+            return;
+        }
+        
+        // Получаем значение и тип
+        let value = null;
+        let type = 'text';
+        let label = fieldKey;
+        
+        // Ищем hidden input (для пользователей)
+        const hiddenInput = field.querySelector('input[type="hidden"]');
+        const input = field.querySelector('input:not([type="hidden"]), textarea, select');
+        
+        if (hiddenInput) {
+            // Для полей с пользователями — берём значение из hidden
+            value = hiddenInput.value || null;
+            type = hiddenInput.dataset.fieldType || 'text';
+            label = hiddenInput.dataset.fieldLabel || fieldKey;
+        } else if (input) {
+            type = input.dataset.fieldType || input.type || 'text';
+            label = input.dataset.fieldLabel || fieldKey;
+            
+            if (input.type === 'checkbox') {
+                value = input.checked;
+            } else if (input.type === 'number') {
+                value = input.value ? parseFloat(input.value) : null;
+            } else if (input.type === 'select-one' || input.tagName === 'SELECT') {
+                value = input.value || null;
+            } else {
+                value = input.value || null;
+            }
+        }
+        
+        // Если значение пустое — пропускаем
+        if (value === null || value === undefined || value === '') {
+            return;
+        }
+        
+        // Для массива (multi-user) — парсим
+        if (type === 'multi-user' && typeof value === 'string' && value.includes(',')) {
+            value = value.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+        }
+        
+        // Сохраняем структурированные данные
+        customFields[fieldKey] = {
+            type: type,
+            value: value,
+            label: label || fieldKey
+        };
+    });
+
+    console.log('📦 Custom fields with types:', JSON.stringify(customFields, null, 2));
     
     // Формируем данные для API
     const taskData = {
         title: formData.title || '',
         description: formData.description || '',
-        priority: priorityCode,  // ← ИСПОЛЬЗУЕМ ПОЛУЧЕННОЕ ЗНАЧЕНИЕ
+        priority: priorityCode,
         startDate: formData.start_date || null,
         dueDate: formData.due_date || null,
         assignedTo: formData.assignee ? parseInt(formData.assignee) : null,
         observers: formData.observers ? formData.observers.split(',').map(id => parseInt(id)).filter(id => id) : [],
         linkedDocument: formData.linked_document || null,
-        customFields: {}
+        customFields: customFields,  // ← теперь с типами
+        templateId: currentFormTemplate?.id || null
     };
     
-    // Добавляем кастомные поля
-    for (const [key, value] of Object.entries(formData)) {
-        if (!['title', 'description', 'priority', 'start_date', 'due_date', 'assignee', 'observers', 'linked_document'].includes(key)) {
-            taskData.customFields[key] = value;
-        }
-    }
-    
     console.log('📤 Final taskData:', taskData);
-    console.log('🎯 Final taskData.priority:', taskData.priority);
     
     // Валидация
     if (!taskData.title) {
@@ -3970,10 +4518,22 @@ async function submitTaskFromTemplate() {
         });
         
         if (response.ok) {
+            const result = await response.json();
             showToast('✅ Задача успешно создана', 'success');
             closeTaskFromTemplate();
             await loadTasks();
             await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            
+            // Предложение открыть созданную задачу
+            setTimeout(() => {
+                if (result.task && confirm('Задача создана. Открыть?')) {
+                    openTaskView(result.task.id);
+                }
+            }, 300);
         } else {
             const error = await response.json();
             console.error('Server error:', error);
@@ -3984,7 +4544,6 @@ async function submitTaskFromTemplate() {
         showToast('Ошибка сервера', 'error');
     }
 }
-
 // Закрытие формы
 function closeTaskFromTemplate() {
     closeWindow('base-section-task-from-template');
@@ -4401,7 +4960,7 @@ function getFieldIcon(type) {
         user: '👤',
         'multi-user': '👥'
     };
-    return icons[type] || '📌';
+    return icons[type] || '';
 }
 
 function getFieldTypeName(type) {
@@ -5805,7 +6364,22 @@ window.toggleUserSelection = toggleUserSelection;
 window.closeUserSelectorModal = closeUserSelectorModal;
 
 
-
+async function loadUsersList() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/users', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            window.allUsersList = data.users || [];
+            console.log('👥 Users loaded for custom fields:', window.allUsersList.length);
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
 
 
 // =====================================================
@@ -5815,23 +6389,388 @@ window.closeUserSelectorModal = closeUserSelectorModal;
 // Заметки - заглушка
 
 // - loadDashboardStats()
+// =====================================================
+// ЗАГРУЗКА СТАТИСТИКИ НА ДАШБОРД
+// =====================================================
+
 async function loadDashboardStats() {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch('/api/dashboard/stats', {
+        if (!token) return;
+        
+        // Загружаем задачи
+        const tasksRes = await fetch('/api/tasks', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        let tasks = [];
+        if (tasksRes.ok) {
+            const data = await tasksRes.json();
+            tasks = data.tasks || [];
+        }
+        
+        const activeTasks = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
+        const completedTasks = tasks.filter(t => t.status === 'completed');
+        
+        // Загружаем чаты
+        const chatsRes = await fetch('/api/chats', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        let chats = [];
+        if (chatsRes.ok) {
+            const data = await chatsRes.json();
+            chats = data.chats || [];
+        }
+        
+        // Загружаем уведомления
+        const notifRes = await fetch('/api/notifications/unread', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        let unread = 0;
+        if (notifRes.ok) {
+            const data = await notifRes.json();
+            unread = data.unreadCount || 0;
+        }
+        
+        // Обновляем счётчики
+        const statsTasks = document.getElementById('statsTasks');
+        const statsCompleted = document.getElementById('statsCompleted');
+        const statsDocs = document.getElementById('statsDocs');
+        const statsProcesses = document.getElementById('statsProcesses');
+        const statsChats = document.getElementById('statsChats');
+        const statsUnread = document.getElementById('statsUnread');
+        
+        if (statsTasks) statsTasks.textContent = activeTasks.length;
+        if (statsCompleted) statsCompleted.textContent = completedTasks.length;
+        if (statsDocs) statsDocs.textContent = '0';
+        if (statsProcesses) statsProcesses.textContent = '0';
+        if (statsChats) statsChats.textContent = chats.length;
+        if (statsUnread) statsUnread.textContent = unread;
+        
+        // Прогресс месяца
+        const totalTasks = tasks.length;
+        const monthProgress = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
+        
+        const progressBar = document.getElementById('monthProgressBar');
+        const progressValue = document.getElementById('monthProgressValue');
+        
+        if (progressBar) progressBar.style.width = monthProgress + '%';
+        if (progressValue) progressValue.textContent = monthProgress + '%';
+        
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+    }
+}
+// =====================================================
+// УВЕДОМЛЕНИЯ
+// =====================================================
+
+let currentNotificationFilter = 'all';
+let notificationsData = [];
+
+// Иконки по категориям (emoji как fallback, PNG потом)
+const NOTIFICATION_ICONS = {
+    admin:     '../materials/icons8-администратор-microsoft-96.png',
+    task:      '../materials/icons8-задача-90.png',
+    document:  '../materials/icons8-документ-100.png',
+    deadline:  '../materials/icons8-дедлайн-96.png',
+    message:   '../materials/icons8-сообщение-64.png',
+    workflow:  '../materials/icons8-обработать-96.png',
+    mention:   '../materials/icons8-@-90.png',
+    reminder:  '../materials/icons8-уведомление-100.png',
+    system:    '../materials/icons8-модуль-90.png',
+};
+
+// Загрузка уведомлений
+async function loadNotifications() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('/api/notifications', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (response.ok) {
             const data = await response.json();
-            document.getElementById('statsTasks').textContent = data.tasks_in_progress || 0;
-            document.getElementById('statsDocs').textContent = data.documents_total || 0;
-            document.getElementById('statsProcesses').textContent = data.active_processes || 0;
-            document.getElementById('statsUnread').textContent = data.unread_notifications || 0;
+            notificationsData = data.notifications || [];
+            renderNotifications();
         }
     } catch (error) {
-        console.error('Error loading stats:', error);
+        console.error('Error loading notifications:', error);
     }
+}
+
+// Рендер уведомлений
+function renderNotifications() {
+    const container = document.getElementById('notificationsList');
+    if (!container) return;
+    
+    let filtered = notificationsData;
+    
+    if (currentNotificationFilter !== 'all') {
+        filtered = notificationsData.filter(n => n.category === currentNotificationFilter);
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-notifications">Нет уведомлений</div>';
+        return;
+    }
+    
+    container.innerHTML = filtered.map(notif => {
+        const iconSrc = NOTIFICATION_ICONS[notif.category] || NOTIFICATION_ICONS.system;
+        const isUnread = !notif.is_read;
+        const timeAgo = formatNotificationTime(notif.created_at);
+        const priorityBadge = notif.priority === 'critical' || notif.priority === 'high' 
+            ? `<span class="notification-priority ${notif.priority}">${notif.priority === 'critical' ? 'Критично' : 'Важно'}</span>` 
+            : '';
+        
+        // Определяем отправителя
+        let senderHtml = '';
+        if (notif.category === 'admin' && notif.sender_name) {
+            senderHtml = `<span class="notification-sender">от ${escapeHtml(notif.sender_name)}</span>`;
+        } else if (notif.category === 'task') {
+            senderHtml = `<span class="notification-sender">Система</span>`;
+        }
+        
+        return `
+            <div class="notification-item ${isUnread ? 'unread' : ''}" 
+                 data-category="${notif.category}"
+                 data-id="${notif.id}"
+                 onclick="openNotification(${notif.id})">
+                <div class="notification-icon">
+                    <img src="${iconSrc}" alt="" loading="lazy">
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <span class="notification-title">${escapeHtml(notif.title || 'Уведомление')}</span>
+                        ${priorityBadge}
+                    </div>
+                    <div class="notification-text">${escapeHtml(notif.content || '')}</div>
+                    <div class="notification-footer">
+                        ${senderHtml}
+                        <span class="notification-time">${timeAgo}</span>
+                    </div>
+                </div>
+                ${isUnread ? '<div class="notification-unread-dot"></div>' : ''}
+                <button class="notification-delete" onclick="event.stopPropagation(); deleteNotification(${notif.id})">✕</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Открытие уведомления
+async function openNotification(notifId) {
+    const notif = notificationsData.find(n => n.id === notifId);
+    if (!notif) return;
+    
+    // Помечаем как прочитанное
+    if (!notif.is_read) {
+        await markNotificationRead(notifId);
+        notif.is_read = true;
+        renderNotifications();
+        updateUnreadCount();
+    }
+    
+    // Переходим по ссылке
+    if (notif.link_type && notif.link_id) {
+        switch (notif.link_type) {
+            case 'task':
+                if (typeof openTaskView === 'function') {
+                    openTaskView(notif.link_id);
+                } else if (typeof openTaskEdit === 'function') {
+                    openTaskEdit(notif.link_id);
+                }
+                break;
+            case 'chat':
+                window.location.href = `/html/chat.html?chat=${notif.link_id}`;
+                break;
+            case 'document':
+                showToast('Документ: ' + notif.title, 'info');
+                break;
+            case 'workflow':
+                showToast('Процесс: ' + notif.title, 'info');
+                break;
+        }
+    }
+}
+
+// Пометить как прочитанное
+async function markNotificationRead(notifId) {
+    try {
+        const token = localStorage.getItem('token');
+        await fetch(`/api/notifications/${notifId}/read`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    } catch (error) {
+        console.error('Error marking notification read:', error);
+    }
+}
+
+// Пометить все как прочитанные
+async function markAllNotificationsRead() {
+    try {
+        const token = localStorage.getItem('token');
+        await fetch('/api/notifications/read-all', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        notificationsData.forEach(n => n.is_read = true);
+        renderNotifications();
+        updateUnreadCount();
+        showToast('Все уведомления прочитаны', 'success');
+    } catch (error) {
+        console.error('Error marking all read:', error);
+    }
+}
+
+// Удалить уведомление
+async function deleteNotification(notifId) {
+    try {
+        const token = localStorage.getItem('token');
+        await fetch(`/api/notifications/${notifId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        notificationsData = notificationsData.filter(n => n.id !== notifId);
+        renderNotifications();
+        updateUnreadCount();
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+    }
+}
+
+// Переключение фильтра
+function toggleNotificationsFilter() {
+    const filter = document.getElementById('notificationsFilter');
+    if (filter) {
+        filter.style.display = filter.style.display === 'none' ? 'flex' : 'none';
+    }
+}
+
+// Фильтрация уведомлений
+function filterNotifications(category) {
+    currentNotificationFilter = category;
+    
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.category === category);
+    });
+    
+    renderNotifications();
+}
+
+// Обновление счётчика непрочитанных
+function updateUnreadCount() {
+    const unreadCount = notificationsData.filter(n => !n.is_read).length;
+    const statsUnread = document.getElementById('statsUnread');
+    if (statsUnread) statsUnread.textContent = unreadCount;
+}
+
+// Форматирование времени
+function formatNotificationTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Только что';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} мин назад`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч назад`;
+    if (diff < 172800000) return 'Вчера';
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} дн назад`;
+    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+}
+// =====================================================
+// ЗАГРУЗКА ИНФОРМАЦИИ ОБ ОТДЕЛЕ (ЗАДЕЛ)
+// =====================================================
+
+async function loadMyDepartment() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const user = window.currentUser;
+        if (!user || !user.department_id) {
+            // Нет отдела
+            const nameEl = document.getElementById('departmentName');
+            if (nameEl) nameEl.textContent = 'Отдел не указан';
+            return;
+        }
+        
+        // Загружаем информацию об отделе
+        const deptRes = await fetch(`/api/admin/departments/${user.department_id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (deptRes.ok) {
+            const data = await deptRes.json();
+            const dept = data.department;
+            
+            const nameEl = document.getElementById('departmentName');
+            if (nameEl) nameEl.textContent = dept.name || 'Отдел';
+            
+            const managerEl = document.getElementById('departmentManager');
+            if (managerEl && dept.manager_name) {
+                managerEl.textContent = `Руководитель: ${dept.manager_name}`;
+            }
+        }
+        
+        // Загружаем сотрудников отдела
+        const empRes = await fetch(`/api/admin/departments/${user.department_id}/employees`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (empRes.ok) {
+            const data = await empRes.json();
+            const employees = data.employees || [];
+            
+            const empCountEl = document.getElementById('departmentEmployeesCount');
+            if (empCountEl) empCountEl.textContent = `${employees.length} сотрудников`;
+            
+            const membersEl = document.getElementById('deptStatsMembers');
+            if (membersEl) membersEl.textContent = employees.length;
+        }
+        
+        // Считаем задачи отдела
+        const tasksRes = await fetch('/api/tasks', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (tasksRes.ok) {
+            const data = await tasksRes.json();
+            const allTasks = data.tasks || [];
+            // Здесь в будущем можно фильтровать по отделу
+            const activeDeptTasks = allTasks.filter(t => t.status !== 'completed');
+            
+            const activeEl = document.getElementById('deptStatsActive');
+            if (activeEl) activeEl.textContent = activeDeptTasks.length;
+            
+            const overdue = allTasks.filter(t => {
+                if (t.status === 'completed' || !t.due_date) return false;
+                return new Date(t.due_date) < new Date();
+            });
+            
+            const overdueEl = document.getElementById('deptStatsOverdue');
+            if (overdueEl) overdueEl.textContent = overdue.length;
+        }
+        
+    } catch (error) {
+        console.error('Error loading department:', error);
+    }
+}
+
+// =====================================================
+// ОТКРЫТИЕ ПОЛНОЙ СТРАНИЦЫ ОТДЕЛА (ЗАДЕЛ)
+// =====================================================
+
+function openFullMyDepartment() {
+    showToast('Раздел "Мой отдел" в разработке', 'info');
+    // В будущем: открытие отдельной секции с полной информацией об отделе
 }
 
 // =====================================================
@@ -5961,6 +6900,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadNotes();
     loadDashboardStats();
+    loadMyDepartment();
+    loadNotifications();
     
     setTimeout(() => {
         if (document.getElementById('miniCalendar')) {
@@ -5974,7 +6915,7 @@ window.addTag = addTag;
 window.previewTask = previewTask;
 window.saveTaskDraft = saveTaskDraft;
 window.createTaskFromEditor = createTaskFromEditor;
-window.openTaskModal = openTaskModal;
+window.openTaskView = openTaskView;
 window.closeTaskModal = closeTaskModal;
 window.toggleTaskStatus = toggleTaskStatus;
 window.openFieldEditor = openFieldEditor;
@@ -6008,7 +6949,7 @@ function createNewDocument(docType) {
 function createNewTask(taskType) {
     console.log('Создание задачи типа:', taskType);
     closeWindow('base-section-task-new');
-    openWindow('base-section-task-edit');
+    openWindow('base-section-task-create');
 }
 function updateTemplateButtons() {
     const createTemplateBtn = document.getElementById('createTemplateBtn');
@@ -6086,7 +7027,7 @@ function renderDashboardTasks() {
         };
         
         return `
-            <div class="dashboard-task-item" onclick="openTaskModal(${task.id})" style="border-left-color: ${getPriorityColor(task.priority)};">
+            <div class="dashboard-task-item" onclick="openTaskView(${task.id})" style="border-left-color: ${getPriorityColor(task.priority)};">
                 <div class="task-info">
                     <div class="task-title">${escapeHtml(task.title)}</div>
                     <div class="task-meta">
@@ -6127,5 +7068,2065 @@ async function loadTasks() {
         }
     } catch (error) {
         console.error('Error loading tasks:', error);
+    }
+}
+// =====================================================
+// ТАБЛИЦЫ ЗАДАЧ - ЗАГРУЗКА ДАННЫХ
+// =====================================================
+
+// Загрузка недавних задач (последние 10)
+async function loadRecentTasks() {
+    const tbody = document.getElementById('recentTasksBody');
+    if (!tbody) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks?limit=10&offset=0', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tasks = data.tasks || [];
+            renderTasksTable(tbody, tasks, 'recent');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading recent tasks:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+// Загрузка задач в работе
+async function loadActiveTasks() {
+    const tbody = document.getElementById('activeTasksBody');
+    if (!tbody) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks?status=pending,in_progress', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tasks = data.tasks || [];
+            renderTasksTable(tbody, tasks, 'active');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading active tasks:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+// Загрузка архивных задач (выполненные + отменённые)
+async function loadArchivedTasks() {
+    const tbody = document.getElementById('archivedTasksBody');
+    if (!tbody) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks?status=completed,cancelled', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tasks = data.tasks || [];
+            renderTasksTable(tbody, tasks, 'archived');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="7" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading archived tasks:', error);
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+// Отрисовка таблицы задач
+function renderTasksTable(tbody, tasks, mode) {
+    if (!tasks || tasks.length === 0) {
+        const cols = mode === 'archived' ? 7 : 8;
+        tbody.innerHTML = `<tr><td colspan="${cols}" class="loading-row">📭 Нет задач</td></tr>`;
+        return;
+    }
+    
+    const priorityLabels = {
+        critical: 'Критический',
+        high: 'Высокий',
+        medium: 'Средний',
+        low: 'Низкий'
+    };
+    
+    const priorityClasses = {
+        critical: 'critical',
+        high: 'high',
+        medium: 'medium',
+        low: 'low'
+    };
+    
+    const statusLabels = {
+        pending: 'Ожидает',
+        in_progress: 'В работе',
+        completed: 'Выполнена',
+        cancelled: 'Отменена'
+    };
+    
+    const statusClasses = {
+        pending: 'pending',
+        in_progress: 'in_progress',
+        completed: 'completed',
+        cancelled: 'cancelled'
+    };
+    
+    tbody.innerHTML = tasks.map(task => {
+        const priorityLabel = priorityLabels[task.priority] || 'Средний';
+        const priorityClass = priorityClasses[task.priority] || 'medium';
+        const statusLabel = statusLabels[task.status] || 'Неизвестно';
+        const statusClass = statusClasses[task.status] || 'pending';
+        
+        // Форматируем даты
+        const startDate = task.start_date ? new Date(task.start_date).toLocaleDateString('ru-RU') : '—';
+        const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('ru-RU') : '—';
+        const completedDate = task.completed_at ? new Date(task.completed_at).toLocaleDateString('ru-RU') : '—';
+        
+        // Имена
+        const assignee = task.assignee_surname ? `${task.assignee_surname} ${task.assignee_name}`.trim() : 'Не назначен';
+        const creator = task.creator_surname ? `${task.creator_surname} ${task.creator_name}`.trim() : '—';
+        
+        // Прогресс
+        const progress = task.progress || 0;
+        
+        let row = '';
+        if (mode === 'archived') {
+            row = `
+                <tr onclick="openTaskView(${task.id})">
+                    <td>#${task.id}</td>
+                    <td><strong>${escapeHtml(task.title)}</strong></td>
+                    <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
+                    <td>${escapeHtml(assignee)}</td>
+                    <td>${escapeHtml(creator)}</td>
+                    <td>${completedDate}</td>
+                    <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                </tr>
+            `;
+        } else {
+            row = `
+                <tr onclick="openTaskView(${task.id})">
+                    <td>#${task.id}</td>
+                    <td><strong>${escapeHtml(task.title)}</strong></td>
+                    <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
+                    <td>${escapeHtml(assignee)}</td>
+                    <td>${escapeHtml(creator)}</td>
+                    <td>${startDate}</td>
+                    <td>${dueDate}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%;"></div>
+                            </div>
+                            <span class="progress-text">${progress}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        return row;
+    }).join('');
+}
+// =====================================================
+// СОРТИРОВКА И ПОИСК В ТАБЛИЦАХ
+// =====================================================
+
+// Хранилище данных таблиц
+const tableData = {
+    recent: { tasks: [], sort: { field: null, direction: null } },
+    active: { tasks: [], sort: { field: null, direction: null } },
+    archived: { tasks: [], sort: { field: null, direction: null } }
+};
+
+// Сортировка таблицы
+function sortTasks(mode, field) {
+    const data = tableData[mode];
+    if (!data || !data.tasks) return;
+    
+    // Определяем направление сортировки
+    if (data.sort.field === field) {
+        // Третий клик — отмена сортировки
+        if (data.sort.direction === 'desc') {
+            data.sort.field = null;
+            data.sort.direction = null;
+            renderTasksTableWithSort(mode, data.tasks);
+            updateSortIcons(mode, null, null);
+            return;
+        }
+        // Второй клик — убывание
+        data.sort.direction = 'desc';
+    } else {
+        // Первый клик — возрастание
+        data.sort.field = field;
+        data.sort.direction = 'asc';
+    }
+    
+    // Сортируем данные
+    const sorted = [...data.tasks];
+    sorted.sort((a, b) => {
+        let valA = getFieldValue(a, field);
+        let valB = getFieldValue(b, field);
+        
+        // Для строк — сравнение без учёта регистра
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        
+        // Для чисел и дат
+        if (valA === valB) return 0;
+        if (data.sort.direction === 'asc') {
+            return valA > valB ? 1 : -1;
+        } else {
+            return valA < valB ? 1 : -1;
+        }
+    });
+    
+    renderTasksTableWithSort(mode, sorted);
+    updateSortIcons(mode, field, data.sort.direction);
+}
+
+// Получение значения поля для сортировки
+function getFieldValue(task, field) {
+    switch(field) {
+        case 'id': return task.id;
+        case 'title': return task.title || '';
+        case 'priority': {
+            const order = { critical: 0, high: 1, medium: 2, low: 3 };
+            return order[task.priority] ?? 999;
+        }
+        case 'assignee': return task.assignee_surname ? `${task.assignee_surname} ${task.assignee_name}`.trim() : '';
+        case 'creator': return task.creator_surname ? `${task.creator_surname} ${task.creator_name}`.trim() : '';
+        case 'start_date': return task.start_date || '';
+        case 'due_date': return task.due_date || '';
+        case 'completed_at': return task.completed_at || '';
+        case 'progress': return task.progress || 0;
+        case 'status': return task.status || '';
+        default: return '';
+    }
+}
+
+// Обновление иконок сортировки
+function updateSortIcons(mode, field, direction) {
+    const table = document.getElementById(`${mode}TasksTable`);
+    if (!table) return;
+    
+    const headers = table.querySelectorAll('th');
+    headers.forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        if (!icon) return;
+        const thField = th.dataset.sort;
+        if (thField === field && direction) {
+            icon.className = 'sort-icon ' + direction;
+        } else {
+            icon.className = 'sort-icon none';
+        }
+    });
+}
+
+// Отрисовка таблицы с учётом сортировки
+function renderTasksTableWithSort(mode, tasks) {
+    const tbody = document.getElementById(`${mode}TasksBody`);
+    if (!tbody) return;
+    
+    const modeMap = {
+        recent: { cols: 8, label: 'recent' },
+        active: { cols: 8, label: 'active' },
+        archived: { cols: 7, label: 'archived' }
+    };
+    
+    const config = modeMap[mode];
+    if (!config) return;
+    
+    if (!tasks || tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${config.cols}" class="loading-row">📭 Нет задач</td></tr>`;
+        return;
+    }
+    
+    // Сохраняем данные для сортировки
+    tableData[mode].tasks = tasks;
+    
+    // Отрисовываем
+    const priorityLabels = {
+        critical: 'Критический',
+        high: 'Высокий',
+        medium: 'Средний',
+        low: 'Низкий'
+    };
+    
+    const priorityClasses = {
+        critical: 'critical',
+        high: 'high',
+        medium: 'medium',
+        low: 'low'
+    };
+    
+    const statusLabels = {
+        pending: 'Ожидает',
+        in_progress: 'В работе',
+        completed: 'Выполнена',
+        cancelled: 'Отменена'
+    };
+    
+    const statusClasses = {
+        pending: 'pending',
+        in_progress: 'in_progress',
+        completed: 'completed',
+        cancelled: 'cancelled'
+    };
+    
+    tbody.innerHTML = tasks.map(task => {
+        const priorityLabel = priorityLabels[task.priority] || 'Средний';
+        const priorityClass = priorityClasses[task.priority] || 'medium';
+        const statusLabel = statusLabels[task.status] || 'Неизвестно';
+        const statusClass = statusClasses[task.status] || 'pending';
+        
+        const startDate = task.start_date ? new Date(task.start_date).toLocaleDateString('ru-RU') : '—';
+        const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('ru-RU') : '—';
+        const completedDate = task.completed_at ? new Date(task.completed_at).toLocaleDateString('ru-RU') : '—';
+        
+        const assignee = task.assignee_surname ? `${task.assignee_surname} ${task.assignee_name}`.trim() : 'Не назначен';
+        const creator = task.creator_surname ? `${task.creator_surname} ${task.creator_name}`.trim() : '—';
+        
+        const progress = task.progress || 0;
+        
+        let row = '';
+        if (mode === 'archived') {
+            row = `
+                <tr onclick="openTaskView(${task.id})">
+                    <td>#${task.id}</td>
+                    <td><strong>${escapeHtml(task.title)}</strong></td>
+                    <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
+                    <td>${escapeHtml(assignee)}</td>
+                    <td>${escapeHtml(creator)}</td>
+                    <td>${completedDate}</td>
+                    <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                </tr>
+            `;
+        } else {
+            row = `
+                <tr onclick="openTaskView(${task.id})">
+                    <td>#${task.id}</td>
+                    <td><strong>${escapeHtml(task.title)}</strong></td>
+                    <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
+                    <td>${escapeHtml(assignee)}</td>
+                    <td>${escapeHtml(creator)}</td>
+                    <td>${startDate}</td>
+                    <td>${dueDate}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%;"></div>
+                            </div>
+                            <span class="progress-text">${progress}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        return row;
+    }).join('');
+}
+
+// Поиск по таблице
+function filterTasks(mode) {
+    const searchInput = document.getElementById(`${mode}TasksSearch`);
+    if (!searchInput) return;
+    
+    const searchText = searchInput.value.toLowerCase().trim();
+    
+    // Получаем ИСХОДНЫЕ данные, а не уже отфильтрованные
+    const data = tableData[mode];
+    if (!data || !data.originalTasks) {
+        // Если originalTasks нет — используем tasks
+        const tasks = data?.tasks || [];
+        data.originalTasks = [...tasks];
+    }
+    
+    // Берём всегда исходные данные
+    const allTasks = data.originalTasks || data.tasks || [];
+    let filtered = allTasks;
+    
+    // Если есть текст поиска — фильтруем
+    if (searchText) {
+        filtered = allTasks.filter(task => {
+            const title = (task.title || '').toLowerCase();
+            const assignee = (task.assignee_surname ? `${task.assignee_surname} ${task.assignee_name}` : '').toLowerCase();
+            const creator = (task.creator_surname ? `${task.creator_surname} ${task.creator_name}` : '').toLowerCase();
+            const id = String(task.id);
+            const status = (task.status || '').toLowerCase();
+            
+            return title.includes(searchText) || 
+                   assignee.includes(searchText) || 
+                   creator.includes(searchText) || 
+                   id.includes(searchText) ||
+                   status.includes(searchText);
+        });
+    }
+    
+    // Применяем текущую сортировку
+    const sort = data.sort;
+    if (sort.field && sort.direction) {
+        filtered.sort((a, b) => {
+            let valA = getFieldValue(a, sort.field);
+            let valB = getFieldValue(b, sort.field);
+            
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            
+            if (valA === valB) return 0;
+            if (sort.direction === 'asc') {
+                return valA > valB ? 1 : -1;
+            } else {
+                return valA < valB ? 1 : -1;
+            }
+        });
+    }
+    
+    renderTasksTableWithSort(mode, filtered);
+}
+
+// Очистка поиска
+function clearSearch(mode) {
+    const searchInput = document.getElementById(`${mode}TasksSearch`);
+    if (!searchInput) return;
+    
+    searchInput.value = '';
+    filterTasks(mode);
+    searchInput.focus();
+}
+
+// Обновляем функции загрузки — сохраняем данные
+async function loadRecentTasks() {
+    const tbody = document.getElementById('recentTasksBody');
+    if (!tbody) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks?limit=50&offset=0', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tasks = data.tasks || [];
+            
+            // Сохраняем ИСХОДНЫЕ данные
+            tableData.recent.originalTasks = [...tasks];
+            tableData.recent.tasks = tasks;
+            tableData.recent.sort = { field: null, direction: null };
+            
+            renderTasksTableWithSort('recent', tasks);
+            updateSortIcons('recent', null, null);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading recent tasks:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+// Аналогично для loadActiveTasks и loadArchivedTasks
+
+async function loadActiveTasks() {
+    const tbody = document.getElementById('activeTasksBody');
+    if (!tbody) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks?status=pending,in_progress', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tasks = data.tasks || [];
+            tableData.active.tasks = tasks;
+            tableData.active.sort = { field: null, direction: null };
+            renderTasksTableWithSort('active', tasks);
+            updateSortIcons('active', null, null);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading active tasks:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+async function loadArchivedTasks() {
+    const tbody = document.getElementById('archivedTasksBody');
+    if (!tbody) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks?status=completed,cancelled', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const tasks = data.tasks || [];
+            tableData.archived.tasks = tasks;
+            tableData.archived.sort = { field: null, direction: null };
+            renderTasksTableWithSort('archived', tasks);
+            updateSortIcons('archived', null, null);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="7" class="loading-row">Ошибка загрузки</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading archived tasks:', error);
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-row">Ошибка загрузки</td></tr>';
+    }
+}
+
+// Экспортируем функции
+window.sortTasks = sortTasks;
+window.filterTasks = filterTasks;
+
+// =====================================================
+// СОЗДАНИЕ ЗАДАЧИ (ПОЛНОЭКРАННАЯ СЕКЦИЯ)
+// =====================================================
+
+let createTaskData = {
+    assigneeId: null,
+    observerIds: [],
+    templateId: null,
+    templateData: null
+};
+
+function openTaskCreate() {
+    renderSimpleTaskForm();
+    
+    const formTitle = document.getElementById('googleFormTitle');
+    if (formTitle) formTitle.textContent = 'Новая задача';
+    
+    const formDesc = document.getElementById('googleFormDescription');
+    if (formDesc) formDesc.textContent = 'Заполните форму для создания задачи';
+    
+    const badge = document.getElementById('templateFormBadge');
+    if (badge) badge.textContent = 'Обычная задача';
+    
+    openWindow('base-section-task-create');
+}
+
+function fillFromTemplate(templateData) {
+    const data = templateData.template_data || {};
+    
+    // Приоритет
+    if (data.defaultPriority) {
+        document.getElementById('taskCreatePriority').value = data.defaultPriority;
+    }
+    
+    // Срок выполнения
+    if (data.defaultDeadlineDays) {
+        const date = new Date();
+        date.setDate(date.getDate() + data.defaultDeadlineDays);
+        document.getElementById('taskCreateDueDate').value = date.toISOString().slice(0, 10);
+    }
+    
+    // Кастомные поля
+    if (data.fields && data.fields.length > 0) {
+        renderCustomFieldsForCreate(data.fields);
+    }
+}
+
+function renderCustomFieldsForCreate(fields) {
+    const container = document.getElementById('taskCreateCustomFieldsContainer');
+    const section = document.getElementById('taskCreateCustomFields');
+    
+    if (!container || !section) return;
+    
+    section.style.display = 'block';
+    container.innerHTML = fields.map(field => {
+        let inputHtml = '';
+        const fieldId = `custom_${field.key}`;
+        
+        switch (field.type) {
+            case 'text':
+                inputHtml = `<input type="text" id="${fieldId}" class="task-input" placeholder="${escapeHtml(field.placeholder || '')}">`;
+                break;
+            case 'textarea':
+                inputHtml = `<textarea id="${fieldId}" class="task-textarea" rows="2" placeholder="${escapeHtml(field.placeholder || '')}"></textarea>`;
+                break;
+            case 'number':
+                inputHtml = `<input type="number" id="${fieldId}" class="task-input" placeholder="${escapeHtml(field.placeholder || '0')}">`;
+                break;
+            case 'date':
+                inputHtml = `<input type="date" id="${fieldId}" class="task-input">`;
+                break;
+            case 'select':
+                inputHtml = `
+                    <select id="${fieldId}" class="task-select">
+                        <option value="">${escapeHtml(field.placeholder || 'Выберите вариант')}</option>
+                        ${(field.options || []).map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('')}
+                    </select>
+                `;
+                break;
+            case 'checkbox':
+                inputHtml = `
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" id="${fieldId}"> ${escapeHtml(field.label)}
+                    </label>
+                `;
+                break;
+            case 'user':
+                inputHtml = `
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="${fieldId}_display" class="task-input" placeholder="Выберите пользователя..." readonly style="flex: 1; cursor: pointer;">
+                        <button class="btn-primary" onclick="openUserSelectorForCustom('${fieldId}')" style="padding: 4px 12px; font-size: 12px;">👤</button>
+                    </div>
+                    <input type="hidden" id="${fieldId}" value="">
+                `;
+                break;
+            default:
+                inputHtml = `<input type="text" id="${fieldId}" class="task-input" placeholder="${escapeHtml(field.placeholder || '')}">`;
+        }
+        
+        return `
+            <div class="task-prop" style="grid-column: span 1;">
+                <label>${escapeHtml(field.label)}${field.required ? ' <span style="color: red;">*</span>' : ''}</label>
+                ${inputHtml}
+            </div>
+        `;
+    }).join('');
+}
+function renderViewCustomFields(task) {
+    const container = document.getElementById('taskViewCustomFieldsContainer');
+    const section = document.getElementById('taskViewCustomFields');
+    
+    if (!container || !section) return;
+    
+    const customFields = task.custom_fields || {};
+    const keys = Object.keys(customFields);
+    
+    if (keys.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    // Собираем все ID пользователей из кастомных полей
+    const userIds = new Set();
+    keys.forEach(key => {
+        const value = customFields[key];
+        // Если значение — строка с числом (ID)
+        if (typeof value === 'string' && !isNaN(value) && value.trim() !== '') {
+            userIds.add(parseInt(value));
+        }
+        // Если массив чисел
+        if (Array.isArray(value)) {
+            value.forEach(id => {
+                if (!isNaN(id)) userIds.add(parseInt(id));
+            });
+        }
+    });
+    
+    // Если есть пользователи — загружаем их
+    if (userIds.size > 0) {
+        loadUsersByIds(Array.from(userIds), (usersMap) => {
+            renderCustomFieldsWithUsers(container, keys, customFields, usersMap);
+        });
+    } else {
+        renderCustomFieldsWithUsers(container, keys, customFields, {});
+    }
+}
+function renderCustomFieldsWithUsers(container, customFields, usersMap) {
+    const keys = Object.keys(customFields);
+    
+    console.log('🔍 Rendering custom fields with users:', customFields);
+    console.log('👤 Users map:', usersMap);
+    
+    if (keys.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = keys.map(key => {
+        const field = customFields[key];
+        let displayValue = '—';
+        let label = key;
+        
+        console.log(`🔍 Field ${key}:`, field);
+        
+        // Если поле — объект с типом (новая структура)
+        if (field && typeof field === 'object' && field.type) {
+            label = field.label || key;
+            const value = field.value;
+            
+            switch (field.type) {
+                case 'user':
+                    // Для пользователей — подставляем имя
+                    if (value && !isNaN(value)) {
+                        const userId = parseInt(value);
+                        displayValue = usersMap[userId] || value;
+                        console.log(`👤 User ${userId} -> ${displayValue}`);
+                    } else {
+                        displayValue = value || '—';
+                    }
+                    break;
+                case 'multi-user':
+                    // Для множественного выбора пользователей
+                    if (Array.isArray(value) && value.length > 0) {
+                        displayValue = value.map(id => {
+                            const name = usersMap[parseInt(id)];
+                            return name || id;
+                        }).join(', ');
+                        console.log(`👥 Multi-user ${value} -> ${displayValue}`);
+                    } else {
+                        displayValue = value || '—';
+                    }
+                    break;
+                case 'date':
+                    if (value) {
+                        const date = new Date(value);
+                        displayValue = date.toLocaleDateString('ru-RU');
+                    }
+                    break;
+                case 'checkbox':
+                    displayValue = value ? 'Да' : 'Нет';
+                    break;
+                case 'number':
+                    displayValue = value !== null && value !== undefined ? value : '—';
+                    break;
+                default:
+                    displayValue = value || '—';
+            }
+        } else {
+            // Старый формат (просто значение)
+            label = key.replace(/^custom_/, '').replace(/_/g, ' ');
+            displayValue = field || '—';
+        }
+        
+        // Если displayValue всё ещё ID и есть usersMap — пробуем подставить
+        if (typeof displayValue === 'string' && !isNaN(displayValue) && usersMap[parseInt(displayValue)]) {
+            displayValue = usersMap[parseInt(displayValue)];
+        }
+        
+        return `
+            <div class="task-view-prop">
+                <span class="prop-label">${escapeHtml(label)}</span>
+                <span class="prop-value">${escapeHtml(String(displayValue))}</span>
+            </div>
+        `;
+    }).join('');
+}
+// =====================================================
+// ВЫБОР ПОЛЬЗОВАТЕЛЕЙ ДЛЯ СОЗДАНИЯ
+// =====================================================
+
+function openUserSelectorForCreate(type) {
+    const isMultiple = type === 'observers';
+    const preselected = isMultiple ? createTaskData.observerIds : (createTaskData.assigneeId ? [createTaskData.assigneeId] : []);
+    
+    openUserSelector({
+        mode: isMultiple ? 'multiple' : 'single',
+        preselectedIds: preselected,
+        title: isMultiple ? 'Выберите наблюдателей' : 'Выберите исполнителя',
+        onConfirm: (users, userIds) => {
+            if (isMultiple) {
+                createTaskData.observerIds = userIds;
+                updateObserversDisplay(users);
+            } else {
+                if (users && users.length > 0) {
+                    const user = users[0];
+                    createTaskData.assigneeId = user.id;
+                    document.getElementById('taskCreateAssigneeDisplay').value = `${user.surname || ''} ${user.name || ''}`.trim();
+                    document.getElementById('taskCreateAssigneeId').value = user.id;
+                }
+            }
+        }
+    });
+}
+
+function updateObserversDisplay(users) {
+    const display = document.getElementById('taskCreateObserversDisplay');
+    const tagsContainer = document.getElementById('taskCreateObserversTags');
+    const idsInput = document.getElementById('taskCreateObserversIds');
+    
+    if (!display || !tagsContainer) return;
+    
+    // Обновляем отображение
+    if (users && users.length > 0) {
+        display.value = users.map(u => `${u.surname || ''} ${u.name || ''}`.trim()).join(', ');
+    } else {
+        display.value = '';
+    }
+    
+    // Обновляем теги
+    tagsContainer.innerHTML = (users || []).map(user => `
+        <span class="task-observer-tag">
+            ${escapeHtml(`${user.surname || ''} ${user.name || ''}`.trim())}
+            <button class="remove-tag" onclick="removeObserver(${user.id})">✕</button>
+        </span>
+    `).join('');
+    
+    // Обновляем скрытое поле
+    idsInput.value = (users || []).map(u => u.id).join(',');
+}
+
+function removeObserver(userId) {
+    createTaskData.observerIds = createTaskData.observerIds.filter(id => id !== userId);
+    
+    // Получаем обновлённый список пользователей
+    const userList = createTaskData.observerIds.map(id => {
+        // Ищем пользователя в глобальном списке
+        const user = window.allUsersList?.find(u => u.id === id);
+        return user || { id, surname: 'Пользователь', name: String(id) };
+    });
+    
+    updateObserversDisplay(userList);
+}
+
+function openUserSelectorForCustom(fieldId) {
+    openUserSelector({
+        mode: 'single',
+        title: 'Выберите пользователя',
+        onConfirm: (users) => {
+            if (users && users.length > 0) {
+                const user = users[0];
+                document.getElementById(`${fieldId}_display`).value = `${user.surname || ''} ${user.name || ''}`.trim();
+                document.getElementById(fieldId).value = user.id;
+            }
+        }
+    });
+}
+
+// =====================================================
+// ОТПРАВКА ЗАДАЧИ
+// =====================================================
+
+async function submitTaskCreate() {
+    const title = document.getElementById('taskCreateTitle').value.trim();
+    const description = document.getElementById('taskCreateDescription').value;
+    const startDate = document.getElementById('taskCreateStartDate').value;
+    const dueDate = document.getElementById('taskCreateDueDate').value;
+    const priority = document.getElementById('taskCreatePriority').value;
+    const assigneeId = createTaskData.assigneeId;
+    const observerIds = createTaskData.observerIds;
+    
+    // Валидация
+    if (!title) {
+        showToast('Введите название задачи', 'error');
+        document.getElementById('taskCreateTitle').focus();
+        return;
+    }
+    
+    if (!dueDate) {
+        showToast('Укажите срок выполнения', 'error');
+        document.getElementById('taskCreateDueDate').focus();
+        return;
+    }
+    
+    if (!assigneeId) {
+        showToast('Выберите исполнителя', 'error');
+        return;
+    }
+    
+    // Собираем кастомные поля
+    const customFields = {};
+    const customInputs = document.querySelectorAll('#taskCreateCustomFieldsContainer .task-prop');
+    customInputs.forEach(prop => {
+        const input = prop.querySelector('input, textarea, select');
+        const label = prop.querySelector('label')?.textContent?.trim() || '';
+        if (input) {
+            const key = input.id;
+            if (input.type === 'checkbox') {
+                customFields[key] = input.checked;
+            } else if (input.type === 'hidden') {
+                // Для пользователей уже есть display поле
+            } else {
+                customFields[key] = input.value;
+            }
+        }
+    });
+    
+    const taskData = {
+        title: title,
+        description: description || '',
+        startDate: startDate || null,
+        dueDate: dueDate || null,
+        priority: priority || 'medium',
+        assignedTo: parseInt(assigneeId),
+        observers: observerIds.map(id => parseInt(id)),
+        customFields: customFields,
+        templateId: createTaskData.templateId
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(taskData)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast('✅ Задача создана', 'success');
+            closeTaskCreate();
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            
+            // Предложение открыть созданную задачу
+            setTimeout(() => {
+                if (data.task && confirm('Задача создана. Открыть?')) {
+                    openTaskEdit(data.task.id);
+                }
+            }, 300);
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Ошибка создания', 'error');
+        }
+    } catch (error) {
+        console.error('Create task error:', error);
+        showToast('Ошибка сервера', 'error');
+    }
+}
+
+function closeTaskCreate() {
+    closeWindow('base-section-task-create');
+    // Возвращаемся к дашборду
+    openWindow('base-section-dashboard');
+}
+
+
+// =====================================================
+// УНИВЕРСАЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ЗАДАЧАМИ
+// =====================================================
+
+// ----- ОТКРЫТИЕ / ЗАКРЫТИЕ СОЗДАНИЯ -----
+// Открытие создания обычной задачи (без шаблона)
+function openTaskCreate() {
+    // Очищаем форму — используем ID из Google Forms стиля
+    const titleInput = document.getElementById('form_field_title');
+    if (titleInput) titleInput.value = '';
+    
+    const descInput = document.getElementById('form_field_description');
+    if (descInput) descInput.value = '';
+    
+    const prioritySelect = document.getElementById('form_field_priority');
+    if (prioritySelect) prioritySelect.value = 'medium';
+    
+    const startDateInput = document.getElementById('form_field_start_date');
+    if (startDateInput) startDateInput.value = '';
+    
+    const dueDateInput = document.getElementById('form_field_due_date');
+    if (dueDateInput) dueDateInput.value = '';
+    
+    // Очищаем выбор пользователей
+    const assigneeInput = document.getElementById('form_field_assignee');
+    if (assigneeInput) assigneeInput.value = '';
+    
+    const observersInput = document.getElementById('form_field_observers');
+    if (observersInput) observersInput.value = '';
+    
+    // Очищаем отображение выбранных пользователей
+    const assigneeDisplay = document.getElementById('selected_assignee');
+    if (assigneeDisplay) assigneeDisplay.innerHTML = '<span class="empty-hint">Не выбран</span>';
+    
+    const observersDisplay = document.getElementById('selected_observers');
+    if (observersDisplay) observersDisplay.innerHTML = '<span class="empty-hint">Не выбраны</span>';
+    
+    // Скрываем кастомные поля
+    const customSection = document.getElementById('taskCreateCustomFields');
+    if (customSection) customSection.style.display = 'none';
+    
+    const customContainer = document.getElementById('taskCreateCustomFieldsContainer');
+    if (customContainer) customContainer.innerHTML = '';
+    
+    // Обновляем заголовок
+    const formTitle = document.getElementById('googleFormTitle');
+    if (formTitle) formTitle.textContent = 'Новая задача';
+    
+    const formDesc = document.getElementById('googleFormDescription');
+    if (formDesc) formDesc.textContent = 'Заполните форму для создания задачи';
+    
+    const badge = document.getElementById('templateFormBadge');
+    if (badge) badge.textContent = 'Обычная задача';
+    
+    // Открываем секцию
+    openWindow('base-section-task-create');
+}
+
+function closeTaskCreate() {
+    closeWindow('base-section-task-create');
+    openWindow('base-section-dashboard');
+}
+
+function fillCreateFromTemplate(templateData) {
+    const data = templateData.template_data || {};
+    
+    if (data.defaultPriority) {
+        document.getElementById('taskCreatePriority').value = data.defaultPriority;
+    }
+    
+    if (data.defaultDeadlineDays) {
+        const date = new Date();
+        date.setDate(date.getDate() + data.defaultDeadlineDays);
+        document.getElementById('taskCreateDueDate').value = date.toISOString().slice(0, 10);
+    }
+    
+    if (data.fields && data.fields.length > 0) {
+        renderCreateCustomFields(data.fields);
+    }
+}
+
+function renderCreateCustomFields(fields) {
+    const container = document.getElementById('taskCreateCustomFieldsContainer');
+    const section = document.getElementById('taskCreateCustomFields');
+    
+    if (!container || !section) return;
+    
+    // Если полей нет — скрываем секцию
+    if (!fields || fields.length === 0) {
+        section.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    container.innerHTML = fields.map((field, index) => {
+        const fieldId = `custom_${field.key || index}`;
+        const fieldType = field.type || 'text';
+        const fieldLabel = field.label || field.key || 'Поле';
+        const isRequired = field.required || false;
+        const placeholder = field.placeholder || '';
+        const defaultValue = field.defaultValue || '';
+        const options = field.options || [];
+        
+        let inputHtml = '';
+        
+        switch (fieldType) {
+            case 'text':
+                inputHtml = `
+                    <input type="text" 
+                           id="${fieldId}" 
+                           class="task-input" 
+                           placeholder="${escapeHtml(placeholder)}" 
+                           value="${escapeHtml(defaultValue)}"
+                           data-field-type="text" 
+                           data-field-label="${escapeHtml(fieldLabel)}">
+                `;
+                break;
+                
+            case 'textarea':
+                inputHtml = `
+                    <textarea id="${fieldId}" 
+                              class="task-textarea" 
+                              rows="3" 
+                              placeholder="${escapeHtml(placeholder)}"
+                              data-field-type="textarea" 
+                              data-field-label="${escapeHtml(fieldLabel)}">${escapeHtml(defaultValue)}</textarea>
+                `;
+                break;
+                
+            case 'number':
+                inputHtml = `
+                    <input type="number" 
+                           id="${fieldId}" 
+                           class="task-input" 
+                           placeholder="${escapeHtml(placeholder)}" 
+                           value="${defaultValue}"
+                           data-field-type="number" 
+                           data-field-label="${escapeHtml(fieldLabel)}">
+                `;
+                break;
+                
+            case 'date':
+                inputHtml = `
+                    <input type="date" 
+                           id="${fieldId}" 
+                           class="task-input" 
+                           value="${defaultValue}"
+                           data-field-type="date" 
+                           data-field-label="${escapeHtml(fieldLabel)}">
+                `;
+                break;
+                
+            case 'select':
+                const optionsHtml = options.map(opt => 
+                    `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`
+                ).join('');
+                inputHtml = `
+                    <select id="${fieldId}" 
+                            class="task-select" 
+                            data-field-type="select" 
+                            data-field-label="${escapeHtml(fieldLabel)}">
+                        <option value="">${escapeHtml(placeholder || 'Выберите вариант')}</option>
+                        ${optionsHtml}
+                    </select>
+                `;
+                break;
+                
+            case 'checkbox':
+                inputHtml = `
+                    <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+                        <input type="checkbox" 
+                               id="${fieldId}" 
+                               ${defaultValue === true || defaultValue === 'true' ? 'checked' : ''}
+                               data-field-type="checkbox" 
+                               data-field-label="${escapeHtml(fieldLabel)}">
+                        ${escapeHtml(fieldLabel)}
+                    </label>
+                `;
+                break;
+                
+            case 'user':
+                inputHtml = `
+                    <div class="task-user-select">
+                        <input type="text" 
+                               id="${fieldId}_display" 
+                               class="task-input" 
+                               placeholder="Выберите пользователя" 
+                               readonly
+                               data-field-type="user" 
+                               data-field-label="${escapeHtml(fieldLabel)}">
+                        <button class="btn-select" 
+                                onclick="openUserSelectorForCustom('${fieldId}')" 
+                                type="button"
+                                title="Выбрать пользователя">
+                            👤
+                        </button>
+                    </div>
+                    <input type="hidden" 
+                           id="${fieldId}" 
+                           value=""
+                           data-field-type="user" 
+                           data-field-label="${escapeHtml(fieldLabel)}">
+                `;
+                break;
+                
+            case 'multi-user':
+                inputHtml = `
+                    <div class="task-user-select">
+                        <input type="text" 
+                               id="${fieldId}_display" 
+                               class="task-input" 
+                               placeholder="Выберите пользователей" 
+                               readonly
+                               data-field-type="multi-user" 
+                               data-field-label="${escapeHtml(fieldLabel)}">
+                        <button class="btn-select" 
+                                onclick="openUserSelectorForCustomMulti('${fieldId}')" 
+                                type="button"
+                                title="Выбрать пользователей">
+                            👥
+                        </button>
+                    </div>
+                    <input type="hidden" 
+                           id="${fieldId}" 
+                           value=""
+                           data-field-type="multi-user" 
+                           data-field-label="${escapeHtml(fieldLabel)}">
+                    <div id="${fieldId}_tags" class="task-tags" style="margin-top: 4px;"></div>
+                `;
+                break;
+                
+            default:
+                inputHtml = `
+                    <input type="text" 
+                           id="${fieldId}" 
+                           class="task-input" 
+                           placeholder="${escapeHtml(placeholder)}" 
+                           value="${escapeHtml(defaultValue)}"
+                           data-field-type="text" 
+                           data-field-label="${escapeHtml(fieldLabel)}">
+                `;
+        }
+        
+        return `
+            <div class="task-field" data-field-key="${field.key || index}">
+                <label>
+                    ${escapeHtml(fieldLabel)}
+                    ${isRequired ? ' <span style="color: #dc3545;">*</span>' : ''}
+                </label>
+                ${inputHtml}
+            </div>
+        `;
+    }).join('');
+}
+// Функция для выбора нескольких пользователей (multi-user)
+function openUserSelectorForCustomMulti(fieldId) {
+    // Получаем текущие выбранные ID
+    const hiddenInput = document.getElementById(fieldId);
+    const currentIds = hiddenInput.value ? hiddenInput.value.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+    
+    openUserSelector({
+        mode: 'multiple',
+        preselectedIds: currentIds,
+        title: 'Выберите пользователей',
+        onConfirm: (users, userIds) => {
+            // Обновляем скрытое поле
+            if (hiddenInput) {
+                hiddenInput.value = userIds.join(',');
+            }
+            
+            // Обновляем отображение
+            const displayInput = document.getElementById(`${fieldId}_display`);
+            if (displayInput) {
+                displayInput.value = users.map(u => `${u.surname || ''} ${u.name || ''}`.trim()).join(', ');
+            }
+            
+            // Обновляем теги
+            const tagsContainer = document.getElementById(`${fieldId}_tags`);
+            if (tagsContainer) {
+                if (users.length === 0) {
+                    tagsContainer.innerHTML = '';
+                    return;
+                }
+                tagsContainer.innerHTML = users.map(u => `
+                    <span class="task-tag">
+                        ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
+                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})">✕</button>
+                    </span>
+                `).join('');
+            }
+        }
+    });
+}
+
+// Удаление тега пользователя
+function removeCustomUserTag(fieldId, userId) {
+    const hiddenInput = document.getElementById(fieldId);
+    if (!hiddenInput) return;
+    
+    const currentIds = hiddenInput.value ? hiddenInput.value.split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+    const newIds = currentIds.filter(id => id !== userId);
+    hiddenInput.value = newIds.join(',');
+    
+    // Обновляем отображение
+    const displayInput = document.getElementById(`${fieldId}_display`);
+    if (displayInput) {
+        // Получаем имена оставшихся пользователей
+        const remainingUsers = newIds.map(id => {
+            // Ищем пользователя в глобальном списке или возвращаем ID
+            const user = window.allUsersList?.find(u => u.id === id);
+            return user ? `${user.surname || ''} ${user.name || ''}`.trim() : id;
+        });
+        displayInput.value = remainingUsers.join(', ');
+    }
+    
+    // Обновляем теги
+    const tagsContainer = document.getElementById(`${fieldId}_tags`);
+    if (tagsContainer) {
+        if (newIds.length === 0) {
+            tagsContainer.innerHTML = '';
+            return;
+        }
+        // Перезагружаем данные пользователей
+        if (newIds.length > 0) {
+            loadUsersByIds(newIds, (usersMap) => {
+                const users = newIds.map(id => ({
+                    id: id,
+                    name: usersMap[id] || id
+                }));
+                tagsContainer.innerHTML = users.map(u => `
+                    <span class="task-tag">
+                        ${escapeHtml(String(u.name))}
+                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})">✕</button>
+                    </span>
+                `).join('');
+            });
+        }
+    }
+}
+// ----- ОТКРЫТИЕ / ЗАКРЫТИЕ РЕДАКТИРОВАНИЯ -----
+function openTaskEdit(taskId) {
+    document.getElementById('taskEditTitle').value = 'Загрузка...';
+    document.getElementById('taskEditTitle').disabled = true;
+    openWindow('base-section-task-edit');
+    
+    fetchTaskForEdit(taskId);
+}
+
+function closeTaskEdit() {
+    closeWindow('base-section-task-edit');
+    openWindow('base-section-dashboard');
+}
+
+async function fetchTaskForEdit(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load task');
+        
+        const data = await response.json();
+        const task = data.task;
+        
+        // Обновляем в локальном массиве
+        const index = currentTasks.findIndex(t => t.id === taskId);
+        if (index !== -1) currentTasks[index] = task;
+        
+        renderTaskEdit(task);
+        
+    } catch (error) {
+        console.error('Error loading task:', error);
+        const task = currentTasks.find(t => t.id === taskId);
+        if (task) {
+            renderTaskEdit(task);
+        } else {
+            showToast('Ошибка загрузки задачи', 'error');
+            closeTaskEdit();
+        }
+    }
+}
+
+function renderTaskEdit(task) {
+    document.getElementById('taskEditTitle').disabled = false;
+    document.getElementById('taskEditId').textContent = task.id;
+    document.getElementById('taskEditTitle').value = task.title || '';
+    document.getElementById('taskEditDescription').value = task.description || '';
+    document.getElementById('taskEditStartDate').value = task.start_date ? task.start_date.slice(0, 10) : '';
+    document.getElementById('taskEditDueDate').value = task.due_date ? task.due_date.slice(0, 10) : '';
+    document.getElementById('taskEditPriority').value = task.priority || 'medium';
+    document.getElementById('taskEditStatus').value = task.status || 'pending';
+    
+    // Исполнитель
+    const assigneeName = task.assignee_surname ? `${task.assignee_surname} ${task.assignee_name || ''}`.trim() : 'Не назначен';
+    document.getElementById('taskEditAssignee').value = assigneeName;
+    
+    // Создатель
+    const creatorName = task.creator_surname ? `${task.creator_surname} ${task.creator_name || ''}`.trim() : '—';
+    document.getElementById('taskEditCreator').value = creatorName;
+    
+    // Прогресс
+    const progress = task.progress || 0;
+    document.getElementById('taskEditProgress').value = progress;
+    document.getElementById('taskEditProgressValue').textContent = progress + '%';
+    
+    // Статус-бейдж
+    updateEditStatusBadge(task.status || 'pending');
+    
+    // Даты
+    document.getElementById('taskEditCreatedDate').textContent = task.created_at ? new Date(task.created_at).toLocaleDateString('ru-RU') : '—';
+    document.getElementById('taskEditUpdatedDate').textContent = task.updated_at ? new Date(task.updated_at).toLocaleDateString('ru-RU') : '—';
+    
+    // Обработчики
+    document.getElementById('taskEditSaveBtn').onclick = () => saveTaskEdit(task.id);
+    document.getElementById('taskEditDeleteBtn').onclick = () => deleteTaskEdit(task.id);
+    document.getElementById('taskEditAddCommentBtn').onclick = () => addCommentEdit(task.id);
+    
+    // Enter в комментарии
+    const commentField = document.getElementById('taskEditNewComment');
+    commentField.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            addCommentEdit(task.id);
+        }
+    };
+    
+    // При изменении статуса обновляем бейдж
+    document.getElementById('taskEditStatus').onchange = function() {
+        updateEditStatusBadge(this.value);
+    };
+    
+    // Загружаем комментарии
+    loadCommentsEdit(task.id);
+}
+
+function updateEditStatusBadge(status) {
+    const badge = document.getElementById('taskEditStatusBadge');
+    const map = {
+        pending: { label: 'Ожидает', class: 'pending' },
+        in_progress: { label: 'В работе', class: 'in_progress' },
+        completed: { label: 'Выполнена', class: 'completed' },
+        cancelled: { label: 'Отменена', class: 'cancelled' }
+    };
+    const info = map[status] || map.pending;
+    badge.textContent = info.label;
+    badge.className = 'task-status-badge ' + info.class;
+}
+
+// ----- КОММЕНТАРИИ В РЕДАКТИРОВАНИИ -----
+async function loadCommentsEdit(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}/comments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            renderCommentsEdit(data.comments || []);
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+    }
+}
+
+function renderCommentsEdit(comments) {
+    const container = document.getElementById('taskEditCommentsList');
+    const countEl = document.getElementById('taskEditCommentsCount');
+    
+    if (!comments || comments.length === 0) {
+        container.innerHTML = '<div class="task-empty">Нет комментариев</div>';
+        if (countEl) countEl.textContent = '0';
+        return;
+    }
+    
+    if (countEl) countEl.textContent = comments.length;
+    
+    container.innerHTML = comments.map(c => `
+        <div class="task-comment">
+            <div class="comment-meta">
+                <span class="comment-author">${escapeHtml(c.user_name || 'Пользователь')}</span>
+                <span>${c.created_at ? new Date(c.created_at).toLocaleString('ru-RU') : ''}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(c.content)}</div>
+        </div>
+    `).join('');
+}
+
+async function addCommentEdit(taskId) {
+    const content = document.getElementById('taskEditNewComment').value.trim();
+    if (!content) {
+        showToast('Введите текст комментария', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+        
+        if (response.ok) {
+            document.getElementById('taskEditNewComment').value = '';
+            await loadCommentsEdit(taskId);
+            showToast('Комментарий добавлен', 'success');
+        }
+    } catch (error) {
+        console.error('Add comment error:', error);
+        showToast('Ошибка', 'error');
+    }
+}
+
+// ----- СОХРАНЕНИЕ И УДАЛЕНИЕ -----
+async function saveTaskEdit(taskId) {
+    const title = document.getElementById('taskEditTitle').value.trim();
+    if (!title) {
+        showToast('Введите название задачи', 'error');
+        document.getElementById('taskEditTitle').focus();
+        return;
+    }
+    
+    const data = {
+        title: title,
+        description: document.getElementById('taskEditDescription').value,
+        startDate: document.getElementById('taskEditStartDate').value || null,
+        dueDate: document.getElementById('taskEditDueDate').value || null,
+        priority: document.getElementById('taskEditPriority').value,
+        status: document.getElementById('taskEditStatus').value,
+        progress: parseInt(document.getElementById('taskEditProgress').value) || 0
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showToast('Задача сохранена', 'success');
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            // Перезагружаем отображение
+            fetchTaskForEdit(taskId);
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        showToast('Ошибка сохранения', 'error');
+    }
+}
+
+async function deleteTaskEdit(taskId) {
+    if (!confirm('Удалить эту задачу?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            showToast('Задача удалена', 'success');
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            closeTaskEdit();
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Ошибка удаления', 'error');
+    }
+}
+
+// ----- ВЫБОР ПОЛЬЗОВАТЕЛЕЙ ДЛЯ СОЗДАНИЯ -----
+// let createTaskData = {
+//     assigneeId: null,
+//     observerIds: [],
+//     templateId: null,
+//     templateData: null
+// };
+
+function openUserSelectorForCreate(type) {
+    const isMultiple = type === 'observers';
+    const preselected = isMultiple ? createTaskData.observerIds : (createTaskData.assigneeId ? [createTaskData.assigneeId] : []);
+    
+    openUserSelector({
+        mode: isMultiple ? 'multiple' : 'single',
+        preselectedIds: preselected,
+        title: isMultiple ? 'Выберите наблюдателей' : 'Выберите исполнителя',
+        onConfirm: (users, userIds) => {
+            if (isMultiple) {
+                createTaskData.observerIds = userIds;
+                updateCreateObservers(users);
+            } else {
+                if (users && users.length > 0) {
+                    const user = users[0];
+                    createTaskData.assigneeId = user.id;
+                    document.getElementById('taskCreateAssigneeDisplay').value = `${user.surname || ''} ${user.name || ''}`.trim();
+                    document.getElementById('taskCreateAssigneeId').value = user.id;
+                }
+            }
+        }
+    });
+}
+
+function updateCreateObservers(users) {
+    const display = document.getElementById('taskCreateObserversDisplay');
+    const tags = document.getElementById('taskCreateObserversTags');
+    const ids = document.getElementById('taskCreateObserversIds');
+    
+    if (!display || !tags) return;
+    
+    if (users && users.length > 0) {
+        display.value = users.map(u => `${u.surname || ''} ${u.name || ''}`.trim()).join(', ');
+        tags.innerHTML = users.map(u => `
+            <span class="task-tag">
+                ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
+                <button class="tag-remove" onclick="removeCreateObserver(${u.id})">✕</button>
+            </span>
+        `).join('');
+    } else {
+        display.value = '';
+        tags.innerHTML = '';
+    }
+    
+    if (ids) ids.value = (users || []).map(u => u.id).join(',');
+}
+
+function removeCreateObserver(userId) {
+    createTaskData.observerIds = createTaskData.observerIds.filter(id => id !== userId);
+    const users = createTaskData.observerIds.map(id => {
+        const user = window.allUsersList?.find(u => u.id === id);
+        return user || { id, surname: 'Пользователь', name: String(id) };
+    });
+    updateCreateObservers(users);
+}
+
+function openUserSelectorForCustom(fieldId) {
+    openUserSelector({
+        mode: 'single',
+        title: 'Выберите пользователя',
+        onConfirm: (users) => {
+            if (users && users.length > 0) {
+                const user = users[0];
+                document.getElementById(`${fieldId}_display`).value = `${user.surname || ''} ${user.name || ''}`.trim();
+                document.getElementById(fieldId).value = user.id;
+            }
+        }
+    });
+}
+
+// ----- ОТПРАВКА СОЗДАНИЯ -----
+async function submitTaskCreate() {
+    const title = document.getElementById('taskCreateTitle').value.trim();
+    if (!title) {
+        showToast('Введите название задачи', 'error');
+        document.getElementById('taskCreateTitle').focus();
+        return;
+    }
+    
+    if (!document.getElementById('taskCreateDueDate').value) {
+        showToast('Укажите срок выполнения', 'error');
+        document.getElementById('taskCreateDueDate').focus();
+        return;
+    }
+    
+    if (!createTaskData.assigneeId) {
+        showToast('Выберите исполнителя', 'error');
+        return;
+    }
+    
+    // Собираем кастомные поля с типом
+    const customFields = {};
+    document.querySelectorAll('#taskCreateCustomFieldsContainer .task-field').forEach(el => {
+        const key = el.dataset.fieldKey;
+        const input = el.querySelector('input, textarea, select');
+        
+        if (input) {
+            let value = null;
+            let type = input.dataset.fieldType || 'text';
+            let label = input.dataset.fieldLabel || key;
+            
+            if (input.type === 'checkbox') {
+                value = input.checked;
+            } else if (input.type === 'hidden') {
+                // Для пользователей — берём значение из hidden
+                value = input.value || null;
+            } else if (input.type === 'number') {
+                value = input.value ? parseFloat(input.value) : null;
+            } else {
+                value = input.value || null;
+            }
+            
+            // Сохраняем структурированные данные
+            customFields[key] = {
+                type: type,
+                value: value,
+                label: label
+            };
+        }
+    });
+    const data = {
+        title: title,
+        description: document.getElementById('taskCreateDescription').value || '',
+        startDate: document.getElementById('taskCreateStartDate').value || null,
+        dueDate: document.getElementById('taskCreateDueDate').value,
+        priority: document.getElementById('taskCreatePriority').value,
+        assignedTo: parseInt(createTaskData.assigneeId),
+        observers: createTaskData.observerIds.map(id => parseInt(id)),
+        customFields: customFields,
+        templateId: createTaskData.templateId
+    };
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showToast('Задача создана', 'success');
+            closeTaskCreate();
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            
+            setTimeout(() => {
+                if (result.task && confirm('Задача создана. Открыть?')) {
+                    openTaskEdit(result.task.id);
+                }
+            }, 300);
+        }
+    } catch (error) {
+        console.error('Create error:', error);
+        showToast('Ошибка создания', 'error');
+    }
+}
+
+// =====================================================
+// КАРТОЧКА ЗАДАЧИ (GOOGLE FORMS СТИЛЬ)
+// =====================================================
+
+
+function openTaskView(taskId) {
+    currentViewTaskId = taskId;
+    
+    // Показываем загрузку
+    document.getElementById('taskViewTitle').textContent = '⏳ Загрузка...';
+    document.getElementById('taskViewTitleDisplay').textContent = 'Загрузка...';
+    
+    openWindow('base-section-task-view');
+    fetchTaskForView(taskId);
+}
+
+function closeTaskView() {
+    closeWindow('base-section-task-view');
+    // Возвращаемся к дашборду
+    openWindow('base-section-dashboard');
+}
+
+async function fetchTaskForView(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load task');
+        
+        const data = await response.json();
+        const task = data.task;
+        
+        // Обновляем в локальном массиве
+        const index = currentTasks.findIndex(t => t.id === taskId);
+        if (index !== -1) currentTasks[index] = task;
+        
+        renderTaskView(task);
+        
+    } catch (error) {
+        console.error('Error loading task:', error);
+        showToast('Ошибка загрузки задачи', 'error');
+        closeTaskView();
+    }
+}
+
+function renderTaskView(task) {
+    window.currentViewTask = task;
+    // Заголовок
+    document.getElementById('taskViewTitle').textContent = '📋 Задача';
+    document.getElementById('taskViewId').textContent = `№${task.id}`;
+    document.getElementById('taskViewTitleDisplay').textContent = task.title || 'Без названия';
+    
+    // Статус и бейдж
+    const statusSelect = document.getElementById('taskViewStatus');
+    statusSelect.value = task.status || 'pending';
+    updateViewStatusBadge(task.status || 'pending');
+    
+    // Приоритет
+    document.getElementById('taskViewPriority').value = task.priority || 'medium';
+    
+    // Прогресс
+    const progress = task.progress || 0;
+    document.getElementById('taskViewProgress').value = progress;
+    document.getElementById('taskViewProgressValue').textContent = progress + '%';
+    
+    // Описание
+    document.getElementById('taskViewDescription').textContent = task.description || '—';
+    
+    // Даты
+    document.getElementById('taskViewStartDate').textContent = task.start_date ? new Date(task.start_date).toLocaleDateString('ru-RU') : '—';
+    document.getElementById('taskViewDueDate').textContent = task.due_date ? new Date(task.due_date).toLocaleDateString('ru-RU') : '—';
+    
+    // Исполнитель
+    const assigneeName = task.assignee_surname ? `${task.assignee_surname} ${task.assignee_name || ''}`.trim() : 'Не назначен';
+    document.getElementById('taskViewAssignee').textContent = assigneeName;
+    
+    // Создатель
+    const creatorName = task.creator_surname ? `${task.creator_surname} ${task.creator_name || ''}`.trim() : '—';
+    document.getElementById('taskViewCreator').textContent = creatorName;
+    
+    // Мета
+    document.getElementById('taskViewCreatedDate').textContent = task.created_at ? new Date(task.created_at).toLocaleString('ru-RU') : '—';
+    document.getElementById('taskViewUpdatedDate').textContent = task.updated_at ? new Date(task.updated_at).toLocaleString('ru-RU') : '—';
+    document.getElementById('taskViewTemplate').textContent = task.template_name || '—';
+    
+    // Кастомные поля из шаблона
+    renderViewCustomFields(task);
+    
+    // Комментарии
+    loadViewComments(task.id);
+    
+    // Обработчики
+    document.getElementById('taskViewStatus').onchange = function() {
+        updateViewStatusBadge(this.value);
+    };
+    
+    document.getElementById('taskViewSaveBtn').onclick = () => saveTaskView(task.id);
+    document.getElementById('taskViewSaveBtn2').onclick = () => saveTaskView(task.id);
+    document.getElementById('taskViewDeleteBtn').onclick = () => deleteTaskView(task.id);
+    document.getElementById('taskViewAddCommentBtn').onclick = () => addViewComment(task.id);
+    document.getElementById('taskViewCloseBtn').onclick = closeTaskView;
+    document.getElementById('taskViewCloseBtn2').onclick = closeTaskView;
+    
+    // Enter в комментарии
+    const commentField = document.getElementById('taskViewNewComment');
+    commentField.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            addViewComment(task.id);
+        }
+    };
+}
+
+function updateViewStatusBadge(status) {
+    const badge = document.getElementById('taskViewStatusBadge');
+    const map = {
+        pending: { label: '⏳ Ожидает', style: 'background: #fef3c7; color: #d97706;' },
+        in_progress: { label: '🔄 В работе', style: 'background: #dbeafe; color: #2563eb;' },
+        completed: { label: '✅ Выполнена', style: 'background: #d1fae5; color: #059669;' },
+        cancelled: { label: '❌ Отменена', style: 'background: #fee2e2; color: #dc2626;' }
+    };
+    const info = map[status] || map.pending;
+    badge.textContent = info.label;
+    badge.style.cssText = info.style + ' padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;';
+}
+
+function renderViewCustomFields(task) {
+    const container = document.getElementById('taskViewCustomFieldsContainer');
+    const section = document.getElementById('taskViewCustomFields');
+    
+    if (!container || !section) return;
+    
+    const customFields = task.custom_fields || {};
+    const keys = Object.keys(customFields);
+    
+    if (keys.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    // Собираем ID пользователей из кастомных полей
+    const userIds = new Set();
+    keys.forEach(key => {
+        const field = customFields[key];
+        
+        // Новая структура с типом
+        if (field && typeof field === 'object' && field.type) {
+            if (field.type === 'user' && field.value && !isNaN(field.value)) {
+                userIds.add(parseInt(field.value));
+            }
+            if (field.type === 'multi-user' && Array.isArray(field.value)) {
+                field.value.forEach(id => {
+                    if (!isNaN(id)) userIds.add(parseInt(id));
+                });
+            }
+        } else {
+            // Старый формат — пробуем определить по ключу
+            if (key.includes('согласующ') || key.includes('наблюдател') || key.includes('user')) {
+                if (field && !isNaN(field)) {
+                    userIds.add(parseInt(field));
+                }
+            }
+        }
+    });
+    
+    console.log('👥 User IDs from custom fields:', Array.from(userIds));
+    
+    // Если есть пользователи — загружаем их
+    if (userIds.size > 0) {
+        loadUsersByIds(Array.from(userIds), (usersMap) => {
+            console.log('👤 Users map:', usersMap);
+            renderCustomFieldsWithUsers(container, customFields, usersMap);
+        });
+    } else {
+        renderCustomFieldsWithUsers(container, customFields, {});
+    }
+}
+async function loadUsersByIds(userIds, callback) {
+    if (!userIds || userIds.length === 0) {
+        if (callback) callback({});
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            if (callback) callback({});
+            return;
+        }
+        
+        const idsParam = userIds.join(',');
+        console.log('🔍 Loading users by ids:', idsParam);
+        
+        // Маршрут в userRoutes.js — /api/users/batch
+        const response = await fetch(`/api/task/userscard?ids=${idsParam}`, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('👥 Users loaded:', data.users);
+            const usersMap = {};
+            data.users.forEach(u => {
+                usersMap[u.id] = `${u.surname || ''} ${u.name || ''}`.trim() || u.username || 'Пользователь';
+            });
+            if (callback) callback(usersMap);
+        } else {
+            const error = await response.json();
+            console.error('Failed to load users:', response.status, error);
+            if (callback) callback({});
+        }
+    } catch (error) {
+        console.error('Error loading users by ids:', error);
+        if (callback) callback({});
+    }
+}
+// ----- КОММЕНТАРИИ В КАРТОЧКЕ -----
+async function loadViewComments(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}/comments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            renderViewComments(data.comments || []);
+        }
+    } catch (error) {
+        console.error('Error loading comments:', error);
+    }
+}
+
+function renderViewComments(comments) {
+    const container = document.getElementById('taskViewCommentsList');
+    const countEl = document.getElementById('taskViewCommentsCount');
+    
+    if (!comments || comments.length === 0) {
+        container.innerHTML = '<div class="task-empty">Нет комментариев</div>';
+        if (countEl) countEl.textContent = '0';
+        return;
+    }
+    
+    if (countEl) countEl.textContent = comments.length;
+    
+    container.innerHTML = comments.map(c => `
+        <div class="task-comment">
+            <div class="comment-meta">
+                <span class="comment-author">${escapeHtml(c.user_name || 'Пользователь')}</span>
+                <span>${c.created_at ? new Date(c.created_at).toLocaleString('ru-RU') : ''}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(c.content)}</div>
+        </div>
+    `).join('');
+}
+
+async function addViewComment(taskId) {
+    const content = document.getElementById('taskViewNewComment').value.trim();
+    if (!content) {
+        showToast('Введите текст комментария', 'error');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+        
+        if (response.ok) {
+            document.getElementById('taskViewNewComment').value = '';
+            await loadViewComments(taskId);
+            showToast('Комментарий добавлен', 'success');
+        }
+    } catch (error) {
+        console.error('Add comment error:', error);
+        showToast('Ошибка', 'error');
+    }
+}
+
+// ----- СОХРАНЕНИЕ И УДАЛЕНИЕ -----
+async function saveTaskView(taskId) {
+    const status = document.getElementById('taskViewStatus').value;
+    const priority = document.getElementById('taskViewPriority').value;
+    const progress = parseInt(document.getElementById('taskViewProgress').value) || 0;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                status: status,
+                priority: priority,
+                progress: progress
+            })
+        });
+        
+        if (response.ok) {
+            showToast('Изменения сохранены', 'success');
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            // Обновляем карточку
+            fetchTaskForView(taskId);
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        showToast('Ошибка сохранения', 'error');
+    }
+}
+
+async function deleteTaskView(taskId) {
+    if (!confirm('Удалить эту задачу?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            showToast('Задача удалена', 'success');
+            await loadTasks();
+            await loadCalendarEvents();
+            loadRecentTasks();
+            loadActiveTasks();
+            loadArchivedTasks();
+            renderDashboardTasks();
+            closeTaskView();
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Ошибка удаления', 'error');
     }
 }

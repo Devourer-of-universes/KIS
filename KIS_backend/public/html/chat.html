@@ -10,36 +10,68 @@
 
 </head>
 <body>
-   <div class="left-menu">
-        <div class="menu-item">
-            <button class="toggle-btn" title="Закрепить меню">
-                <img src="../materials/menu_stay.png" alt="Закрепить" class="toggle-btn-img menu-icon ">
+    <div class="left-menu">
+        <div class="menu-logo">
+            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <span class="logo-text">КИС</span>
+            <button class="toggle-btn" id="menuToggleBtn">
+                <img src="../materials/menu_stay.png" alt="toggle">
             </button>
         </div>
-              
-        <div class="menu-item">
-            <a class="left_menu_pagelink" href="../html/base.html">
-                <img src="../materials/icons8-рабочее-пространство-80.png" alt="Рабочее пространство" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Рабочее пространство</h3>
-            </a> 
-        </div>
-        <div class="menu-item">
-            <a class="left_menu_pagelink" href="../html/chat.html">
-                <img src="..//materials/icons8-чат-80.png" alt="Чаты" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Чаты</h3>
-            </a> 
-        </div>
-        <div class="menu-item">
-            <a class="left_menu_pagelink" href="../html/settings.html">
-                <img src="../materials/icons8-сервисы-80.png" alt="Настройки" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Настройки</h3>
-            </a> 
-        </div>
-        <div class="menu-item logout-item">
-            <a class="left_menu_pagelink" href="../html/login.html">
-                <img src="../materials/icons8-выход-48.png" alt="Выход" class="menu-icon">
-                <h3 class="left_menu_pagelink-text">Выход</h3>
-            </a> 
+
+        <nav class="menu-nav">
+            <a href="../html/base.html" class="menu-item" data-page="base">
+                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
+                <span>Рабочее пространство</span>
+            </a>
+            <a href="../html/chat.html" class="menu-item" data-page="chat">
+                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <span>Чаты</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+        </nav>
+
+        <div class="menu-footer">
+            <div class="theme-switcher">
+                <button class="theme-toggle" id="themeToggle">
+                    <span class="theme-icon">☀️</span>
+                </button>
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatarBtn">
+                    <img src="../materials/avatar_for_profile.png" alt="avatar">
+                </div>
+                <div class="user-info" id="userInfo">
+                    <span class="user-name" id="userName">Загрузка...</span>
+                    <span class="user-role" id="userRole"></span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="../html/profile.html" class="dropdown-header">
+                        <div class="dropdown-avatar">
+                            <img src="../materials/avatar_for_profile.png" alt="avatar" id="dropdownAvatar">
+                        </div>
+                        <div class="dropdown-info">
+                            <span class="dropdown-name" id="dropdownName">Загрузка...</span>
+                            <span class="dropdown-role" id="dropdownRole"></span>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="../html/settings.html" class="dropdown-item">
+                        <img src="../materials/icons8-настройки-96.png" alt="settings">
+                        <span>Настройки</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
+                        <img src="../materials/icons8-выход-48.png" alt="logout">
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <div class="chat-container">

@@ -52,7 +52,7 @@ btn_roles.addEventListener('click', function(e){
 if (btn_addUser) {
     btn_addUser.addEventListener('click', function(e){
         e.stopPropagation();
-        openModal('addUserModal'); 
+        openDocSingleModal('addUserModal'); 
     });
 }
 
@@ -241,7 +241,7 @@ function initEventListeners() {
     if (btn_addUser) {
         btn_addUser.addEventListener('click', (e) => {
             e.stopPropagation();
-            openModal('addUserModal');
+            openDocSingleModal('addUserModal');
         });
     }
     
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-function openModal(modalId) {
+function openDocSingleModal(modalId) {
     // Закрываем все открытые модалки
     document.querySelectorAll('.admin-modal.active').forEach(modal => {
         modal.classList.remove('active');
@@ -460,8 +460,15 @@ function openModal(modalId) {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-    document.body.style.overflow = '';
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.zIndex = ''; // сбрасываем z-index
+    }
+    
+    // Проверяем, есть ли ещё активные модалки
+    const stillActive = document.querySelectorAll('.admin-modal.active').length > 0;
+    document.body.style.overflow = stillActive ? 'hidden' : '';
 }
 
 
@@ -555,7 +562,7 @@ function openUserModal(userId = null) {
         loadRolesForUserForm();
     }
     
-    openModal('addUserModal');
+    openDocSingleModal('addUserModal');
 }
 
 // Загрузка списка подразделений для формы
@@ -802,7 +809,7 @@ async function openUserInfoModal(userId) {
     currentHistoryPage = 1;
     const body = document.getElementById('userInfoBody');
     body.innerHTML = '<div style="text-align: center; padding: 20px;">Загрузка...</div>';
-    openModal('userInfoModal');
+    openDocSingleModal('userInfoModal');
     
     try {
         const token = localStorage.getItem('token');
@@ -1550,7 +1557,7 @@ class TemplateBuilder {
     showPreview() {
         const previewHTML = this.generatePreviewHTML();
         document.getElementById('livePreview').innerHTML = previewHTML;
-        openModal('templatePreviewModal');
+        openDocSingleModal('templatePreviewModal');
     }
     
     generatePreviewHTML() {
@@ -1929,7 +1936,7 @@ function openBlockUserModal(userId, userName, currentStatus) {
         confirmBtn.style.backgroundColor = '#10b981';
     }
     
-    openModal('blockUserModal');
+    openDocSingleModal('blockUserModal');
     
     document.getElementById('confirmBlockBtn').onclick = async () => {
         const newStatus = isBlocking ? 'blocked' : 'active';
@@ -1990,7 +1997,7 @@ function openResetPasswordModal(userId, username) {
     currentResetUserId = userId;
     document.getElementById('resetUserName').textContent = username;
     document.getElementById('resetNewPassword').value = generateRandomPassword(12);
-    openModal('resetPasswordModal');
+    openDocSingleModal('resetPasswordModal');
     
     document.getElementById('confirmResetPasswordBtn').onclick = async () => {
         const newPassword = document.getElementById('resetNewPassword').value.trim();
@@ -2235,7 +2242,7 @@ function openRoleModal(roleId = null) {
         currentEditingRoleId = null;
     }
     
-    openModal('roleEditorModal');
+    openDocSingleModal('roleEditorModal');
 }
 
 // Загрузка данных роли для редактирования
@@ -2810,7 +2817,7 @@ async function openAddDepartmentModal(parentId = null) {
         document.getElementById('departmentParent').value = parentId;
     }
     
-    openModal('addDepartmentModal');
+    openDocSingleModal('addDepartmentModal');
 }
 async function openEditDepartmentModal(deptId, deptName) {
     const modal = document.getElementById('addDepartmentModal');
@@ -2849,7 +2856,7 @@ async function openEditDepartmentModal(deptId, deptName) {
             document.getElementById('departmentParent').value = dept.parent_department_id;
         }
         
-        openModal('addDepartmentModal');
+        openDocSingleModal('addDepartmentModal');
     } catch (error) {
         console.error('Error loading department:', error);
         showToast('Ошибка загрузки данных подразделения', 'error');
@@ -2957,7 +2964,7 @@ function showConfirmDelete(title, message, onConfirm) {
     document.getElementById('confirmDeleteTitle').textContent = title;
     document.getElementById('confirmDeleteMessage').textContent = message;
     pendingDeleteAction = onConfirm;
-    openModal('confirmDeleteModal');
+    openDocSingleModal('confirmDeleteModal');
 }
 
 document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
@@ -3066,7 +3073,7 @@ async function openMoveEmployeeModal(employeeId, currentDeptId) {
         // Загружаем список должностей
         await loadPostsForSelect('movePostId');
         
-        openModal('moveEmployeeModal');
+        openDocSingleModal('moveEmployeeModal');
     } catch (error) {
         console.error('Error loading employee:', error);
         showToast('Ошибка загрузки данных сотрудника', 'error');
@@ -3228,7 +3235,7 @@ async function openEditEmployeeModal(employeeId) {
             }
         };
         
-        openModal('editEmployeeModal');
+        openDocSingleModal('editEmployeeModal');
     } catch (error) {
         console.error('Error loading employee:', error);
         showToast('Ошибка загрузки данных сотрудника', 'error');
@@ -3334,7 +3341,7 @@ async function openManagePostsModal(departmentId, departmentName) {
     document.getElementById('newPostName').value = '';
     
     await loadPostsForDepartment(departmentId);
-    openModal('managePostsModal');
+    openDocSingleModal('managePostsModal');
 }
 
 // Загрузка должностей для отдела
@@ -4704,7 +4711,7 @@ function openCreateNotificationModal() {
     // Загружаем отделы
     loadDepartmentsForNotification();
     
-    openModal('createNotificationModal');
+    openDocSingleModal('createNotificationModal');
 }
 
 // Переключение типа получателей
@@ -4811,7 +4818,7 @@ function previewNotification() {
         </div>
     `;
     
-    openModal('previewNotificationModal');
+    openDocSingleModal('previewNotificationModal');
 }
 
 function getCategoryColor(category) {

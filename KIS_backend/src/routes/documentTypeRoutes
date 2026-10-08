@@ -1,0 +1,370 @@
+const express = require('express');
+const router = express.Router();
+const { authMiddleware } = require('../middleware/auth');
+const { checkDocumentPermission } = require('../middleware/documentPermissions');
+const { query } = require('../config/database');
+
+// =====================================================
+// ТИПЫ ДОКУМЕНТОВ
+// =====================================================
+
+// Получение всех типов документов (для всех авторизованных)
+router.get('/document-types', authMiddleware, async (req, res) => {
+    try {
+        const { active_only = 'true', search = '' } = req.query;
+        
+        let sql = `
+            SELECT dt.*, 
+                   wt.name as default_workflow_name,
+                   dtmpl.name as default_template_name,
+                   (SELECT COUNT(*) FROM documents d 
+                    WHERE d.document_type_id = dt.id AND d.deleted_at IS NULL) as documents_count
+            FROM document_types dt
+            LEFT JOIN workflow_templates wt ON dt.default_workflow_template_id = wt.id
+            LEFT JOIN document_templates dtmpl ON dt.default_document_template_id = dtmpl.id
+            WHERE 1=1
+        `;
+        
+        const params = [];
+        let idx = 1;
+        
+        if (active_only === 'true') {
+            sql += ` AND dt.is_active = true`;
+        }
+        
+        if (search) {
+            sql += ` AND (dt.name ILIKE $${idx} OR dt.code ILIKE $${idx})`;
+            params.push(`%${search}%`);
+            idx++;
+        }
+        
+        sql += ` ORDER BY dt.sort_order, dt.name`;
+        
+        const result = await query(sql, params);
+        
+        res.json({ types: result.rows });
+    } catch (error) {
+        console.error('Get document types error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Получение одного типа
+router.get('/document-types/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query(
+            `SELECT * FROM document_types WHERE id = $1`,
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Тип документа не найден' });
+        }
+        
+        res.json({ type: result.rows[0] });
+    } catch (error) {
+        console.error('Get document type error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Создание типа (только manage_types)
+router.post('/document-types', 
+    authMiddleware, 
+    checkDocumentPermission('manage_types'), 
+    async (req, res) => {
+    try {
+        const {
+            code, name, description, icon,
+            numbering_enabled = true,
+            numbering_pattern = '№{N:4}/{YYYY:4}',
+            numbering_reset_period = 'year',
+            numbering_next = 1,
+            numbering_separator = '',
+            default_workflow_template_id = null,
+            default_document_template_id = null,
+            sort_order = 0
+        } = req.body;
+        
+        // Валидация
+        if (!code || !name) {
+            return res.status(400).json({ error: 'Укажите код и название' });
+        }
+        
+        // Проверяем уникальность кода
+        const existing = await query(
+            `SELECT id FROM document_types WHERE code = $1`,
+            [code]
+        );
+        
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ error: 'Тип с таким кодом уже существует' });
+        }
+        
+        // Проверяем формат шаблона нумерации
+        const patternError = validateNumberingPattern(numbering_pattern);
+        if (patternError) {
+            return res.status(400).json({ error: patternError });
+        }
+        
+        const result = await query(
+            `INSERT INTO document_types (
+                code, name, description, icon,
+                numbering_enabled, numbering_pattern, numbering_reset_period, 
+                numbering_next, numbering_separator,
+                default_workflow_template_id, default_document_template_id,
+                sort_order, created_by
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING *`,
+            [
+                code.trim().toLowerCase(), name.trim(), description, icon,
+                numbering_enabled, numbering_pattern, numbering_reset_period,
+                numbering_next, numbering_separator,
+                default_workflow_template_id, default_document_template_id,
+                sort_order, req.userId
+            ]
+        );
+        
+        res.status(201).json({ type: result.rows[0] });
+    } catch (error) {
+        console.error('Create document type error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Обновление типа
+router.put('/document-types/:id', 
+    authMiddleware, 
+    checkDocumentPermission('manage_types'), 
+    async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            name, description, icon,
+            numbering_enabled, numbering_pattern, numbering_reset_period,
+            numbering_next, numbering_separator,
+            default_workflow_template_id, default_document_template_id,
+            sort_order, is_active
+        } = req.body;
+        
+        // Валидация шаблона
+        if (numbering_pattern) {
+            const patternError = validateNumberingPattern(numbering_pattern);
+            if (patternError) {
+                return res.status(400).json({ error: patternError });
+            }
+        }
+        
+        const updates = [];
+        const values = [];
+        let idx = 1;
+        
+        if (name !== undefined) { updates.push(`name = $${idx++}`); values.push(name); }
+        if (description !== undefined) { updates.push(`description = $${idx++}`); values.push(description); }
+        if (icon !== undefined) { updates.push(`icon = $${idx++}`); values.push(icon); }
+        if (numbering_enabled !== undefined) { updates.push(`numbering_enabled = $${idx++}`); values.push(numbering_enabled); }
+        if (numbering_pattern !== undefined) { updates.push(`numbering_pattern = $${idx++}`); values.push(numbering_pattern); }
+        if (numbering_reset_period !== undefined) { updates.push(`numbering_reset_period = $${idx++}`); values.push(numbering_reset_period); }
+        if (numbering_next !== undefined) { updates.push(`numbering_next = $${idx++}`); values.push(numbering_next); }
+        if (numbering_separator !== undefined) { updates.push(`numbering_separator = $${idx++}`); values.push(numbering_separator); }
+        if (default_workflow_template_id !== undefined) { updates.push(`default_workflow_template_id = $${idx++}`); values.push(default_workflow_template_id); }
+        if (default_document_template_id !== undefined) { updates.push(`default_document_template_id = $${idx++}`); values.push(default_document_template_id); }
+        if (sort_order !== undefined) { updates.push(`sort_order = $${idx++}`); values.push(sort_order); }
+        if (is_active !== undefined) { updates.push(`is_active = $${idx++}`); values.push(is_active); }
+        
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'Нет данных для обновления' });
+        }
+        
+        updates.push(`updated_at = CURRENT_TIMESTAMP`);
+        values.push(id);
+        
+        const result = await query(
+            `UPDATE document_types SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+            values
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Тип не найден' });
+        }
+        
+        res.json({ type: result.rows[0] });
+    } catch (error) {
+        console.error('Update document type error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Деактивация типа (мягкое удаление)
+router.delete('/document-types/:id', 
+    authMiddleware, 
+    checkDocumentPermission('manage_types'), 
+    async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Проверяем, есть ли документы этого типа
+        const docsCount = await query(
+            `SELECT COUNT(*) FROM documents 
+             WHERE document_type_id = $1 AND deleted_at IS NULL`,
+            [id]
+        );
+        
+        if (parseInt(docsCount.rows[0].count) > 0) {
+            // Не удаляем, а деактивируем
+            await query(
+                `UPDATE document_types SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+                [id]
+            );
+            return res.json({ 
+                success: true, 
+                message: 'Тип деактивирован (есть связанные документы)' 
+            });
+        }
+        
+        // Если документов нет — можно удалить полностью
+        await query(`DELETE FROM document_types WHERE id = $1`, [id]);
+        res.json({ success: true, message: 'Тип удалён' });
+    } catch (error) {
+        console.error('Delete document type error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Предпросмотр номера — каким будет следующий номер
+router.get('/document-types/:id/preview-number', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const typeResult = await query(
+            `SELECT * FROM document_types WHERE id = $1`,
+            [id]
+        );
+        
+        if (typeResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Тип не найден' });
+        }
+        
+        const type = typeResult.rows[0];
+        
+        // Симулируем генерацию номера
+        const nextNumber = await peekNextNumber(type);
+        
+        res.json({ next_number: nextNumber });
+    } catch (error) {
+        console.error('Preview number error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// =====================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// =====================================================
+
+/**
+ * Проверка корректности шаблона нумерации
+ */
+function validateNumberingPattern(pattern) {
+    if (!pattern || typeof pattern !== 'string') {
+        return 'Шаблон нумерации обязателен';
+    }
+    
+    // Разрешённые переменные
+    const allowedVars = ['N', 'YYYY', 'YY', 'MM', 'DD', 'TYPE'];
+    
+    // Ищем все {...}
+    const matches = pattern.match(/\{([^}]+)\}/g);
+    
+    if (!matches || matches.length === 0) {
+        return 'Шаблон должен содержать хотя бы одну переменную в {...}';
+    }
+    
+    for (const match of matches) {
+        const inner = match.slice(1, -1); // убираем { }
+        const [varName, length] = inner.split(':');
+        
+        if (!allowedVars.includes(varName)) {
+            return `Неизвестная переменная: {${varName}}`;
+        }
+        
+        if (length !== undefined) {
+            const len = parseInt(length);
+            if (isNaN(len) || len < 1 || len > 20) {
+                return `Некорректная длина для {${varName}:${length}}`;
+            }
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Предпросмотр номера (не увеличивает счётчик)
+ */
+async function peekNextNumber(type) {
+    const periodKey = getPeriodKey(type.numbering_reset_period);
+    
+    const counterResult = await query(
+        `SELECT last_number FROM document_numbering_counters 
+         WHERE document_type_id = $1 AND period_key = $2`,
+        [type.id, periodKey]
+    );
+    
+    const lastNumber = counterResult.rows[0]?.last_number || (type.numbering_next - 1);
+    const nextNumber = lastNumber + 1;
+    
+    return formatNumber(type.numbering_pattern, nextNumber, type.code);
+}
+
+/**
+ * Получить ключ периода для счётчика
+ */
+function getPeriodKey(resetPeriod) {
+    const now = new Date();
+    
+    if (resetPeriod === 'year') {
+        return String(now.getFullYear());
+    }
+    if (resetPeriod === 'month') {
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+    return 'all';
+}
+
+/**
+ * Форматирование номера по шаблону
+ */
+function formatNumber(pattern, number, typeCode) {
+    const now = new Date();
+    
+    const vars = {
+        N: String(number).padStart(5, '0'),
+        YYYY: String(now.getFullYear()).padStart(4, '0'),
+        YY: String(now.getFullYear() % 100).padStart(2, '0'),
+        MM: String(now.getMonth() + 1).padStart(2, '0'),
+        DD: String(now.getDate()).padStart(2, '0'),
+        TYPE: typeCode.toUpperCase()
+    };
+    
+    return pattern.replace(/\{([^}:]+)(?::(\d+))?\}/g, (match, varName, length) => {
+        let value = vars[varName] || '';
+        
+        if (length) {
+            const len = parseInt(length);
+            if (varName === 'N' || varName === 'YYYY' || varName === 'MM' || varName === 'DD') {
+                value = value.padStart(len, '0');
+            } else {
+                value = value.padEnd(len, ' ');
+            }
+        }
+        
+        return value;
+    });
+}
+
+module.exports = router;
+module.exports.formatNumber = formatNumber;
+module.exports.getPeriodKey = getPeriodKey;

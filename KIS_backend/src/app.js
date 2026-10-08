@@ -52,6 +52,13 @@ const adminRoutes = require('./routes/adminRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const taskTemplateRoutes = require('./routes/taskTemplateRoutes');
 const noteRoutes = require('./routes/noteRoutes');
+const documentTypeRoutes = require('./routes/documentTypeRoutes');
+const counterpartyRoutes = require('./routes/counterpartyRoutes');
+const documentTemplateRoutes = require('./routes/documentTemplateRoutes');
+const documentWorkflowRoutes = require('./routes/documentWorkflowRoutes');
+const workflowTemplateRoutes = require('./routes/workflowTemplateRoutes');
+const documentSignatureRoutes = require('./routes/documentSignatureRoutes');
+const documentAccessRoutes = require('./routes/documentAccessRoutes');
 
 // Проверка статуса
 app.get('/api/status', (req, res) => {
@@ -67,6 +74,13 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', taskRoutes);
 app.use('/api', taskTemplateRoutes);
 app.use('/api', noteRoutes);
+app.use('/api', documentTypeRoutes);
+app.use('/api', counterpartyRoutes);
+app.use('/api', documentTemplateRoutes);
+app.use('/api', documentWorkflowRoutes);
+app.use('/api', workflowTemplateRoutes);
+app.use('/api', documentSignatureRoutes);
+app.use('/api', documentAccessRoutes);
 
 // Статические файлы (uploads)
 const uploadsPath = path.join(__dirname, '../uploads');

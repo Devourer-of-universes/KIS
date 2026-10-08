@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS document_versions (
     UNIQUE(document_id, version_number)
 );
 
-COMMENT ON TABLE document_versions IS 'История версий документа';
+-- COMMENT ON TABLE document_versions IS 'История вер.';
 
 CREATE INDEX IF NOT EXISTS idx_document_versions_doc ON document_versions(document_id, version_number DESC);
 

@@ -102,6 +102,7 @@
                 <button class="nav-btn" data-section="structure" id="nav-btn-structure"> Структура</button>
                 <button class="nav-btn" data-section="roles" id="nav-btn-roles"> Роли</button>
                 <button class="nav-btn" data-section="notifications" id="nav-btn-notifications">🔔 Уведомления</button>
+                <button class="nav-btn" data-section="documents" id="nav-btn-documents" style="display: none;">📄 Документооборот</button>
             </nav>
             <div class="admin-content">
                 <section id="users-section" class="admin-section active">
@@ -295,6 +296,263 @@
                             Показано <span id="notifShowingFrom">0</span>-<span id="notifShowingTo">0</span> из <span id="notifTotalCount">0</span>
                         </div>
                         <div class="pagination-buttons" id="notifPaginationButtons"></div>
+                    </div>
+                </section>
+                <!-- ===================================================== -->
+                <!-- СЕКЦИЯ ДОКУМЕНТООБОРОТА -->
+                <!-- ===================================================== -->
+                <section id="documents-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>📄 Управление документооборотом</h2>
+                    </div>
+
+                    <!-- Вкладки внутри секции -->
+                    <div class="doc-tabs">
+                        <button class="doc-tab active" data-doc-tab="types" id="doc-tab-types">
+                            🏷️ Типы документов
+                        </button>
+                        <button class="doc-tab" data-doc-tab="templates" id="doc-tab-templates">
+                            📋 Шаблоны документов
+                        </button>
+                        <button class="doc-tab" data-doc-tab="counterparties" id="doc-tab-counterparties">
+                            🏢 Контрагенты
+                        </button>
+                        <button class="doc-tab" data-doc-tab="workflows" id="doc-tab-workflows">
+                            🔄 Шаблоны процессов
+                        </button>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: ТИПЫ ДОКУМЕНТОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection active" id="doc-subsection-types">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Типы документов</h3>
+                            <button class="buttonbase" id="addDocumentTypeBtn">+ Создать тип</button>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Код</th>
+                                        <th>Название</th>
+                                        <th>Формат номера</th>
+                                        <th>Сброс</th>
+                                        <th>Документов</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentTypesTableBody">
+                                    <tr><td colspan="8" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: ШАБЛОНЫ ДОКУМЕНТОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-templates">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Шаблоны документов</h3>
+                            <button class="buttonbase" id="addDocumentTemplateBtn">+ Создать шаблон</button>
+                        </div>
+
+                        <div class="doc-templates-filters">
+                            <select id="docTemplatesTypeFilter" class="form-select">
+                                <option value="">— Все типы —</option>
+                            </select>
+                            <input type="text" id="docTemplatesSearch" class="form-input" placeholder="🔍 Поиск по названию...">
+                        </div>
+
+                        <div class="doc-templates-grid" id="docTemplatesGrid">
+                            <div class="loading-templates">Загрузка шаблонов...</div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: КОНТРАГЕНТЫ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-counterparties">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Контрагенты</h3>
+                            <button class="buttonbase" id="addCounterpartyBtn">+ Добавить контрагента</button>
+                        </div>
+
+                        <div class="doc-templates-filters">
+                            <input type="text" id="counterpartiesSearch" class="form-input" placeholder="🔍 Поиск по названию или ИНН...">
+                            <label class="checkbox-label" style="margin-left: 12px;">
+                                <input type="checkbox" id="counterpartiesActiveOnly" checked>
+                                Только активные
+                            </label>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Название</th>
+                                        <th>ИНН</th>
+                                        <th>Контактное лицо</th>
+                                        <th>Телефон</th>
+                                        <th>Email</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="counterpartiesTableBody">
+                                    <tr><td colspan="7" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                            <div class="pagination-info">
+                                Показано <span id="cpShowingFrom">0</span>-<span id="cpShowingTo">0</span> из <span id="cpTotalCount">0</span>
+                            </div>
+                            <div class="pagination-buttons" id="cpPaginationButtons"></div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: ШАБЛОНЫ ПРОЦЕССОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-workflows">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Шаблоны процессов</h3>
+                            <button class="buttonbase" id="addWorkflowTemplateBtn">+ Создать шаблон</button>
+                        </div>
+
+                        <div class="doc-templates-grid" id="workflowTemplatesGrid">
+                            <div class="loading-templates">Загрузка шаблонов...</div>
+                        </div>
+                    </div>
+                </section>
+                <!-- ===================================================== -->
+                <section id="workflow-template-editor-section" class="admin-section">
+                    <div class="wf-editor-container">
+                        
+                        <!-- ШАПКА -->
+                        <header class="wf-editor-header">
+                            <div class="wf-editor-header-left">
+                                <button class="wf-editor-back-btn" onclick="closeWorkflowTemplateEditor()" title="Назад к списку">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                    </svg>
+                                </button>
+                                <h2 id="workflowTemplateEditorTitle">🔄 Новый шаблон процесса</h2>
+                                <span class="wf-editor-badge" id="workflowTemplateEditorIdBadge"></span>
+                            </div>
+                            <div class="wf-editor-header-right">
+                                <button class="buttonbase btn-outline" onclick="closeWorkflowTemplateEditor()">Отмена</button>
+                                <button class="buttonbase" id="saveWorkflowTemplateBtn">💾 Сохранить</button>
+                            </div>
+                        </header>
+
+                        <!-- ТЕЛО: 3 КОЛОНКИ -->
+                        <div class="wf-editor-body-3col">
+                            
+                            <!-- ЛЕВАЯ КОЛОНКА — ОСНОВНАЯ ИНФОРМАЦИЯ -->
+                            <div class="wf-editor-col wf-editor-col-left">
+                                
+                                <div class="wf-editor-section">
+                                    <div class="wf-editor-section-title">📋 Основная информация</div>
+                                    
+                                    <div class="wf-editor-field">
+                                        <label>Название *</label>
+                                        <input type="text" id="workflowTemplateName" placeholder="Например: Согласование договора" required>
+                                    </div>
+                                    
+                                    <div class="wf-editor-field">
+                                        <label>Описание</label>
+                                        <textarea id="workflowTemplateDescription" rows="3" placeholder="Краткое описание назначения шаблона"></textarea>
+                                    </div>
+                                    
+                                    <div class="wf-editor-field">
+                                        <label>Тип шаблона</label>
+                                        <select id="workflowTemplateScope">
+                                            <option value="personal">👤 Личный</option>
+                                            <option value="department">🏢 Для отдела</option>
+                                            <option value="corporate">🌐 Корпоративный</option>
+                                        </select>
+                                        <small class="wf-editor-hint">Корпоративные шаблоны видны всем сотрудникам компании</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="wf-editor-section">
+                                    <div class="wf-editor-section-title">📊 Итого</div>
+                                    <div class="wf-editor-stats">
+                                        <div class="wf-editor-stat">
+                                            <span class="wf-editor-stat-value" id="wfStepsCount">0</span>
+                                            <span class="wf-editor-stat-label">Этапов</span>
+                                        </div>
+                                        <div class="wf-editor-stat">
+                                            <span class="wf-editor-stat-value" id="wfUniqueUsersCount">0</span>
+                                            <span class="wf-editor-stat-label">Исполнителей</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                            <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА — ЭТАПЫ + DRAG&DROP -->
+                            <div class="wf-editor-col wf-editor-col-center">
+                                
+                                <div class="wf-editor-section wf-editor-section-full">
+                                    <div class="wf-editor-section-title">🎯 Этапы процесса</div>
+                                    
+                                    <!-- Кнопки добавления -->
+                                    <div class="wf-add-steps-panel">
+                                        <button type="button" class="wf-add-step-btn" onclick="addWorkflowStep('approval')">
+                                            <span class="wf-add-step-icon">✅</span>
+                                            <span class="wf-add-step-text">Согласование</span>
+                                        </button>
+                                        <button type="button" class="wf-add-step-btn" onclick="addWorkflowStep('signature')">
+                                            <span class="wf-add-step-icon">✍️</span>
+                                            <span class="wf-add-step-text">Подписание</span>
+                                        </button>
+                                        <button type="button" class="wf-add-step-btn" onclick="addWorkflowStep('review')">
+                                            <span class="wf-add-step-icon">👀</span>
+                                            <span class="wf-add-step-text">Ознакомление</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Список этапов -->
+                                    <div id="workflowStepsList" class="wf-steps-list-vertical">
+                                        <div class="wf-empty-steps">
+                                            <div class="wf-empty-steps-icon">🎯</div>
+                                            <div class="wf-empty-steps-text">Нет этапов</div>
+                                            <div class="wf-empty-steps-hint">Добавьте первый этап, используя кнопки выше</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="wf-editor-hint" style="text-align: center; margin-top: 12px;">
+                                        Перетаскивайте карточки за ⋮⋮ для изменения порядка
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                            <!-- ПРАВАЯ КОЛОНКА — РЕДАКТОР ВЫБРАННОГО ЭТАПА -->
+                            <div class="wf-editor-col wf-editor-col-right">
+                                
+                                <div class="wf-editor-section wf-editor-section-full">
+                                    <div class="wf-editor-section-title">⚙️ Настройки этапа</div>
+                                    
+                                    <div id="stepPropertiesPanel" class="wf-step-properties-panel">
+                                        <div class="wf-no-step-selected">
+                                            <div class="wf-no-step-icon">👈</div>
+                                            <div class="wf-no-step-text">Выберите этап в центре,<br>чтобы настроить его</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                        </div>
                     </div>
                 </section>
             </div>
@@ -1458,7 +1716,479 @@
             </div>
         </div>
     </div>
-    <script src="../scripts/admin.js"></script>
+    <!-- ===================================================== -->
+    <!-- МОДАЛКА: ТИП ДОКУМЕНТА -->
+    <!-- ===================================================== -->
+    <div id="documentTypeModal" class="admin-modal doc-modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="documentTypeModalTitle">🏷️ Новый тип документа</h2>
+                <button class="modal-close" onclick="closeDocModal('documentTypeModal')">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="documentTypeForm" class="modal-form">
+                    <input type="hidden" id="documentTypeId">
+
+                    <div class="form-section">
+                        <h3>Основная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="documentTypeCode">Код (латиница) *</label>
+                                <input type="text" id="documentTypeCode" placeholder="contract" required>
+                                <small style="color: var(--c_surf_txt);">Латиница, без пробелов. Используется в шаблоне номера</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="documentTypeName">Название *</label>
+                                <input type="text" id="documentTypeName" placeholder="Договор" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="documentTypeDescription">Описание</label>
+                            <textarea id="documentTypeDescription" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Нумерация</h3>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="documentTypeNumberingEnabled" checked>
+                                Включить автоматическую нумерацию
+                            </label>
+                        </div>
+                        <div class="form-group" id="numberingFieldsGroup">
+                            <label for="documentTypeNumberingPattern">Формат номера</label>
+                            
+                            <!-- Поле ввода -->
+                            <input type="text" id="documentTypeNumberingPattern" value="№{N:4}/{YYYY:4}" autocomplete="off">
+                            
+                            <!-- Панель переменных -->
+                            <div class="numbering-vars-panel">
+                                <div class="numbering-vars-label">Вставить переменную:</div>
+                                
+                                <div class="numbering-vars-buttons">
+                                    <div class="num-var-btn-wrapper">
+                                        <button type="button" class="num-var-btn" data-var="N">
+                                            <span class="num-var-icon">#</span> №
+                                        </button>
+                                        <select class="num-var-length" data-var="N">
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4" selected>4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="num-var-btn-wrapper">
+                                        <button type="button" class="num-var-btn" data-var="YYYY">
+                                            <span class="num-var-icon">📅</span> Год
+                                        </button>
+                                        <select class="num-var-length" data-var="YYYY">
+                                            <option value="2">2 (25)</option>
+                                            <option value="4" selected>4 (2025)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="num-var-btn-wrapper">
+                                        <button type="button" class="num-var-btn" data-var="MM">
+                                            <span class="num-var-icon">📆</span> Месяц
+                                        </button>
+                                        <select class="num-var-length" data-var="MM">
+                                            <option value="1">1 (9)</option>
+                                            <option value="2" selected>2 (09)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="num-var-btn-wrapper">
+                                        <button type="button" class="num-var-btn" data-var="DD">
+                                            <span class="num-var-icon">📅</span> День
+                                        </button>
+                                        <select class="num-var-length" data-var="DD">
+                                            <option value="1">1 (9)</option>
+                                            <option value="2" selected>2 (09)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button type="button" class="num-var-btn" data-var="TYPE" data-no-length="true">
+                                        <span class="num-var-icon">🏷️</span> Код типа
+                                    </button>
+                                </div>
+                                
+                                <div class="numbering-vars-actions">
+                                    <button type="button" class="num-action-btn" id="numberingClearBtn">
+                                        🗑️ Очистить
+                                    </button>
+                                    <button type="button" class="num-action-btn" id="numberingResetBtn">
+                                        ↺ Сброс
+                                    </button>
+                                </div>
+                                
+                                <!-- Быстрые пресеты -->
+                                <div class="numbering-presets">
+                                    <span class="numbering-presets-label">Быстрые шаблоны:</span>
+                                    <button type="button" class="num-preset-btn" data-preset="№{N:4}/{YYYY:4}">№0001/2025</button>
+                                    <button type="button" class="num-preset-btn" data-preset="{TYPE}-{N:5}/{MM:2}-{YYYY:4}">КОД-00001/09-2025</button>
+                                    <button type="button" class="num-preset-btn" data-preset="№{N:3}/{MM:2}/{YYYY:4}">№001/09/2025</button>
+                                    <button type="button" class="num-preset-btn" data-preset="{DD:2}.{MM:2}.{YY:2}-{N:3}">23.09.25-001</button>
+                                </div>
+                            </div>
+                            
+                            <small style="color: var(--c_surf_txt); display: block; margin-top: 8px;">
+                                Нажимайте на кнопки выше, чтобы вставить переменные в нужное место. Порядок можно менять вручную в поле.
+                            </small>
+                        </div>
+                        <div class="form-row" id="numberingRow">
+                            <div class="form-group">
+                                <label for="documentTypeResetPeriod">Период сброса</label>
+                                <select id="documentTypeResetPeriod">
+                                    <option value="year">Раз в год</option>
+                                    <option value="month">Раз в месяц</option>
+                                    <option value="never">Никогда</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="documentTypeNext">Начальный номер</label>
+                                <input type="number" id="documentTypeNext" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Предпросмотр</label>
+                            <div id="numberingPreview" style="padding: 10px 14px; background: var(--c_bg); border-radius: 8px; font-family: monospace; font-weight: 600; color: var(--c_acc);">
+                                №0001/2025
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Связки</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="documentTypeWorkflow">Шаблон процесса по умолчанию</label>
+                                <select id="documentTypeWorkflow">
+                                    <option value="">— Не выбран —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="documentTypeTemplate">Шаблон документа по умолчанию</label>
+                                <select id="documentTypeTemplate">
+                                    <option value="">— Не выбран —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="documentTypeSortOrder">Порядок сортировки</label>
+                                <input type="number" id="documentTypeSortOrder" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label" style="margin-top: 28px;">
+                                    <input type="checkbox" id="documentTypeIsActive" checked>
+                                    Активен
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeDocModal('documentTypeModal')">Отмена</button>
+                <button class="buttonbase" id="saveDocumentTypeBtn">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- МОДАЛКА: ШАБЛОН ДОКУМЕНТА -->
+    <!-- ===================================================== -->
+    <div id="documentTemplateModal" class="admin-modal doc-modal">
+        <div class="modal-content" style="max-width: 1100px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="documentTemplateModalTitle">📋 Новый шаблон документа</h2>
+                <button class="modal-close" onclick="closeDocModal('documentTemplateModal')">&times;</button>
+            </div>
+
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                <form id="documentTemplateForm" class="modal-form">
+                    <input type="hidden" id="documentTemplateId">
+
+                    <div class="form-section">
+                        <h3>Основная информация</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="documentTemplateName">Название *</label>
+                                <input type="text" id="documentTemplateName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="documentTemplateType">Тип документа *</label>
+                                <select id="documentTemplateType" required>
+                                    <option value="">— Выберите тип —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="documentTemplateDescription">Описание</label>
+                            <textarea id="documentTemplateDescription" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📎 Файл-шаблон .docx</h3>
+                        <div class="form-group">
+                            <input type="file" id="documentTemplateFile" accept=".docx">
+                            <small style="color: var(--c_surf_txt);">
+                                Загрузите .docx с плейсхолдерами вида <code>{Название}</code>, <code>{Контрагент}</code> и т.д.
+                            </small>
+                        </div>
+                        <div id="currentTemplateFile" style="display: none; padding: 12px; background: var(--c_bg); border-radius: 8px; margin-top: 10px;">
+                            <span style="font-size: 13px;">Текущий файл: <b id="currentTemplateFileName"></b></span>
+                        </div>
+                        <div id="detectedPlaceholders" style="display: none; margin-top: 12px; padding: 12px; background: var(--c_acchalf); border-radius: 8px;">
+                            <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px;">Обнаруженные плейсхолдеры:</div>
+                            <div id="detectedPlaceholdersList" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📋 Поля шаблона</h3>
+                        
+                        <div class="fields-editor-layout">
+                            <!-- ЛЕВАЯ ПАНЕЛЬ: список полей + кнопки добавления -->
+                            <div class="fields-editor-left">
+                                <div class="fields-add-panel">
+                                    <div class="fields-add-title">Добавить поле:</div>
+                                    <div class="fields-add-buttons">
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('text')">
+                                            <span class="afi">📝</span> Текст
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('textarea')">
+                                            <span class="afi">📄</span> Область
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('number')">
+                                            <span class="afi">🔢</span> Число
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('date')">
+                                            <span class="afi">📅</span> Дата
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('select')">
+                                            <span class="afi">📋</span> Список
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('checkbox')">
+                                            <span class="afi">☑️</span> Флаг
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('user')">
+                                            <span class="afi">👤</span> Пользователь
+                                        </button>
+                                        <button type="button" class="add-field-btn" onclick="addTemplateField('counterparty')">
+                                            <span class="afi">🏢</span> Контрагент
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="fields-list-header">
+                                    <span>Поля шаблона</span>
+                                    <span class="fields-count" id="templateFieldsCount">0</span>
+                                </div>
+                                <div id="templateFieldsList" class="template-fields-list-compact">
+                                    <div class="empty-fields-compact">Нет полей</div>
+                                </div>
+                            </div>
+                            
+                            <!-- ПРАВАЯ ПАНЕЛЬ: настройки выбранного поля -->
+                            <div class="fields-editor-right" id="fieldPropertiesPanel">
+                                <div class="no-field-selected">
+                                    <div class="nfs-icon">👈</div>
+                                    <div class="nfs-text">Выберите поле слева<br>или добавьте новое</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🔗 Маппинг плейсхолдеров</h3>
+                        <p style="font-size: 12px; color: var(--c_surf_txt); margin-bottom: 12px;">
+                            Сопоставьте плейсхолдеры из .docx с полями шаблона. Например: плейсхолдер <code>{Контрагент}</code> → поле <code>counterparty.name</code>
+                        </p>
+                        <div id="placeholdersMapping" class="placeholders-mapping">
+                            <div class="empty-fields">
+                                <small>Плейсхолдеры появятся после загрузки .docx</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>⚙️ Настройки</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="documentTemplateWorkflow">Шаблон процесса</label>
+                                <select id="documentTemplateWorkflow">
+                                    <option value="">— Не выбран —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="documentTemplateAccessMode">Доступ к шаблону</label>
+                                <select id="documentTemplateAccessMode">
+                                    <option value="all">Все пользователи</option>
+                                    <option value="department">Только отдел</option>
+                                    <option value="specific">Конкретные пользователи</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeDocModal('documentTemplateModal')">Отмена</button>
+                <button class="buttonbase" id="saveDocumentTemplateBtn">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- МОДАЛКА: КОНТРАГЕНТ -->
+    <!-- ===================================================== -->
+    <div id="counterpartyModal" class="admin-modal doc-modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="counterpartyModalTitle">🏢 Новый контрагент</h2>
+                <button class="modal-close" onclick="closeDocModal('counterpartyModal')">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="counterpartyForm" class="modal-form">
+                    <input type="hidden" id="counterpartyId">
+
+                    <div class="form-section">
+                        <h3>Основная информация</h3>
+                        <div class="form-group">
+                            <label for="counterpartyName">Краткое название *</label>
+                            <input type="text" id="counterpartyName" placeholder="ООО Ромашка" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="counterpartyFullName">Полное название</label>
+                            <input type="text" id="counterpartyFullName" placeholder="Общество с ограниченной ответственностью «Ромашка»">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Реквизиты</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="counterpartyInn">ИНН</label>
+                                <input type="text" id="counterpartyInn" maxlength="12" placeholder="10 или 12 цифр">
+                            </div>
+                            <div class="form-group">
+                                <label for="counterpartyKpp">КПП</label>
+                                <input type="text" id="counterpartyKpp" maxlength="9" placeholder="9 цифр">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="counterpartyOgrn">ОГРН</label>
+                            <input type="text" id="counterpartyOgrn" maxlength="15" placeholder="13 или 15 цифр">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Контакты</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="counterpartyPhone">Телефон</label>
+                                <input type="tel" id="counterpartyPhone">
+                            </div>
+                            <div class="form-group">
+                                <label for="counterpartyEmail">Email</label>
+                                <input type="email" id="counterpartyEmail">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="counterpartyContactPerson">Контактное лицо</label>
+                                <input type="text" id="counterpartyContactPerson">
+                            </div>
+                            <div class="form-group">
+                                <label for="counterpartyContactPosition">Должность</label>
+                                <input type="text" id="counterpartyContactPosition">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Адрес</h3>
+                        <div class="form-group">
+                            <label for="counterpartyAddress">Юридический адрес</label>
+                            <textarea id="counterpartyAddress" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="counterpartyPostalAddress">Почтовый адрес</label>
+                            <textarea id="counterpartyPostalAddress" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="counterpartyIsActive" checked>
+                                Активен
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeDocModal('counterpartyModal')">Отмена</button>
+                <button class="buttonbase" id="saveCounterpartyBtn">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+    <!-- Модалка выбора пользователей (общая) -->
+    <div id="userSelectorModal" class="admin-modal doc-modal">
+        <div class="modal-content" style="max-width: 700px; max-height: 80vh;">
+            <div class="modal-header">
+                <h2 id="userSelectorTitle">👥 Выбор пользователей</h2>
+                <button class="modal-close" onclick="closeUserSelectorModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-selector-filters">
+                    <div class="search-box">
+                        <input type="text" id="userSelectorSearch" placeholder="Поиск по имени, email, отделу..." class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <select id="userSelectorDepartment" class="form-select">
+                            <option value="">Все отделы</option>
+                        </select>
+                        <select id="userSelectorRole" class="form-select">
+                            <option value="">Все роли</option>
+                            <option value="admin">Администраторы</option>
+                            <option value="user">Пользователи</option>
+                        </select>
+                        <select id="userSelectorSort" class="form-select">
+                            <option value="name_asc">По имени (А-Я)</option>
+                            <option value="name_desc">По имени (Я-А)</option>
+                            <option value="department">По отделу</option>
+                            <option value="post">По должности</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="user-selector-stats">
+                    <span id="selectedCount">Выбрано: 0</span>
+                    <button class="buttonbase btn-outline" id="selectAllBtn">Выбрать всех</button>
+                    <button class="buttonbase btn-outline" id="clearAllBtn">Очистить всё</button>
+                </div>
+                
+                <div class="user-selector-list" id="userSelectorList">
+                    <div class="loading-users">Загрузка пользователей...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase" onclick="closeUserSelectorModal()">Отмена</button>
+                <button class="buttonbase" id="confirmUserSelectionBtn" onclick="confirmUserSelection()">Подтвердить</button>
+            </div>
+        </div>
+    </div>
     <script src="../scripts/main.js"></script>
+    <script src="../scripts/admin-documents.js"></script>
+    <script src="../scripts/admin.js"></script>
 </body>
 </html>

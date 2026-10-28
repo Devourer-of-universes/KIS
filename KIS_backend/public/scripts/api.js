@@ -1,5 +1,5 @@
 // API клиент для работы с бэкендом
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://192.168.8.106:3000/api';
 
 // Хранилище токена
 let authToken = localStorage.getItem('token');

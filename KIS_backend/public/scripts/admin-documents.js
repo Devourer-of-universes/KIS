@@ -598,6 +598,18 @@ async function openDocumentTemplateModal(templateId = null) {
             currentTemplatePlaceholders = tData.placeholders || {};
             currentTemplateDetectedPlaceholders = tData.detectedPlaceholders || [];
 
+            // Если detectedPlaceholders пуст, но есть .docx — вытащим плейсхолдеры через API
+            if (currentTemplateDetectedPlaceholders.length === 0 && tmpl.template_file_uri) {
+                try {
+                    const phRes = await apiRequest(`/api/document-templates/${templateId}/placeholders`);
+                    if (phRes.placeholders) {
+                        currentTemplateDetectedPlaceholders = phRes.placeholders;
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch placeholders:', e);
+                }
+            }
+
             renderTemplateFields();
             renderPlaceholdersMapping();
 

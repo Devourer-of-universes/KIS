@@ -1023,7 +1023,7 @@ fieldset legend {
     left: 100%;
     margin-left: 20px;
     width: 240px;
-    background: white;
+    background: var(--c_bg);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     opacity: 0;
@@ -1070,7 +1070,7 @@ fieldset legend {
     display: block;
     font-size: 14px;
     font-weight: 600;
-    color: #1a1a2e;
+    color: var(--c_bg_txt);
 }
 
 .dropdown-role {
@@ -1420,8 +1420,13 @@ fieldset legend {
     overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
 }
 
+.modal-body-card{
+    background-color: var(--c_surf);
+}
 .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -2053,3 +2058,159 @@ body.compact-mode .admin-table td {
     padding: 40px;
     color: var(--c_surf_txt);
 }
+/* Статистика */
+
+.stat-period {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    background: var(--c_bg);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.stat-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Прогресс-блок */
+.stat-block-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+}
+
+.stat-block-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.stat-block-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stat-block-label {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    font-weight: 500;
+}
+
+.stat-block-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--c_bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stat-block-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--c_acc), var(--c_brightacc));
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.stat-block-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--c_acc);
+    align-self: flex-end;
+}
+
+/* Сетка показателей */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--c_surf);
+    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    cursor: default;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-item-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.stat-item-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--c_bg_txt);
+}
+
+.stat-label {
+    font-size: 10px;
+    color: var(--c_surf_txt);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Цветовые вариации */
+.stat-item-tasks .stat-item-icon {
+    background: rgba(81, 148, 255, 0.5);
+    color: var(--c_acc);
+}
+.stat-item-tasks .stat-value { color: var(--c_acc); }
+
+.stat-item-completed .stat-item-icon {
+    background: rgba(16, 185, 129, 0.5);
+    color: #10b981;
+}
+.stat-item-completed .stat-value { color: #10b981; }
+
+.stat-item-docs .stat-item-icon {
+    background: rgba(139, 92, 246, 0.5);
+    color: #8b5cf6;
+}
+.stat-item-docs .stat-value { color: #8b5cf6; }
+
+.stat-item-processes .stat-item-icon {
+    background: rgba(245, 158, 11, 0.5);
+    color: #f59e0b;
+}
+.stat-item-processes .stat-value { color: #f59e0b; }
+
+.stat-item-chats .stat-item-icon {
+    background: rgba(236, 72, 153, 0.5);
+    color: #ec4899;
+}
+.stat-item-chats .stat-value { color: #ec4899; }
+
+.stat-item-unread .stat-item-icon {
+    background: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+.stat-item-unread .stat-value { color: #ef4444; }

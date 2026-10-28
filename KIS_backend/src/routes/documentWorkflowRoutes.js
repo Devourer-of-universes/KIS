@@ -52,7 +52,10 @@ async function notifyStep(step, document, message = null) {
 router.post('/documents/:id/submit', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        
+        const { 
+            workflow_template_id = null,
+            route_data: customRouteData = null  // ← кастомный маршрут от пользователя
+        } = req.body || {};
         const canManage = await canManageWorkflow(id, req.userId, req.user?.is_super_admin);
         if (!canManage) {
             return res.status(403).json({ error: 'Нет прав на отправку' });
@@ -77,17 +80,135 @@ router.post('/documents/:id/submit', authMiddleware, async (req, res) => {
             }
             
             // Проверяем маршрут
-            const routeResult = await client.query(
+                        // Проверяем маршрут
+            let routeResult = await client.query(
                 `SELECT * FROM document_routes WHERE document_id = $1 ORDER BY id DESC LIMIT 1`,
                 [id]
             );
             
-            if (routeResult.rows.length === 0) {
-                throw new Error('У документа нет маршрута согласования');
+            let route;
+            
+            // ==========================================================
+            // ПРИОРИТЕТ: кастомный route_data > шаблон процесса
+            // ==========================================================
+            
+            // Собираем steps из кастомного маршрута, если он передан
+            let incomingSteps = null;
+            
+            if (customRouteData && Array.isArray(customRouteData.steps) && customRouteData.steps.length > 0) {
+                incomingSteps = customRouteData.steps;
             }
             
-            const route = routeResult.rows[0];
-            const steps = route.route_data?.steps || [];
+            // Если маршрута нет — создаём его (из кастомного route_data или из шаблона)
+            if (routeResult.rows.length === 0) {
+                let stepsToUse = incomingSteps;
+                
+                // Если кастомного нет — берём из шаблона
+                if (!stepsToUse) {
+                    if (!workflow_template_id) {
+                        throw new Error('У документа нет маршрута согласования. Укажите шаблон процесса или задайте маршрут вручную.');
+                    }
+                    
+                    // Проверяем шаблон процесса
+                    const wtResult = await client.query(
+                        `SELECT * FROM workflow_templates 
+                         WHERE id = $1 AND deleted_at IS NULL AND is_active = true`,
+                        [workflow_template_id]
+                    );
+                    
+                    if (wtResult.rows.length === 0) {
+                        throw new Error('Шаблон процесса не найден');
+                    }
+                    
+                    const wt = wtResult.rows[0];
+                    stepsToUse = wt.steps || [];
+                    
+                    if (stepsToUse.length === 0) {
+                        throw new Error('Шаблон процесса пуст');
+                    }
+                    
+                    // Увеличиваем счётчик использования
+                    await client.query(
+                        `UPDATE workflow_templates SET usage_count = usage_count + 1 WHERE id = $1`,
+                        [workflow_template_id]
+                    );
+                }
+                
+                // Резолвим исполнителей
+                const { resolveAllSteps } = require('../services/assigneeResolver');
+                
+                const documentForResolve = {
+                    created_by: doc.created_by,
+                    department_id: doc.department_id
+                };
+                
+                const resolvedSteps = await resolveAllSteps(stepsToUse, documentForResolve);
+                
+                const finalSteps = resolvedSteps.map((s, i) => ({
+                    id: s.id || uuidv4(),
+                    order: i + 1,
+                    type: s.type || 'approval',
+                    user_id: s.user_id,
+                    role: s.role_label || s.role || '',
+                    status: 'pending',
+                    comment: null,
+                    completed_at: null,
+                    assignee_type: s.assignee_type || 'user',
+                    assignee_user_id: s.assignee_user_id || null,
+                    assignee_post_id: s.assignee_post_id || null,
+                    assignee_department_id: s.assignee_department_id || null,
+                    assignee_role_id: s.assignee_role_id || null,
+                    unresolved: s.unresolved || false
+                }));
+                
+                const unresolvedCount = finalSteps.filter(s => s.unresolved).length;
+                if (unresolvedCount > 0) {
+                    throw new Error(
+                        `Не удалось определить исполнителей для ${unresolvedCount} этапов. ` +
+                        `Проверьте оргструктуру и настройки маршрута.`
+                    );
+                }
+                
+                const routeData = {
+                    steps: finalSteps,
+                    allow_parallel: customRouteData?.allow_parallel || false,
+                    auto_start: true
+                };
+                
+                // Создаём маршрут
+                const createRouteResult = await client.query(
+                    `INSERT INTO document_routes 
+                     (document_id, workflow_template_id, route_data, created_by)
+                     VALUES ($1, $2, $3, $4)
+                     RETURNING *`,
+                    [id, workflow_template_id || null, JSON.stringify(routeData), doc.created_by]
+                );
+                
+                route = createRouteResult.rows[0];
+            } else {
+                route = routeResult.rows[0];
+                
+                // Если маршрут есть, но передан кастомный route_data — обновляем его
+                if (incomingSteps) {
+                    const routeData = {
+                        ...route.route_data,
+                        steps: incomingSteps,
+                        allow_parallel: customRouteData?.allow_parallel || route.route_data?.allow_parallel || false
+                    };
+                    
+                    const updateRouteResult = await client.query(
+                        `UPDATE document_routes 
+                         SET route_data = $1, updated_at = CURRENT_TIMESTAMP
+                         WHERE id = $2
+                         RETURNING *`,
+                        [JSON.stringify(routeData), route.id]
+                    );
+                    
+                    route = updateRouteResult.rows[0];
+                }
+            }
+            
+                        const steps = route.route_data?.steps || [];
             
             if (steps.length === 0) {
                 throw new Error('Маршрут пуст');
@@ -99,62 +220,12 @@ router.post('/documents/:id/submit', authMiddleware, async (req, res) => {
                 throw new Error('В маршруте есть шаги без исполнителя');
             }
             
-            // Сбрасываем статусы всех шагов
-            const { resolveAllSteps } = require('../services/assigneeResolver');
-
-            // Перерезолвим исполнителей — на случай, если кадровая ситуация изменилась
-            // (нормально делать это перед запуском)
-            const documentForResolve = {
-                created_by: doc.created_by,
-                department_id: doc.department_id
-            };
-
-            // Резолвим только шаги, которые имеют assignee_type
-            // (для старых шагов с user_id — оставляем как есть)
-            const resolvedSteps = [];
-            for (const step of steps) {
-                if (step.assignee_type) {
-                    const [resolved] = await resolveAllSteps([step], documentForResolve);
-                    resolvedSteps.push({
-                        ...step,
-                        user_id: resolved.user_id,
-                        unresolved: resolved.unresolved,
-                        id: step.id || uuidv4(),
-                        order: step.order,
-                        status: 'pending',
-                        comment: null,
-                        completed_at: null
-                    });
-                } else {
-                    // Старая логика
-                    resolvedSteps.push({
-                        ...step,
-                        id: step.id || uuidv4(),
-                        order: step.order || 1,
-                        status: 'pending',
-                        comment: null,
-                        completed_at: null
-                    });
-                }
-            }
-
-            const newSteps = resolvedSteps;
-
-            // Проверяем, что все шаги зарезолвлены
-            const unresolvedSteps = newSteps.filter(s => s.unresolved);
-            if (unresolvedSteps.length > 0) {
-                throw new Error(
-                    `Не удалось определить исполнителей для ${unresolvedSteps.length} этапов. ` +
-                    `Проверьте оргструктуру и настройки шаблона процесса.`
-                );
-            }
-            
+            // Помечаем маршрут запущенным
             const newRouteData = {
                 ...route.route_data,
-                steps: newSteps
+                steps
             };
             
-            // Обновляем маршрут
             await client.query(
                 `UPDATE document_routes 
                  SET route_data = $1, is_started = true, started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
@@ -170,8 +241,7 @@ router.post('/documents/:id/submit', authMiddleware, async (req, res) => {
             );
             
             return { document: updateDoc.rows[0], route: { ...route, route_data: newRouteData } };
-        });
-        
+        });        
         // Уведомляем первого исполнителя (вне транзакции)
         const firstStep = result.route.route_data.steps[0];
         await notifyStep(firstStep, result.document);

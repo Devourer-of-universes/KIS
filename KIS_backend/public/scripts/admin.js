@@ -887,24 +887,66 @@ async function openUserInfoModal(userId) {
             </div>
             
             <!-- СТАТИСТИКА АКТИВНОСТИ -->
-            <div class="user-stats-section">
-                <h3>📊 Статистика активности</h3>
-                <div class="stats-grid">
-                    <div class="stats-card">
-                        <div class="stats-number">${stats.documentsCreated}</div>
-                        <div class="stats-label">Создано документов</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-number">${stats.tasksCompleted}</div>
-                        <div class="stats-label">Выполнено задач</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-number">${stats.approvalsDone}</div>
-                        <div class="stats-label">Согласований</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-number">${stats.activeProcesses}</div>
-                        <div class="stats-label">Активных процессов</div>
+            <div class="dashboard-card stat-dashcard">
+                <div class="card-body">
+                    <div class="stat-blocks">
+                        <!-- Прогресс-блок -->
+                        <div class="stat-block stat-block-progress">
+                            <div class="stat-block-icon"><img src="../materials/icons8-статистика-96.png" alt="" style="width: 40px;"></div>
+                            <div class="stat-block-content">
+                                <span class="stat-block-label">Прогресс месяца</span>
+                                <div class="stat-block-bar">
+                                    <div class="stat-block-bar-fill" id="monthProgressBar" style="width: 0%;"></div>
+                                </div>
+                                <span class="stat-block-value" id="monthProgressValue">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Сетка показателей -->
+                        <div class="stat-grid">
+                            <div class="stat-item stat-item-tasks">
+                                <div class="stat-item-icon"> <img src="../materials/icons8-задача-90.png" alt="" style="width: 20px;"></div>
+                                <div class="stat-item-info">
+                                    <span class="stat-value" id="statsTasks">0</span>
+                                    <span class="stat-label">Задач в работе</span>
+                                </div>
+                            </div>
+                            <div class="stat-item stat-item-completed">
+                                <div class="stat-item-icon"><img src="../materials/icons8-галочка-96.png" alt="" style="width: 20px;"></div>
+                                <div class="stat-item-info">
+                                    <span class="stat-value" id="statsCompleted">0</span>
+                                    <span class="stat-label">Выполнено</span>
+                                </div>
+                            </div>
+                            <div class="stat-item stat-item-docs">
+                                <div class="stat-item-icon"><img src="../materials/icons8-документ-100.png" alt="" style="width: 20px;"></div>
+                                <div class="stat-item-info">
+                                    <span class="stat-value" id="statsDocs">0</span>
+                                    <span class="stat-label">Документов</span>
+                                </div>
+                            </div>
+                            <div class="stat-item stat-item-processes">
+                                <div class="stat-item-icon"><img src="../materials/icons8-процесс-96.png" alt="" style="width: 20px;"></div>
+                                <div class="stat-item-info">
+                                    <span class="stat-value" id="statsProcesses">0</span>
+                                    <span class="stat-label">Процессов</span>
+                                </div>
+                            </div>
+                            <div class="stat-item stat-item-chats">
+                                <div class="stat-item-icon"><img src="../materials/icons8-чат-100.png" alt="" style="width: 20px;"></div>
+                                <div class="stat-item-info">
+                                    <span class="stat-value" id="statsChats">0</span>
+                                    <span class="stat-label">Чатов</span>
+                                </div>
+                            </div>
+                            <div class="stat-item stat-item-unread">
+                                <div class="stat-item-icon"><img src="../materials/icons8-уведомление-100.png" alt="" style="width: 20px;"></div>
+                                <div class="stat-item-info">
+                                    <span class="stat-value" id="statsUnread">0</span>
+                                    <span class="stat-label">Непрочитанных</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

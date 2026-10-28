@@ -24,11 +24,30 @@ const btn_dashboard = document.querySelector('#top-menu-btn-dashboard');
 
 // Обработчики кнопок
 btn_workflows.addEventListener('click', (e) => { e.stopPropagation(); openWindow('workflow-section'); });
-btn_docs_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-last'); });
-btn_docs_at_work.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-at-work'); });
-btn_docs_new.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-new'); });
-btn_docs_archive.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-doc-archive'); });
-btn_tasks_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-last'); loadRecentTasks();});
+btn_docs_last.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
+    openWindow('base-section-doc-last'); 
+    loadDocuments('recent');
+});
+btn_docs_at_work.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
+    openWindow('base-section-doc-at-work'); 
+    loadDocuments('at-work');
+});
+btn_docs_new.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
+    if (typeof openDocumentCreate === 'function') {
+        openDocumentCreate();
+    } else {
+        console.warn('openDocumentCreate not defined');
+        openWindow('base-section-doc-new');
+    }
+});
+btn_docs_archive.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
+    openWindow('base-section-doc-archive'); 
+    loadDocuments('archive');
+});btn_tasks_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-last'); loadRecentTasks();});
 btn_tasks_at_work.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-at-work'); loadActiveTasks();});
 btn_tasks_new.addEventListener('click', (e) => { e.stopPropagation(); openTaskTypeSelector();});
 btn_tasks_archive.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-archive'); loadArchivedTasks();});
@@ -5875,16 +5894,22 @@ class ApprovalFlowManager {
     constructor() {
         this.flowContainer = document.getElementById('approvalFlow');
         this.steps = [];
+        // Если контейнера нет — вообще не инициализируемся
+        if (!this.flowContainer) {
+            return;
+        }
         this.init();
     }
     
     init() {
+        if (!this.flowContainer) return;
         this.loadSteps();
         this.initDragAndDrop();
         this.initEventListeners();
     }
     
     loadSteps() {
+        if (!this.flowContainer) return;
         this.steps = Array.from(this.flowContainer.querySelectorAll('.approval-step'));
         this.updateStepNumbers();
     }
@@ -6424,7 +6449,7 @@ async function loadDashboardStats() {
         }
         
         // Загружаем уведомления
-        const notifRes = await fetch('/api/notifications/unread', {
+        const notifRes = await fetch('/api/notifications/unread/count', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         

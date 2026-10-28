@@ -18,11 +18,15 @@ router.get('/document-types', authMiddleware, async (req, res) => {
                    wt.name as default_workflow_name,
                    dtmpl.name as default_template_name,
                    (SELECT COUNT(*) FROM documents d 
-                    WHERE d.document_type_id = dt.id AND d.deleted_at IS NULL) as documents_count
+                    WHERE d.document_type_id = dt.id AND d.deleted_at IS NULL) as documents_count,
+                   (SELECT COUNT(*) FROM document_templates t
+                    WHERE t.document_type_id = dt.id 
+                      AND t.deleted_at IS NULL 
+                      AND t.is_active = true) as templates_count
             FROM document_types dt
             LEFT JOIN workflow_templates wt ON dt.default_workflow_template_id = wt.id
             LEFT JOIN document_templates dtmpl ON dt.default_document_template_id = dtmpl.id
-            WHERE 1=1
+            WHERE dt.code != 'simple'
         `;
         
         const params = [];
@@ -42,7 +46,14 @@ router.get('/document-types', authMiddleware, async (req, res) => {
         
         const result = await query(sql, params);
         
-        res.json({ types: result.rows });
+        // Приводим templates_count к числу (pg возвращает строку для COUNT)
+        const types = result.rows.map(t => ({
+            ...t,
+            templates_count: parseInt(t.templates_count) || 0,
+            documents_count: parseInt(t.documents_count) || 0
+        }));
+        
+        res.json({ types });
     } catch (error) {
         console.error('Get document types error:', error);
         res.status(500).json({ error: error.message });

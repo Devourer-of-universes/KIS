@@ -602,5 +602,226 @@ router.get('/document-templates/:id/download', authMiddleware, async (req, res) 
         res.status(500).json({ error: error.message });
     }
 });
+// =====================================================
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: сборка данных для подстановки
+// (Дубликат из documentRoutes.js, потом вынесем в сервис)
+// =====================================================
 
+/**
+ * Сборка данных для подстановки в .docx.
+ * @param {Object} template — { template_data: { fields, placeholders } }
+ * @param {Object} fieldValues — { fieldKey: value }
+ * @returns {Object} { placeholderName: stringValue }
+ */
+async function buildPlaceholderData(template, fieldValues) {
+    const templateData = template?.template_data || template || {};
+    if (!templateData.placeholders) return {};
+    
+    const placeholders = templateData.placeholders;
+    const fields = templateData.fields || [];
+    
+    // Карта: key -> field (чтобы знать тип поля)
+    const fieldsMap = {};
+    for (const f of fields) {
+        if (f && f.key) fieldsMap[f.key] = f;
+    }
+    
+    const result = {};
+    
+    for (const [placeholderName, sourceKey] of Object.entries(placeholders)) {
+        // sourceKey = "counterparty_id" | "counterparty.name" | "signer_id.fullName" | "amount"
+        const parts = sourceKey.split('.');
+        const fieldKey = parts[0];
+        const subfield = parts[1];
+        
+        const rawValue = fieldValues[fieldKey];
+        const field = fieldsMap[fieldKey];
+        
+        if (rawValue === undefined || rawValue === null || rawValue === '') {
+            result[placeholderName] = '';
+            continue;
+        }
+        
+        // Разворот по типу поля
+        if (field?.type === 'counterparty') {
+            const cpResult = await query(
+                `SELECT name, full_name, inn, kpp, address, phone, email, 
+                        contact_person, contact_position
+                 FROM counterparties WHERE id = $1`,
+                [rawValue]
+            );
+            
+            if (cpResult.rows.length > 0) {
+                const cp = cpResult.rows[0];
+                const map = {
+                    name: cp.name,
+                    fullName: cp.full_name,
+                    inn: cp.inn,
+                    kpp: cp.kpp,
+                    address: cp.address,
+                    phone: cp.phone,
+                    email: cp.email,
+                    contactPerson: cp.contact_person,
+                    contactPosition: cp.contact_position
+                };
+                result[placeholderName] = subfield ? (map[subfield] ?? '') : (cp.name || '');
+            } else {
+                result[placeholderName] = '';
+            }
+            continue;
+        }
+        
+        if (field?.type === 'user') {
+            const userResult = await query(
+                `SELECT u.surname, u.name, u.patronymic, u.email, u.tel_num,
+                        p.name as post_name, d.name as department_name
+                 FROM users u
+                 LEFT JOIN posts p ON u.post_id = p.id
+                 LEFT JOIN departments d ON u.department_id = d.id
+                 WHERE u.id = $1`,
+                [rawValue]
+            );
+            
+            if (userResult.rows.length > 0) {
+                const u = userResult.rows[0];
+                const fullName = `${u.surname || ''} ${u.name || ''} ${u.patronymic || ''}`.trim();
+                const shortName = `${u.surname || ''} ${(u.name || '').charAt(0)}.${u.patronymic ? (u.patronymic.charAt(0) + '.') : ''}`.trim();
+                const map = {
+                    fullName: fullName,
+                    shortName: shortName,
+                    surname: u.surname,
+                    name: u.name,
+                    patronymic: u.patronymic,
+                    email: u.email,
+                    phone: u.tel_num,
+                    post: u.post_name,
+                    department: u.department_name
+                };
+                result[placeholderName] = subfield ? (map[subfield] ?? '') : fullName;
+            } else {
+                result[placeholderName] = '';
+            }
+            continue;
+        }
+        
+        // Дата
+        if (field?.type === 'date' && rawValue) {
+            try {
+                const d = new Date(rawValue);
+                result[placeholderName] = d.toLocaleDateString('ru-RU');
+            } catch (e) {
+                result[placeholderName] = String(rawValue);
+            }
+            continue;
+        }
+        
+        // Простое значение
+        if (typeof rawValue === 'object') {
+            result[placeholderName] = JSON.stringify(rawValue);
+        } else if (typeof rawValue === 'boolean') {
+            result[placeholderName] = rawValue ? 'Да' : 'Нет';
+        } else {
+            result[placeholderName] = String(rawValue);
+        }
+    }
+    
+    return result;
+}
+// =====================================================
+// ПРЕДПРОСМОТР ШАБЛОНА С ДАННЫМИ (live-preview)
+// =====================================================
+
+/**
+ * POST /api/document-templates/:id/preview-with-data
+ * Body: { field_values: {...} }
+ * Возвращает: { html }
+ * 
+ * Генерирует временный .docx с подстановкой, конвертит в HTML, удаляет временный файл.
+ */
+router.post('/document-templates/:id/preview-with-data',
+    authMiddleware,
+    async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { field_values = {} } = req.body;
+        
+        // Получаем шаблон
+        const result = await query(
+            `SELECT id, name, template_file_uri, template_data
+             FROM document_templates
+             WHERE id = $1 AND deleted_at IS NULL`,
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Шаблон не найден' });
+        }
+        
+        const template = result.rows[0];
+        
+        if (!template.template_file_uri) {
+            return res.status(400).json({ 
+                error: 'У шаблона нет .docx-файла',
+                html: null
+            });
+        }
+        
+        const templatePath = path.join(
+            __dirname, '../../public',
+            template.template_file_uri
+        );
+        
+        if (!fs.existsSync(templatePath)) {
+            return res.status(404).json({ 
+                error: 'Файл шаблона не найден на диске',
+                html: null
+            });
+        }
+        
+        // Собираем данные для подстановки
+        // Используем ту же логику, что и в documentRoutes.js → buildPlaceholderData
+        const placeholderData = await buildPlaceholderDataFromTemplate(
+            template.template_data,
+            field_values
+        );
+        
+        // Генерируем во временный файл
+        const tempFilename = `preview_${uuidv4()}.docx`;
+        const tempPath = path.join(
+            __dirname, '../../public/uploads/doc-templates',
+            tempFilename
+        );
+        
+        // Директория для временных файлов должна существовать
+        const tempDir = path.dirname(tempPath);
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+        
+        await docxService.generateDocx(templatePath, placeholderData, tempPath);
+        
+        // Конвертируем в HTML
+        let html = '';
+        try {
+            const convResult = await docxService.docxToHtml(tempPath);
+            html = convResult.html || '';
+        } finally {
+            // Удаляем временный файл
+            setTimeout(() => {
+                if (fs.existsSync(tempPath)) {
+                    try { fs.unlinkSync(tempPath); } catch (e) {}
+                }
+            }, 2000);
+        }
+        
+        res.json({ html });
+        
+    } catch (error) {
+        console.error('Preview template with data error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            html: null
+        });
+    }
+});
 module.exports = router;

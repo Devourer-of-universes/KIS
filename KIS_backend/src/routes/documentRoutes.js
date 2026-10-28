@@ -157,87 +157,112 @@ async function generateRegNumber(client, type, userId) {
  * Обогащение field_values для генерации docx
  * Преобразует { counterparty_id: 5, signer_id: 3 } в { Контрагент: "ООО Ромашка", Подписант: "Иванов И.И." }
  */
+/**
+ * Сборка данных для подстановки в .docx.
+ * @param {Object} template — { template_data: { fields, placeholders } }
+ * @param {Object} fieldValues — { fieldKey: value }
+ * @returns {Object} { placeholderName: stringValue }
+ */
 async function buildPlaceholderData(template, fieldValues) {
-    if (!template?.template_data?.placeholders) return {};
+    const templateData = template?.template_data || template || {};
+    if (!templateData.placeholders) return {};
     
-    const placeholders = template.template_data.placeholders;
+    const placeholders = templateData.placeholders;
+    const fields = templateData.fields || [];
+    
+    // Карта: key -> field (чтобы знать тип поля)
+    const fieldsMap = {};
+    for (const f of fields) {
+        if (f && f.key) fieldsMap[f.key] = f;
+    }
+    
     const result = {};
     
     for (const [placeholderName, sourceKey] of Object.entries(placeholders)) {
-        // sourceKey = "counterparty.name" | "amount" | "signer.fullName"
+        // sourceKey = "counterparty_id" | "counterparty.name" | "signer_id.fullName" | "amount"
         const parts = sourceKey.split('.');
         const fieldKey = parts[0];
         const subfield = parts[1];
         
         const rawValue = fieldValues[fieldKey];
+        const field = fieldsMap[fieldKey];
         
-        if (rawValue === undefined || rawValue === null) {
+        if (rawValue === undefined || rawValue === null || rawValue === '') {
             result[placeholderName] = '';
             continue;
         }
         
-        // Если это составное поле (counterparty.name) — подгружаем данные
-        if (subfield) {
-            // Для контрагента
-            if (fieldKey === 'counterparty_id' || fieldKey === 'counterparty') {
-                const cpResult = await query(
-                    `SELECT name, full_name, inn, kpp, address, phone, email, contact_person 
-                     FROM counterparties WHERE id = $1`,
-                    [rawValue]
-                );
-                
-                if (cpResult.rows.length > 0) {
-                    const cp = cpResult.rows[0];
-                    const map = {
-                        name: cp.name,
-                        fullName: cp.full_name,
-                        inn: cp.inn,
-                        kpp: cp.kpp,
-                        address: cp.address,
-                        phone: cp.phone,
-                        email: cp.email,
-                        contactPerson: cp.contact_person
-                    };
-                    result[placeholderName] = map[subfield] ?? '';
-                } else {
-                    result[placeholderName] = '';
-                }
-                continue;
-            }
+        // Разворот по типу поля
+        if (field?.type === 'counterparty') {
+            const cpResult = await query(
+                `SELECT name, full_name, inn, kpp, address, phone, email, 
+                        contact_person, contact_position
+                 FROM counterparties WHERE id = $1`,
+                [rawValue]
+            );
             
-            // Для пользователя (signer_id или user_id)
-            if (fieldKey === 'signer_id' || fieldKey === 'signer' || 
-                fieldKey === 'author_id' || fieldKey === 'assignee_id') {
-                const userResult = await query(
-                    `SELECT surname, name, patronymic, email, tel_num, 
-                            p.name as post_name, d.name as department_name
-                     FROM users u
-                     LEFT JOIN posts p ON u.post_id = p.id
-                     LEFT JOIN departments d ON u.department_id = d.id
-                     WHERE u.id = $1`,
-                    [rawValue]
-                );
-                
-                if (userResult.rows.length > 0) {
-                    const u = userResult.rows[0];
-                    const fullName = `${u.surname || ''} ${u.name || ''} ${u.patronymic || ''}`.trim();
-                    const map = {
-                        fullName: fullName,
-                        shortName: `${u.surname || ''} ${(u.name || '').charAt(0)}.${u.patronymic ? (u.patronymic.charAt(0) + '.') : ''}`.trim(),
-                        surname: u.surname,
-                        name: u.name,
-                        patronymic: u.patronymic,
-                        email: u.email,
-                        phone: u.tel_num,
-                        post: u.post_name,
-                        department: u.department_name
-                    };
-                    result[placeholderName] = map[subfield] ?? '';
-                } else {
-                    result[placeholderName] = '';
-                }
-                continue;
+            if (cpResult.rows.length > 0) {
+                const cp = cpResult.rows[0];
+                const map = {
+                    name: cp.name,
+                    fullName: cp.full_name,
+                    inn: cp.inn,
+                    kpp: cp.kpp,
+                    address: cp.address,
+                    phone: cp.phone,
+                    email: cp.email,
+                    contactPerson: cp.contact_person,
+                    contactPosition: cp.contact_position
+                };
+                result[placeholderName] = subfield ? (map[subfield] ?? '') : (cp.name || '');
+            } else {
+                result[placeholderName] = '';
             }
+            continue;
+        }
+        
+        if (field?.type === 'user') {
+            const userResult = await query(
+                `SELECT u.surname, u.name, u.patronymic, u.email, u.tel_num,
+                        p.name as post_name, d.name as department_name
+                 FROM users u
+                 LEFT JOIN posts p ON u.post_id = p.id
+                 LEFT JOIN departments d ON u.department_id = d.id
+                 WHERE u.id = $1`,
+                [rawValue]
+            );
+            
+            if (userResult.rows.length > 0) {
+                const u = userResult.rows[0];
+                const fullName = `${u.surname || ''} ${u.name || ''} ${u.patronymic || ''}`.trim();
+                const shortName = `${u.surname || ''} ${(u.name || '').charAt(0)}.${u.patronymic ? (u.patronymic.charAt(0) + '.') : ''}`.trim();
+                const map = {
+                    fullName: fullName,
+                    shortName: shortName,
+                    surname: u.surname,
+                    name: u.name,
+                    patronymic: u.patronymic,
+                    email: u.email,
+                    phone: u.tel_num,
+                    post: u.post_name,
+                    department: u.department_name
+                };
+                result[placeholderName] = subfield ? (map[subfield] ?? '') : fullName;
+            } else {
+                result[placeholderName] = '';
+            }
+            continue;
+        }
+        
+        // Дата
+        if (field?.type === 'date' && rawValue) {
+            try {
+                const d = new Date(rawValue);
+                result[placeholderName] = d.toLocaleDateString('ru-RU');
+            } catch (e) {
+                result[placeholderName] = String(rawValue);
+            }
+            continue;
         }
         
         // Простое значение
@@ -252,7 +277,6 @@ async function buildPlaceholderData(template, fieldValues) {
     
     return result;
 }
-
 // =====================================================
 // CRUD ДОКУМЕНТОВ
 // =====================================================
@@ -482,21 +506,38 @@ router.post('/documents',
             workflow_template_id = null
         } = req.body;
         
-        if (!title || !document_type_id) {
+        if (!title) {
             return res.status(400).json({ 
-                error: 'Укажите название и тип документа' 
+                error: 'Укажите название документа' 
             });
         }
         
-        // Проверяем тип
-        const typeResult = await query(
-            `SELECT * FROM document_types WHERE id = $1 AND is_active = true`,
-            [document_type_id]
-        );
-        if (typeResult.rows.length === 0) {
-            return res.status(400).json({ error: 'Тип документа не найден' });
+        // Определяем тип: если не передан — используем системный "simple"
+        let finalTypeId = document_type_id;
+        let type = null;
+        
+        if (finalTypeId) {
+            const typeResult = await query(
+                `SELECT * FROM document_types WHERE id = $1 AND is_active = true`,
+                [finalTypeId]
+            );
+            if (typeResult.rows.length === 0) {
+                return res.status(400).json({ error: 'Тип документа не найден' });
+            }
+            type = typeResult.rows[0];
+        } else {
+            // Ищем системный тип "Простой документ"
+            const simpleTypeResult = await query(
+                `SELECT * FROM document_types WHERE code = 'simple' LIMIT 1`
+            );
+            if (simpleTypeResult.rows.length === 0) {
+                return res.status(500).json({ 
+                    error: 'Системный тип "Простой документ" не найден. Обратитесь к администратору.' 
+                });
+            }
+            type = simpleTypeResult.rows[0];
+            finalTypeId = type.id;
         }
-        const type = typeResult.rows[0];
         
         // Если указан шаблон — проверяем
         let template = null;
@@ -531,7 +572,7 @@ router.post('/documents',
                 RETURNING *`,
                 [
                     title.trim(),
-                    document_type_id,
+                    finalTypeId,
                     template_id || null,
                     JSON.stringify(field_values),
                     req.userId,
@@ -665,7 +706,8 @@ router.put('/documents/:id', authMiddleware, async (req, res) => {
             access_user_ids,
             access_department_ids,
             route_data,
-            priority
+            priority,
+            status
         } = req.body;
         
         // Проверка доступа
@@ -708,7 +750,18 @@ router.put('/documents/:id', authMiddleware, async (req, res) => {
                 updates.push(`priority = $${idx++}`);
                 values.push(priority);
             }
-            
+                        // Смена статуса (только для разрешённых переходов)
+            if (status !== undefined) {
+                const allowedStatuses = [
+                    'draft', 'on_approval', 'revision', 'approved', 
+                    'signed', 'registered', 'archived', 'cancelled'
+                ];
+                if (!allowedStatuses.includes(status)) {
+                    throw new Error('Недопустимый статус');
+                }
+                updates.push(`status = $${idx++}`);
+                values.push(status);
+            }
             // Изменение полей
             let fieldValuesChanged = false;
             if (field_values !== undefined && canEditFields) {
@@ -1256,5 +1309,102 @@ router.post('/documents/:id/preview-with-data', authMiddleware, async (req, res)
         res.status(500).json({ error: error.message });
     }
 });
+// =====================================================
+// ПРЕДПРОСМОТР ДОКУМЕНТА С ДАННЫМИ (live-preview в карточке просмотра)
+// =====================================================
 
+/**
+ * POST /api/documents/:id/preview-with-data
+ * Body: { field_values: {...} } — необязательно, если не передали — берём из документа
+ * Возвращает: { html }
+ */
+router.post('/documents/:id/preview-with-data', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { field_values } = req.body;
+        
+        // Проверка доступа
+        const accessLevel = await getUserAccessLevel(
+            parseInt(id),
+            req.userId,
+            req.user?.is_super_admin,
+            req.documentsPermissions || {}
+        );
+        
+        if (!accessLevel) {
+            return res.status(403).json({ error: 'Нет доступа к документу' });
+        }
+        
+        // Получаем документ + шаблон
+        const docResult = await query(
+            `SELECT d.id, d.field_values,
+                    tmpl.template_data as template_data,
+                    tmpl.template_file_uri
+             FROM documents d
+             LEFT JOIN document_templates tmpl ON d.template_id = tmpl.id
+             WHERE d.id = $1 AND d.deleted_at IS NULL`,
+            [id]
+        );
+        
+        if (docResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+        
+        const doc = docResult.rows[0];
+        
+        if (!doc.template_file_uri) {
+            return res.status(400).json({ 
+                error: 'У документа нет .docx-шаблона',
+                html: null
+            });
+        }
+        
+        const templatePath = path.join(__dirname, '../../public', doc.template_file_uri);
+        
+        if (!fs.existsSync(templatePath)) {
+            return res.status(404).json({ 
+                error: 'Файл шаблона не найден на диске',
+                html: null
+            });
+        }
+        
+        // Используем field_values из запроса или из документа
+        const valuesToUse = field_values || doc.field_values || {};
+        
+        // Собираем данные для подстановки
+        const placeholderData = await buildPlaceholderData(
+            { template_data: doc.template_data },
+            valuesToUse
+        );
+        
+        // Генерируем во временный файл
+        const tempFilename = `preview_${uuidv4()}.docx`;
+        const tempPath = path.join(documentsDir, tempFilename);
+        
+        await docxService.generateDocx(templatePath, placeholderData, tempPath);
+        
+        // Конвертируем в HTML
+        let html = '';
+        try {
+            const convResult = await docxService.docxToHtml(tempPath);
+            html = convResult.html || '';
+        } finally {
+            // Удаляем временный файл
+            setTimeout(() => {
+                if (fs.existsSync(tempPath)) {
+                    try { fs.unlinkSync(tempPath); } catch (e) {}
+                }
+            }, 2000);
+        }
+        
+        res.json({ html });
+        
+    } catch (error) {
+        console.error('Preview document with data error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            html: null
+        });
+    }
+});
 module.exports = router;

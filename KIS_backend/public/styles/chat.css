@@ -1371,89 +1371,7 @@ body {
 .btn-secondary:hover {
     background: #aaa;
 }
-/* Кастомные модальные окна */
-.custom-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20000;
-}
 
-.custom-modal-content {
-    background: var(--c_surf, white);
-    border-radius: 20px;
-    width: 450px;
-    max-width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-}
-
-.custom-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: var(--c_acc, #5194ff);
-    color: white;
-}
-
-.custom-modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-}
-
-.custom-modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-}
-
-.custom-modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.custom-modal-body {
-    padding: 20px;
-}
-
-.custom-modal-body textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--c_surf_txt, #ddd);
-    border-radius: 12px;
-    font-size: 14px;
-    font-family: inherit;
-    resize: vertical;
-}
-
-.custom-modal-body textarea:focus {
-    outline: none;
-    border-color: var(--c_acc, #5194ff);
-}
-
-.custom-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 16px 20px;
-    border-top: 1px solid var(--c_surf_txt, #eee);
-}
 .chat-input-section{
     display: flex;
     flex-direction: column;
@@ -1636,4 +1554,261 @@ body {
 
 .add-folder-btn:hover {
     background: var(--c_acchalf);
+}
+/* Индикатор набора текста */
+.typing-dots {
+    display: inline-block;
+    color: var(--c_acc);
+    font-size: 10px;
+    letter-spacing: 2px;
+    animation: typingBlink 1.2s infinite;
+}
+
+@keyframes typingBlink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* =====================================================
+   ИНДИКАТОР "ПЕЧАТАЕТ..."
+   ===================================================== */
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    margin: 0 20px 8px 20px;
+    background: var(--c_acchalf);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--c_bg_txt);
+    width: fit-content;
+    animation: fadeIn 0.2s ease;
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.typing-dots span {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background-color: var(--c_acc);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Пересланное сообщение */
+.forwarded-message {
+    background: rgba(81, 148, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    border-left: 3px solid var(--c_acc);
+    margin-bottom: 4px;
+}
+
+.message.sent .forwarded-message {
+    background: rgba(255, 255, 255, 0.15);
+    border-left-color: white;
+}
+
+.message.sent .forwarded-message div[style*="color: var(--c_acc)"] {
+    color: white !important;
+    opacity: 0.9;
+}
+/* Вкладки в левом меню */
+.chat-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 10px;
+    background: var(--c_surf);
+    border-bottom: 1px solid var(--c_surf_txt);
+}
+
+.chat-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--c_surf_txt);
+    transition: all 0.2s;
+    position: relative;
+}
+
+.chat-tab:hover { background: var(--c_bg); }
+
+.chat-tab.active {
+    background: var(--c_acc);
+    color: white;
+}
+
+.tab-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 10px;
+}
+
+/* Элементы списка контактов */
+.contact-item, .contact-search-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: var(--c_surf);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.contact-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.contact-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--c_bg_txt);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-accept, .btn-decline, .btn-write, .btn-add-contact {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-accept { background: #10b981; color: white; }
+.btn-decline { background: #ef4444; color: white; }
+.btn-write { background: var(--c_acc); color: white; }
+.btn-add-contact { background: var(--c_acchalf); color: var(--c_acc); }
+
+.btn-accept:hover, .btn-write:hover { opacity: 0.8; }
+
+/* =====================================================
+   ШАПКА СПИСКА ЧАТОВ (ВКЛАДКИ)
+   ===================================================== */
+
+.chat-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px 10px 20px;
+    border-bottom: 1px solid var(--c_surf_txt);
+    margin-bottom: 10px;
+    background: var(--c_surf);
+    border-radius: 34px 34px 0 0;
+}
+
+.active-tab-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--c_bg_txt);
+}
+
+.tab-switcher {
+    display: flex;
+    gap: 6px;
+    background: var(--c_bg);
+    padding: 4px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: var(--c_acchalf);
+}
+
+.tab-btn.active {
+    background: var(--c_acc);
+    box-shadow: 0 2px 8px var(--c_acchalf);
+}
+
+.tab-btn img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+/* Заголовки внутри вкладки контактов */
+#contactsTab h4 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-count {
+    background: var(--c_bg);
+    color: var(--c_surf_txt);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+#incomingRequestsBlock .badge-count {
+    background: var(--c_acc);
+    color: white;
 }

@@ -20,6 +20,7 @@ class ChatManager {
         await this.loadFolders();
         await this.loadChats();
         this.initEventListeners();
+        this.initWebSocket();
     }
     
     // Загрузка списка чатов
@@ -77,51 +78,51 @@ class ChatManager {
     async sendMessage(chatId, content) {
         if (!content.trim()) return;
         
+        const messageText = content.trim();
+        
+        // Оптимистично добавляем сообщение в UI
+        const tempMessage = {
+            id: 'temp_' + Date.now(),
+            chat_id: chatId,
+            user_id: window.currentUser?.id,
+            content: messageText,
+            created_at: new Date().toISOString(),
+            surname: window.currentUser?.surname,
+            name: window.currentUser?.name,
+            avatar_uri: window.currentUser?.avatar_uri,
+            is_temp: true
+        };
+        this.messages.push(tempMessage);
+        this.renderMessages();
+        this.scrollToBottom();
+        
         try {
             // Отправляем через WebSocket (мгновенно)
             if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                 this.ws.send(JSON.stringify({
                     type: 'send-message',
                     chatId: chatId,
-                    content: content.trim()
+                    content: messageText
                 }));
                 
-                // Оптимистично добавляем сообщение в UI
-                const tempMessage = {
-                    id: 'temp_' + Date.now(),
-                    chat_id: chatId,
-                    user_id: window.currentUser?.id,
-                    content: content.trim(),
-                    created_at: new Date().toISOString(),
-                    surname: window.currentUser?.surname,
-                    name: window.currentUser?.name,
-                    avatar_uri: window.currentUser?.avatar_uri,
-                    is_temp: true
-                };
-                this.messages.push(tempMessage);
-                this.renderMessages();
-                this.scrollToBottom();
-                
-                // Если WebSocket не сработает, делаем fallback через REST
-                const result = await api.chats.sendMessage(chatId, content);
-                if (result.success) {
-                    // Убираем временное сообщение и добавляем реальное
+                // Убираем временное сообщение через 300мс (когда придет new-message от сервера)
+                setTimeout(() => {
                     this.messages = this.messages.filter(m => !m.is_temp);
-                    await this.loadMessages(chatId);
-                    await this.loadChats();
-                }
+                    this.renderMessages();
+                }, 300);
+                
             } else {
-                // Fallback через REST
-                const result = await api.chats.sendMessage(chatId, content);
+                // Fallback через REST, если WebSocket не подключен
+                const result = await api.chats.sendMessage(chatId, messageText);
                 if (result.success) {
+                    this.messages = this.messages.filter(m => !m.is_temp);
                     await this.loadMessages(chatId);
                     await this.loadChats();
                 }
             }
         } catch (error) {
-            console.error('Failed to send message:', error);
-            showToast('Ошибка отправки сообщения', 'error');
-            // Удаляем временное сообщение
+            console.error('Send message error:', error);
+            showToast('Ошибка отправки', 'error');
             this.messages = this.messages.filter(m => !m.is_temp);
             this.renderMessages();
         }
@@ -144,22 +145,35 @@ class ChatManager {
     initWebSocket() {
         const token = localStorage.getItem('token');
         if (!token) {
-            console.warn('No token, WebSocket not initialized');
+            console.warn('❌ No token, WebSocket not initialized');
             return;
         }
         
         // Определяем URL WebSocket
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsHost = window.location.host || 'localhost:3000';
-        this.ws = new WebSocket(`${wsProtocol}//${wsHost}?token=${token}`);
+        const wsUrl = `${wsProtocol}//${wsHost}?token=${token}`;
+        
+        console.log('🔌 Connecting to WebSocket:', wsUrl.replace(/token=[^&]+/, 'token=***'));
+        
+        try {
+            this.ws = new WebSocket(wsUrl);
+        } catch (error) {
+            console.error('❌ WebSocket constructor error:', error);
+            return;
+        }
         
         this.ws.onopen = () => {
-            console.log('🔌 WebSocket connected');
+            console.log('✅ WebSocket connected');
+            
             // Отправляем событие подключения
             this.ws.send(JSON.stringify({
                 type: 'connection',
                 userId: window.currentUser?.id
             }));
+            
+            // Присоединяемся к чатам
+            this.joinChats();
         };
         
         this.ws.onmessage = (event) => {
@@ -173,11 +187,11 @@ class ChatManager {
         };
         
         this.ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
+            console.error('❌ WebSocket error:', error);
         };
         
-        this.ws.onclose = () => {
-            console.log('🔌 WebSocket disconnected');
+        this.ws.onclose = (event) => {
+            console.log('🔌 WebSocket disconnected, code:', event.code, 'reason:', event.reason);
             // Попытка переподключения через 3 секунды
             setTimeout(() => {
                 if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
@@ -208,21 +222,33 @@ class ChatManager {
         switch (data.type) {
             case 'new-message':
                 if (data.message) {
-                    // Добавляем сообщение в текущий чат
-                    if (data.message.chat_id === this.currentChatId) {
-                        // Проверяем, нет ли уже такого сообщения (дубликат)
-                        const exists = this.messages.some(m => m.id === data.message.id);
+                    const msg = data.message;
+                    
+                    // Если сообщение в текущем открытом чате
+                    if (msg.chat_id === this.currentChatId) {
+                        const exists = this.messages.some(m => m.id === msg.id);
                         if (!exists) {
-                            this.messages.push(data.message);
+                            this.messages.push(msg);
                             this.renderMessages();
                             this.scrollToBottom();
                         }
+                        
+                        // Если это НЕ наше собственное сообщение — сразу помечаем как прочитанное
+                        if (msg.user_id !== window.currentUser?.id) {
+                            this.markAsRead(msg.chat_id);
+                        }
+                    } else {
+                        // Если это сообщение в другом чате — увеличиваем счетчик в списке
+                        const chat = this.chats.find(c => c.id === msg.chat_id);
+                        if (chat && msg.user_id !== window.currentUser?.id) {
+                            chat.unread_count = (chat.unread_count || 0) + 1;
+                            chat.last_message = msg;
+                            chat.last_message_at = msg.created_at;
+                            this.renderChatList();
+                        }
                     }
-                    // Обновляем список чатов (последнее сообщение, счётчик)
-                    this.updateChatListOnNewMessage(data.message);
                 }
                 break;
-                
             case 'message-edited':
                 if (data.messageId) {
                     const msg = this.messages.find(m => m.id === data.messageId);
@@ -259,14 +285,20 @@ class ChatManager {
                 }
                 break;
                 
+            case 'user-status-change':
+                this.updateUserStatus(data.userId, data.isOnline);
+                break;
+                
             case 'user-typing':
-                this.showTypingIndicator(data.userId, data.isTyping);
+                this.showTypingIndicator(data.userId, data.userName, data.isTyping);
                 break;
                 
             case 'connection-confirmed':
                 console.log('✅ WebSocket connection confirmed for user:', data.userId);
                 break;
-                
+            case 'joined-chats':
+                console.log('✅ Joined chats:', data.chatIds);
+                break;    
             case 'error':
                 console.error('WebSocket error from server:', data.message);
                 break;
@@ -275,7 +307,65 @@ class ChatManager {
                 console.log('Unknown WebSocket message type:', data.type);
         }
     }
+        // Обновление статуса пользователя в UI
+    updateUserStatus(userId, isOnline) {
+        // Обновляем в списке участников (правая панель)
+        const userItems = document.querySelectorAll(`.user-item[data-user-id="${userId}"]`);
+        userItems.forEach(item => {
+            item.classList.toggle('online', isOnline);
+            item.classList.toggle('offline', !isOnline);
+        });
+        
+        // Если это личный чат с этим пользователем — обновляем статус в шапке
+        const currentChat = this.chats.find(c => c.id === this.currentChatId);
+        if (currentChat && !currentChat.is_group) {
+            const otherUser = currentChat.participants?.find(p => p.id === userId);
+            if (otherUser) {
+                const statusEl = document.querySelector('.chat-status');
+                if (statusEl) {
+                    statusEl.textContent = isOnline ? 'В сети' : 'Не в сети';
+                    statusEl.style.color = isOnline ? '#10b981' : '#999';
+                }
+            }
+        }
+    }
 
+    // Индикатор «Печатает...»
+    showTypingIndicator(userId, userName, isTyping) {
+        if (userId === window.currentUser?.id) return;
+        
+        // Ищем контейнер, в который будем вставлять индикатор (подвал чата)
+        const chatInputSection = document.querySelector('.chat-input-section');
+        if (!chatInputSection) return;
+        
+        let indicator = document.getElementById('typingIndicator');
+        
+        if (isTyping) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'typingIndicator';
+                indicator.className = 'typing-indicator';
+                // Вставляем ПЕРЕД полем ввода (в самое начало секции ввода)
+                chatInputSection.insertBefore(indicator, chatInputSection.firstChild);
+            }
+            
+            indicator.innerHTML = `
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="typing-text">${escapeHtml(userName || 'Кто-то')} печатает...</span>
+            `;
+            
+            clearTimeout(this._typingTimeout);
+            this._typingTimeout = setTimeout(() => {
+                const ind = document.getElementById('typingIndicator');
+                if (ind) ind.remove();
+            }, 3000);
+            
+        } else {
+            if (indicator) indicator.remove();
+        }
+    }
     // Обновление списка чатов при новом сообщении
     async updateChatListOnNewMessage(message) {
         // Перезагружаем список чатов, чтобы обновить последнее сообщение и счётчик
@@ -311,7 +401,29 @@ class ChatManager {
             // Для личного чата - берем имя собеседника
             let avatarHtml;
             let displayName = chat.name || 'Чат';
+            // Проверка на "Избранное" (один участник - сам пользователь)
+            const participants = chat.participants || [];
+            const isSaved = !chat.is_group && participants.length === 1 && participants[0].id === window.currentUser?.id;
             
+            if (isSaved) {
+                avatarHtml = `
+                    <img src="../materials/icons8-избранное-96.png" 
+                         alt="Избранное" 
+                         style="width:100%;height:100%;object-fit:cover;"
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--c_acc);color:white;font-size:24px;\'>📌</div>';">
+                `;
+                displayName = 'Избранное';
+            } else if (chat.is_group) {
+                avatarHtml = this.getGroupAvatar(chat);
+            } else {
+                const otherUser = participants.find(p => p.id !== window.currentUser?.id);
+                if (otherUser) {
+                    avatarHtml = this.getAvatar(otherUser.avatar_uri, otherUser.name, otherUser.surname);
+                    displayName = `${otherUser.surname} ${otherUser.name}`;
+                } else {
+                    avatarHtml = this.getAvatar(chat.avatar_uri, displayName);
+                }
+            }
             if (chat.is_group) {
                 // Групповой чат
                 avatarHtml = this.getGroupAvatar(chat);
@@ -392,24 +504,73 @@ class ChatManager {
             const isImage = msg.content && msg.content.startsWith('📷');
             const isFile = msg.content && msg.content.startsWith('📎');
             
-            let contentHtml = '';
+                        let contentHtml = '';
             
-            if (isImage) {
-                const imageUrl = msg.content.split('\n')[1];
-                contentHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy">`;
-            } else if (isFile) {
-                const lines = msg.content.split('\n');
-                const fileName = lines[0].replace('📎 ', '');
-                const fileUrl = lines[1] || '';
-                contentHtml = `
-                    <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')">
-                        <span class="file-icon">📎</span>
-                        <span class="file-name">${this.escapeHtml(fileName)}</span>
-                    </div>
-                `;
+            // Проверяем, не пересланное ли это сообщение
+            if (msg.content && msg.content.startsWith('[FORWARDED_FROM:')) {
+                try {
+                    // Извлекаем JSON
+                    const jsonStr = msg.content.substring(16, msg.content.length - 1); // 16 = длина '[FORWARDED_FROM:'
+                    const forwardData = JSON.parse(jsonStr);
+                    
+                    // Рендерим оригинальный контент (текст или картинку)
+                    let originalHtml = '';
+                    const origText = forwardData.text || '';
+                    
+                    if (origText.startsWith('📷')) {
+                        const imageUrl = origText.split('\n')[1];
+                        if (imageUrl) {
+                            originalHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 8px; cursor: pointer;">`;
+                        }
+                    } else if (origText.startsWith('📎')) {
+                        const lines = origText.split('\n');
+                        const fileName = lines[0].replace('📎 ', '');
+                        const fileUrl = lines[1] || '';
+                        originalHtml = `
+                            <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; margin-top: 8px;">
+                                <span>📎</span>
+                                <span style="font-size: 13px;">${fileName}</span>
+                            </div>
+                        `;
+                    } else {
+                        originalHtml = `<div style="font-size: 14px; margin-top: 4px; white-space: pre-wrap;">${this.formatLinks(this.escapeHtml(origText))}</div>`;
+                    }
+                    
+                    contentHtml = `
+                        <div class="forwarded-message" style="border-left: 3px solid var(--c_acc); padding-left: 10px; margin-bottom: 4px;">
+                            <div style="font-size: 11px; color: var(--c_acc); font-weight: 600; margin-bottom: 4px;">
+                                ↪️ Переслано от: ${this.escapeHtml(forwardData.from)}
+                            </div>
+                            ${originalHtml}
+                        </div>
+                    `;
+                } catch (e) {
+                    console.error('Failed to parse forwarded message:', e);
+                    contentHtml = `<div class="message-text">${this.escapeHtml(msg.content)}</div>`;
+                }
             } else {
-                const formattedText = this.formatLinks(this.escapeHtml(msg.content));
-                contentHtml = `<div class="message-text">${formattedText}</div>`;
+                // Обычная логика для старых сообщений
+                const isImage = msg.content && msg.content.startsWith('📷');
+                const isFile = msg.content && msg.content.startsWith('📎');
+                
+                if (isImage) {
+                    const lines = msg.content.split('\n');
+                    const imageUrl = lines[1] || '';
+                    contentHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy" style="max-width: 300px; max-height: 200px; border-radius: 12px; cursor: pointer; margin-top: 4px;">`;
+                } else if (isFile) {
+                    const lines = msg.content.split('\n');
+                    const fileName = lines[0].replace('📎 ', '');
+                    const fileUrl = lines[1] || '';
+                    contentHtml = `
+                        <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; margin-top: 4px;">
+                            <span style="font-size: 20px;">📎</span>
+                            <span style="font-size: 13px; font-weight: 500; word-break: break-all;">${fileName}</span>
+                        </div>
+                    `;
+                } else {
+                    const formattedText = this.formatLinks(this.escapeHtml(msg.content));
+                    contentHtml = `<div class="message-text">${formattedText}</div>`;
+                }
             }
             
             // Аватар для чужих сообщений
@@ -447,10 +608,8 @@ class ChatManager {
     showContextMenu(event, messageId, isOwn, content) {
         event.preventDefault();
         
-        // Удаляем существующее меню
         this.closeContextMenu();
         
-        // Создаём меню
         const menu = document.createElement('div');
         menu.className = 'message-context-menu';
         menu.style.cssText = `
@@ -465,11 +624,15 @@ class ChatManager {
             overflow: hidden;
         `;
         
-        let menuItems = '';
+        let menuItems = `
+            <div class="context-menu-item" onclick="chatManager.forwardMessage(${messageId})">
+                ↪️ Переслать
+            </div>
+        `;
         
         if (isOwn) {
             menuItems += `
-                <div class="context-menu-item" onclick="chatManager.startEditing(${messageId}, '${this.escapeHtml(content).replace(/'/g, "\\'")}')">
+                <div class="context-menu-item" onclick="chatManager.startEditing(${messageId})">
                     ✏️ Редактировать
                 </div>
                 <div class="context-menu-item" onclick="chatManager.deleteMessage(${messageId})">
@@ -487,7 +650,6 @@ class ChatManager {
         menu.innerHTML = menuItems;
         document.body.appendChild(menu);
         
-        // Закрыть меню при клике вне
         const closeMenu = (e) => {
             if (!menu.contains(e.target)) {
                 menu.remove();
@@ -495,6 +657,142 @@ class ChatManager {
             }
         };
         setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+    async forwardMessage(messageId) {
+        this.closeContextMenu();
+        
+        // Находим исходное сообщение
+        const originalMsg = this.messages.find(m => m.id === messageId);
+        if (!originalMsg) {
+            showToast('Сообщение не найдено', 'error');
+            return;
+        }
+        
+        // Открываем модалку выбора чата
+        this.openForwardModal(originalMsg);
+    }
+
+    openForwardModal(message) {
+        const existing = document.getElementById('forwardModal');
+        if (existing) existing.remove();
+        
+        // Список чатов (исключаем текущий)
+        const availableChats = this.chats.filter(c => c.id !== this.currentChatId);
+        
+        const modal = document.createElement('div');
+        modal.id = 'forwardModal';
+        modal.className = 'custom-modal active';
+        modal.style.display = 'flex';
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 450px; max-height: 80vh;">
+                <div class="modal-header">
+                    <h2>↪️ Переслать сообщение</h2>
+                    <button class="modal-close" onclick="document.getElementById('forwardModal').remove()">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 0; overflow-y: auto;">
+                    <div style="padding: 16px; background: var(--c_bg); border-bottom: 1px solid var(--c_surf_txt);">
+                        <div style="font-size: 12px; color: var(--c_surf_txt); margin-bottom: 4px;">Исходное сообщение от ${escapeHtml(message.surname || '')} ${escapeHtml(message.name || '')}:</div>
+                        <div style="font-size: 14px; color: var(--c_bg_txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${escapeHtml(message.content.substring(0, 80))}${message.content.length > 80 ? '...' : ''}
+                            ${message.attachments?.length ? ' 📎' : ''}
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 12px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--c_surf_txt); text-transform: uppercase; margin-bottom: 8px;">Выберите чат</div>
+                        <div class="forward-chat-list">
+                            ${availableChats.map(chat => {
+                                let name = chat.name || 'Чат';
+                                let avatar = '💬';
+                                if (chat.name === 'Избранное') {
+                                    name = 'Избранное';
+                                    avatar = `<img src="../materials/icons8-избранное-96.png" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                                } else if (chat.is_group) {
+                                    avatar = '👥';
+                                } else {
+                                    const other = chat.participants?.find(p => p.id !== window.currentUser?.id);
+                                    if (other) {
+                                        name = `${other.surname} ${other.name}`;
+                                        avatar = other.avatar_uri 
+                                            ? `<img src="${other.avatar_uri}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+                                            : (other.name?.[0] || '?');
+                                    }
+                                }
+                                
+                                return `
+                                    <div class="forward-chat-item" onclick="chatManager.doForward(${chat.id}, ${message.id})">
+                                        <div class="forward-chat-avatar">${avatar}</div>
+                                        <div class="forward-chat-name">${escapeHtml(name)}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+
+    async doForward(targetChatId, messageId) {
+        // Закрываем модалку
+        document.getElementById('forwardModal')?.remove();
+        
+        const originalMsg = this.messages.find(m => m.id === messageId);
+        if (!originalMsg) return;
+        
+        const authorName = `${originalMsg.surname || ''} ${originalMsg.name || ''}`.trim() || 'Неизвестный';
+        // Формируем контент для пересылки
+        const forwardData = {
+            from: authorName,
+            text: originalMsg.content,
+            attachments: (originalMsg.attachments || []).map(att => ({
+                uri: att.file_uri || att.url,
+                name: att.file_name || att.name,
+                size: att.file_size || att.size,
+                type: att.file_type,
+                mimeType: att.mime_type
+            }))
+        };
+        
+        const forwardedContent = `[FORWARDED_FROM:${JSON.stringify(forwardData)}]`;
+        
+        try {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({
+                    type: 'send-message',
+                    chatId: targetChatId,
+                    content: forwardedContent,
+                    attachments: forwardData.attachments
+                }));
+                showToast('Сообщение переслано', 'success');
+            } else {
+                const result = await fetch(`/api/chats/${targetChatId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        content: forwardedContent,
+                        attachments: attachments
+                    })
+                });
+                
+                if (result.ok) {
+                    showToast('Сообщение переслано', 'success');
+                    await this.loadChats();
+                    if (targetChatId === this.currentChatId) {
+                        await this.loadMessages(targetChatId);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Forward error:', error);
+            showToast('Ошибка пересылки', 'error');
+        }
     }
     // Редактирование сообщения (через модалку)
     async editMessage(messageId, oldContent) {
@@ -710,20 +1008,28 @@ class ChatManager {
 
 
 
-    async markAsRead(chatId) {
-        try {
-            await fetch(`${API_URL}/chats/${chatId}/read`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+        async markAsRead(chatId) {
+            if (!chatId) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/chats/${chatId}/read`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    // Обновляем локальный массив чатов, чтобы счетчик исчез
+                    const chat = this.chats.find(c => c.id === chatId);
+                    if (chat) {
+                        chat.unread_count = 0;
+                        this.renderChatList();
+                    }
                 }
-            });
-            // Убираем this.loadChats() отсюда
-            // this.loadChats();
-        } catch (error) {
-            console.error('Failed to mark as read:', error);
+            } catch (error) {
+                console.error('Failed to mark as read:', error);
+            }
         }
-    }
     
     // Индикатор набора текста
     showTypingIndicator(userId, isTyping) {
@@ -782,9 +1088,12 @@ class ChatManager {
         }
 
         // Отправка сообщения по Enter
+                // Отправка сообщения по Enter
         const messageInput = document.querySelector('.message-input');
         if (messageInput) {
             let typingTimeout = null;
+            
+            // Индикатор набора текста
             messageInput.addEventListener('input', () => {
                 if (this.currentChatId) {
                     this.sendTyping(this.currentChatId, true);
@@ -792,6 +1101,19 @@ class ChatManager {
                     typingTimeout = setTimeout(() => {
                         this.sendTyping(this.currentChatId, false);
                     }, 1000);
+                }
+            });
+            
+            // Отправка по Enter
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    
+                    const text = messageInput.value.trim();
+                    if ((text || this.pendingAttachments.length > 0) && this.currentChatId) {
+                        this.sendMessageWithAttachments(this.currentChatId, text);
+                        messageInput.value = '';
+                    }
                 }
             });
         }
@@ -1050,29 +1372,38 @@ class ChatManager {
         
         let chatId;
         
-        if (this.isGroupMode()) {
-            const groupName = document.getElementById('groupNameInput').value.trim();
-            if (!groupName) {
-                alert('Введите название группы');
-                return;
+        try {
+            if (this.isGroupMode()) {
+                const groupName = document.getElementById('groupNameInput').value.trim();
+                if (!groupName) {
+                    alert('Введите название группы');
+                    return;
+                }
+                const result = await api.chats.create(selectedUserIds, groupName, true);
+                chatId = result.chatId;
+            } else {
+                if (selectedUserIds.length > 1) {
+                    alert('Для личного чата выберите только одного пользователя');
+                    return;
+                }
+                const result = await api.chats.create(selectedUserIds, null, false);
+                chatId = result.chatId;
             }
-            const result = await api.chats.create(selectedUserIds, groupName, true);
-            chatId = result.chatId;
-        } else {
-            if (selectedUserIds.length > 1) {
-                alert('Для личного чата выберите только одного пользователя');
-                return;
+            
+            if (chatId) {
+                await this.loadChats();
+                this.loadMessages(chatId);
+                this.selectedUsers.clear();
+                document.getElementById('groupNameInput').value = '';
+                document.getElementById('userSearchInput').value = '';
             }
-            const result = await api.chats.create(selectedUserIds, null, false);
-            chatId = result.chatId;
-        }
-        
-        if (chatId) {
-            await this.loadChats();
-            this.loadMessages(chatId);
-            this.selectedUsers.clear();
-            document.getElementById('groupNameInput').value = '';
-            document.getElementById('userSearchInput').value = '';
+        } catch (error) {
+            // Показываем ошибку (например, "Пользователь не в контактах")
+            if (typeof showToast === 'function') {
+                showToast(error.message || 'Ошибка создания чата', 'error');
+            } else {
+                alert(error.message || 'Ошибка создания чата');
+            }
         }
     }
     // Загрузка участников чата
@@ -1389,6 +1720,7 @@ class ChatManager {
         
         // Загружаем сообщения
         await this.loadMessages(chatId);
+        await this.markAsRead(chatId);
         // После загрузки сообщений и участников
         await this.loadChatMedia(chatId);
         
@@ -1620,24 +1952,36 @@ class ChatManager {
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await fetch(`/api/chats/${chatId}/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`Upload failed: ${error}`);
+        try {
+            const response = await fetch(`/api/chats/${chatId}/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Upload failed: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('📎 File uploaded:', result);
+            
+            // ← ГЛАВНОЕ: обновляем сообщения и список чатов
+            await this.loadMessages(chatId);
+            await this.loadChats();
+            await this.loadChatMedia(chatId);
+            
+            return result;
+            
+        } catch (error) {
+            console.error('Upload file error:', error);
+            throw error;
         }
-        
-        const result = await response.json();
-        console.log('Upload result:', result);
-        // Убираем строки с tempId, они уже обработаны в обработчике fileInput
-        return result;
     }
+
     addPendingAttachment(file) {
         this.pendingAttachments.push(file);
         this.renderPendingAttachments();
@@ -1672,17 +2016,24 @@ class ChatManager {
 
     // Отправить сообщение с файлами
     async sendMessageWithAttachments(chatId, text) {
-        // Отправляем текст (если есть)
-        if (text && text.trim()) {
+        const hasText = text && text.trim().length > 0;
+        const hasFiles = this.pendingAttachments.length > 0;
+        
+        if (!hasText && !hasFiles) return;
+        
+        // 1. Отправляем текст (если есть) через WebSocket/REST
+        if (hasText) {
             await this.sendMessage(chatId, text);
         }
         
-        // Отправляем файлы из очереди
-        for (const file of this.pendingAttachments) {
-            await this.uploadFile(chatId, file);
+        // 2. Отправляем файлы
+        if (hasFiles) {
+            for (const file of this.pendingAttachments) {
+                await this.uploadFile(chatId, file);
+            }
         }
         
-        // Очищаем очередь
+        // 3. Очищаем очередь
         this.pendingAttachments = [];
         this.renderPendingAttachments();
     }
@@ -2172,8 +2523,256 @@ class ChatManager {
     closeDeleteFolderModal() {
         document.getElementById('deleteFolderModal').style.display = 'none';
     }
-}
+    async switchTab(tab) {
+        const title = document.getElementById('activeTabTitle');
+        const chatsTab = document.getElementById('chatsTab');
+        const contactsTab = document.getElementById('contactsTab');
+        const btnChats = document.getElementById('tab-btn-chats');
+        const btnContacts = document.getElementById('tab-btn-contacts');
+        
+        if (!title || !chatsTab || !contactsTab) return;
+        
+        // Сброс классов
+        [btnChats, btnContacts].forEach(btn => btn?.classList.remove('active'));
+        [chatsTab, contactsTab].forEach(t => t?.classList.remove('active'));
+        
+        if (tab === 'chats') {
+            title.textContent = 'Чаты';
+            btnChats?.classList.add('active');
+            chatsTab.style.display = 'block';
+            chatsTab.classList.add('active');
+            contactsTab.style.display = 'none';
+        } else {
+            title.textContent = 'Контакты';
+            btnContacts?.classList.add('active');
+            contactsTab.style.display = 'block';
+            contactsTab.classList.add('active');
+            chatsTab.style.display = 'none';
+            
+            // Загружаем контакты
+            await this.loadContacts();
+        }
+    }
 
+    async loadContacts() {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/contacts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            const inBlock = document.getElementById('incomingRequestsBlock');
+            const inList = document.getElementById('incomingRequestsList');
+            const inCount = document.getElementById('incomingCount');
+            
+            const contactsList = document.getElementById('contactsList');
+            const contactsCount = document.getElementById('contactsCount');
+            
+            // 1. Входящие
+            if (data.incoming && data.incoming.length > 0) {
+                inBlock.style.display = 'block';
+                if (inCount) inCount.textContent = data.incoming.length;
+                
+                inList.innerHTML = data.incoming.map(u => `
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            ${u.avatar_uri 
+                                ? `<img src="${u.avatar_uri}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">` 
+                                : (u.name?.[0] || '?')}
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">${escapeHtml(u.surname)} ${escapeHtml(u.name)}</div>
+                            <div style="font-size: 12px; color: var(--c_surf_txt);">Хочет добавить вас</div>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn-accept" onclick="chatManager.respondContact(${u.id}, 'accept')" title="Принять">✓</button>
+                            <button class="btn-decline" onclick="chatManager.respondContact(${u.id}, 'decline')" title="Отклонить">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                inBlock.style.display = 'none';
+            }
+            
+            // 2. Мои контакты
+            if (data.contacts && data.contacts.length > 0) {
+                if (contactsCount) contactsCount.textContent = data.contacts.length;
+                
+                contactsList.innerHTML = data.contacts.map(u => `
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            ${u.avatar_uri 
+                                ? `<img src="${u.avatar_uri}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">` 
+                                : (u.name?.[0] || '?')}
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">${escapeHtml(u.surname)} ${escapeHtml(u.name)}</div>
+                        </div>
+                        <button class="btn-write" onclick="chatManager.startChatWith(${u.id})">Написать</button>
+                    </div>
+                `).join('');
+            } else {
+                if (contactsCount) contactsCount.textContent = '0';
+                contactsList.innerHTML = '<div style="text-align:center; color:#999; padding: 20px;">Нет контактов</div>';
+            }
+            
+        } catch (e) {
+            console.error('Load contacts error:', e);
+        }
+    }
+
+    async respondContact(userId, action) {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/contacts/respond/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ action })
+            });
+            
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Ошибка');
+            }
+            
+            if (typeof showToast === 'function') {
+                showToast(action === 'accept' ? 'Контакт добавлен' : 'Заявка отклонена', 'success');
+            }
+            
+            // Перезагружаем контакты (обновится и список, и счетчики)
+            await this.loadContacts();
+            
+            // Если приняли — обновляем список чатов (чтобы можно было написать)
+            if (action === 'accept') {
+                await this.loadChats();
+            }
+            
+        } catch (e) {
+            console.error('Respond contact error:', e);
+            if (typeof showToast === 'function') {
+                showToast(e.message, 'error');
+            }
+        }
+    }
+
+    async startChatWith(userId) {
+        try {
+            const result = await api.chats.create([userId], null, false);
+            if (result.chatId) {
+                await this.loadChats();
+                this.openChat(result.chatId, '');
+                this.switchTab('chats');
+            }
+        } catch(e) { console.error(e); }
+    }
+        openFindUsersModal() {
+        const modal = document.getElementById('findUsersModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.getElementById('findUsersSearch').value = '';
+            this.searchUsers('');
+        }
+    }
+
+    async searchUsers(searchText = '') {
+        const resultsContainer = document.getElementById('findUsersResults');
+        if (!resultsContainer) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            // Ищем пользователей через существующий API (можно добавить параметр search)
+            const res = await fetch(`/api/users?search=${encodeURIComponent(searchText)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            // Отфильтровываем себя
+            const users = (data.users || []).filter(u => u.id !== window.currentUser?.id);
+
+            // Получаем текущие контакты, чтобы знать статус (в контактах, заявка отправлена и т.д.)
+            const contactsRes = await fetch('/api/contacts', { headers: { 'Authorization': `Bearer ${token}` } });
+            const contactsData = await contactsRes.json();
+            
+            const acceptedIds = new Set(contactsData.contacts.map(c => c.id));
+            const incomingIds = new Set(contactsData.incoming.map(c => c.id));
+            const outgoingIds = new Set(contactsData.outgoing.map(c => c.id));
+
+            if (users.length === 0) {
+                resultsContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Никого не найдено</div>';
+                return;
+            }
+
+            resultsContainer.innerHTML = users.map(user => {
+                let actionHtml = '';
+                
+                if (acceptedIds.has(user.id)) {
+                    actionHtml = `<span style="color: var(--c_success); font-size: 12px;">✓ В контактах</span>`;
+                } else if (outgoingIds.has(user.id)) {
+                    actionHtml = `<span style="color: var(--c_warning); font-size: 12px;">⏳ Заявка отправлена</span>`;
+                } else if (incomingIds.has(user.id)) {
+                    actionHtml = `<button class="btn-accept" onclick="chatManager.respondContact(${user.id}, 'accept')">Принять</button>`;
+                } else {
+                    actionHtml = `<button class="btn-add-contact" onclick="chatManager.sendContactRequest(${user.id}, this)">Добавить</button>`;
+                }
+
+                return `
+                    <div class="contact-search-item">
+                        <div class="contact-avatar">
+                            ${user.avatar_uri 
+                                ? `<img src="${user.avatar_uri}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">` 
+                                : (user.name?.[0] || '?')}
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">${escapeHtml(user.surname)} ${escapeHtml(user.name)}</div>
+                            <div class="contact-email" style="font-size: 12px; color: var(--c_surf_txt);">${escapeHtml(user.email || '')}</div>
+                        </div>
+                        <div class="contact-action">
+                            ${actionHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (e) {
+            console.error(e);
+            resultsContainer.innerHTML = '<div style="color: red; padding: 20px;">Ошибка поиска</div>';
+        }
+    }
+
+    async sendContactRequest(userId, btnElement) {
+        try {
+            btnElement.disabled = true;
+            btnElement.textContent = '...';
+            
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/contacts/request/${userId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error);
+            }
+            
+            btnElement.outerHTML = '<span style="color: var(--c_warning); font-size: 12px;">⏳ Заявка отправлена</span>';
+            showToast('Заявка отправлена', 'success');
+            
+        } catch (e) {
+            console.error(e);
+            btnElement.disabled = false;
+            btnElement.textContent = 'Добавить';
+            showToast(e.message, 'error');
+        }
+    }
+}
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 // Инициализация при загрузке страницы
 let chatManager;
 document.addEventListener('DOMContentLoaded', () => {

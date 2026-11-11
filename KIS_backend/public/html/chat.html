@@ -77,147 +77,66 @@
     <div class="chat-container">
         <main class="chat-main">
             <div class="chat-list">
-                <div class="chat-searching">
-                    <div class="chat-searching-line">
-                        <input type="text" placeholder="Поиск...">
-                        <img src="../materials/searching_icon.png" alt="search-icon">
+                <!-- Шапка с переключателем вкладок -->
+                <div class="chat-list-header">
+                    <h2 class="active-tab-title" id="activeTabTitle">Чаты</h2>
+                    <div class="tab-switcher">
+                        <button class="tab-btn active" id="tab-btn-chats" onclick="chatManager.switchTab('chats')" title="Чаты">
+                            <img src="../materials/icons8-чат-100.png" alt="Чаты" style="width: 20px; filter: brightness(0) invert(1);">
+                        </button>
+                        <button class="tab-btn" id="tab-btn-contacts" onclick="chatManager.switchTab('contacts')" title="Контакты">
+                            <img src="../materials/icons8-контакты-96.png" alt="Контакты" style="width: 20px; filter: brightness(0) invert(1);">
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Вкладка "Контакты" -->
+                <section class="list-tab contacts-tab" id="contactsTab" style="display: none;">
+                    <button class="btn-find-users" onclick="chatManager.openFindUsersModal()" style="width: 100%; padding: 10px; margin-bottom: 15px; background: var(--c_acc); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        🔍 Найти людей
+                    </button>
+
+                    <div id="incomingRequestsBlock" style="display: none; margin-bottom: 20px;">
+                        <h4 style="color: var(--c_acc); margin-bottom: 10px; font-size: 14px; display: flex; justify-content: space-between;">
+                            <span>Входящие заявки</span>
+                            <span id="incomingCount" class="badge-count">0</span>
+                        </h4>
+                        <div id="incomingRequestsList"></div>
                     </div>
                     
-                </div>
-                <div class="chat-folders">
-                    <div class="chat-folders-wrapper">
-                        <div class="chat-folders-container">
-                            <div class="chat-folders-list" id="foldersList">
-                                <!-- Папки будут загружаться динамически -->
-                            </div>
+                    <h4 style="color: var(--c_surf_txt); margin-bottom: 10px; font-size: 14px; display: flex; justify-content: space-between;">
+                        <span>Мои контакты</span>
+                        <span id="contactsCount" class="badge-count">0</span>
+                    </h4>
+                    <div id="contactsList"></div>
+                </section>
+
+                <!-- Вкладка "Чаты" (активна по умолчанию) -->
+                <section class="list-tab chats-tab active" id="chatsTab">
+                    <div class="chat-searching">
+                        <div class="chat-searching-line">
+                            <input type="text" placeholder="Поиск...">
+                            <img src="../materials/searching_icon.png" alt="search-icon">
                         </div>
-                        
                     </div>
-                    <button class="add-folder-btn" id="addFolderBtn" title="Создать папку">+</button>
-                </div>
-                
-                <div class="chat-list-elements">
-                    <section class="chat-list-group-active">
-                        
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
+                    
+                    <div class="chat-folders">
+                        <div class="chat-folders-wrapper">
+                            <div class="chat-folders-container">
+                                <div class="chat-folders-list" id="foldersList"></div>
                             </div>
                         </div>
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
-                            </div>
-                        </div>
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
-                            </div>
-                        </div>
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="../materials/Focused & Productive Mood.jpg" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
-                            </div>
-                        </div>
-                    </section>
-                    <section class="chat-list-group">
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
-                            </div>
-                        </div>
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
-                            </div>
-                        </div>
-                        <div class="chat-list-element">
-                            <div class="chat-list-element-icon">
-                                <img src="" alt="F">
-                            </div>
-                            <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">
-                                    Fu-fu-fu
-                                </div>
-                                <div class="chat-list-element-lasttxt">
-                                    Иван: ну и бредятина, что вы тут...
-                                </div>
-                            </div>
-                            <div class="chat-list-element-notifications">
-                                6
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                <button class="floating-create-btn" id="floatingCreateChatBtn" title="Создать чат">
-                    <img src="../materials/icons8-карандаш-96.png" alt="Создать чат">
-                </button>
+                        <button class="add-folder-btn" id="addFolderBtn" title="Создать папку">+</button>
+                    </div>
+                    
+                    <div class="chat-list-elements">
+                        <section class="chat-list-group-active"></section>
+                    </div>
+                    
+                    <button class="floating-create-btn" id="floatingCreateChatBtn" title="Создать чат">
+                        <img src="../materials/icons8-карандаш-96.png" alt="Создать чат">
+                    </button>
+                </section>
             </div>
             <div class="chat-content no-chat-selected">
                 <div class="chat-header">
@@ -241,7 +160,7 @@
                 <section class="chat-messages">
                     <div class="messages-container" id="messagesContainer">
                         <div class="empty-chat-placeholder">
-                            <div class="empty-icon">💬</div>
+                            <div class="empty-icon"><img src="../materials/icons8-сообщение-64.png" alt=""></div>
                             <h3>Выберите чат</h3>
                             <p>Нажмите на чат в списке слева, чтобы начать общение</p>
                         </div>
@@ -465,6 +384,22 @@
             <div class="custom-modal-footer">
                 <button class="buttonbase btn-secondary" onclick="closeDeleteFolderModal()">Отмена</button>
                 <button class="buttonbase" id="confirmDeleteFolderBtn" style="background-color: #dc3545;">Удалить</button>
+            </div>
+        </div>
+    </div>
+    <!-- Модалка поиска людей -->
+    <div id="findUsersModal" class="custom-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>🔍 Поиск людей</h2>
+                <button class="modal-close" onclick="document.getElementById('findUsersModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <input type="text" id="findUsersSearch" class="form-input" placeholder="Введите имя или email..." 
+                    oninput="chatManager.searchUsers(this.value)" style="margin-bottom: 15px; width: 100%;">
+                <div id="findUsersResults" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Результаты -->
+                </div>
             </div>
         </div>
     </div>

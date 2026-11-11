@@ -30,17 +30,41 @@ const getChats = async (req, res) => {
              FROM chats c
              JOIN chat_participants cp ON cp.chat_id = c.id
              WHERE cp.user_id = $1
-             ORDER BY c.last_message_at DESC`,
+             ORDER BY 
+                CASE WHEN c.name = 'Избранное' THEN 0 ELSE 1 END ASC,
+                c.last_message_at DESC`,
+            [req.userId]
+        );
+                // Проверяем, есть ли чат "Избранное" (личный чат с самим собой)
+        const savedChat = await query(
+            `SELECT c.id FROM chats c
+             JOIN chat_participants cp ON cp.chat_id = c.id
+             WHERE cp.user_id = $1 AND c.is_group = false
+               AND (SELECT COUNT(*) FROM chat_participants WHERE chat_id = c.id) = 1
+             LIMIT 1`,
             [req.userId]
         );
         
+        if (savedChat.rows.length === 0) {
+            const newChat = await query(
+                `INSERT INTO chats (name, is_group, created_by, avatar_uri) 
+                 VALUES ('Избранное', false, $1, '/materials/icons8-избранное-96.png') 
+                 RETURNING id`,
+                [req.userId]
+            );
+            await query(
+                `INSERT INTO chat_participants (chat_id, user_id) VALUES ($1, $2)`,
+                [newChat.rows[0].id, req.userId]
+            );
+        }
         const chats = result.rows;
         
         // Для личных чатов подставляем имя собеседника
+                // Для личных чатов подставляем имя собеседника
         for (const chat of chats) {
             if (!chat.is_group && !chat.name) {
                 const participants = await query(
-                    `SELECT u.surname, u.name
+                    `SELECT u.id, u.surname, u.name, u.avatar_uri
                      FROM users u
                      JOIN chat_participants cp ON cp.user_id = u.id
                      WHERE cp.chat_id = $1 AND u.id != $2`,
@@ -49,8 +73,21 @@ const getChats = async (req, res) => {
                 if (participants.rows[0]) {
                     const p = participants.rows[0];
                     chat.name = `${p.surname} ${p.name}`;
+                    chat.avatar_uri = chat.avatar_uri || p.avatar_uri;
+                    chat.other_user_id = p.id;
                 }
             }
+            
+            // Подгружаем участников для всех чатов (нужно для статусов)
+            const allParticipants = await query(
+                `SELECT u.id, u.surname, u.name, u.avatar_uri, u.status,
+                        (EXTRACT(EPOCH FROM (NOW() - u.last_seen_at)) / 60) < $2 as is_online
+                 FROM chat_participants cp
+                 JOIN users u ON cp.user_id = u.id
+                 WHERE cp.chat_id = $1`,
+                [chat.id, process.env.OFFLINE_TIMEOUT_MINUTES || 5]
+            );
+            chat.participants = allParticipants.rows;
         }
         
         res.json({ chats });
@@ -104,6 +141,20 @@ const createChat = async (req, res) => {
             
             if (!otherUserId) {
                 return res.status(400).json({ error: 'Укажите собеседника' });
+            }
+
+            // Проверяем, в контактах ли они (кроме Избранного, где польз. сам с собой)
+            if (otherUserId !== req.userId) {
+                const contactCheck = await query(
+                    `SELECT 1 FROM contacts 
+                     WHERE ((user_id = $1 AND contact_id = $2) OR (user_id = $2 AND contact_id = $1))
+                       AND status = 'accepted'`,
+                    [req.userId, otherUserId]
+                );
+                
+                if (contactCheck.rows.length === 0) {
+                    return res.status(403).json({ error: 'Пользователь не в ваших контактах. Сначала отправьте заявку.' });
+                }
             }
             
             // Проверяем, существует ли уже чат между этими пользователями

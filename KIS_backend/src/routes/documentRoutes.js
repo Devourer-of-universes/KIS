@@ -481,7 +481,16 @@ router.get('/documents/:id', authMiddleware, async (req, res) => {
             [id]
         );
         doc.signatures = sigResult.rows;
-        
+        // Версии документа
+        const versionsResult = await query(
+            `SELECT dv.*, u.surname, u.name
+             FROM document_versions dv
+             LEFT JOIN users u ON dv.created_by = u.id
+             WHERE dv.document_id = $1
+             ORDER BY dv.version_number DESC`,
+            [id]
+        );
+        doc.versions = versionsResult.rows;
         res.json({ document: doc });
     } catch (error) {
         console.error('Get document error:', error);

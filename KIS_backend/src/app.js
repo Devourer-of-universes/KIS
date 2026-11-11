@@ -60,6 +60,8 @@ const workflowTemplateRoutes = require('./routes/workflowTemplateRoutes');
 const documentSignatureRoutes = require('./routes/documentSignatureRoutes');
 const documentAccessRoutes = require('./routes/documentAccessRoutes');
 const documentRoutes = require('./routes/documentRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 
 // Проверка статуса
 app.get('/api/status', (req, res) => {
@@ -72,6 +74,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api', fileRoutes);
+
 app.use('/api', taskRoutes);
 app.use('/api', taskTemplateRoutes);
 app.use('/api', noteRoutes);
@@ -82,7 +86,8 @@ app.use('/api', documentWorkflowRoutes);
 app.use('/api', workflowTemplateRoutes);
 app.use('/api', documentSignatureRoutes);
 app.use('/api', documentAccessRoutes);
-app.use('/api', documentRoutes);          // ← добавить
+app.use('/api', documentRoutes);
+app.use('/api', contactRoutes);
 
 // Статические файлы (uploads)
 const uploadsPath = path.join(__dirname, '../uploads');
@@ -188,7 +193,9 @@ wss.on('connection', async (ws, req) => {
         
         ws.userId = userId;
         clients.set(userId, ws);
-        
+        // Уведомляем контакты, что пользователь онлайн
+        broadcastUserStatus(userId, true);
+
         console.log(`✅ User ${userId} connected via WebSocket`);
         
         ws.send(JSON.stringify({
@@ -213,6 +220,8 @@ wss.on('connection', async (ws, req) => {
         ws.on('close', () => {
             console.log(`🔌 User ${userId} disconnected`);
             clients.delete(userId);
+            // Уведомляем контакты, что пользователь оффлайн
+            broadcastUserStatus(userId, false);
         });
         
         ws.on('error', (error) => {
@@ -228,20 +237,51 @@ wss.on('connection', async (ws, req) => {
 // Обработка WebSocket сообщений
 async function handleWebSocketMessage(ws, userId, data) {
     switch (data.type) {
+        case 'connection': {
+            // Просто подтверждаем подключение
+            ws.send(JSON.stringify({
+                type: 'connection-confirmed',
+                userId: userId
+            }));
+            break;
+        }
+        
+        case 'join-chats': {
+            // Присоединяем пользователя к комнатам (в текущей реализации мы просто подтверждаем)
+            ws.send(JSON.stringify({
+                type: 'joined-chats',
+                chatIds: data.chatIds || []
+            }));
+            break;
+        }
+
         case 'send-message': {
+            // 1. Создаем сообщение
             const result = await query(
                 `INSERT INTO messages (chat_id, user_id, content) 
-                 VALUES ($1, $2, $3) 
-                 RETURNING id, chat_id, user_id, content, created_at`,
+                 VALUES ($1, $2, $3) RETURNING id, chat_id, user_id, content, created_at`,
                 [data.chatId, userId, data.content]
             );
             
             const message = result.rows[0];
             
+            // 2. Сохраняем вложения, если есть
+            if (data.attachments && data.attachments.length > 0) {
+                for (const att of data.attachments) {
+                    await query(
+                        `INSERT INTO message_attachments (message_id, file_uri, file_name, file_size, file_type, mime_type)
+                         VALUES ($1, $2, $3, $4, $5, $6)`,
+                        [message.id, att.uri, att.name, att.size, att.type, att.mimeType || null]
+                    );
+                }
+            }
+            
+            // 3. Получаем автора
             const userResult = await query(
                 `SELECT surname, name, avatar_uri FROM users WHERE id = $1`,
                 [userId]
             );
+
             
             const messageData = {
                 ...message,
@@ -278,12 +318,22 @@ async function handleWebSocketMessage(ws, userId, data) {
                 [data.chatId, userId]
             );
             
+            // Получаем имя того, кто печатает
+            const userResult = await query(
+                `SELECT surname, name FROM users WHERE id = $1`,
+                [userId]
+            );
+            const userName = userResult.rows[0] 
+                ? `${userResult.rows[0].surname} ${userResult.rows[0].name}`.trim()
+                : 'Пользователь';
+            
             for (const p of typingParticipants.rows) {
                 const client = clients.get(p.user_id);
                 if (client && client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({
                         type: 'user-typing',
                         userId: userId,
+                        userName: userName,
                         isTyping: data.isTyping
                     }));
                 }
@@ -291,17 +341,10 @@ async function handleWebSocketMessage(ws, userId, data) {
             break;
         }
             
-        case 'join-chats':
-            ws.send(JSON.stringify({
-                type: 'joined-chats',
-                chatIds: data.chatIds
-            }));
-            break;
-            
         default:
             ws.send(JSON.stringify({
                 type: 'error',
-                message: 'Unknown message type'
+                message: `Unknown message type: ${data.type}`
             }));
     }
 }
@@ -314,7 +357,37 @@ function sendToUser(userId, data) {
     }
     return false;
 }
-
+// Оповещение контактов об изменении статуса
+async function broadcastUserStatus(userId, isOnline) {
+    try {
+        // Получаем всех, у кого этот пользователь есть в контактах (или с кем есть общие чаты)
+        const contacts = await query(
+            `SELECT DISTINCT contact_id as user_id FROM contacts WHERE user_id = $1
+             UNION
+             SELECT DISTINCT user_id FROM contacts WHERE contact_id = $1
+             UNION
+             SELECT DISTINCT cp2.user_id FROM chat_participants cp1
+             JOIN chat_participants cp2 ON cp1.chat_id = cp2.chat_id
+             WHERE cp1.user_id = $1 AND cp2.user_id != $1`,
+            [userId]
+        );
+        
+        const statusPayload = JSON.stringify({
+            type: 'user-status-change',
+            userId: userId,
+            isOnline: isOnline
+        });
+        
+        for (const contact of contacts.rows) {
+            const client = clients.get(contact.user_id);
+            if (client && client.readyState === WebSocket.OPEN) {
+                client.send(statusPayload);
+            }
+        }
+    } catch (error) {
+        console.error('Broadcast status error:', error);
+    }
+}
 // =====================================================
 // 8. ЗАПУСК СЕРВЕРА
 // =====================================================

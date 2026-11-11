@@ -703,7 +703,7 @@ router.get('/documents/:id/current-step', authMiddleware, async (req, res) => {
 
 router.get('/documents/my-approvals', authMiddleware, async (req, res) => {
     try {
-        // Находим все документы, где текущий пользователь — исполнитель активного шага
+        // Находим все документы, где текущий пользователь — исполнитель активного шага (pending)
         const result = await query(
             `SELECT 
                 d.id, d.title, d.status, d.reg_number, d.priority,
@@ -726,12 +726,20 @@ router.get('/documents/my-approvals', authMiddleware, async (req, res) => {
             [req.userId]
         );
         
-        const documents = result.rows.map(d => ({
-            ...d,
-            created_by_name: d.created_by_surname 
-                ? `${d.created_by_surname} ${d.created_by_name || ''}`.trim() 
-                : null
-        }));
+        const documents = result.rows.map(d => {
+            // Определяем, какой именно шаг сейчас у этого пользователя
+            const steps = d.route_data?.steps || [];
+            const myStep = steps.find(s => s.status === 'pending' && s.user_id === req.userId);
+            
+            return {
+                ...d,
+                created_by_name: d.created_by_surname 
+                    ? `${d.created_by_surname} ${d.created_by_name || ''}`.trim() 
+                    : null,
+                current_step_type: myStep?.type || 'approval',
+                current_step_role: myStep?.role || ''
+            };
+        });
         
         res.json({ documents });
     } catch (error) {

@@ -1,0 +1,299 @@
+.files-container {
+    margin-left: 60px;
+    padding: 20px;
+    background: var(--c_bg);
+    min-height: 100vh;
+}
+
+.files-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--c_surf);
+    padding: 20px 24px;
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.files-header h2 { margin: 0; color: var(--c_bg_txt); }
+
+.files-main {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+}
+
+/* Таблица */
+.files-content {
+    background: var(--c_surf);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.files-table tr:hover { background: var(--c_acchalf); cursor: pointer; }
+.files-table td { padding: 12px 16px; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
+
+.file-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* Цвета подложек */
+.bg-doc { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.bg-excel { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.bg-ppt { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.bg-pdf { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.bg-image { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.bg-archive { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+.bg-other { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+
+/* Сайдбар */
+.files-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.storage-info, .file-types-info {
+    background: var(--c_surf);
+    padding: 20px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.storage-info h3, .file-types-info h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--c_bg_txt);
+}
+
+.storage-bar-container {
+    height: 12px;
+    background: var(--c_bg);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.storage-bar {
+    height: 100%;
+    background: var(--c_acc);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+.storage-text {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    text-align: right;
+}
+
+.file-types-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.file-type-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-type-item .file-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+}
+
+.file-type-item .type-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--c_bg_txt);
+}
+
+.file-type-item .type-count {
+    color: var(--c_surf_txt);
+    font-weight: 600;
+}
+/* Хлебные крошки */
+.files-breadcrumbs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--c_bg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.crumb {
+    font-size: 13px;
+    color: var(--c_surf_txt);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.crumb:hover { background: var(--c_acchalf); color: var(--c_acc); }
+.crumb.active { background: var(--c_acc); color: white; }
+
+.files-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 0 20px 16px 20px;
+    gap: 12px;
+}
+
+.btn-create-folder {
+    padding: 8px 16px;
+    background: var(--c_surf);
+    border: 1px dashed var(--c_surf_txt);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--c_bg_txt);
+    transition: all 0.2s;
+}
+
+.btn-create-folder:hover {
+    border-color: var(--c_acc);
+    background: var(--c_acchalf);
+}
+
+/* Элементы списка (папки) */
+.folder-row {
+    cursor: pointer;
+}
+.folder-row:hover { background: var(--c_acchalf); }
+
+/* Drag & Drop */
+.dragging { opacity: 0.5; }
+.drag-over { background: var(--c_acchalf) !important; border: 2px dashed var(--c_acc) !important; }
+
+/* =====================================================
+   DRAG & DROP и ПРОГРЕСС ЗАГРУЗКИ
+   ===================================================== */
+
+/* Подсветка всей страницы при перетаскивании файла */
+.files-container.drag-active {
+    outline: 4px dashed var(--c_acc);
+    outline-offset: -10px;
+    background: var(--c_acchalf);
+    transition: all 0.2s;
+}
+
+/* Оверлей при перетаскивании */
+.drag-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(81, 148, 255, 0.1);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border-radius: 20px;
+}
+
+.files-container.drag-active .drag-overlay {
+    display: flex;
+}
+
+.drag-overlay-text {
+    background: var(--c_surf);
+    padding: 20px 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--c_acc);
+    border: 2px solid var(--c_acc);
+}
+
+/* Окно прогресса загрузки (справа снизу) */
+.upload-progress-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: var(--c_surf);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    z-index: 10000;
+    overflow: hidden;
+    border: 1px solid var(--c_surf_txt);
+    animation: slideInRight 0.3s ease;
+}
+
+.upload-progress-header {
+    padding: 12px 16px;
+    background: var(--c_bg);
+    border-bottom: 1px solid var(--c_surf_txt);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.upload-progress-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.upload-progress-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--c_bg);
+}
+
+.upload-progress-item:last-child {
+    border-bottom: none;
+}
+
+.upload-file-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: var(--c_bg_txt);
+}
+
+.upload-file-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.upload-bar-container {
+    height: 6px;
+    background: var(--c_bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.upload-bar {
+    height: 100%;
+    background: var(--c_acc);
+    width: 0%;
+    transition: width 0.2s ease;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}

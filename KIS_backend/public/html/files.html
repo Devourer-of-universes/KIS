@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ИС</title>
+    <link rel="stylesheet" type="text/css" href="../styles/main.css" >
+    <link rel="stylesheet" type="text/css" href="../styles/files.css" >
+
+</head>
+<body>
+    <div class="left-menu">
+        <div class="menu-logo">
+            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <span class="logo-text">КИС</span>
+            <button class="toggle-btn" id="menuToggleBtn">
+                <img src="../materials/menu_stay.png" alt="toggle">
+            </button>
+        </div>
+
+        <nav class="menu-nav">
+            <a href="../html/base.html" class="menu-item" data-page="base">
+                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
+                <span>Рабочее пространство</span>
+            </a>
+            <a href="../html/chat.html" class="menu-item" data-page="chat">
+                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <span>Чаты</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+        </nav>
+
+        <div class="menu-footer">
+            <div class="theme-switcher">
+                <button class="theme-toggle" id="themeToggle">
+                    <span class="theme-icon">☀️</span>
+                </button>
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatarBtn">
+                    <img src="../materials/avatar_for_profile.png" alt="avatar">
+                </div>
+                <div class="user-info" id="userInfo">
+                    <span class="user-name" id="userName">Загрузка...</span>
+                    <span class="user-role" id="userRole"></span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="../html/profile.html" class="dropdown-header">
+                        <div class="dropdown-avatar">
+                            <img src="../materials/avatar_for_profile.png" alt="avatar" id="dropdownAvatar">
+                        </div>
+                        <div class="dropdown-info">
+                            <span class="dropdown-name" id="dropdownName">Загрузка...</span>
+                            <span class="dropdown-role" id="dropdownRole"></span>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="../html/settings.html" class="dropdown-item">
+                        <img src="../materials/icons8-настройки-96.png" alt="settings">
+                        <span>Настройки</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
+                        <img src="../materials/icons8-выход-96.png" alt="logout">
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="files-container" id="filesMainContainer" style="position: relative;">
+        <div class="drag-overlay">
+            <div class="drag-overlay-text">📁 Отпустите файлы для загрузки</div>
+        </div>
+    
+    <!-- ... остальной контент ... -->
+        <!-- Шапка -->
+        <div class="files-header">
+            <h2>📁 Файловое хранилище</h2>
+            <div class="files-actions">
+                <input type="text" id="fileSearch" class="form-input" placeholder="🔍 Поиск файлов..." style="width: 250px;">
+                <button class="buttonbase" id="uploadFileBtn">⬆️ Загрузить файл</button>
+                <input type="file" id="fileUploadInput" multiple style="display: none;">
+            </div>
+        </div>
+
+        <!-- Основной контент: 2 колонки -->
+        <div class="files-main">
+            <!-- Левая колонка: Таблица -->
+            <div class="files-content">
+                <!-- Хлебные крошки -->
+                <div class="files-breadcrumbs" id="filesBreadcrumbs">
+                    <span class="crumb active" data-id="root">📁 Корень</span>
+                </div>
+
+                <div class="files-toolbar">
+                    <button class="btn-create-folder" id="createFolderBtn">+ Новая папка</button>
+                    <input type="text" id="fileSearch" class="form-input" placeholder="🔍 Поиск..." style="width: 200px; margin-left: auto;">
+                </div>
+
+                <table class="admin-table files-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Имя</th>
+                            <th>Размер</th>
+                            <th>Дата</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="filesTableBody">
+                        <tr><td colspan="5" class="loading-row">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Правая колонка: Статистика -->
+            <div class="files-sidebar">
+                <div class="storage-info">
+                    <h3>Хранилище</h3>
+                    <div class="storage-bar-container">
+                        <div class="storage-bar" id="storageBar"></div>
+                    </div>
+                    <div class="storage-text">
+                        <span id="storageUsed">0 МБ</span> из <span id="storageLimit">5 ГБ</span>
+                    </div>
+                </div>
+
+                <div class="file-types-info">
+                    <h3>По типам</h3>
+                    <div id="fileTypesList" class="file-types-list">
+                        <!-- Сюда рендерим типы -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Модалка: Создание папки -->
+    <div id="createFolderModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content" style="max-width: 400px;">
+            <div class="custom-modal-header">
+                <h3>📁 Новая папка</h3>
+                <button class="custom-modal-close" onclick="closeFolderModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <div class="form-group">
+                    <label>Название папки</label>
+                    <input type="text" id="newFolderName" class="form-input" placeholder="Например: Документы проекта" autocomplete="off">
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase btn-secondary" onclick="closeFolderModal()">Отмена</button>
+                <button class="buttonbase" id="confirmCreateFolderBtn">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Универсальная модалка подтверждения -->
+    <div id="confirmActionModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content" style="max-width: 400px;">
+            <div class="custom-modal-header">
+                <h3 id="confirmActionTitle">Подтверждение</h3>
+                <button class="custom-modal-close" onclick="closeConfirmActionModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <p id="confirmActionMessage">Вы уверены?</p>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="buttonbase btn-secondary" onclick="closeConfirmActionModal()">Отмена</button>
+                <button class="buttonbase" id="confirmActionBtn" style="background-color: #dc3545;">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+    <script src="../scripts/files.js"></script>
+    <script src="../scripts/main.js"></script>
+</body>
+<script src="/scripts/api.js"></script>
+<script>
+    // Проверяем, авторизован ли пользователь
+    (async () => {
+        try {
+            const user = await api.auth.getMe();
+            if (!user) {
+                window.location.href = '/html/login.html';
+            }
+            // Сохраняем текущего пользователя
+            window.currentUser = user.user;
+        } catch (error) {
+            window.location.href = '/html/login.html';
+        }
+    })();
+</script>
+</html>

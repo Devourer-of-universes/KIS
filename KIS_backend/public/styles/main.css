@@ -2214,3 +2214,86 @@ body.compact-mode .admin-table td {
     color: #ef4444;
 }
 .stat-item-unread .stat-value { color: #ef4444; }
+/* Кастомные модальные окна */
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+}
+
+.custom-modal-content {
+    background: var(--c_surf, white);
+    border-radius: 20px;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.custom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--c_acc, #5194ff);
+    color: white;
+}
+
+.custom-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.custom-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.custom-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.custom-modal-body {
+    padding: 20px;
+}
+
+.custom-modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--c_surf_txt, #ddd);
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.custom-modal-body textarea:focus {
+    outline: none;
+    border-color: var(--c_acc, #5194ff);
+}
+
+.custom-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--c_surf_txt, #eee);
+}

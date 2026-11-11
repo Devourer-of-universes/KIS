@@ -33,6 +33,10 @@
                 <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
                 <span>Администрирование</span>
             </a>
+            <a href="../html/files.html" class="menu-item" data-page="disk">
+                <img src="../materials/icons8-папка-120.png" alt="disk">
+                <span>Мой диск</span>
+            </a>
         </nav>
 
         <div class="menu-footer">
@@ -177,6 +181,7 @@
                                             
                                         </div>
                                     </div>
+                                    
                                     <!-- Календарь -->
                                     <div class="dashboard-card calendar-card">
                                         <div class="card-header">
@@ -218,9 +223,21 @@
                                         </div>
                                     </div>
                                 </div>
+
                             </div>
 
-                            
+                            <!-- Блок "Требуют моего внимания" -->
+                                    <div class="dashboard-card attention-card" id="attentionCard" style="display: none;">
+                                        <div class="card-header">
+                                            <h3>⚠️ Требуют моего внимания</h3>
+                                            <span class="badge" id="attentionCount">0</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="attention-list" id="attentionList">
+                                                <!-- Сюда рендерятся документы -->
+                                            </div>
+                                        </div>
+                                    </div>
                             <div class="dashboard-card department-card">
                                 <div class="card-header">
                                     <h3>Мой отдел</h3>

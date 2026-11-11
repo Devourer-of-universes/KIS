@@ -2625,15 +2625,13 @@ table td{
 
 .board-container {
     display: flex;
-    flex-direction: column;
     gap: 20px;
     background: rgb(0, 67, 44);
-    /* border-radius: 12px; */
     padding: 20px;
-    min-height: 300px;
-    max-height: max-content;
+    min-height: 400px; /* Увеличили высоту */
     box-shadow: inset 0 2px 20px rgba(0,0,0,0.15);
     position: relative;
+    border-radius: 12px;
 }
 
 .board-column {
@@ -2644,9 +2642,9 @@ table td{
     padding: 12px;
     display: flex;
     flex-direction: column;
-    min-height: 250px;
-    position: relative;
-    z-index: 1;
+    position: relative; /* Важно для абсолютного позиционирования заметок */
+    overflow: hidden;
+    min-height: 350px;
 }
 
 .board-column-header {
@@ -2656,6 +2654,8 @@ table td{
     padding-bottom: 12px;
     margin-bottom: 12px;
     border-bottom: 2px dashed rgba(255,255,255,0.2);
+    position: relative;
+    z-index: 10;
 }
 
 .board-column-header h4 {
@@ -2678,46 +2678,50 @@ table td{
 .notes-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    flex: 1;
+    align-items: center;
+    padding: 20px 10px 40px 10px;
 }
 
 .note-item {
-    width: max-content;
-    min-width: 100px;
+    position: absolute; /* Абсолютное позиционирование для drag&drop */
+    width: 180px;
+    height: 180px;
     background: linear-gradient(145deg, #fff9e6, #fff3cd);
     padding: 14px 16px 12px 16px;
     border-radius: 4px;
-    position: relative;
-    box-shadow: 
-        0 2px 8px rgba(0,0,0,0.15),
-        0 1px 2px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-    cursor: default;
-    min-height: 100px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    cursor: grab;
     border: 1px solid rgba(255,255,255,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1;
+}
+.note-item:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 100;
 }
 
+.note-item:active {
+    cursor: grabbing;
+}
 /* Альтернативные цвета для разных заметок */
-.note-item:nth-child(3n+1) {
-    background: linear-gradient(145deg, #fadd7d, #ffc400);
+.note-item:nth-child(3n+1) { 
+    background: linear-gradient(145deg, #fadd7d, #ffc400); 
+    transform: rotate(-2deg); 
+    z-index: 1;
 }
-
-.note-item:nth-child(3n+2) {
-    background: linear-gradient(145deg, #63cffd, #00c8ff);
+.note-item:nth-child(3n+2) { 
+    background: linear-gradient(145deg, #63cffd, #00c8ff); 
+    transform: rotate(1.5deg); 
+    z-index: 2;
 }
-
-.note-item:nth-child(3n+3) {
-    background: linear-gradient(145deg, #c278ff, #ae00ff);
+.note-item:nth-child(3n+3) { 
+    background: linear-gradient(145deg, #c278ff, #ae00ff); 
+    transform: rotate(-1deg); 
+    z-index: 3;
 }
-/* 
-.note-item {
-    position: relative;
-    background: linear-gradient(145deg, #fff9e6, #fff3cd);
-    padding: 14px 16px 20px 16px;
-    border-radius: 4px;
-} */
-
 .note-item::after {
     content: '';
     position: absolute;
@@ -2736,19 +2740,32 @@ table td{
     line-height: 1.5;
     color: #2d2d2d;
     word-wrap: break-word;
-    padding-right: 20px;
+    overflow-wrap: break-word;
+    white-space: normal;
+    flex: 1;
+    overflow-y: auto; /* Прокрутка внутри, если текст очень длинный */
+    padding-right: 4px;
     font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+/* Скрываем скроллбар для красоты */
+.note-item .note-text::-webkit-scrollbar {
+    width: 4px;
+}
+.note-item .note-text::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
 }
 
 .note-item .note-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 4px;
+    padding-top: 4px;
     border-top: 1px solid rgba(0,0,0,0.06);
     font-size: 10px;
     color: rgba(0,0,0,0.4);
+    flex-shrink: 0;
 }
 
 .note-item .note-meta .note-author {
@@ -2762,16 +2779,26 @@ table td{
 
 /* Кнопка удаления на стикере */
 .note-item .note-delete {
-    background: none;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.1);
     border: none;
+    border-radius: 50%;
     cursor: pointer;
-    color: rgba(0,0,0,0.2);
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: all 0.2s;
+    color: #2d2d2d;
+    font-size: 12px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    font-weight: bold;
 }
-
+.note-item:hover .note-delete {
+    opacity: 1;
+}
 .note-item .note-delete:hover {
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
@@ -8293,4 +8320,233 @@ table td{
     border-radius: 10px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+}
+
+/* =====================================================
+   БЛОК "ТРЕБУЮТ МОЕГО ВНИМАНИЯ"
+   ===================================================== */
+
+.attention-card {
+    border-left: 4px solid #f59e0b; /* Желтый акцент */
+}
+
+.attention-card .card-header h3 {
+    color: #d97706;
+}
+
+.attention-card .badge {
+    background: #f59e0b;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.attention-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attention-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--c_bg);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.attention-item:hover {
+    background: var(--c_surf);
+    border-color: var(--c_acchalf);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+
+.attention-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.attention-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.attention-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c_bg_txt);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attention-meta {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+    margin-top: 2px;
+}
+
+.attention-action {
+    font-size: 12px;
+    font-weight: 600;
+    color: #d97706;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+@keyframes attentionPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
+    100% { transform: scale(1); }
+}
+
+.attention-card.pulse {
+    animation: attentionPulse 0.6s ease;
+}
+/* =====================================================
+   ИСТОРИЯ ДОКУМЕНТА (ТАЙМЛАЙН)
+   ===================================================== */
+
+.doc-view-history {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 16px;
+}
+
+.doc-view-history::before {
+    content: '';
+    position: absolute;
+    left: 21px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: var(--c_surf_txt);
+    opacity: 0.3;
+}
+
+.history-timeline-item {
+    display: flex;
+    gap: 12px;
+    position: relative;
+    padding-bottom: 16px;
+}
+
+.history-timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.history-timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--c_acc);
+    border: 2px solid var(--c_surf);
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    margin-top: 6px;
+    margin-left: -10px;
+}
+
+.history-timeline-content {
+    flex: 1;
+    background: var(--c_bg);
+    padding: 10px 14px;
+    border-radius: var(--border-radius-sm);
+}
+
+.history-timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.history-timeline-author {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--c_bg_txt);
+}
+
+.history-timeline-version {
+    font-size: 11px;
+    background: var(--c_acchalf);
+    color: var(--c_acc);
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.history-timeline-comment {
+    font-size: 13px;
+    color: var(--c_bg_txt);
+    margin-bottom: 4px;
+}
+
+.history-timeline-date {
+    font-size: 11px;
+    color: var(--c_surf_txt);
+}
+
+/* =====================================================
+   МОДАЛКА ПЕРЕСЫЛКИ
+   ===================================================== */
+
+.forward-chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.forward-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.forward-chat-item:hover {
+    background: var(--c_acchalf);
+}
+
+.forward-chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--c_acc);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.forward-chat-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--c_bg_txt);
 }

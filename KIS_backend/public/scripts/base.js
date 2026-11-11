@@ -326,33 +326,115 @@ function renderNotes(containerId, notes, isPersonal) {
         return;
     }
     
-    // Получаем текущего пользователя
     const currentUser = window.currentUser || {};
     const currentUserId = currentUser.id;
     
-    container.innerHTML = notes.map(note => {
+    // Восстанавливаем позиции из localStorage (если есть)
+    const savedPositions = JSON.parse(localStorage.getItem('notePositions') || '{}');
+    
+    container.innerHTML = notes.map((note, index) => {
         const isAuthor = note.user_id === currentUserId;
         const authorName = isAuthor ? 'Вы' : `${note.surname || ''} ${note.name || ''}`.trim() || 'Пользователь';
-        
-        // Форматируем дату
         const dateStr = formatNoteDate(note.created_at);
         
+        // Позиция: по умолчанию спавним в центре, если нет сохранённой
+        const pos = savedPositions[note.id] || { 
+            x: 50 + (index * 20), // легкое смещение
+            y: 50 + (index * 20) 
+        };
+        
         return `
-            <div class="note-item" data-note-id="${note.id}">
-                <div class="pin"></div>
+            <div class="note-item" 
+                 data-note-id="${note.id}"
+                 draggable="true"
+                 style="position: absolute; left: ${pos.x}px; top: ${pos.y}px; transform: rotate(${Math.random() * 6 - 3}deg);"
+                 ondragstart="handleNoteDragStart(event, '${note.id}')"
+                 ondragend="handleNoteDragEnd(event)"
+                 onclick="event.stopPropagation()">
+                
+                <button class="note-delete" 
+                        onclick="event.stopPropagation(); confirmDeleteNote('${note.id}')" 
+                        title="Удалить">✕</button>
+                
                 <div class="note-text">${escapeHtml(note.content)}</div>
+                
                 <div class="note-meta">
                     <span class="note-author">${isPersonal ? '' : '👤 ' + escapeHtml(authorName)}</span>
                     <span class="note-date">${dateStr}</span>
                 </div>
-                <div style="position: absolute; bottom: 8px; right: 8px; display: flex; gap: 4px;">
-                    ${isAuthor ? `
-                        <button class="note-delete" onclick="confirmDeleteNote('${note.id}')" title="Удалить">🗑️</button>
-                    ` : ''}
-                </div>
             </div>
         `;
     }).join('');
+    
+    initNoteDragDrop();
+}
+
+// =====================================================
+// DRAG & DROP ЗАМЕТОК
+// =====================================================
+
+let __draggedNote = null;
+let __dragOffsetX = 0;
+let __dragOffsetY = 0;
+
+function handleNoteDragStart(event, noteId) {
+    const el = event.target.closest('.note-item');
+    if (!el) return;
+    
+    __draggedNote = { id: noteId, el };
+    
+    const rect = el.getBoundingClientRect();
+    __dragOffsetX = event.clientX - rect.left;
+    __dragOffsetY = event.clientY - rect.top;
+    
+    el.style.zIndex = '9999';
+    el.style.cursor = 'grabbing';
+    el.style.opacity = '0.8';
+    
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', noteId);
+}
+
+function handleNoteDragEnd(event) {
+    if (__draggedNote) {
+        __draggedNote.el.style.opacity = '1';
+        __draggedNote.el.style.cursor = 'grab';
+        __draggedNote.el.style.zIndex = '';
+        
+        // Сохраняем позицию в localStorage
+        const savedPositions = JSON.parse(localStorage.getItem('notePositions') || '{}');
+        savedPositions[__draggedNote.id] = {
+            x: parseInt(__draggedNote.el.style.left),
+            y: parseInt(__draggedNote.el.style.top)
+        };
+        localStorage.setItem('notePositions', JSON.stringify(savedPositions));
+        
+        __draggedNote = null;
+    }
+}
+
+function initNoteDragDrop() {
+    // Плавное перемещение при перетаскивании
+    document.addEventListener('dragover', (e) => {
+        if (!__draggedNote) return;
+        e.preventDefault();
+        
+        const board = e.target.closest('.board-column');
+        if (!board) return;
+        
+        const boardRect = board.getBoundingClientRect();
+        
+        // Вычисляем новые координаты относительно доски
+        let newX = e.clientX - boardRect.left - __dragOffsetX;
+        let newY = e.clientY - boardRect.top - __dragOffsetY;
+        
+        // Ограничиваем, чтобы заметка не вылетала за пределы
+        newX = Math.max(0, Math.min(newX, boardRect.width - __draggedNote.el.offsetWidth));
+        newY = Math.max(0, Math.min(newY, boardRect.height - __draggedNote.el.offsetHeight));
+        
+        __draggedNote.el.style.left = newX + 'px';
+        __draggedNote.el.style.top = newY + 'px';
+    });
 }
 
 // Удаление заметки с подтверждением
@@ -6788,7 +6870,124 @@ async function loadMyDepartment() {
         console.error('Error loading department:', error);
     }
 }
+async function loadAttentionDocuments() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('/api/documents/my-approvals', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Ошибка загрузки');
+        
+        const data = await response.json();
+        const documents = data.documents || [];
+        
+        const card = document.getElementById('attentionCard');
+        const list = document.getElementById('attentionList');
+        const count = document.getElementById('attentionCount');
+        
+        if (!card || !list) return;
+        
+        if (documents.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+        
+        card.style.display = 'block';
+        if (count) count.textContent = documents.length;
+        
+        list.innerHTML = documents.map(doc => {
+            const isSignature = doc.current_step_type === 'signature';
+            const icon = isSignature ? '✍️' : '✅';
+            const actionText = isSignature ? 'Подписать' : 'Согласовать';
+            
+            const dateStr = doc.reg_number 
+                ? `№${doc.reg_number}` 
+                : new Date(doc.updated_at || doc.route_created_at).toLocaleDateString('ru-RU');
+            
+            return `
+                <div class="attention-item" onclick="openDocumentView(${doc.id})">
+                    <div class="attention-icon">${icon}</div>
+                    <div class="attention-info">
+                        <div class="attention-title">${escapeHtml(doc.title)}</div>
+                        <div class="attention-meta">
+                            ${escapeHtml(doc.document_type_name || '—')} · ${dateStr}
+                        </div>
+                    </div>
+                    <div class="attention-action">
+                        ${actionText} →
+                    </div>
+                </div>
+            `;
+        }).join('');
+                // Анимация пульсации при обновлении
+        card.classList.remove('pulse');
+        void card.offsetWidth; // Триггер перерисовки
+        card.classList.add('pulse');
+        setTimeout(() => card.classList.remove('pulse'), 600);
+        
+    } catch (error) {
+        console.error('Load attention docs error:', error);
+    }
+}
+async function loadDashboardProfile() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
+        // Всегда запрашиваем полные данные с сервера
+        const response = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) return;
+        const data = await response.json();
+        const user = data.user;
+        window.currentUser = user; // Обновляем глобальный объект
+
+        // Безопасная установка текста
+        const safeSetText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        
+        const safeSetSrc = (id, src) => {
+            const el = document.getElementById(id);
+            if (el) el.src = src;
+        };
+
+        // 1. ФИО
+        const fullName = `${user.surname || ''} ${user.name || ''} ${user.patronymic || ''}`.trim() || user.username;
+        safeSetText('profileFullName', fullName);
+
+        // 2. Аватар
+        const avatarUrl = user.avatar_uri || '../materials/avatar_for_profile.png';
+        safeSetSrc('profileAvatar', avatarUrl);
+        
+        // 3. Роль
+        let roleText = 'Пользователь';
+        if (user.is_super_admin) roleText = '👑 Супер-админ';
+        else if (user.role_id === 1) roleText = 'Администратор';
+        safeSetText('profileRole', roleText);
+
+        // 4. Должность
+        safeSetText('profilePosition', user.post_name || 'Должность не указана');
+
+        // 5. Отдел
+        safeSetText('profileDepartment', user.department_name || 'Отдел не указан');
+
+        // 6. Статус
+        const statusEl = document.getElementById('profileStatus');
+        if (statusEl) {
+            statusEl.className = 'profile-avatar-status ' + (user.status === 'active' ? 'online' : 'offline');
+        }
+
+    } catch (error) {
+        console.error('Error loading dashboard profile:', error);
+    }
+}
 // =====================================================
 // ОТКРЫТИЕ ПОЛНОЙ СТРАНИЦЫ ОТДЕЛА (ЗАДЕЛ)
 // =====================================================
@@ -6922,12 +7121,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initUserSelectorHandlers();
     initTemplatesSection();
     initTaskFromTemplateHandlers();
-    
+    loadAttentionDocuments();
     loadNotes();
     loadDashboardStats();
     loadMyDepartment();
     loadNotifications();
-    
+    loadDashboardProfile();
     setTimeout(() => {
         if (document.getElementById('miniCalendar')) {
             renderMiniCalendar();

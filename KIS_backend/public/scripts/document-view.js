@@ -31,6 +31,10 @@ function closeDocumentView() {
     if (typeof loadDocuments === 'function') {
         loadDocuments('recent');
     }
+    // Обновляем блок внимания
+    if (typeof loadAttentionDocuments === 'function') {
+        loadAttentionDocuments();
+    }
 }
 
 // =====================================================
@@ -129,7 +133,16 @@ function renderDocumentView(doc) {
             document.getElementById('docViewSignaturesSection').style.display = 'none';
         }
     } catch (e) { console.error('❌ Подписи:', e); }
-    
+    // История
+    try {
+        // История (из версий)
+        if (doc.versions && doc.versions.length > 0) {
+            document.getElementById('docViewHistorySection').style.display = 'block';
+            renderDocViewHistory(doc.versions);
+        } else {
+            document.getElementById('docViewHistorySection').style.display = 'none';
+        }
+    } catch (e) { console.error('❌ История:', e); }
     // Кнопки действий — ВСЕГДА В КОНЦЕ
     try { 
         console.log('🎨 Перед renderDocViewActions');
@@ -145,7 +158,40 @@ function renderDocumentView(doc) {
     
     console.log('📄 renderDocumentView END');
 }
-
+function renderDocViewHistory(versions) {
+    const container = document.getElementById('docViewHistory');
+    if (!container) return;
+    
+    container.innerHTML = versions.map(v => {
+        const userName = v.surname 
+            ? `${v.surname} ${v.name || ''}`.trim() 
+            : 'Система';
+        
+        const date = v.created_at 
+            ? new Date(v.created_at).toLocaleString('ru-RU', { 
+                day: '2-digit', month: '2-digit', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+            }) 
+            : '';
+        
+        const comment = v.comment || 'Изменение документа';
+        const versionLabel = `Версия ${v.version_number}`;
+        
+        return `
+            <div class="history-timeline-item">
+                <div class="history-timeline-dot"></div>
+                <div class="history-timeline-content">
+                    <div class="history-timeline-header">
+                        <span class="history-timeline-author">${escapeHtml(userName)}</span>
+                        <span class="history-timeline-version">${versionLabel}</span>
+                    </div>
+                    <div class="history-timeline-comment">${escapeHtml(comment)}</div>
+                    <div class="history-timeline-date">${date}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 // =====================================================
 // СТАТУС
 // =====================================================
@@ -1683,7 +1729,10 @@ async function doApprove(docId, comment) {
         
         closeApproveModal();
         await loadDocumentForView(docId);
-        
+        // Обновляем дашборд (если мы на странице base.html)
+        if (typeof loadAttentionDocuments === 'function') {
+            loadAttentionDocuments();
+        }
     } catch (error) {
         console.error('Approve error:', error);
         showToast(error.message, 'error');
@@ -1764,7 +1813,10 @@ async function doReject(docId, comment) {
         showToast('Документ возвращён на доработку', 'success');
         closeRejectModal();
         await loadDocumentForView(docId);
-        
+        // Обновляем дашборд (если мы на странице base.html)
+        if (typeof loadAttentionDocuments === 'function') {
+            loadAttentionDocuments();
+        }
     } catch (error) {
         console.error('Reject error:', error);
         showToast(error.message, 'error');

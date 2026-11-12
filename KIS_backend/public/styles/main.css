@@ -830,28 +830,76 @@ fieldset legend {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 20px;
+    margin: 8px;
+    padding: 10px 20px;
     color: white;
     text-decoration: none;
     transition: all 0.2s;
     position: relative;
+    border-radius: 36px;
 }
 
 .menu-item:hover {
     background: var(--c_acchalf);
 }
 
+/* Активный пункт меню — Стеклянная капсула */
 .menu-item.active {
-    background: var(--c_acchalf);
-    border-left: 3px solid var(--c_acc);
-    color: var(--c_acc);
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.3) 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 
+        inset 0 0 12px rgba(255, 255, 255, 0.3), /* Внутреннее свечение */
+        0 8px 32px 0 rgba(0, 0, 0, 0.25),        /* Внешняя тень */
+        0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    color: #fff;
+    transform: translateY(-1px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Блик сверху капсулы */
+.menu-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+}
+
+/* Эффект при наведении на активный пункт (чтобы не пропадал) */
+.menu-item.active:hover {
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.4) 0%, 
+        rgba(255, 255, 255, 0.15) 50%, 
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    box-shadow: 
+        inset 0 0 16px rgba(255, 255, 255, 0.4),
+        0 10px 36px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Убираем старый стиль с border-left, если он был */
+.menu-item.active {
+    border-left: none; 
 }
 
 .menu-item img {
-    width: 22px;
-    height: 22px;
+    width: 30px;
+    height: 30px;
 }
-
 .menu-item span {
     font-size: 14px;
     font-weight: 500;
@@ -981,7 +1029,7 @@ fieldset legend {
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    border: 2px solid var(--c_acc);
+    border: 2px solid white;
     transition: all 0.2s;
 }
 

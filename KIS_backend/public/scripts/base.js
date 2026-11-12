@@ -9,49 +9,11 @@
 // 1. ИНИЦИАЛИЗАЦИЯ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // =====================================================
 // - DOM элементы (кнопки меню)
-const btn_docs_last = document.querySelector('#top-menu-btn-docs-last');
-const btn_docs_at_work = document.querySelector('#top-menu-btn-docs-at-work');
-const btn_docs_new = document.querySelector('#top-menu-btn-docs-new');
-const btn_docs_archive = document.querySelector('#top-menu-btn-docs-archive');
-const btn_tasks_last = document.querySelector('#top-menu-btn-tasks-last');
-const btn_tasks_at_work = document.querySelector('#top-menu-btn-tasks-at-work');
-const btn_tasks_new = document.querySelector('#top-menu-btn-tasks-new');
-const btn_tasks_archive = document.querySelector('#top-menu-btn-tasks-archive');
+
 const btn_fav = document.querySelector('#top-menu-btn-favourites');
-const btn_files = document.querySelector('#top-menu-btn-files');
-const btn_workflows = document.querySelector('#top-menu-btn-workflows');
 const btn_dashboard = document.querySelector('#top-menu-btn-dashboard');
 
 // Обработчики кнопок
-btn_workflows.addEventListener('click', (e) => { e.stopPropagation(); openWindow('workflow-section'); });
-btn_docs_last.addEventListener('click', (e) => { 
-    e.stopPropagation(); 
-    openWindow('base-section-doc-last'); 
-    loadDocuments('recent');
-});
-btn_docs_at_work.addEventListener('click', (e) => { 
-    e.stopPropagation(); 
-    openWindow('base-section-doc-at-work'); 
-    loadDocuments('at-work');
-});
-btn_docs_new.addEventListener('click', (e) => { 
-    e.stopPropagation(); 
-    if (typeof openDocumentCreate === 'function') {
-        openDocumentCreate();
-    } else {
-        console.warn('openDocumentCreate not defined');
-        openWindow('base-section-doc-new');
-    }
-});
-btn_docs_archive.addEventListener('click', (e) => { 
-    e.stopPropagation(); 
-    openWindow('base-section-doc-archive'); 
-    loadDocuments('archive');
-});btn_tasks_last.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-last'); loadRecentTasks();});
-btn_tasks_at_work.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-at-work'); loadActiveTasks();});
-btn_tasks_new.addEventListener('click', (e) => { e.stopPropagation(); openTaskTypeSelector();});
-btn_tasks_archive.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-task-archive'); loadArchivedTasks();});
-btn_fav.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-favourites'); });
 btn_dashboard.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-dashboard'); });
 // - Глобальные переменные (currentCalendarDate, calendarEvents, currentTasks и т.д.)
 let currentCalendarDate = new Date();

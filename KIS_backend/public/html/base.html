@@ -21,21 +21,32 @@
 
         <nav class="menu-nav">
             <a href="../html/base.html" class="menu-item" data-page="base">
-                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
-                <span>Рабочее пространство</span>
+                <img src="../materials/icons8-главная-96.png" alt="workspace">
+                <span>Главная</span>
+            </a>
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-администрирование-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+            <a href="../html/tasks.html" class="menu-item" data-page="tasks">
+                <img src="../materials/icons8-задачи-96.png" alt="tasks">
+                <span>Задачи</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            <a href="../html/documents.html" class="menu-item" data-page="documents">
+                <img src="../materials/icons8-документ-100.png" alt="documents">
+                <span>Документы</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
             </a>
             <a href="../html/chat.html" class="menu-item" data-page="chat">
-                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <img src="../materials/icons8-чат-96.png" alt="chats">
                 <span>Чаты</span>
                 <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
             </a>
-            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
-                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
-                <span>Администрирование</span>
-            </a>
-            <a href="../html/files.html" class="menu-item" data-page="disk">
-                <img src="../materials/icons8-папка-120.png" alt="disk">
-                <span>Мой диск</span>
+
+            <a href="../html/disk.html" class="menu-item" data-page="disk">
+                <img src="../materials/icons8-облако-96.png" alt="disk">
+                <span>Облако</span>
             </a>
         </nav>
 
@@ -83,57 +94,14 @@
             <div class="top_menu">
                 <div class="instruments">
                     <div class="instruments_groups">
-                        <!-- Группа документов -->
-                        <div class="instruments_group instruments_group_documents">
-                            <span class="group-label">Документы</span>
-                            <div class="group-icons">
-                                <div class="icon-tooltip" id="top-menu-btn-docs-last" data-tooltip="Недавние документы">
-                                    <img src="../materials/icons8-документ-100.png" alt="Недавние" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-docs-at-work" data-tooltip="Документы в работе">
-                                    <img src="../materials/doc_at_work.png" alt="В работе" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-docs-new" data-tooltip="Новый документ">
-                                    <img src="../materials/new_doc.png" alt="Новый" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-docs-archive" data-tooltip="Архив документов">
-                                    <img src="../materials/icons8-коробка-96.png" alt="Архив" class="instrument-icon">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Группа задач -->
-                        <div class="instruments_group instruments_group_tasks">
-                            <span class="group-label">Задачи</span>
-                            <div class="group-icons">
-                                <div class="icon-tooltip" id="top-menu-btn-tasks-last" data-tooltip="Недавние задачи">
-                                    <img src="../materials/icons8-задача-90.png" alt="Недавние задачи" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-tasks-at-work" data-tooltip="Задачи в работе">
-                                    <img src="../materials/task_at_work.png" alt="В работе" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-tasks-new" data-tooltip="Новая задача">
-                                    <img src="../materials/new_task.png" alt="Новая" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-tasks-archive" data-tooltip="Архив задач">
-                                    <img src="../materials/task_archive.png" alt="Архив" class="instrument-icon">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="instruments_group instruments_group_tasks">
+                        <div class="instruments_group">
                             <span class="group-label">Иное</span>
                             <div class="group-icons">
                                  <div class="icon-tooltip" id="top-menu-btn-dashboard" data-tooltip="Дашборд">
                                     <img src="../materials/icons8-дашборд-100.png" alt="Дашборд" class="instrument-icon">
                                 </div>
-                                <div class="icon-tooltip" id="top-menu-btn-favourites" data-tooltip="Избранное">
-                                    <img src="../materials/icons8-избранное-96.png" alt="Избранное" class="instrument-icon">
-                                </div>
                                 <div class="icon-tooltip" id="top-menu-btn-templates" data-tooltip="Мои шаблоны">
                                     <img src="../materials/icons8-шаблон-64.png" alt="Шаблоны" class="instrument-icon">
-                                </div>
-                                <div class="icon-tooltip" id="top-menu-btn-workflows" data-tooltip="Процессы">
-                                    <img src="../materials/icons8-процесс-96.png" alt="Процессы" class="instrument-icon">
                                 </div>
                             </div>
                         </div>

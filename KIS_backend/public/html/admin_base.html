@@ -20,17 +20,32 @@
 
         <nav class="menu-nav">
             <a href="../html/base.html" class="menu-item" data-page="base">
-                <img src="../materials/icons8-рабочее-пространство-96.png" alt="workspace">
-                <span>Рабочее пространство</span>
+                <img src="../materials/icons8-главная-96.png" alt="workspace">
+                <span>Главная</span>
+            </a>
+            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
+                <img src="../materials/icons8-администрирование-96.png" alt="admin">
+                <span>Администрирование</span>
+            </a>
+            <a href="../html/tasks.html" class="menu-item" data-page="tasks">
+                <img src="../materials/icons8-задачи-96.png" alt="tasks">
+                <span>Задачи</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+            </a>
+            <a href="../html/documents.html" class="menu-item" data-page="documents">
+                <img src="../materials/icons8-документ-100.png" alt="documents">
+                <span>Документы</span>
+                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
             </a>
             <a href="../html/chat.html" class="menu-item" data-page="chat">
-                <img src="../materials/icons8-чат-100.png" alt="chats">
+                <img src="../materials/icons8-чат-96.png" alt="chats">
                 <span>Чаты</span>
                 <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
             </a>
-            <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
-                <img src="../materials/icons8-настройки-окна-браузера-96.png" alt="admin">
-                <span>Администрирование</span>
+
+            <a href="../html/disk.html" class="menu-item" data-page="disk">
+                <img src="../materials/icons8-облако-96.png" alt="disk">
+                <span>Облако</span>
             </a>
         </nav>
 
@@ -66,7 +81,7 @@
                     </a>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item logout-btn" id="dropdownLogoutBtn">
-                        <img src="../materials/icons8-выход-48.png" alt="logout">
+                        <img src="../materials/icons8-выход-96.png" alt="logout">
                         <span>Выйти</span>
                     </button>
                 </div>

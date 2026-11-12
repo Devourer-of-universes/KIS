@@ -267,12 +267,21 @@ async function loadUnreadCount() {
 
 // ========== ПОДСВЕТКА АКТИВНОЙ СТРАНИЦЫ ==========
 function highlightActivePage() {
-    const currentPage = window.location.pathname.split('/').pop().replace('.html', '');
+    // Получаем имя текущего файла без расширения (например, 'documents')
+    const path = window.location.pathname;
+    const currentPage = path.substring(path.lastIndexOf('/') + 1).replace('.html', '');
+    
     const menuItems = document.querySelectorAll('.menu-item[data-page]');
     
     menuItems.forEach(item => {
         const page = item.dataset.page;
-        if (currentPage === page || (currentPage === 'admin_base' && page === 'admin')) {
+        
+        // Сопоставляем
+        if (
+            currentPage === page || 
+            (currentPage === 'admin_base' && page === 'admin') ||
+            (currentPage === 'base' && page === 'base')
+        ) {
             item.classList.add('active');
         } else {
             item.classList.remove('active');

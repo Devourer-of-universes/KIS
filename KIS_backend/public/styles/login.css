@@ -753,3 +753,11 @@ body {
     .shape-4 { width: 100px; height: 100px; }
     .shape-5 { width: 150px; height: 150px; }
 }
+
+.welcome-banner{
+    border-radius: 64px;
+    width: 30%;
+    height: 80vh;
+    background-color: var(--c_acc);
+    color: white;
+}

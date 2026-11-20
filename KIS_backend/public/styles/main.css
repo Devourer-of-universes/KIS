@@ -6,8 +6,7 @@
 }
 
 :root {
-    /* Цветовая схема */
-    --c_bg: #f5f7fb;
+    /* --c_bg: #f5f7fb;
     --c_bg_txt: #1a1a2e;
     --c_surf: #ffffff;
     --c_surf_txt: #6c757d;
@@ -15,12 +14,29 @@
     --c_acchalf:rgba(81, 148, 255, 0.5);
     --c_brightacc: #007bff;
 
-    /* Статусы */
     --c_success: #10b981;
     --c_success-bg: rgba(16, 185, 129, 0.12);
     --c_warning: #f59e0b;
     --c_warning-bg: rgba(245, 158, 11, 0.12);
     --c_error: #ef4444;
+    --c_error-bg: rgba(239, 68, 68, 0.12);  */
+     /* Основные */
+    --c_bg: #F8F9FC;
+    --c_bg_txt: #1C1C28;
+    --c_surf: #FFFFFF;
+    --c_surf_txt: #6B7280;
+
+    /* Акценты */
+    --c_acc: #4F46E5;
+    --c_brightacc: #4338CA; /* Hover */
+    --c_acchalf: rgba(79, 70, 229, 0.15); /* Для фонов */
+
+    /* Статусы */
+    --c_success: #10B981;
+    --c_success-bg: rgba(16, 185, 129, 0.12);
+    --c_warning: #F59E0B;
+    --c_warning-bg: rgba(245, 158, 11, 0.12);
+    --c_error: #EF4444;
     --c_error-bg: rgba(239, 68, 68, 0.12);
 
     /* Размеры */
@@ -938,13 +954,13 @@ fieldset legend {
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    /* background: var(--c_acchalf); */
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    background-color: transparent;
 }
 
 /* Подложка под иконку */
@@ -958,31 +974,19 @@ fieldset legend {
     z-index: 0;
 }
 
-/* Светлая тема — жёлтый круг */
-.theme-toggle.light::before {
-    background: #f1c40f;
-    box-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+
+.theme-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-/* Тёмная тема — тёмно-синий круг */
-.theme-toggle.dark::before {
-    background: #1a252f;
-    box-shadow: 0 0 8px rgba(26, 37, 47, 0.5);
+/* Анимация вращения при клике */
+.theme-toggle.rotate .theme-icon-img {
+    transform: rotate(360deg);
 }
 
-.theme-toggle:hover {
-    transform: scale(1.05);
-    /* background: var(--c_acc); */
-}
-
-.theme-icon {
-    font-size: 24px;
-    transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), 
-                opacity 0.3s ease;
-    display: inline-block;
-    position: relative;
-    z-index: 1;
-}
 
 /* Цвет иконок */
 .theme-toggle.light .theme-icon {
@@ -2344,4 +2348,28 @@ body.compact-mode .admin-table td {
     gap: 12px;
     padding: 16px 20px;
     border-top: 1px solid var(--c_surf_txt, #eee);
+}
+.toast-notification{
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background: var(--c_surf);
+    color: var(--c_surf_txt);
+    border-radius: 8px;
+    z-index: 10000;
+    animation: fadeInOut 3s ease;
+}
+.toast-icon-container .success{
+    background-color: var(--c_success);
+}
+.toast-icon-container .error{
+    background-color: var(--c_error);
+}
+.toast-icon-container .info{
+    background-color: var(--c_acc);
+}
+.toast-icon{
+    width: 40px;
+    height: 40px;
 }

@@ -76,32 +76,33 @@ function closeAllWindowsExcept(exceptWindowId) {
 }
 
 // Функция автоматического открытия дашборда
-function ensureDashboardVisible() {
+function ensureTaskLastVisible() {
     // Если есть открытые секции (кроме дашборда) или модалки — ничего не делаем
     if (hasAnyOpenSections() || hasAnyOpenModals()) {
         return;
     }
     
     // Если дашборд уже виден — ничего не делаем
-    if (isDashboardVisible()) {
+    if (isTaskLastVisible()) {
         return;
     }
     
     // Иначе открываем дашборд
-    console.log('📊 Автоматическое открытие дашборда (все секции закрыты)');
-    openWindow('base-section-dashboard');
+    console.log('📊 Автоматическое открытие (все секции закрыты)');
+    openWindow('base-section-task-last');
+    loadRecentTasks();
 }
 // Функция, которая вызывается после закрытия любой секции
 function onSectionClosed(closedSectionId) {
     // Небольшая задержка, чтобы дать завершиться другим событиям
     setTimeout(() => {
-        ensureDashboardVisible();
+        ensureTaskLastVisible();
     }, 50);
 }
 // Функция, которая вызывается после закрытия модального окна
 function onModalClosed() {
     setTimeout(() => {
-        ensureDashboardVisible();
+        ensureTaskLastVisible();
     }, 50);
 }
 
@@ -4181,7 +4182,6 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultWindow.classList.add('active');
     }
     // Маршрут согласования
-    const flowManager = new ApprovalFlowManager();
     loadTasks();
     initTaskEditorHandlers();
     initTemplateBuilderHandlers();

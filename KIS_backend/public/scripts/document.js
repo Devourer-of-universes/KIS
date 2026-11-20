@@ -75,32 +75,33 @@ function closeAllWindowsExcept(exceptWindowId) {
 }
 
 // Функция автоматического открытия дашборда
-function ensureDashboardVisible() {
+function ensureDocLastVisible() {
     // Если есть открытые секции (кроме дашборда) или модалки — ничего не делаем
     if (hasAnyOpenSections() || hasAnyOpenModals()) {
         return;
     }
     
     // Если дашборд уже виден — ничего не делаем
-    if (isDashboardVisible()) {
+    if (isDocLastVisible()) {
         return;
     }
     
     // Иначе открываем дашборд
-    console.log('📊 Автоматическое открытие дашборда (все секции закрыты)');
-    openWindow('base-section-dashboard');
+    console.log('📊 Автоматическое открытие (все секции закрыты)');
+    openWindow('base-section-doc-last');
+    loadDocuments();
 }
 // Функция, которая вызывается после закрытия любой секции
 function onSectionClosed(closedSectionId) {
     // Небольшая задержка, чтобы дать завершиться другим событиям
     setTimeout(() => {
-        ensureDashboardVisible();
+        ensureDocLastVisible();
     }, 50);
 }
 // Функция, которая вызывается после закрытия модального окна
 function onModalClosed() {
     setTimeout(() => {
-        ensureDashboardVisible();
+        ensureDocLastVisible();
     }, 50);
 }
 

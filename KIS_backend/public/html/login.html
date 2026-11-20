@@ -3,109 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход - КИС</title>
+    <title>Вход - КИС ЦРП</title>
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <link rel="stylesheet" type="text/css" href="/styles/login.css">
 </head>
 <body>
-    <!-- ===================================================== -->
+    <!-- Кнопка смены темы -->
+    <button class="theme-toggle" id="themeToggle" style="position: fixed; top: 24px; right: 24px; z-index: 1000;">
+        <img src="../materials/icons8-солнце-96.png" alt="theme" class="theme-icon-img" id="themeIconImg">
+    </button>
+
     <!-- ОБЛАЧНЫЙ ФОН -->
-    <!-- ===================================================== -->
     <div class="cloud-background">
-        <!-- Большие кучевые облака -->
-        <div class="cloud cloud-1">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
-        
-        <div class="cloud cloud-2">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
-        
-        <div class="cloud cloud-3">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
-        
-        <div class="cloud cloud-4">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
-        
-        <div class="cloud cloud-5">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
-        
-        <!-- Маленькие облачка для глубины -->
-        <div class="cloud-small cloud-small-1">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
-        
-        <div class="cloud-small cloud-small-2">
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-            <div class="cloud-part"></div>
-        </div>
+        <div class="cloud cloud-1"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-2"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-3"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-4"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-5"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
     </div>
 
-
-    <!-- Слой блюра -->
-    <div class="blur-overlay"></div>
-
-    <!-- ===================================================== -->
-    <!-- ОКНО ВХОДА -->
-    <!-- ===================================================== -->
     <div id="enterbody">
+        <!-- Левый баннер -->
         <div class="welcome-banner">
-            <h1>
-                КИС ЦРП
-            </h1>
-            <h2>
-                "У нас есть всё, что вам нужно для продуктивной работы
-            а ещё кот"
-            </h2>
+            <div class="banner-glows">
+                <div class="glow glow-blue"></div>
+                <div class="glow glow-purple"></div>
+                <div class="glow glow-cyan"></div>
+            </div>
             
+            <!-- Декоративные круги на фоне -->
+            <div class="decorative-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+            </div>
+
+            <div class="banner-content">
+                <!-- Верхняя часть: логотип и слоган -->
+                <div class="banner-top">
+                    <div class="banner-logo">
+                        <img src="../materials/logo.svg" alt="logo">
+                        <span>КИС ЦРП</span>
+                    </div>
+                    <h2>Одно окно для всех<br>рабочих процессов</h2>
+                </div>
+                
+                <!-- Центральная часть: Карусель -->
+                <div class="banner-center">
+                    <div class="icon-carousel">
+                        <img src="../materials/logo.svg" alt="logo" class="carousel-icon">
+                        <img src="../materials/icons8-главная-96.png" alt="home" class="carousel-icon">
+                        <img src="../materials/icons8-задачи-96.png" alt="tasks" class="carousel-icon">
+                        <img src="../materials/icons8-документ-100.png" alt="docs" class="carousel-icon">
+                        <img src="../materials/icons8-чат-96.png" alt="chat" class="carousel-icon">
+                        <img src="../materials/icons8-облако-96.png" alt="cloud" class="carousel-icon">
+                        <img src="../materials/logo.svg" alt="logo" class="carousel-icon">
+                    </div>
+                </div>
+                
+                <div class="banner-bottom">
+                    <div class="banner-features">
+                        <div class="feature-item">
+                            <span class="feature-icon"></span>
+                            <span>Быстро</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon"></span>
+                            <span>Безопасно</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon"></span>
+                            <span>Доступно</span>
+                        </div>
+                    </div>
+                    
+                    <div class="cat-placeholder" id="catPlaceholder">
+                        <span style="font-size: 40px;">🐈</span>
+                        <span style="font-size: 11px; opacity: 0.6;">(тут будет кот)</span>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Правая колонка (Форма) -->
         <div id="loginwindow">
-            <h1 class="text-header">Авторизация</h1>
-            
-            <div class="inputelem_container text-inner-header">
-                <label>Логин / Email</label>
-                <input class="inputelem" type="text" id="loginInput" placeholder="Введите логин или email">
+            <div class="login-header">
+                <img src="../materials/logo.svg" alt="logo" class="login-logo">
+                <h1 class="text-header">КИС ЦРП</h1>
+                <p class="login-subtitle">Корпоративная информационная система</p>
             </div>
-            
-            <div class="inputelem_container text-inner-header">
-                <label>Пароль</label>
-                <input class="inputelem" type="password" id="passwordInput" placeholder="Введите пароль">
+
+            <div class="login-container" id="loginContainer">
+                
+                <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
+                <div class="auth-screen active" id="screen-login">
+                    <div class="inputelem_container">
+                        <label>Логин / Email</label>
+                        <input class="inputelem" type="text" id="loginInput" placeholder="Введите логин или email">
+                    </div>
+                    
+                    <div class="inputelem_container">
+                        <label>Пароль</label>
+                        <input class="inputelem" type="password" id="passwordInput" placeholder="Введите пароль">
+                    </div>
+                    
+                    <button class="buttonbase log_page_button" id="loginBtn">Войти в систему</button>
+                    
+                    <div id="errorMessage" class="error-message"></div>
+                    
+                    <div class="auth-links">
+                        <span class="auth-link" onclick="switchScreen('forgot')">Забыли пароль?</span>
+                        <span class="auth-link" onclick="switchScreen('register')">Регистрация</span>
+                    </div>
+                </div>
+
+                <!-- ЭКРАН 2: ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
+                <div class="auth-screen" id="screen-forgot">
+                    <div class="auth-icon">🔑</div>
+                    <h3>Восстановление доступа</h3>
+                    <p class="auth-desc">Для восстановления пароля или логина обратитесь к администратору системы или в отдел кадров.</p>
+                    <p class="auth-desc"><strong>Администратор:</strong> admin@company.ru</p>
+                    <button class="buttonbase log_page_button" onclick="switchScreen('login')">Вернуться к входу</button>
+                </div>
+
+                <!-- ЭКРАН 3: РЕГИСТРАЦИЯ -->
+                <div class="auth-screen" id="screen-register">
+                    <div class="auth-icon">📝</div>
+                    <h3>Регистрация</h3>
+                    <p class="auth-desc">Самостоятельная регистрация в системе <strong>запрещена</strong>.</p>
+                    <p class="auth-desc">Учётные записи создаются ответственным сотрудником отдела кадров или администратором.</p>
+                    <p class="auth-desc">Обратитесь к вашему руководителю или в <strong>HR-отдел</strong>.</p>
+                    <button class="buttonbase log_page_button" onclick="switchScreen('login')">Вернуться к входу</button>
+                </div>
+
             </div>
-            
-            <button class="buttonbase log_page_button" id="loginBtn">Войти</button>
-            
-            <div id="errorMessage" style="color: red; display: none; margin-top: 10px;"></div>
         </div>
     </div>
 
+    <!-- Подключаем main.js для работы темы -->
+    <script src="/scripts/main.js"></script>
     <script src="/scripts/api.js"></script>
     <script>
         const loginBtn = document.getElementById('loginBtn');
@@ -113,7 +149,18 @@
         const passwordInput = document.getElementById('passwordInput');
         const errorDiv = document.getElementById('errorMessage');
 
-        // Проверяем параметры URL при загрузке
+        // Переключение экранов
+        function switchScreen(screenName) {
+            document.querySelectorAll('.auth-screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(`screen-${screenName}`).classList.add('active');
+            
+            if (screenName === 'login') {
+                loginInput.focus();
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        // Проверяем параметры URL
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const errorType = urlParams.get('error');
@@ -121,14 +168,13 @@
             if (errorType === 'blocked') {
                 errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
                 errorDiv.style.display = 'block';
-                errorDiv.style.color = '#dc3545';
             } else if (errorType === 'unauthorized') {
                 errorDiv.textContent = '⏰ Сессия истекла. Пожалуйста, войдите заново.';
                 errorDiv.style.display = 'block';
-                errorDiv.style.color = '#f59e0b';
             }
         });
 
+        // Обработчик входа
         loginBtn.addEventListener('click', async () => {
             const emailOrUsername = loginInput.value.trim();
             const password = passwordInput.value.trim();
@@ -184,11 +230,10 @@
                     errorDiv.textContent = error.message || 'Неверный логин или пароль';
                 }
                 errorDiv.style.display = 'block';
-                
                 passwordInput.value = '';
             } finally {
                 loginBtn.disabled = false;
-                loginBtn.textContent = 'Войти';
+                loginBtn.textContent = 'Войти в систему';
             }
         });
 

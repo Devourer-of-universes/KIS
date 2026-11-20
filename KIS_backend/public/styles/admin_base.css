@@ -1,7 +1,7 @@
 /* admin_base.css - Панель администратора */
 
 :root {
-    --c_bg: #f5f7fb;
+    /* --c_bg: #f5f7fb;
     --c_bg_txt: #1a1a2e;
     --c_surf: #ffffff;
     --c_surf_txt: #6c757d;
@@ -10,7 +10,27 @@
     --c_brightacc: #007bff;
     --c_success: #10b981;
     --c_warning: #f59e0b;
-    --c_error: #ef4444;
+    --c_error: #ef4444; */
+
+     /* Основные */
+    --c_bg: #F8F9FC;
+    --c_bg_txt: #1C1C28;
+    --c_surf: #FFFFFF;
+    --c_surf_txt: #6B7280;
+
+    /* Акценты */
+    --c_acc: #4F46E5;
+    --c_brightacc: #4338CA; /* Hover */
+    --c_acchalf: rgba(79, 70, 229, 0.15); /* Для фонов */
+
+    /* Статусы */
+    --c_success: #10B981;
+    --c_success-bg: rgba(16, 185, 129, 0.12);
+    --c_warning: #F59E0B;
+    --c_warning-bg: rgba(245, 158, 11, 0.12);
+    --c_error: #EF4444;
+    --c_error-bg: rgba(239, 68, 68, 0.12);
+
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 20px;

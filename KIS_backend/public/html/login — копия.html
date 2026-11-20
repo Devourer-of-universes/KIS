@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - КИС</title>
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
+    <link rel="stylesheet" type="text/css" href="/styles/login.css">
+</head>
+<body>
+    <!-- Кнопка смены темы -->
+    <button class="theme-toggle" id="themeToggle" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <img src="../materials/icons8-солнце-96.png" alt="theme" class="theme-icon-img" id="themeIconImg">
+    </button>
+
+    <!-- ОБЛАЧНЫЙ ФОН -->
+    <div class="cloud-background">
+        <div class="cloud cloud-1"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-2"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-3"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-4"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud cloud-5"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud-small cloud-small-1"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+        <div class="cloud-small cloud-small-2"><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div><div class="cloud-part"></div></div>
+    </div>
+
+    <div id="enterbody">
+        <!-- Левый баннер -->
+        <div class="welcome-banner banner">
+            <div class="banner-content">
+                <h2>"У нас есть всё, что вам нужно для продуктивной работы, а ещё кот"</h2>
+                <!-- Контейнер для анимации иконок -->
+                <div class="icon-carousel">
+                    <img src="../materials/logo.svg" alt="logo" class="carousel-icon">
+                    <img src="../materials/icons8-главная-96.png" alt="home" class="carousel-icon">
+                    <img src="../materials/icons8-задачи-96.png" alt="tasks" class="carousel-icon">
+                    <img src="../materials/icons8-документ-100.png" alt="docs" class="carousel-icon">
+                    <img src="../materials/icons8-чат-96.png" alt="chat" class="carousel-icon">
+                    <img src="../materials/icons8-облако-96.png" alt="cloud" class="carousel-icon">
+                    <!-- Замыкаем круг логотипом -->
+                    <img src="../materials/logo.svg" alt="logo" class="carousel-icon">
+                </div>
+                <!-- Здесь позже будет картинка с котом -->
+                <div class="cat-placeholder"> (тут будет кот)</div>
+            </div>
+        </div>
+
+        <!-- Правая колонка (динамическая) -->
+        <div id="loginwindow" class="banner">
+            <!-- Логотип и заголовок -->
+            <div class="login-header">
+                <img src="../materials/logo.svg" alt="logo" class="login-logo">
+                <h1 class="text-header">КИС ЦРП</h1>
+            </div>
+
+            <div class="login-container" id="loginContainer">
+                
+                <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
+                <div class="auth-screen active" id="screen-login">
+                    <div class="inputelem_container text-inner-header">
+                        <label>Логин / Email</label>
+                        <input class="inputelem" type="text" id="loginInput" placeholder="Введите логин или email">
+                    </div>
+                    
+                    <div class="inputelem_container text-inner-header">
+                        <label>Пароль</label>
+                        <input class="inputelem" type="password" id="passwordInput" placeholder="Введите пароль">
+                    </div>
+                    
+                    <button class="buttonbase log_page_button" id="loginBtn">Войти</button>
+                    
+                    <div id="errorMessage" style="color: red; display: none; margin-top: 10px; text-align: center; font-size: 13px;"></div>
+                    
+                    <div class="auth-links">
+                        <span class="auth-link" onclick="switchScreen('forgot')">Забыли пароль?</span>
+                        <span class="auth-link" onclick="switchScreen('register')">Регистрация</span>
+                    </div>
+                </div>
+
+                <!-- ЭКРАН 2: ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
+                <div class="auth-screen" id="screen-forgot">
+                    <h3>Восстановление доступа</h3>
+                    <p class="auth-desc">Для восстановления пароля или логина обратитесь к администратору системы или в отдел кадров.</p>
+                    <p class="auth-desc"><strong>Администратор:</strong> admin@company.ru</p>
+                    <button class="buttonbase log_page_button" onclick="switchScreen('login')">Вернуться к входу</button>
+                </div>
+
+                <!-- ЭКРАН 3: РЕГИСТРАЦИЯ -->
+                <div class="auth-screen" id="screen-register">
+                    <h3>Регистрация</h3>
+                    <p class="auth-desc">Самостоятельная регистрация в системе <strong>запрещена</strong>.</p>
+                    <p class="auth-desc">Учётные записи создаются ответственным сотрудником отдела кадров или администратором.</p>
+                    <p class="auth-desc">Обратитесь к вашему руководителю или в <strong>HR-отдел</strong>.</p>
+                    <button class="buttonbase log_page_button" onclick="switchScreen('login')">Вернуться к входу</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем main.js для работы темы -->
+    <script src="/scripts/main.js"></script>
+    <script src="/scripts/api.js"></script>
+    <script>
+        const loginBtn = document.getElementById('loginBtn');
+        const loginInput = document.getElementById('loginInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorDiv = document.getElementById('errorMessage');
+
+        // Переключение экранов
+        function switchScreen(screenName) {
+            document.querySelectorAll('.auth-screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(`screen-${screenName}`).classList.add('active');
+            
+            if (screenName === 'login') {
+                loginInput.focus();
+            }
+        }
+
+        // Проверяем параметры URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorType = urlParams.get('error');
+            
+            if (errorType === 'blocked') {
+                errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                errorDiv.style.display = 'block';
+            } else if (errorType === 'unauthorized') {
+                errorDiv.textContent = '⏰ Сессия истекла. Пожалуйста, войдите заново.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#f59e0b';
+            }
+        });
+
+        // Обработчик входа
+        loginBtn.addEventListener('click', async () => {
+            const emailOrUsername = loginInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+
+            if (!emailOrUsername || !password) {
+                errorDiv.textContent = 'Заполните все поля';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Вход...';
+
+            try {
+                const result = await api.auth.login(emailOrUsername, password);
+                if (result.success) {
+                    window.currentUser = result.user;
+                    
+                    if (result.user.role_id && !result.user.is_super_admin) {
+                        try {
+                            const permResponse = await fetch(`/api/admin/roles/${result.user.role_id}/permissions`, {
+                                headers: { 'Authorization': `Bearer ${result.token}` }
+                            });
+                            if (permResponse.ok) {
+                                const permData = await permResponse.json();
+                                window.currentUser.permissions = permData.permissions;
+                            }
+                        } catch (e) {
+                            console.error('Failed to load permissions:', e);
+                        }
+                    } else if (result.user.is_super_admin) {
+                        window.currentUser.permissions = { admin_panel: true };
+                    }
+                    
+                    const hasAdminAccess = result.user.is_super_admin || 
+                        (window.currentUser.permissions && window.currentUser.permissions.admin_panel === true);
+                    
+                    if (hasAdminAccess) {
+                        window.location.href = '/html/admin_base.html';
+                    } else {
+                        window.location.href = '/html/base.html';
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                if (error.message && error.message.includes('заблокирована')) {
+                    errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                } else {
+                    errorDiv.textContent = error.message || 'Неверный логин или пароль';
+                }
+                errorDiv.style.display = 'block';
+                passwordInput.value = '';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Войти';
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+    </script>
+</body>
+</html>

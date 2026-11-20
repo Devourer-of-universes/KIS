@@ -475,7 +475,7 @@ class ChatManager {
         if (!messagesContainer) return;
         
         if (!this.messages || this.messages.length === 0) {
-            messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">💬 Нет сообщений<br>Напишите что-нибудь...</div>';
+            messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">Нет сообщений<br>Напишите что-нибудь...</div>';
             return;
         }
         
@@ -1570,7 +1570,7 @@ class ChatManager {
         if (messagesContainer) {
             messagesContainer.innerHTML = `
                 <div class="empty-chat-placeholder">
-                    <div class="empty-icon">💬</div>
+                    <div class="empty-icon"><img src="../materials/icons8-сообщение-64.png" alt=""></div>
                     <h3>Выберите чат</h3>
                     <p>Нажмите на чат в списке слева, чтобы начать общение</p>
                 </div>

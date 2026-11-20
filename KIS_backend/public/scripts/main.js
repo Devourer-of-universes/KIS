@@ -296,20 +296,22 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     updateColorScheme(theme);
     
-    // Меняем иконку и классы на кнопке
-    const themeBtn = document.getElementById('themeToggle');
-    const themeIcon = document.querySelector('.theme-icon');
-    
-    if (themeBtn && themeIcon) {
+    // Меняем иконку на картинку
+    const themeIconImg = document.getElementById('themeIconImg');
+    if (themeIconImg) {
         if (theme === 'light') {
-            themeBtn.classList.remove('dark');
-            themeBtn.classList.add('light');
-            themeIcon.textContent = '☀️';
+            themeIconImg.src = '../materials/icons8-солнце-96.png'; // Путь к солнцу
+            themeIconImg.alt = 'Светлая тема';
         } else {
-            themeBtn.classList.remove('light');
-            themeBtn.classList.add('dark');
-            themeIcon.textContent = '🌙';
+            themeIconImg.src = '../materials/icons8-луна-96.png'; // Путь к луне
+            themeIconImg.alt = 'Тёмная тема';
         }
+    }
+    
+    // Если у тебя где-то остался старый span с эмодзи, на всякий случай обновляем и его
+    const themeIconSpan = document.querySelector('.theme-icon');
+    if (themeIconSpan) {
+        themeIconSpan.textContent = theme === 'light' ? '☀️' : '🌙';
     }
     
     localStorage.setItem('theme', theme);

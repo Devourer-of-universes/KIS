@@ -32,6 +32,7 @@ btn_reports.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('reports-section');
     setActiveNavButton(this);
+    initReportsDashboard();
 })
 
 btn_structure.addEventListener('click', function(e){
@@ -258,13 +259,13 @@ function initEventListeners() {
     if (btn_notifications) {
         btn_notifications.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log('🔔 Notifications tab clicked');
+            console.log('Notifications tab clicked');
             openAdminSection('notifications-section');
             setActiveNavButton(btn_notifications);
             loadAdminNotifications(1);
         });
     } else {
-        console.warn('⚠️ Кнопка #nav-btn-notifications не найдена');
+        console.warn('Кнопка #nav-btn-notifications не найдена');
     }
     
     // Кнопка создания уведомления
@@ -425,7 +426,7 @@ class OrganizationStructure {
                 <div class="structure-group-actionbuttons">
                     <button class="structure-group-actionbutton btn-outline">+ Подразделение</button>
                     <button class="structure-group-actionbutton btn-outline">+ Сотрудник</button>
-                    <button class="structure-group-actionbutton btn-icon">✎</button>
+                    <button class="structure-group-actionbutton btn-icon" title="Действия"><img src="../materials/icons8-меню-2-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                 </div>
             </div>
             <ul class="structure-subgroups"></ul>
@@ -541,14 +542,14 @@ function openUserModal(userId = null) {
     document.getElementById('editUserId').value = '';
     
     if (userId) {
-        title.textContent = '✏️ Редактирование пользователя';
+        title.textContent = 'Редактирование пользователя';
         submitBtn.textContent = 'Сохранить изменения';
         loadUserDataToForm(userId);
         // При редактировании скрываем поле пароля или делаем необязательным
         const passwordGroup = document.querySelector('#userPassword').closest('.form-group');
         if (passwordGroup) passwordGroup.style.display = 'none';
     } else {
-        title.textContent = '👤 Добавление пользователя';
+        title.textContent = 'Добавление пользователя';
         submitBtn.textContent = 'Добавить пользователя';
         
         // Показываем поле пароля
@@ -844,7 +845,7 @@ async function openUserInfoModal(userId) {
                         <div class="user-card-badges">
                             <span class="badge role-badge">${escapeHtml(user.role_name) || 'Пользователь'}</span>
                             <span class="badge status-badge status-${user.status === 'active' ? 'active' : 'inactive'}">
-                                ${user.status === 'active' ? '🟢 Активен' : '🔴 Заблокирован'}
+                                ${user.status === 'active' ? ' Активен' : ' Заблокирован'}
                             </span>
                         </div>
                         <p class="user-card-position">${escapeHtml(user.post_name) || 'Должность не указана'}</p>
@@ -854,32 +855,32 @@ async function openUserInfoModal(userId) {
                 
                 <div class="user-card-details">
                     <div class="detail-item">
-                        <span class="detail-icon">👤</span>
+                        <span class="detail-icon"></span>
                         <span class="detail-label">Логин:</span>
                         <span class="detail-value">${escapeHtml(user.username)}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">📧</span>
+                        <span class="detail-icon"></span>
                         <span class="detail-label">Email:</span>
                         <span class="detail-value">${escapeHtml(user.email)}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">📞</span>
+                        <span class="detail-icon"></span>
                         <span class="detail-label">Телефон:</span>
                         <span class="detail-value">${escapeHtml(user.tel_num)}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">📅</span>
+                        <span class="detail-icon"></span>
                         <span class="detail-label">Дата рождения:</span>
                         <span class="detail-value">${user.birthday ? new Date(user.birthday).toLocaleDateString('ru-RU') : '—'}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">📆</span>
+                        <span class="detail-icon"></span>
                         <span class="detail-label">Дата регистрации:</span>
                         <span class="detail-value">${new Date(user.created_at).toLocaleDateString('ru-RU')}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">🕐</span>
+                        <span class="detail-icon"></span>
                         <span class="detail-label">Последний вход:</span>
                         <span class="detail-value">${user.last_seen_at ? new Date(user.last_seen_at).toLocaleString('ru-RU') : '—'}</span>
                     </div>
@@ -953,7 +954,7 @@ async function openUserInfoModal(userId) {
             
             <!-- ИСТОРИЯ ДЕЙСТВИЙ -->
             <div class="user-history-section">
-                <h3>📋 История действий</h3>
+                <h3>История действий</h3>
                 <div class="history-timeline" id="userHistoryTimeline">
                     <div style="text-align: center; padding: 20px;">Загрузка истории...</div>
                 </div>
@@ -968,7 +969,7 @@ async function openUserInfoModal(userId) {
         
     } catch (error) {
         console.error('Error loading user info:', error);
-        body.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">❌ Ошибка загрузки данных</div>';
+        body.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Ошибка загрузки данных</div>';
     }
 }
 
@@ -1047,12 +1048,12 @@ function loadMoreHistory() {
 
 // Иконка для действия
 function getActionIcon(action) {
-    if (action.includes('POST')) return '➕';
-    if (action.includes('PUT')) return '✏️';
-    if (action.includes('DELETE')) return '🗑️';
-    if (action.includes('login')) return '🔐';
-    if (action.includes('logout')) return '🚪';
-    return '📌';
+    if (action.includes('POST')) return '';
+    if (action.includes('PUT')) return '';
+    if (action.includes('DELETE')) return '';
+    if (action.includes('login')) return '';
+    if (action.includes('logout')) return '';
+    return '';
 }
 
 // Форматирование текста действия
@@ -1247,8 +1248,8 @@ class TemplateBuilder {
                     ${field.required ? '<span class="field-required">*</span>' : ''}
                 </div>
                 <div class="field-controls">
-                    <button class="field-control-btn field-edit" title="Редактировать">✎</button>
-                    <button class="field-control-btn field-delete" title="Удалить">🗑️</button>
+                    <button class="field-control-btn field-edit" title="Редактировать"></button>
+                    <button class="field-control-btn field-delete" title="Удалить"></button>
                 </div>
             </div>
             <div class="field-preview">
@@ -1529,8 +1530,8 @@ class TemplateBuilder {
             <div class="section-header">
                 <h4 class="section-title">${section.title}</h4>
                 <div class="section-controls">
-                    <button class="field-control-btn section-edit" title="Редактировать раздел">✎</button>
-                    <button class="field-control-btn section-delete" title="Удалить раздел">🗑️</button>
+                    <button class="field-control-btn section-edit" title="Редактировать раздел"></button>
+                    <button class="field-control-btn section-delete" title="Удалить раздел"></button>
                 </div>
             </div>
             <div class="section-content layout-${section.layout}">
@@ -1587,7 +1588,7 @@ class TemplateBuilder {
             this.selectedField = null;
             document.getElementById('templatePreview').innerHTML = `
                 <div class="empty-template">
-                    <div class="empty-icon">📝</div>
+                    <div class="empty-icon"></div>
                     <h4>Шаблон пуст</h4>
                     <p>Перетащите поля из левой панели или добавьте раздел</p>
                 </div>
@@ -1636,7 +1637,7 @@ class TemplateBuilder {
             file: `<input type="file">`,
             signature: `
                 <div style="border: 1px dashed #ccc; padding: 20px; text-align: center; cursor: pointer;">
-                    <div>🖊️ Нажмите для подписания</div>
+                    <div> Нажмите для подписания</div>
                     <small style="color: #666;">Электронная подпись</small>
                 </div>
             `,
@@ -1737,17 +1738,17 @@ async function loadUsers(page = 1, search = '') {
         console.error('Error loading users:', error);
         const tbody = document.querySelector('#users-section .admin-table tbody');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">❌ Ошибка загрузки пользователей</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Ошибка загрузки пользователей</td></tr>';
         }
     }
 }
 function getStatusBadge(status) {
     switch(status) {
-        case 'active': return '<span class="status-badge status-active">🟢 Активен</span>';
-        case 'away': return '<span class="status-badge status-away">🌙 Не беспокоить</span>';
-        case 'offline': return '<span class="status-badge status-offline">⚫ Не в сети</span>';
-        case 'blocked': return '<span class="status-badge status-blocked">🔴 Заблокирован</span>';
-        default: return '<span class="status-badge">❓ Неизвестно</span>';
+        case 'active': return '<span class="status-badge status-active"> Активен</span>';
+        case 'away': return '<span class="status-badge status-away"> Не беспокоить</span>';
+        case 'offline': return '<span class="status-badge status-offline"> Не в сети</span>';
+        case 'blocked': return '<span class="status-badge status-blocked"> Заблокирован</span>';
+        default: return '<span class="status-badge"> Неизвестно</span>';
     }
 }
 // Отрисовка таблицы пользователей
@@ -1756,7 +1757,7 @@ function renderUsersTable(users) {
     if (!tbody) return;
     
     if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">📭 Нет пользователей</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Нет пользователей</td></tr>';
         return;
     }
     
@@ -1795,7 +1796,7 @@ function renderUsersTable(users) {
     }
     
     if (filteredUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">📭 Нет доступных пользователей</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">Нет доступных пользователей</td></tr>';
         return;
     }
     
@@ -1816,7 +1817,7 @@ function renderUsersTable(users) {
                     <strong>${escapeHtml(user.surname)} ${escapeHtml(user.name)}</strong>
                     ${user.patronymic ? ` ${escapeHtml(user.patronymic)}` : ''}
                     <br><small style="color:#999;">@${escapeHtml(user.username)}</small>
-                    ${isSuperAdminUser ? '<span class="role-badge super-admin">👑 Супер-админ</span>' : ''}
+                    ${isSuperAdminUser ? '<span class="role-badge super-admin">Супер-админ</span>' : ''}
                 </td>
                 <td>${escapeHtml(user.post_name || '-')}</td>
                 <td>${escapeHtml(user.department_name || '-')}</td>
@@ -1824,17 +1825,17 @@ function renderUsersTable(users) {
                     <select class="role-select" data-user-id="${user.id}" 
                         onchange="updateUserRole(${user.id}, this.value)" 
                         ${!canChangeRole || isSuperAdminUser ? 'disabled' : ''}>
-                        <option value="1" ${user.role_id === 1 ? 'selected' : ''}>👑 Администратор</option>
-                        <option value="2" ${user.role_id === 2 ? 'selected' : ''}>👤 Пользователь</option>
+                        <option value="1" ${user.role_id === 1 ? 'selected' : ''}>Администратор</option>
+                        <option value="2" ${user.role_id === 2 ? 'selected' : ''}>Пользователь</option>
                     </select>
                 </td>
                 <td>${getStatusBadge(user.status)}</td>
                 <td>
-                    <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})">ℹ️</button>
-                    ${canEditThisUser ? `<button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})">✏️</button>` : ''}
-                    ${canBlockThisUser ? `<button class="btn-icon buttonbase" title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')">${user.status === 'blocked' ? '🔓' : '🔒'}</button>` : ''}
-                    ${canResetPasswordUser ? `<button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')">🔑</button>` : ''}
-                    ${canDeleteThisUser ? `<button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;">🗑️</button>` : ''}
+                    <button class="btn-icon buttonbase" title="Информация" onclick="openUserInfoModal(${user.id})"><img src="../materials/icons8-информация-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                    ${canEditThisUser ? `<button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal(${user.id})"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
+                    ${canBlockThisUser ? `<button class="btn-icon buttonbase" title="${user.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}" onclick="openBlockUserModal(${user.id}, '${escapeHtml(user.surname)} ${escapeHtml(user.name)}', '${user.status}')"><img src="../materials/${user.status === 'blocked' ? 'icons8-open-lock-96.png' : 'icons8-замок-96.png'}" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
+                    ${canResetPasswordUser ? `<button class="btn-icon buttonbase" title="Сбросить пароль" onclick="openResetPasswordModal(${user.id}, '${escapeHtml(user.username)}')"><img src="../materials/icons8-ключ-96.png" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
+                    ${canDeleteThisUser ? `<button class="btn-icon buttonbase" title="Удалить" onclick="deleteUser(${user.id})" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
                 </td>
             </tr>
         `;
@@ -1849,7 +1850,7 @@ function renderUsersTable(users) {
 }
 function deleteUser(userId) {
     showConfirmDelete(
-        '🗑️ Удаление пользователя',
+        'Удаление пользователя',
         'Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.',
         async () => {
             try {
@@ -1967,12 +1968,12 @@ function openBlockUserModal(userId, userName, currentStatus) {
     const confirmBtn = document.getElementById('confirmBlockBtn');
     
     if (isBlocking) {
-        title.textContent = '🔒 Блокировка пользователя';
+        title.textContent = 'Блокировка пользователя';
         message.textContent = `Вы уверены, что хотите заблокировать пользователя "${userName}"?`;
         confirmBtn.textContent = 'Заблокировать';
         confirmBtn.style.backgroundColor = '#dc3545';
     } else {
-        title.textContent = '🔓 Разблокировка пользователя';
+        title.textContent = ' Разблокировка пользователя';
         message.textContent = `Вы уверены, что хотите разблокировать пользователя "${userName}"?`;
         confirmBtn.textContent = 'Разблокировать';
         confirmBtn.style.backgroundColor = '#10b981';
@@ -2173,7 +2174,7 @@ function renderRolesCards() {
     if (!container) return;
     
     if (!rolesList || rolesList.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px;">📭 Нет ролей</div>';
+        container.innerHTML = '<div style="text-align:center; padding:40px;">Нет ролей</div>';
         return;
     }
     
@@ -2198,13 +2199,13 @@ function renderRolesCards() {
                 </div>
                 <div class="role-card-stats">
                     <div class="role-card-users">
-                        <span>👥</span>
+                        <span></span>
                         <span>—</span>
                     </div>
                     <div class="role-card-actions" onclick="event.stopPropagation()">
-                        ${canEditRoles && !isSystem ? `<button class="btn-icon buttonbase" title="Редактировать" onclick="openRoleModal(${role.id})">✏️</button>` : ''}
-                        ${canDeleteRoles && !isSystem ? `<button class="btn-icon buttonbase" title="Удалить" onclick="deleteRole(${role.id})" style="color:#dc3545;">🗑️</button>` : ''}
-                        ${!canEditRoles && !canDeleteRoles && isSystem ? `<button class="btn-icon buttonbase" title="Просмотр" onclick="openRoleModal(${role.id})">👁️</button>` : ''}
+                        ${canEditRoles && !isSystem ? `<button class="btn-icon buttonbase" title="Редактировать" onclick="openRoleModal(${role.id})"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
+                        ${canDeleteRoles && !isSystem ? `<button class="btn-icon buttonbase" title="Удалить" onclick="deleteRole(${role.id})" style="color:#dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
+                        ${!canEditRoles && !canDeleteRoles && isSystem ? `<button class="btn-icon buttonbase" title="Просмотр" onclick="openRoleModal(${role.id})"><img src="../materials/icons8-просмотр-96.png" class="ui-icon ui-icon-inline" alt=""></button>` : ''}
                     </div>
                 </div>
             </div>
@@ -2215,9 +2216,9 @@ function renderRolesCards() {
 // Иконка для роли
 function getRoleIcon(roleName) {
     const name = roleName.toLowerCase();
-    if (name.includes('админ')) return '👑';
-    if (name.includes('менеджер')) return '📊';
-    if (name.includes('пользователь')) return '👤';
+    if (name.includes('админ')) return '';
+    if (name.includes('менеджер')) return '';
+    if (name.includes('пользователь')) return '';
     return '⭐';
 }
 
@@ -2275,10 +2276,10 @@ function openRoleModal(roleId = null) {
     const form = document.getElementById('roleEditorForm');
     
     if (roleId) {
-        title.textContent = '✏️ Редактирование роли';
+        title.textContent = 'Редактирование роли';
         loadRoleData(roleId);
     } else {
-        title.textContent = '👑 Создание новой роли';
+        title.textContent = 'Создание новой роли';
         form.reset();
         resetPermissions();
         currentEditingRoleId = null;
@@ -2531,7 +2532,7 @@ async function loadStructure() {
         renderStructureTree(data.structure || [], data.unassigned || []);
     } catch (error) {
         console.error('Error loading structure:', error);
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">❌ Ошибка загрузки структуры</div>';
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">Ошибка загрузки структуры</div>';
     }
 }
 
@@ -2581,10 +2582,10 @@ function renderStructureTree(departments, unassignedEmployees = []) {
                             `}
                         </div>
                         <div class="structure-group-actionbuttons">
-                            <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
-                            <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
-                            <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;">🗑️</button>
-                            <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями">📋</button>
+                            <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение"><img src="../materials/icons8-добавить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                            <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                            <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                            <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями"><img src="../materials/icons8-отдел-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                         </div>
                     </div>
             `;
@@ -2607,8 +2608,8 @@ function renderStructureTree(departments, unassignedEmployees = []) {
                                     </span>
                                 </div>
                                 <div class="employee-actions">
-                                    <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
-                                    <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                                    <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить"><img src="../materials/icons8-переместить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                    <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                                 </div>
                             </div>
                         </li>
@@ -2635,7 +2636,7 @@ function renderStructureTree(departments, unassignedEmployees = []) {
         html += `
             <div class="unassigned-section" style="margin-top: 20px; border-top: 2px dashed var(--c_surf_txt); padding-top: 15px;">
                 <div class="section-header" style="margin-bottom: 15px;">
-                    <h3 style="color: var(--c_surf_txt);">👥 Без отдела</h3>
+                    <h3 style="color: var(--c_surf_txt);">Без отдела</h3>
                     <span class="unassigned-count">${unassignedEmployees.length} сотрудников</span>
                 </div>
                 <ul class="structure-employees unassigned-list">
@@ -2657,8 +2658,8 @@ function renderStructureTree(departments, unassignedEmployees = []) {
                             </span>
                         </div>
                         <div class="employee-actions">
-                            <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, null)" title="Переместить">↷</button>
-                            <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                            <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, null)" title="Переместить"><img src="../materials/icons8-переместить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                            <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                         </div>
                     </div>
                 </li>
@@ -2672,7 +2673,7 @@ function renderStructureTree(departments, unassignedEmployees = []) {
     }
     
     if (html === '') {
-        html = '<div style="text-align: center; padding: 40px;">📭 Нет подразделений и сотрудников</div>';
+        html = '<div style="text-align: center; padding: 40px;">Нет подразделений и сотрудников</div>';
     }
     
     container.innerHTML = html;
@@ -2707,10 +2708,10 @@ function renderSubtree(children) {
                         <h5 class="structure-employe-person manager-name">—</h5>
                     </div>
                     <div class="structure-group-actionbuttons">
-                        <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение">➕</button>
-                        <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать">✏️</button>
-                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;">🗑️</button>
-                        <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями">📋</button>
+                        <button class="btn-icon buttonbase" onclick="openAddDepartmentModal(${dept.id})" title="Добавить подразделение"><img src="../materials/icons8-добавить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                        <button class="btn-icon buttonbase" onclick="openEditDepartmentModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                        <button class="btn-icon buttonbase" onclick="deleteDepartment(${dept.id}, '${escapeHtml(dept.name)}')" title="Удалить" style="color:#dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                        <button class="btn-icon buttonbase" onclick="openManagePostsModal(${dept.id}, '${escapeHtml(dept.name)}')" title="Управление должностями"><img src="../materials/icons8-отдел-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                     </div>
                 </div>
         `;
@@ -2736,8 +2737,8 @@ function renderSubtree(children) {
                                 </span>
                             </div>
                             <div class="employee-actions">
-                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить">↷</button>
-                                <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать">✏️</button>
+                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить"><img src="../materials/icons8-переместить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                             </div>
                         </div>
                     </li>
@@ -2841,7 +2842,7 @@ async function openAddDepartmentModal(parentId = null) {
     const modal = document.getElementById('addDepartmentModal');
     const title = modal.querySelector('.modal-header h2');
     
-    title.textContent = '🏢 Добавление подразделения';
+    title.textContent = 'Добавление подразделения';
     document.getElementById('departmentEditId').value = '';
     document.getElementById('departmentName').value = '';
     document.getElementById('departmentCode').value = '';
@@ -2865,7 +2866,7 @@ async function openEditDepartmentModal(deptId, deptName) {
     const modal = document.getElementById('addDepartmentModal');
     const title = modal.querySelector('.modal-header h2');
     
-    title.textContent = '✏️ Редактирование подразделения';
+    title.textContent = 'Редактирование подразделения';
     document.getElementById('departmentEditId').value = deptId;
     document.getElementById('departmentName').value = deptName;
     
@@ -3021,7 +3022,7 @@ function deleteDepartment(deptId, deptName) {
     closeModal('managePostsModal');
     
     showConfirmDelete(
-        '🗑️ Удаление подразделения',
+        'Удаление подразделения',
         `Вы уверены, что хотите удалить подразделение "${deptName}"? Все сотрудники будут перемещены в "Без отдела".`,
         async () => {
             try {
@@ -3048,7 +3049,7 @@ function deleteDepartment(deptId, deptName) {
 
 function deletePostWithConfirm(postId, postName) {
     showConfirmDelete(
-        '🗑️ Удаление должности',
+        'Удаление должности',
         `Вы уверены, что хотите удалить должность "${postName}"? Сотрудники с этой должностью останутся без должности.`,
         async () => {
             try {
@@ -3378,7 +3379,7 @@ let currentDepartmentPosts = null;
 
 // Открытие модалки управления должностями
 async function openManagePostsModal(departmentId, departmentName) {
-    document.getElementById('managePostsTitle').textContent = `📋 Должности: ${departmentName}`;
+    document.getElementById('managePostsTitle').textContent = `Должности: ${departmentName}`;
     document.getElementById('managePostsDepartmentId').value = departmentId;
     document.getElementById('newPostName').value = '';
     
@@ -3409,8 +3410,8 @@ async function loadPostsForDepartment(departmentId) {
         
         container.innerHTML = posts.map(post => `
             <div class="post-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eef2f6;">
-                <span>📌 ${escapeHtml(post.name)}</span>
-                <button class="btn-icon buttonbase" onclick="deletePostWithConfirm(${post.id}, '${escapeHtml(post.name)}')" style="color: #dc3545;" title="Удалить">🗑️</button>
+                <span>${escapeHtml(post.name)}</span>
+                <button class="btn-icon buttonbase" onclick="deletePostWithConfirm(${post.id}, '${escapeHtml(post.name)}')" style="color: #dc3545;" title="Удалить"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
             </div>
         `).join('');
     } catch (error) {
@@ -3508,7 +3509,7 @@ async function loadSystemSettings() {
         renderSettingsForm();
     } catch (error) {
         console.error('Error loading settings:', error);
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">❌ Ошибка загрузки настроек</div>';
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">Ошибка загрузки настроек</div>';
     }
 }
 
@@ -3520,7 +3521,7 @@ function renderSettingsForm() {
         <!-- Общие настройки -->
         <div class="settings-card">
             <div class="settings-card-header">
-                <div class="settings-card-icon">🏢</div>
+                <div class="settings-card-icon"></div>
                 <div>
                     <h3 class="settings-card-title">Общие настройки</h3>
                     <p class="settings-card-description">Основные параметры системы</p>
@@ -3572,7 +3573,7 @@ function renderSettingsForm() {
         <!-- Документооборот -->
         <div class="settings-card">
             <div class="settings-card-header">
-                <div class="settings-card-icon">📄</div>
+                <div class="settings-card-icon"></div>
                 <div>
                     <h3 class="settings-card-title">Документооборот</h3>
                     <p class="settings-card-description">Настройки работы с документами и файлами</p>
@@ -3629,7 +3630,7 @@ function renderSettingsForm() {
         <!-- Безопасность -->
         <div class="settings-card">
             <div class="settings-card-header">
-                <div class="settings-card-icon">🔒</div>
+                <div class="settings-card-icon"></div>
                 <div>
                     <h3 class="settings-card-title">Безопасность</h3>
                     <p class="settings-card-description">Настройки безопасности и доступа</p>
@@ -3686,7 +3687,7 @@ function renderSettingsForm() {
         <!-- Резервное копирование -->
         <div class="settings-card">
             <div class="settings-card-header">
-                <div class="settings-card-icon">💾</div>
+                <div class="settings-card-icon"></div>
                 <div>
                     <h3 class="settings-card-title">Резервное копирование</h3>
                     <p class="settings-card-description">Настройки автоматического резервного копирования данных</p>
@@ -3732,7 +3733,7 @@ function renderSettingsForm() {
                         <span class="settings-card-hint">Создаёт полную копию базы данных</span>
                     </div>
                     <div class="settings-card-control">
-                        <button class="buttonbase" id="createBackupBtn">➕ Создать бэкап</button>
+                        <button class="buttonbase" id="createBackupBtn">Создать бэкап</button>
                     </div>
                 </div>
                 <div class="settings-card-item">
@@ -3741,7 +3742,7 @@ function renderSettingsForm() {
                         <span class="settings-card-hint">Доступные резервные копии</span>
                     </div>
                     <div class="settings-card-control">
-                        <button class="buttonbase" id="viewBackupsBtn">📋 Показать бэкапы</button>
+                        <button class="buttonbase" id="viewBackupsBtn">Показать бэкапы</button>
                     </div>
                 </div>
                 
@@ -3751,7 +3752,7 @@ function renderSettingsForm() {
         <!-- Системные уведомления -->
         <div class="settings-card">
             <div class="settings-card-header">
-                <div class="settings-card-icon">🔔</div>
+                <div class="settings-card-icon"></div>
                 <div>
                     <h3 class="settings-card-title">Системные уведомления</h3>
                     <p class="settings-card-description">Настройки оповещений о системных событиях</p>
@@ -3797,7 +3798,7 @@ function renderSettingsForm() {
         <!-- Логи и мониторинг -->
         <div class="settings-card">
             <div class="settings-card-header">
-                <div class="settings-card-icon">📊</div>
+                <div class="settings-card-icon"></div>
                 <div>
                     <h3 class="settings-card-title">Логи и мониторинг</h3>
                     <p class="settings-card-description">Настройки логирования и отслеживания системы</p>
@@ -3838,8 +3839,8 @@ function renderSettingsForm() {
                     </div>
                 </div>
                 <div class="settings-card-actions">
-                    <button class="buttonbase" id="viewLogsBtn">📋 Просмотр логов</button>
-                    <button class="buttonbase" id="viewStatsBtn">📈 Статистика</button>
+                    <button class="buttonbase" id="viewLogsBtn">Просмотр логов</button>
+                    <button class="buttonbase" id="viewStatsBtn"> Статистика</button>
                 </div>
             </div>
         </div>
@@ -4012,33 +4013,33 @@ async function openLogsModal() {
     modal.className = 'admin-modal';
     modal.style.display = 'flex';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 900px; max-height: 80vh;">
+        <div class="modal-content" style="max-width: 1040px; max-height: 80vh;">
             <div class="modal-header">
-                <h2>📋 Системные логи</h2>
-                <button class="modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+                <h2>Системные логи</h2>
+                <button class="modal-close" onclick="this.closest('.admin-modal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body" style="overflow-y: auto;">
                 <div class="logs-filters">
                     <select id="logFilter" class="log-filter-select">
-                        <option value="all">📋 Все</option>
-                        <option value="error">❌ Ошибки</option>
-                        <option value="warn">⚠️ Предупреждения</option>
-                        <option value="info">ℹ️ Информация</option>
+                        <option value="all">Все</option>
+                        <option value="error">Ошибки</option>
+                        <option value="warn">Предупреждения</option>
+                        <option value="info">ℹ Информация</option>
                     </select>
                     <div class="logs-actions">
-                        <button class="buttonbase" id="refreshLogsBtn" style="padding: 6px 12px;">🔄 Обновить</button>
-                        <button class="buttonbase" id="exportLogsBtn" style="padding: 6px 12px;">📎 Экспорт</button>
+                        <button class="buttonbase" id="refreshLogsBtn" style="padding: 6px 12px;"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                        <button class="buttonbase" id="exportLogsBtn" style="padding: 6px 12px;"><img src="../materials/icons8-скачать-96.png" class="ui-icon ui-icon-inline" alt=""> Экспорт</button>
                     </div>
                 </div>
                 <div class="logs-container" id="logsContainer">
                     <div class="empty-logs">
-                        <div class="empty-icon">📭</div>
+                        <div class="empty-icon"></div>
                         <p>Загрузка логов...</p>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()">Закрыть</button>
+                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
             </div>
         </div>
     `;
@@ -4070,32 +4071,32 @@ async function loadLogs() {
         const logs = data.logs || [];
         
         if (logs.length === 0) {
-            container.innerHTML = '<div class="empty-logs"><div class="empty-icon">📭</div><p>Нет записей</p></div>';
+            container.innerHTML = '<div class="empty-logs"><div class="empty-icon"></div><p>Нет записей</p></div>';
             return;
         }
         
         container.innerHTML = logs.map(log => {
             let levelClass = '';
-            let levelIcon = '📌';
+            let levelIcon = '';
             
             if (log.action === 'LOGIN') {
                 levelClass = 'log-info';
-                levelIcon = '🔐';
+                levelIcon = '';
             } else if (log.action === 'LOGOUT') {
                 levelClass = 'log-info';
-                levelIcon = '🚪';
+                levelIcon = '';
             } else if (log.action.includes('DELETE')) {
                 levelClass = 'log-warn';
-                levelIcon = '🗑️';
+                levelIcon = '';
             } else if (log.action.includes('ERROR')) {
                 levelClass = 'log-error';
-                levelIcon = '❌';
+                levelIcon = '';
             } else if (log.action.includes('UPDATE')) {
                 levelClass = 'log-info';
-                levelIcon = '✏️';
+                levelIcon = '';
             } else if (log.action.includes('CREATE') || log.action.includes('POST')) {
                 levelClass = 'log-info';
-                levelIcon = '➕';
+                levelIcon = '';
             }
             
             return `
@@ -4116,7 +4117,7 @@ async function loadLogs() {
         
     } catch (error) {
         console.error('Error loading logs:', error);
-        container.innerHTML = '<div class="empty-logs"><div class="empty-icon">❌</div><p>Ошибка загрузки логов</p></div>';
+        container.innerHTML = '<div class="empty-logs"><div class="empty-icon"></div><p>Ошибка загрузки логов</p></div>';
     }
 }
 
@@ -4137,10 +4138,10 @@ async function openStatsModal() {
     modal.className = 'admin-modal';
     modal.style.display = 'flex';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 650px;">
+        <div class="modal-content" style="max-width: 920px;">
             <div class="modal-header">
-                <h2>📈 Системная статистика</h2>
-                <button class="modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+                <h2> Системная статистика</h2>
+                <button class="modal-close" onclick="this.closest('.admin-modal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div id="statsContainer" style="min-height: 300px;">
@@ -4151,8 +4152,8 @@ async function openStatsModal() {
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()">Закрыть</button>
-                <button class="buttonbase" id="refreshStatsBtn">🔄 Обновить</button>
+                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
+                <button class="buttonbase" id="refreshStatsBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
             </div>
         </div>
     `;
@@ -4200,32 +4201,32 @@ async function loadStats() {
             </div>
             
             <div class="stats-section">
-                <h4>📊 Детальная статистика</h4>
+                <h4>Детальная статистика</h4>
                 <div class="stats-detail-row">
-                    <span class="stats-detail-label">👥 Групповые чаты</span>
+                    <span class="stats-detail-label">Групповые чаты</span>
                     <span class="stats-detail-value">${data.group_chats || 0}</span>
                 </div>
                 <div class="stats-detail-row">
-                    <span class="stats-detail-label">💬 Личные чаты</span>
+                    <span class="stats-detail-label">Личные чаты</span>
                     <span class="stats-detail-value">${data.private_chats || 0}</span>
                 </div>
                 <div class="stats-detail-row">
-                    <span class="stats-detail-label">📎 Всего файлов</span>
+                    <span class="stats-detail-label"> Всего файлов</span>
                     <span class="stats-detail-value">${data.total_files || 0}</span>
                 </div>
                 <div class="stats-detail-row">
-                    <span class="stats-detail-label">👥 Заблокированных пользователей</span>
+                    <span class="stats-detail-label">Заблокированных пользователей</span>
                     <span class="stats-detail-value">${data.blocked_users || 0}</span>
                 </div>
                 <div class="stats-detail-row">
-                    <span class="stats-detail-label">📅 Новых пользователей за месяц</span>
+                    <span class="stats-detail-label">Новых пользователей за месяц</span>
                     <span class="stats-detail-value">${data.new_users_month || 0}</span>
                 </div>
             </div>
         `;
     } catch (error) {
         console.error('Error loading stats:', error);
-        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">❌ Ошибка загрузки статистики</div>';
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Ошибка загрузки статистики</div>';
     }
 }
 // Вызываем при старте сервера (после подключения к БД)
@@ -4276,10 +4277,10 @@ async function openBackupsModal() {
     modal.className = 'admin-modal';
     modal.style.display = 'flex';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 800px; max-height: 80vh;">
+        <div class="modal-content" style="max-width: 960px; max-height: 80vh;">
             <div class="modal-header">
-                <h2>💾 Список резервных копий</h2>
-                <button class="modal-close" onclick="this.closest('.admin-modal').remove()">&times;</button>
+                <h2>Список резервных копий</h2>
+                <button class="modal-close" onclick="this.closest('.admin-modal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body" style="overflow-y: auto;">
                 <div id="backupsListContainer">
@@ -4287,8 +4288,8 @@ async function openBackupsModal() {
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()">Закрыть</button>
-                <button class="buttonbase" id="refreshBackupsBtn">🔄 Обновить</button>
+                <button class="buttonbase" onclick="this.closest('.admin-modal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
+                <button class="buttonbase" id="refreshBackupsBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
             </div>
         </div>
     `;
@@ -4315,7 +4316,7 @@ async function loadBackupsList() {
         const backups = data.backups || [];
         
         if (backups.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px;">📭 Нет резервных копий</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">Нет резервных копий</div>';
             return;
         }
         
@@ -4338,9 +4339,9 @@ async function loadBackupsList() {
                             <td>${backup.size_formatted || '—'}</td>
                             <td>${escapeHtml(backup.surname || '')} ${escapeHtml(backup.name || '')}</td>
                             <td>
-                                <button class="btn-icon buttonbase" onclick="downloadBackup(${backup.id})" title="Скачать">📥</button>
-                                <button class="btn-icon buttonbase" onclick="restoreBackup(${backup.id})" title="Восстановить" style="color:#ffc107;">🔄</button>
-                                <button class="btn-icon buttonbase" onclick="deleteBackup(${backup.id})" title="Удалить" style="color:#dc3545;">🗑️</button>
+                                <button class="btn-icon buttonbase" onclick="downloadBackup(${backup.id})" title="Скачать"><img src="../materials/icons8-скачать-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                <button class="btn-icon buttonbase" onclick="restoreBackup(${backup.id})" title="Восстановить" style="color:#ffc107;"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                <button class="btn-icon buttonbase" onclick="deleteBackup(${backup.id})" title="Удалить" style="color:#dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                             </td>
                         </tr>
                     `).join('')}
@@ -4349,7 +4350,7 @@ async function loadBackupsList() {
         `;
     } catch (error) {
         console.error('Error loading backups:', error);
-        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">❌ Ошибка загрузки</div>';
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Ошибка загрузки</div>';
     }
 }
 
@@ -4439,7 +4440,7 @@ async function loadUserPermissions() {
             }
         }
         
-        console.log('📋 User permissions loaded:', currentUserPermissions);
+        console.log('User permissions loaded:', currentUserPermissions);
         
         // После загрузки прав применяем их к интерфейсу
         applyPermissionsToUI();
@@ -4474,7 +4475,7 @@ function canAccessAdminPanel() {
 }
 // Применение прав доступа к интерфейсу
 function applyPermissionsToUI() {
-    console.log('🔒 Applying permissions to UI...');
+    console.log('Applying permissions to UI...');
     
     // Проверяем, есть ли у пользователя права
     const canViewUsers = hasPermission('users', 'view');
@@ -4545,7 +4546,7 @@ function applyPermissionsToUI() {
         addRoleBtn.style.display = hasPermission('roles', 'create') ? 'flex' : 'none';
     }
     
-    console.log('✅ Permissions applied to UI');
+    console.log('Permissions applied to UI');
 }
 // =====================================================
 // УПРАВЛЕНИЕ УВЕДОМЛЕНИЯМИ В АДМИН-ПАНЕЛИ
@@ -4559,15 +4560,15 @@ const adminNotificationsPerPage = 20;
 let selectedNotificationUsers = [];
 
 const NOTIF_ICONS = {
-    admin: '📢',
-    task: '📋',
-    document: '📄',
+    admin: '',
+    task: '',
+    document: '',
     deadline: '⏰',
-    message: '💬',
-    workflow: '🔄',
+    message: '',
+    workflow: '',
     mention: '@',
-    reminder: '🔔',
-    system: '⚙️'
+    reminder: '',
+    system: ''
 };
 
 const NOTIF_CATEGORY_LABELS = {
@@ -4626,12 +4627,12 @@ function renderAdminNotifications(notifications) {
     if (!tbody) return;
     
     if (notifications.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="loading-row">📭 Нет уведомлений</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="loading-row">Нет уведомлений</td></tr>';
         return;
     }
     
     tbody.innerHTML = notifications.map(n => {
-        const icon = NOTIF_ICONS[n.category] || '🔔';
+        const icon = NOTIF_ICONS[n.category] || '';
         const categoryLabel = NOTIF_CATEGORY_LABELS[n.category] || n.category;
         const recipient = n.user_name || n.recipient_name || 'Неизвестно';
         const sender = n.sender_name || 'Система';
@@ -4660,12 +4661,12 @@ function renderAdminNotifications(notifications) {
                 </td>
                 <td>
                     <span class="notif-read-status ${n.is_read ? 'read' : 'unread'}">
-                        ${n.is_read ? '✓ Прочитано' : '● Не прочитано'}
+                        ${n.is_read ? 'Прочитано' : '● Не прочитано'}
                     </span>
                 </td>
                 <td>${date}</td>
                 <td>
-                    <button class="btn-icon buttonbase" onclick="deleteAdminNotification(${n.id})" title="Удалить" style="color: #dc3545;">🗑️</button>
+                    <button class="btn-icon buttonbase" onclick="deleteAdminNotification(${n.id})" title="Удалить" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                 </td>
             </tr>
         `;
@@ -4674,10 +4675,10 @@ function renderAdminNotifications(notifications) {
 
 function getPriorityLabel(priority) {
     const labels = {
-        low: '🟢 Низкий',
-        normal: '🔵 Обычный',
-        high: '🟠 Высокий',
-        critical: '🔴 Критический'
+        low: ' Низкий',
+        normal: ' Обычный',
+        high: ' Высокий',
+        critical: ' Критический'
     };
     return labels[priority] || 'Обычный';
 }
@@ -4812,7 +4813,7 @@ function openUserSelectorForNotification() {
             tagsContainer.innerHTML = users.map(u => `
                 <span class="task-tag">
                     ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
-                    <button class="tag-remove" onclick="removeNotifUser(${u.id})">✕</button>
+                    <button class="tag-remove" onclick="removeNotifUser(${u.id})"></button>
                 </span>
             `).join('');
         }
@@ -4844,7 +4845,7 @@ function previewNotification() {
     const title = document.getElementById('notifTitle').value || 'Заголовок';
     const content = document.getElementById('notifContent').value || 'Текст уведомления';
     
-    const icon = NOTIF_ICONS[category] || '🔔';
+    const icon = NOTIF_ICONS[category] || '';
     const categoryLabel = NOTIF_CATEGORY_LABELS[category] || category;
     
     document.getElementById('notificationPreviewContent').innerHTML = `
@@ -4934,7 +4935,7 @@ document.getElementById('createNotificationForm')?.addEventListener('submit', as
     // Отправляем
     const sendBtn = document.getElementById('sendNotificationBtn');
     sendBtn.disabled = true;
-    sendBtn.textContent = '📤 Отправка...';
+    sendBtn.textContent = 'Отправка...';
     
     try {
         const token = localStorage.getItem('token');
@@ -4949,7 +4950,7 @@ document.getElementById('createNotificationForm')?.addEventListener('submit', as
         
         if (response.ok) {
             const result = await response.json();
-            showToast(`✅ Уведомление отправлено ${result.count} получателям`, 'success');
+            showToast(`Уведомление отправлено ${result.count} получателям`, 'success');
             closeModal('createNotificationModal');
             loadAdminNotifications(1);
         } else {
@@ -4961,7 +4962,7 @@ document.getElementById('createNotificationForm')?.addEventListener('submit', as
         showToast('Ошибка сервера', 'error');
     } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = '📢 Отправить';
+        sendBtn.textContent = ' Отправить';
     }
 });
 
@@ -5014,3 +5015,220 @@ window.filterAdminNotifications = filterAdminNotifications;
 window.filterAdminNotificationsBySearch = filterAdminNotificationsBySearch;
 window.loadAdminNotifications = loadAdminNotifications;
 window.deleteAdminNotification = deleteAdminNotification;
+
+// ==================== ОТЧЁТЫ / АНАЛИТИКА ====================
+let _reportsCharts = {};
+let _reportsLoaded = false;
+
+function initReportsDashboard() {
+    const periodSel = document.getElementById('reportsPeriodSelect');
+    const refreshBtn = document.getElementById('reportsRefreshBtn');
+    const exportBtn = document.getElementById('reportsExportBtn');
+    const from = document.getElementById('reportsFromDate');
+    const to = document.getElementById('reportsToDate');
+
+    if (periodSel && !periodSel.dataset.bound) {
+        periodSel.dataset.bound = '1';
+        periodSel.addEventListener('change', () => {
+            const custom = periodSel.value === 'custom';
+            document.getElementById('reportsFromWrap').style.display = custom ? '' : 'none';
+            document.getElementById('reportsToWrap').style.display = custom ? '' : 'none';
+            if (!custom) loadReportsDashboard();
+        });
+    }
+    if (refreshBtn && !refreshBtn.dataset.bound) {
+        refreshBtn.dataset.bound = '1';
+        refreshBtn.addEventListener('click', () => loadReportsDashboard());
+    }
+    if (exportBtn && !exportBtn.dataset.bound) {
+        exportBtn.dataset.bound = '1';
+        exportBtn.addEventListener('click', () => exportReportsCharts());
+    }
+    [from, to].forEach(inp => {
+        if (inp && !inp.dataset.bound) {
+            inp.dataset.bound = '1';
+            inp.addEventListener('change', () => {
+                const ps = document.getElementById('reportsPeriodSelect');
+                if (ps && ps.value === 'custom' && from.value && to.value) loadReportsDashboard();
+            });
+        }
+    });
+
+    if (!_reportsLoaded) loadReportsDashboard();
+}
+
+function _reportsPeriodParams() {
+    const sel = document.getElementById('reportsPeriodSelect');
+    const val = sel ? sel.value : '30';
+    if (val === 'custom') {
+        const from = document.getElementById('reportsFromDate')?.value;
+        const to = document.getElementById('reportsToDate')?.value;
+        const p = new URLSearchParams();
+        if (from) p.set('from', from);
+        if (to) p.set('to', to);
+        if (!from && !to) p.set('days', '30');
+        return p.toString();
+    }
+    return 'days=' + encodeURIComponent(val);
+}
+
+async function loadReportsDashboard() {
+    const loading = document.getElementById('reportsLoading');
+    const kpis = document.getElementById('reportsKpis');
+    const grid = document.getElementById('reportsChartsGrid');
+    if (loading) { loading.style.display = ''; loading.textContent = 'Загрузка аналитики...'; }
+    if (kpis) kpis.style.display = 'none';
+    if (grid) grid.style.display = 'none';
+
+    try {
+        const token = localStorage.getItem('token');
+        const qs = _reportsPeriodParams();
+        const resp = await fetch('/api/admin/reports?' + qs, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        _reportsLoaded = true;
+        renderReportsKpis(data);
+        renderReportsCharts(data);
+        if (loading) loading.style.display = 'none';
+        if (kpis) kpis.style.display = '';
+        if (grid) grid.style.display = '';
+    } catch (e) {
+        console.error('loadReportsDashboard error:', e);
+        if (loading) loading.textContent = 'Ошибка загрузки аналитики: ' + (e.message || e);
+    }
+}
+
+function renderReportsKpis(data) {
+    const k = data.kpis || {};
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('kpiDocsPeriod', k.documents_period ?? 0);
+    set('kpiTasksPeriod', k.tasks_period ?? 0);
+    set('kpiCompletedTasks', k.tasks_completed_period ?? 0);
+    set('kpiActiveUsers', k.active_users_period ?? 0);
+    set('kpiNewUsers', k.new_users_period ?? 0);
+    set('kpiAvgApproval', k.avg_approval_days == null ? '—' : (Number(k.avg_approval_days).toFixed(1) + ' дн'));
+}
+
+function _chartPalette(n, alpha) {
+    const base = ['#4f8cff','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#64748b'];
+    const a = alpha == null ? 0.85 : alpha;
+    const out = [];
+    for (let i=0;i<n;i++) {
+        const hex = base[i % base.length];
+        const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+        out.push('rgba('+r+','+g+','+b+','+a+')');
+    }
+    return out;
+}
+
+function _statusLabel(s) {
+    const map = { draft:'Черновик', on_approval:'На согласовании', revision:'На доработке', approved:'Одобрен', signed:'Подписан', registered:'Зарегистрирован', archived:'В архиве', cancelled:'Отменён', pending:'Ожидает', in_progress:'В работе', completed:'Завершена', unknown:'Неизвестно' };
+    return map[s] || s;
+}
+function _priorityLabel(p) {
+    const map = { low:'Низкий', medium:'Средний', high:'Высокий', critical:'Критический', unknown:'Неизвестно' };
+    return map[p] || p;
+}
+
+function _destroyChart(id) { if (_reportsCharts[id]) { try { _reportsCharts[id].destroy(); } catch(e){} delete _reportsCharts[id]; } }
+
+function _makeChart(id, config) {
+    const canvas = document.getElementById(id);
+    if (!canvas || typeof Chart === 'undefined') return;
+    _destroyChart(id);
+    const ctx = canvas.getContext('2d');
+    _reportsCharts[id] = new Chart(ctx, config);
+}
+
+function _fillTimeSeries(rows, fromIso, toIso) {
+    const map = new Map();
+    (rows||[]).forEach(r => map.set(String(r.day).slice(0,10), Number(r.count)||0));
+    const labels = []; const values = [];
+    const start = new Date(fromIso); start.setHours(0,0,0,0);
+    const end = new Date(toIso); end.setHours(0,0,0,0);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+        const key = d.toISOString().slice(0,10);
+        labels.push(key.slice(5)); // MM-DD
+        values.push(map.get(key) || 0);
+    }
+    // if too many labels, thin them
+    return { labels, values };
+}
+
+function renderReportsCharts(data) {
+    const c = data.charts || {};
+    const period = data.period || {};
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--c_text').trim() || '#333';
+    const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--c_border').trim() || 'rgba(0,0,0,0.1)';
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    const docsStatus = c.documents_by_status || [];
+    _makeChart('chartDocsStatus', {
+        type: 'doughnut',
+        data: { labels: docsStatus.map(r=>_statusLabel(r.status)), datasets: [{ data: docsStatus.map(r=>r.count), backgroundColor: _chartPalette(docsStatus.length), borderWidth: 1 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+    });
+
+    const tasksStatus = c.tasks_by_status || [];
+    _makeChart('chartTasksStatus', {
+        type: 'doughnut',
+        data: { labels: tasksStatus.map(r=>_statusLabel(r.status)), datasets: [{ data: tasksStatus.map(r=>r.count), backgroundColor: _chartPalette(tasksStatus.length), borderWidth: 1 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+    });
+
+    const docsTime = _fillTimeSeries(c.documents_over_time, period.from, period.to);
+    _makeChart('chartDocsOverTime', {
+        type: 'line',
+        data: { labels: docsTime.labels, datasets: [{ label:'Документы', data: docsTime.values, borderColor:'#4f8cff', backgroundColor:'rgba(79,140,255,0.15)', fill:true, tension:0.3 }] },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }, plugins:{ legend:{ display:false } } }
+    });
+
+    const tasksTime = _fillTimeSeries(c.tasks_over_time, period.from, period.to);
+    _makeChart('chartTasksOverTime', {
+        type: 'line',
+        data: { labels: tasksTime.labels, datasets: [{ label:'Задачи', data: tasksTime.values, borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.15)', fill:true, tension:0.3 }] },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }, plugins:{ legend:{ display:false } } }
+    });
+
+    const docsType = c.documents_by_type || [];
+    _makeChart('chartDocsByType', {
+        type: 'bar',
+        data: { labels: docsType.map(r=>r.name), datasets: [{ label:'Документы', data: docsType.map(r=>r.count), backgroundColor:_chartPalette(docsType.length,0.75) }] },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }, plugins:{ legend:{ display:false } } }
+    });
+
+    const tasksPrio = c.tasks_by_priority || [];
+    _makeChart('chartTasksPriority', {
+        type: 'bar',
+        data: { labels: tasksPrio.map(r=>_priorityLabel(r.priority)), datasets: [{ label:'Задачи', data: tasksPrio.map(r=>r.count), backgroundColor:_chartPalette(tasksPrio.length,0.75) }] },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }, plugins:{ legend:{ display:false } } }
+    });
+
+    const msgTime = _fillTimeSeries(c.messages_over_time, period.from, period.to);
+    _makeChart('chartMessagesOverTime', {
+        type: 'line',
+        data: { labels: msgTime.labels, datasets: [{ label:'Сообщения', data: msgTime.values, borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.15)', fill:true, tension:0.3 }] },
+        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }, plugins:{ legend:{ display:false } } }
+    });
+}
+
+function exportReportsCharts() {
+    const ids = ['chartDocsStatus','chartTasksStatus','chartDocsOverTime','chartTasksOverTime','chartDocsByType','chartTasksPriority','chartMessagesOverTime'];
+    const names = ['documents-status','tasks-status','documents-dynamics','tasks-dynamics','documents-types','tasks-priority','messages-dynamics'];
+    const ts = new Date().toISOString().slice(0,10);
+    let exported = 0;
+    ids.forEach((id, i) => {
+        const chart = _reportsCharts[id];
+        if (!chart) return;
+        const a = document.createElement('a');
+        a.href = chart.toBase64Image('image/png', 1);
+        a.download = 'report-' + names[i] + '-' + ts + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        exported++;
+    });
+    if (!exported) showErrorToast('Нет диаграмм для выгрузки');
+    else showSuccessToast('Выгружено диаграмм: ' + exported);
+}

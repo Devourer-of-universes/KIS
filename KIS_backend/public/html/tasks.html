@@ -24,6 +24,7 @@
                 <img src="../materials/icons8-главная-96.png" alt="workspace">
                 <span>Главная</span>
             </a>
+            <a href="../html/department.html" class="menu-item" data-page="department" id="menuMyDepartment" style="display:none;"><img src="../materials/icons8-отдел-96.png" alt="department"><span>Мой отдел</span></a>
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
                 <img src="../materials/icons8-администрирование-96.png" alt="admin">
                 <span>Администрирование</span>
@@ -31,12 +32,12 @@
             <a href="../html/tasks.html" class="menu-item" data-page="tasks">
                 <img src="../materials/icons8-задачи-96.png" alt="tasks">
                 <span>Задачи</span>
-                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+                <span class="menu-badge" id="tasksUnreadBadge" style="display: none;">0</span>
             </a>
             <a href="../html/documents.html" class="menu-item" data-page="documents">
                 <img src="../materials/icons8-документ-100.png" alt="documents">
                 <span>Документы</span>
-                <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
+                <span class="menu-badge" id="docsUnreadBadge" style="display: none;">0</span>
             </a>
             <a href="../html/chat.html" class="menu-item" data-page="chat">
                 <img src="../materials/icons8-чат-96.png" alt="chats">
@@ -99,16 +100,16 @@
                             <span class="group-label">Задачи</span>
                             <div class="group-icons">
                                 <div class="icon-tooltip" id="top-menu-btn-tasks-last" data-tooltip="Недавние задачи">
-                                    <img src="../materials/icons8-задача-90.png" alt="Недавние задачи" class="instrument-icon">
+                                    <img src="../materials/icons8-время-96.png" alt="Недавние задачи" class="instrument-icon">
                                 </div>
                                 <div class="icon-tooltip" id="top-menu-btn-tasks-at-work" data-tooltip="Задачи в работе">
-                                    <img src="../materials/task_at_work.png" alt="В работе" class="instrument-icon">
+                                    <img src="../materials/icons8-работа-96.png" alt="В работе" class="instrument-icon">
                                 </div>
                                 <div class="icon-tooltip" id="top-menu-btn-tasks-new" data-tooltip="Новая задача">
-                                    <img src="../materials/new_task.png" alt="Новая" class="instrument-icon">
+                                    <img src="../materials/icons8-добавить-96.png" alt="Новая" class="instrument-icon">
                                 </div>
                                 <div class="icon-tooltip" id="top-menu-btn-tasks-archive" data-tooltip="Архив задач">
-                                    <img src="../materials/task_archive.png" alt="Архив" class="instrument-icon">
+                                    <img src="../materials/icons8-архив-96.png" alt="Архив" class="instrument-icon">
                                 </div>
                             </div>
                         </div>
@@ -122,13 +123,13 @@
                 <section class="base-section active" id="base-section-task-last">
                     <div class="base-sec-tl-container">
                         <div class="section-header">
-                            <h2>📋 Недавние задачи</h2>
+                            <h2><img src="../materials/icons8-время-96.png" class="ui-icon ui-icon-inline" alt=""> Недавние задачи</h2>
                             <div class="table-controls">
                                 <div class="search-box">
-                                    <input type="text" id="recentTasksSearch" placeholder="🔍 Поиск..." class="search-input" onkeyup="filterTasks('recent')">
+                                    <input type="text" id="recentTasksSearch" placeholder="Поиск..." class="search-input" onkeyup="filterTasks('recent')">
                                 </div>
                                 <button class="sec-btn-close">
-                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                    <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                                 </button>
                             </div>
                         </div>
@@ -158,13 +159,13 @@
                 <section class="base-section" id="base-section-task-at-work">
                     <div class="base-sec-tw-container">
                         <div class="section-header">
-                            <h2>🔄 Задачи в работе</h2>
+                            <h2><img src="../materials/icons8-работа-96.png" class="ui-icon ui-icon-inline" alt=""> Задачи в работе</h2>
                             <div class="table-controls">
                                 <div class="search-box">
-                                    <input type="text" id="activeTasksSearch" placeholder="🔍 Поиск..." class="search-input" onkeyup="filterTasks('active')">
+                                    <input type="text" id="activeTasksSearch" placeholder="Поиск..." class="search-input" onkeyup="filterTasks('active')">
                                 </div>
                                 <button class="sec-btn-close">
-                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                    <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                                 </button>
                             </div>
                         </div>
@@ -194,13 +195,13 @@
                 <section class="base-section" id="base-section-task-archive">
                     <div class="base-sec-ta-container">
                         <div class="section-header">
-                            <h2>📦 Архив задач</h2>
+                            <h2><img src="../materials/icons8-архив-96.png" class="ui-icon ui-icon-inline" alt=""> Архив задач</h2>
                             <div class="table-controls">
                                 <div class="search-box">
-                                    <input type="text" id="archivedTasksSearch" placeholder="🔍 Поиск..." class="search-input" onkeyup="filterTasks('archived')">
+                                    <input type="text" id="archivedTasksSearch" placeholder="Поиск..." class="search-input" onkeyup="filterTasks('archived')">
                                 </div>
                                 <button class="sec-btn-close">
-                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                    <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                                 </button>
                             </div>
                         </div>
@@ -228,9 +229,9 @@
                     <div class="base-sec-modal">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h2>📄 Создание задачи</h2>
+                                <h2><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Создание задачи</h2>
                                 <button class="sec-btn-close" onclick="closeWindow('base-section-task-new-typeselector')">
-                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                    <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                                 </button>
                             </div>
                             <div class="modal-body">
@@ -242,7 +243,7 @@
                                 <div class="type-list task-list" id="taskTypeList">
                                     <!-- Обычная задача (всегда есть) -->
                                     <button class="type-list-elem" data-type="simple" onclick="openSimpleTaskEditor()">
-                                        <div class="type-icon">📝</div>
+                                        <div class="type-icon"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                         <h4>Обычная задача</h4>
                                         <p class="type-desc">Создайте задачу с нуля</p>
                                     </button>
@@ -252,7 +253,7 @@
                                 </div>
                                 <div class="modal-body-bottom">
                                     <button class="new-type" id="createTemplateBtn">+ Создать шаблон задачи</button>
-                                    <button class="new-type" id="manageTemplatesBtn" style="background: #6c757d;">📋 Управление шаблонами</button>
+                                    <button class="new-type" id="manageTemplatesBtn" style="background: #6c757d;"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Управление шаблонами</button>
                                 </div>
                             </div>
                         </div>
@@ -261,9 +262,9 @@
                 <section class="base-section" id="base-section-favourites">
                     <div class="base-sec-fa-container">
                         <div class="section-header">
-                            <h2>⭐️ Избранное</h2>
+                            <h2><img src="../materials/icons8-избранное-96.png" class="ui-icon ui-icon-inline" alt=""> Избранное</h2>
                             <button class="sec-btn-close">
-                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                             </button>
                         </div>
                         <table>
@@ -290,14 +291,14 @@
                 <section class="base-section" id="base-section-templates">
                     <div class="templates-manager-container">
                         <div class="templates-manager-header">
-                            <h2>📋 Мои шаблоны</h2>
+                            <h2><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Мои шаблоны</h2>
                             <div class="templates-manager-actions">
                                 <button class="buttonbase" id="createNewTemplateBtn">+ Создать шаблон</button>
                                 <div class="template-type-filter">
                                     <button class="filter-btn active" data-type="all">Все</button>
-                                    <button class="filter-btn" data-type="task">📝 Задачи</button>
-                                    <button class="filter-btn" data-type="document">📄 Документы</button>
-                                    <button class="filter-btn" data-type="workflow">🔄 Процессы</button>
+                                    <button class="filter-btn" data-type="task"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Задачи</button>
+                                    <button class="filter-btn" data-type="document"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документы</button>
+                                    <button class="filter-btn" data-type="workflow"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Процессы</button>
                                 </div>
                             </div>
                         </div>
@@ -311,9 +312,9 @@
                 <section class="base-section" id="base-section-calendar">
                     <div class="fullcalendar-container">
                         <div class="fullcalendar-header section-header">
-                            <h2>📅 Полноэкранный календарь</h2>
+                            <h2><img src="../materials/icons8-календарь-96.png" class="ui-icon ui-icon-inline" alt=""> Полноэкранный календарь</h2>
                             <button class="sec-btn-close" onclick="closeWindow('base-section-calendar')">
-                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                             </button>
                         </div>
                         
@@ -323,7 +324,7 @@
                             <div class="fullcalendar-col calendar-col">
                                 <!-- <div class="fullcalendar-card">
                                     <div class="fullcalendar-card-header">
-                                        <h3>📅 Календарь</h3>
+                                        <h3><img src="../materials/icons8-календарь-96.png" class="ui-icon ui-icon-inline" alt=""> Календарь</h3>
                                     </div>
                                     <div class="fullcalendar-card-body">
                                         <div class="calendar-mini" id="fullscreenCalendar"></div>
@@ -331,7 +332,7 @@
                                 </div> -->
                                 <div class="dashboard-card calendar-card">
                                     <div class="card-header">
-                                        <h3>📅 Календарь</h3>
+                                        <h3><img src="../materials/icons8-календарь-96.png" class="ui-icon ui-icon-inline" alt=""> Календарь</h3>
                                         <!-- <button class="card-expand" onclick="openCalendarModal()">⤢</button> -->
                                     </div>
                                     <div class="card-body">
@@ -344,7 +345,7 @@
                             <div class="fullcalendar-col tasks-col">
                                 <div class="fullcalendar-card">
                                     <div class="fullcalendar-card-header">
-                                        <h3>✅ Активные задачи</h3>
+                                        <h3><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Активные задачи</h3>
                                         <div style="display: flex; gap: 12px; align-items: center;">
                                             <label class="checkbox-label" style="font-size: 12px; font-weight: 400;">
                                                 <input type="checkbox" id="filterGanttPeriod" checked>
@@ -364,7 +365,7 @@
                         <!-- Диаграмма Ганта -->
                         <div class="fullcalendar-card gantt-card">
                             <div class="fullcalendar-card-header">
-                                <h3>📊 Диаграмма Ганта</h3>
+                                <h3><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Диаграмма Ганта</h3>
                                 <div class="gantt-controls">
                                     <div class="gantt-zoom">
                                         <button class="zoom-btn" data-zoom="day">День</button>
@@ -377,7 +378,7 @@
                                         <button class="gantt-nav-btn" id="ganttNextBtn">▶</button>
                                         <button class="gantt-today-btn" id="ganttTodayBtn">Сегодня</button>
                                     </div>
-                                    <button class="gantt-export-btn" id="ganttExportBtn">📎</button>
+                                    <button class="gantt-export-btn" id="ganttExportBtn"><img src="../materials/icons8-скрепка-80.png" class="ui-icon ui-icon-sm" alt=""></button>
                                 </div>
                             </div>
                             <div class="fullcalendar-card-body gantt-body">
@@ -406,15 +407,15 @@
                     <div class="editor-container">
                         <div class="editor-header">
                             <div class="editor-header-info">
-                                <h2 id="templateBuilderTitle">📋 Конструктор шаблона</h2>
+                                <h2 id="templateBuilderTitle"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Конструктор шаблона</h2>
                                 <span class="editor-number" id="templateBuilderId"></span>
                             </div>
                             <div class="editor-actions">
-                                <button class="buttonbase" id="saveTemplateDraftBtn">💾 Сохранить черновик</button>
-                                <button class="buttonbase" id="previewTemplateBtn">👁️ Предпросмотр</button>
-                                <button class="buttonbase buttonbase-primary" id="saveTemplateBtn">💾 Сохранить шаблон</button>
+                                <button class="buttonbase" id="saveTemplateDraftBtn">Сохранить черновик</button>
+                                <button class="buttonbase" id="previewTemplateBtn"><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""> Предпросмотр</button>
+                                <button class="buttonbase buttonbase-primary" id="saveTemplateBtn">Сохранить шаблон</button>
                                 <button class="sec-btn-close" id="closeTemplateBuilderBtn">
-                                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                    <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                                 </button>
                             </div>
                         </div>
@@ -440,10 +441,10 @@
                                         <div class="form-group">
                                             <label>Приоритет</label>
                                             <select id="builderDefaultPriority" class="form-select">
-                                                <option value="low">🟢 Низкий</option>
-                                                <option value="medium" selected>🟡 Средний</option>
-                                                <option value="high">🟠 Высокий</option>
-                                                <option value="critical">🔴 Критический</option>
+                                                <option value="low">Низкий</option>
+                                                <option value="medium" selected>Средний</option>
+                                                <option value="high">Высокий</option>
+                                                <option value="critical">Критический</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
@@ -491,13 +492,13 @@
                             <div class="editor-sidebar builder-right-panel">
                                 <div class="sidebar-section">
                                     <div class="builder-header">
-                                        <h4>📋 Поля формы</h4>
+                                        <h4><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Поля формы</h4>
                                         <button class="buttonbase" id="addFieldBtn">+ Добавить поле</button>
                                     </div>
                                     
                                     <div class="fields-list" id="templateFieldsList">
                                         <div class="empty-fields">
-                                            <div class="empty-icon">📝</div>
+                                            <div class="empty-icon"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                             <p>Нет добавленных полей</p>
                                             <small>Нажмите "Добавить поле", чтобы создать кастомное поле</small>
                                         </div>
@@ -505,7 +506,7 @@
                                 </div>
                                 
                                 <div class="sidebar-section">
-                                    <h4>👁️ Предпросмотр формы</h4>
+                                    <h4><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""> Предпросмотр формы</h4>
                                     <div id="templatePreview" class="template-preview"></div>
                                 </div>
                             </div>
@@ -527,8 +528,8 @@
                                 <input type="text" id="templateCreateName" class="task-title-input" placeholder="Введите название шаблона...">
                             </div>
                             <div class="task-header-right">
-                                <button class="btn-primary task-save-btn" id="templateCreateSaveBtn">💾 Сохранить</button>
-                                <button class="task-close-btn" onclick="closeTemplateCreate()">✕</button>
+                                <button class="btn-primary task-save-btn" id="templateCreateSaveBtn">Сохранить</button>
+                                <button class="task-close-btn" onclick="closeTemplateCreate()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                             </div>
                         </div>
 
@@ -538,19 +539,19 @@
                             <div class="task-left-col">
                                 <!-- Настройки -->
                                 <div class="task-section">
-                                    <div class="task-section-title">⚙️ Настройки</div>
+                                    <div class="task-section-title"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки</div>
                                     <div class="task-props-grid">
                                         <div class="task-prop" style="grid-column: span 2;">
-                                            <label>📝 Описание</label>
+                                            <label><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Описание</label>
                                             <textarea id="templateCreateDesc" class="task-textarea" placeholder="Описание шаблона..." rows="2"></textarea>
                                         </div>
                                         <div class="task-prop">
-                                            <label>🎯 Приоритет по умолчанию</label>
+                                            <label>Приоритет по умолчанию</label>
                                             <select id="templateCreatePriority" class="task-select">
-                                                <option value="low">🟢 Низкий</option>
-                                                <option value="medium" selected>🟡 Средний</option>
-                                                <option value="high">🟠 Высокий</option>
-                                                <option value="critical">🔴 Критический</option>
+                                                <option value="low">Низкий</option>
+                                                <option value="medium" selected>Средний</option>
+                                                <option value="high">Высокий</option>
+                                                <option value="critical">Критический</option>
                                             </select>
                                         </div>
                                         <div class="task-prop">
@@ -565,7 +566,7 @@
                                 <!-- Поля -->
                                 <div class="task-section">
                                     <div class="task-section-title" style="display: flex; justify-content: space-between;">
-                                        <span>📋 Поля шаблона</span>
+                                        <span><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Поля шаблона</span>
                                         <button class="btn-primary" onclick="openFieldEditorForTemplate()" style="padding: 2px 12px; font-size: 12px;">+ Добавить поле</button>
                                     </div>
                                     <div id="templateCreateFieldsList" class="task-fields-list">
@@ -577,7 +578,7 @@
                             <!-- Правая колонка -->
                             <div class="task-right-col">
                                 <div class="task-section">
-                                    <div class="task-section-title">👁️ Предпросмотр</div>
+                                    <div class="task-section-title"><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""> Предпросмотр</div>
                                     <div id="templateCreatePreview" class="template-preview-wrap">
                                         <div class="task-empty-comments">Нет полей для отображения</div>
                                     </div>
@@ -589,14 +590,14 @@
                 <section class="base-section" id="base-section-templates">
                     <div class="templates-manager-container">
                         <div class="templates-manager-header">
-                            <h2>📋 Мои шаблоны</h2>
+                            <h2><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Мои шаблоны</h2>
                             <div class="templates-manager-actions">
                                 <button class="buttonbase" id="createNewTemplateBtn">+ Создать шаблон</button>
                                 <div class="template-type-filter">
                                     <button class="filter-btn active" data-type="all">Все</button>
-                                    <button class="filter-btn" data-type="task">📝 Задачи</button>
-                                    <button class="filter-btn" data-type="document">📄 Документы</button>
-                                    <button class="filter-btn" data-type="workflow">🔄 Процессы</button>
+                                    <button class="filter-btn" data-type="task"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Задачи</button>
+                                    <button class="filter-btn" data-type="document"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документы</button>
+                                    <button class="filter-btn" data-type="workflow"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Процессы</button>
                                 </div>
                             </div>
                         </div>
@@ -611,21 +612,21 @@
                     <div class="google-form-editor">
                         <div class="form-editor-header">
                             <div class="form-editor-title-section">
-                                <h2 id="templateFormTitle">📝 Создание задачи</h2>
+                                <h2 id="templateFormTitle"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Создание задачи</h2>
                                 <div class="form-editor-badge" id="templateFormBadge"></div>
                             </div>
                             <div class="form-editor-actions">
-                                <button class="buttonbase btn-outline" id="cancelTaskCreateBtn">Отмена</button>
-                                <button class="buttonbase" id="submitTaskCreateBtn">✅ Создать</button>
+                                <button class="buttonbase btn-outline" id="cancelTaskCreateBtn"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                                <button class="buttonbase" id="submitTaskCreateBtn"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Создать</button>
                             </div>
                             <button class="sec-btn-close" id="closeTaskFromTemplateBtn">
-                                <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                                <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                             </button>
                         </div>
                         
                         <div class="google-form-container">
                             <div class="google-form-header">
-                                <div class="form-icon">📋</div>
+                                <div class="form-icon"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                 <div class="form-title" id="googleFormTitle">Новая задача</div>
                                 <div class="form-description" id="googleFormDescription"></div>
                             </div>
@@ -646,13 +647,13 @@
                     <div class="google-form-editor">
                         <div class="form-editor-header">
                             <div class="form-editor-title-section">
-                                <h2 id="taskViewTitle">📋 Задача</h2>
+                                <h2 id="taskViewTitle"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Задача</h2>
                                 <div class="form-editor-badge" id="taskViewStatusBadge">⏳ Ожидает</div>
                                 <span class="form-editor-number" id="taskViewId">№—</span>
                             </div>
                             <div class="form-editor-actions">
-                                <button class="buttonbase btn-outline" id="taskViewCloseBtn">✕ Закрыть</button>
-                                <button class="buttonbase" id="taskViewSaveBtn">💾 Сохранить изменения</button>
+                                <button class="buttonbase btn-outline" id="taskViewCloseBtn"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt=""> Закрыть</button>
+                                <button class="buttonbase" id="taskViewSaveBtn">Сохранить изменения</button>
                             </div>
                         </div>
                         
@@ -668,18 +669,18 @@
                                             <div style="font-size: 11px; color: var(--c_surf_txt);">Статус</div>
                                             <select id="taskViewStatus" class="task-view-select" style="min-width: 140px;">
                                                 <option value="pending">⏳ Ожидает</option>
-                                                <option value="in_progress">🔄 В работе</option>
-                                                <option value="completed">✅ Выполнена</option>
-                                                <option value="cancelled">❌ Отменена</option>
+                                                <option value="in_progress"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> В работе</option>
+                                                <option value="completed"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Выполнена</option>
+                                                <option value="cancelled">Отменена</option>
                                             </select>
                                         </div>
                                         <div>
                                             <div style="font-size: 11px; color: var(--c_surf_txt);">Приоритет</div>
                                             <select id="taskViewPriority" class="task-view-select" style="min-width: 120px;">
-                                                <option value="low">🟢 Низкий</option>
-                                                <option value="medium">🟡 Средний</option>
-                                                <option value="high">🟠 Высокий</option>
-                                                <option value="critical">🔴 Критический</option>
+                                                <option value="low">Низкий</option>
+                                                <option value="medium">Средний</option>
+                                                <option value="high">Высокий</option>
+                                                <option value="critical">Критический</option>
                                             </select>
                                         </div>
                                     </div>
@@ -692,7 +693,7 @@
                                     <div class="task-view-left">
                                         <!-- Прогресс -->
                                         <div class="task-view-section">
-                                            <div class="task-view-section-title">📊 Прогресс выполнения</div>
+                                            <div class="task-view-section-title"><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Прогресс выполнения</div>
                                             <div class="task-progress-wrap">
                                                 <div class="task-progress-header">
                                                     <span id="taskViewProgressValue">0%</span>
@@ -709,13 +710,13 @@
                                         
                                         <!-- Описание -->
                                         <div class="task-view-section">
-                                            <div class="task-view-section-title">📄 Описание</div>
+                                            <div class="task-view-section-title"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Описание</div>
                                             <div id="taskViewDescription" style="font-size: 14px; color: var(--c_bg_txt); line-height: 1.6; padding: 8px 0;">—</div>
                                         </div>
                                         
                                         <!-- Свойства -->
                                         <div class="task-view-section">
-                                            <div class="task-view-section-title">📋 Свойства</div>
+                                            <div class="task-view-section-title"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Свойства</div>
                                             <div class="task-view-props">
                                                 <div class="task-view-prop">
                                                     <span class="prop-label">Дата начала</span>
@@ -738,7 +739,7 @@
                                         
                                         <!-- Кастомные поля -->
                                         <div id="taskViewCustomFields" class="task-view-section" style="display: none;">
-                                            <div class="task-view-section-title">📋 Дополнительные поля</div>
+                                            <div class="task-view-section-title"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Дополнительные поля</div>
                                             <div id="taskViewCustomFieldsContainer" class="task-view-props"></div>
                                         </div>
                                     </div>
@@ -748,7 +749,7 @@
                                         <!-- Комментарии -->
                                         <div class="task-view-section">
                                             <div class="task-view-section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                                                <span>💬 Комментарии</span>
+                                                <span><img src="../materials/icons8-чат-96.png" class="ui-icon ui-icon-inline" alt=""> Комментарии</span>
                                                 <span id="taskViewCommentsCount" style="font-size: 12px; color: var(--c_surf_txt);">0</span>
                                             </div>
                                             <div id="taskViewCommentsList" class="task-comments-list">
@@ -781,11 +782,11 @@
                             
                             <div class="google-form-footer" style="padding: 12px 32px; background: var(--c_bg); border-top: 1px solid var(--c_surf_txt);">
                                 <div style="display: flex; gap: 12px; align-items: center;">
-                                    <button class="buttonbase btn-danger" id="taskViewDeleteBtn" style="background: #dc3545;">🗑️ Удалить</button>
+                                    <button class="buttonbase btn-danger" id="taskViewDeleteBtn" style="background: #dc3545;">Удалить</button>
                                 </div>
                                 <div style="display: flex; gap: 12px;">
-                                    <button class="buttonbase btn-outline" id="taskViewCloseBtn2">Закрыть</button>
-                                    <button class="buttonbase" id="taskViewSaveBtn2">💾 Сохранить</button>
+                                    <button class="buttonbase btn-outline" id="taskViewCloseBtn2"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
+                                    <button class="buttonbase" id="taskViewSaveBtn2">Сохранить</button>
                                 </div>
                             </div>
                         </div>
@@ -793,10 +794,10 @@
                 </section>
                 <!-- Модалка добавления/редактирования поля (оставляем как есть) -->
                 <div id="fieldEditorModal" class="admin-modal">
-                    <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-content modal-lg" style="max-width: 640px;">
                         <div class="modal-header">
-                            <h2 id="fieldEditorTitle">✏️ Добавление поля</h2>
-                            <button class="modal-close" onclick="closeFieldEditorModal()">&times;</button>
+                            <h2 id="fieldEditorTitle"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Добавление поля</h2>
+                            <button class="modal-close" onclick="closeFieldEditorModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <form id="fieldEditorForm">
@@ -804,15 +805,15 @@
                                 <div class="form-group">
                                     <label>Тип поля</label>
                                     <select id="fieldType" class="form-select">
-                                        <option value="text">📝 Текстовое поле</option>
-                                        <option value="textarea">📄 Текстовая область</option>
-                                        <option value="number">🔢 Число</option>
-                                        <option value="date">📅 Дата</option>
-                                        <option value="select">📋 Выпадающий список</option>
-                                        <option value="checkbox">☑️ Чекбокс</option>
-                                        <option value="user">👤 Выбор пользователя</option>
-                                        <option value="multi-user">👥 Выбор нескольких пользователей</option>
-                                        <option value="document">📄 Связанный документ</option> 
+                                        <option value="text"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Текстовое поле</option>
+                                        <option value="textarea"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Текстовая область</option>
+                                        <option value="number">Число</option>
+                                        <option value="date"><img src="../materials/icons8-календарь-96.png" class="ui-icon ui-icon-inline" alt=""> Дата</option>
+                                        <option value="select"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Выпадающий список</option>
+                                        <option value="checkbox"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Чекбокс</option>
+                                        <option value="user"><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Выбор пользователя</option>
+                                        <option value="multi-user"><img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Выбор нескольких пользователей</option>
+                                        <option value="document"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Связанный документ</option> 
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -837,7 +838,7 @@
                                     <div id="optionsList" class="options-list">
                                         <div class="option-item">
                                             <input type="text" class="option-input" placeholder="Вариант 1">
-                                            <button type="button" class="remove-option-btn" style="display: none;">×</button>
+                                            <button type="button" class="remove-option-btn" style="display: none;"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                                         </div>
                                     </div>
                                     <button type="button" class="buttonbase btn-outline" id="addOptionBtn" style="margin-top: 8px;">+ Добавить вариант</button>
@@ -850,17 +851,17 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeFieldEditorModal()">Отмена</button>
-                            <button class="buttonbase" id="deleteFieldBtn" style="background-color: #dc3545; display: none;">🗑️ Удалить</button>
-                            <button class="buttonbase" id="saveFieldBtn">💾 Сохранить</button>
+                            <button class="buttonbase" onclick="closeFieldEditorModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                            <button class="buttonbase" id="deleteFieldBtn" style="background-color: #dc3545; display: none;">Удалить</button>
+                            <button class="buttonbase" id="saveFieldBtn">Сохранить</button>
                         </div>
                     </div>
                 </div>
                 <div id="createWorkflowModal" class="admin-modal">
                     <div class="modal-content workflow-editor-modal">
                         <div class="modal-header">
-                            <h2>🔄 Создание нового процесса</h2>
-                            <button class="modal-close" onclick="closeModal('createWorkflowModal')">&times;</button>
+                            <h2><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Создание нового процесса</h2>
+                            <button class="modal-close" onclick="closeModal('createWorkflowModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         
                         <div class="modal-body">
@@ -878,12 +879,12 @@
                                             <label for="workflowCategory">Категория *</label>
                                             <select id="workflowCategory" name="category" required>
                                                 <option value="">Выберите категорию</option>
-                                                <option value="hr">📋 Кадровые процессы</option>
-                                                <option value="finance">💰 Финансовые процессы</option>
-                                                <option value="legal">⚖️ Юридические процессы</option>
-                                                <option value="project">🚀 Проектные процессы</option>
-                                                <option value="approval">✅ Процессы согласования</option>
-                                                <option value="other">📁 Другие процессы</option>
+                                                <option value="hr"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Кадровые процессы</option>
+                                                <option value="finance">Финансовые процессы</option>
+                                                <option value="legal">Юридические процессы</option>
+                                                <option value="project">Проектные процессы</option>
+                                                <option value="approval"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Процессы согласования</option>
+                                                <option value="other"><img src="../materials/icons8-папка-120.png" class="ui-icon ui-icon-inline" alt=""> Другие процессы</option>
                                             </select>
                                         </div>
                                     </div>
@@ -898,7 +899,7 @@
 
                                 <!-- Конструктор этапов процесса -->
                                 <div class="form-section">
-                                    <h3>🎯 Этапы процесса</h3>
+                                    <h3>Этапы процесса</h3>
                                     
                                     <div class="workflow-builder">
                                         <!-- Панель доступных этапов -->
@@ -906,42 +907,42 @@
                                             <h4>Доступные этапы</h4>
                                             <div class="stages-library">
                                                 <div class="stage-type" data-type="approval" draggable="true">
-                                                    <div class="stage-icon">✅</div>
+                                                    <div class="stage-icon"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""></div>
                                                     <div class="stage-info">
                                                         <div class="stage-name">Согласование</div>
                                                         <div class="stage-desc">Утверждение документа</div>
                                                     </div>
                                                 </div>
                                                 <div class="stage-type" data-type="review" draggable="true">
-                                                    <div class="stage-icon">👀</div>
+                                                    <div class="stage-icon"><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""></div>
                                                     <div class="stage-info">
                                                         <div class="stage-name">Проверка</div>
                                                         <div class="stage-desc">Проверка корректности</div>
                                                     </div>
                                                 </div>
                                                 <div class="stage-type" data-type="signature" draggable="true">
-                                                    <div class="stage-icon">✍️</div>
+                                                    <div class="stage-icon"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-sm" alt=""></div>
                                                     <div class="stage-info">
                                                         <div class="stage-name">Подписание</div>
                                                         <div class="stage-desc">Электронная подпись</div>
                                                     </div>
                                                 </div>
                                                 <div class="stage-type" data-type="notification" draggable="true">
-                                                    <div class="stage-icon">🔔</div>
+                                                    <div class="stage-icon"><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""></div>
                                                     <div class="stage-info">
                                                         <div class="stage-name">Уведомление</div>
                                                         <div class="stage-desc">Информирование участников</div>
                                                     </div>
                                                 </div>
                                                 <div class="stage-type" data-type="task" draggable="true">
-                                                    <div class="stage-icon">📝</div>
+                                                    <div class="stage-icon"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-sm" alt=""></div>
                                                     <div class="stage-info">
                                                         <div class="stage-name">Задача</div>
                                                         <div class="stage-desc">Выполнение действия</div>
                                                     </div>
                                                 </div>
                                                 <div class="stage-type" data-type="condition" draggable="true">
-                                                    <div class="stage-icon">🔀</div>
+                                                    <div class="stage-icon"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""></div>
                                                     <div class="stage-info">
                                                         <div class="stage-name">Условие</div>
                                                         <div class="stage-desc">Ветвление процесса</div>
@@ -953,12 +954,12 @@
                                         <!-- Область конструктора -->
                                         <div class="workflow-canvas">
                                             <div class="canvas-toolbar">
-                                                <button type="button" class="buttonbase" id="autoArrangeBtn">🔄 Авторасположение</button>
-                                                <button type="button" class="buttonbase" id="clearCanvasBtn">🗑️ Очистить</button>
+                                                <button type="button" class="buttonbase" id="autoArrangeBtn"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Авторасположение</button>
+                                                <button type="button" class="buttonbase" id="clearCanvasBtn">Очистить</button>
                                                 <div class="zoom-controls">
-                                                    <button type="button" class="btn-icon" id="zoomOutBtn">🔍-</button>
+                                                    <button type="button" class="btn-icon" id="zoomOutBtn">-</button>
                                                     <span class="zoom-level">100%</span>
-                                                    <button type="button" class="btn-icon" id="zoomInBtn">🔍+</button>
+                                                    <button type="button" class="btn-icon" id="zoomInBtn">+</button>
                                                 </div>
                                             </div>
                                             
@@ -966,7 +967,7 @@
                                                 <!-- Начальный этап -->
                                                 <div class="workflow-stage start-stage" data-stage-type="start">
                                                     <div class="stage-header">
-                                                        <div class="stage-number">🚀</div>
+                                                        <div class="stage-number">1</div>
                                                         <div class="stage-title">Начало процесса</div>
                                                     </div>
                                                     <div class="stage-content">
@@ -977,7 +978,7 @@
                                                 <!-- Конечный этап -->
                                                 <div class="workflow-stage end-stage" data-stage-type="end">
                                                     <div class="stage-header">
-                                                        <div class="stage-number">🏁</div>
+                                                        <div class="stage-number">2</div>
                                                         <div class="stage-title">Завершение процесса</div>
                                                     </div>
                                                     <div class="stage-content">
@@ -1009,7 +1010,7 @@
 
                                 <!-- Настройки процесса -->
                                 <div class="form-section">
-                                    <h3>⚙️ Настройки процесса</h3>
+                                    <h3><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки процесса</h3>
                                     
                                     <div class="settings-grid">
                                         <div class="setting-group">
@@ -1081,7 +1082,7 @@
 
                                 <!-- Шаблоны документов -->
                                 <div class="form-section">
-                                    <h3>📄 Привязка к шаблонам</h3>
+                                    <h3><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Привязка к шаблонам</h3>
                                     <div class="form-group">
                                         <label>Шаблоны документов для этого процесса</label>
                                         <select name="templates" multiple id="workflowTemplates">
@@ -1098,26 +1099,26 @@
                         </div>
                         
                         <div class="modal-footer">
-                            <button type="button" class="buttonbase" onclick="closeModal('createWorkflowModal')">Отмена</button>
-                            <button type="button" class="buttonbase" id="testWorkflowBtn">🧪 Тестировать процесс</button>
-                            <button type="button" class="buttonbase" id="saveDraftBtn">💾 Сохранить черновик</button>
-                            <button type="submit" form="createWorkflowForm" class="buttonbase" id="publishWorkflowBtn">🚀 Опубликовать процесс</button>
+                            <button type="button" class="buttonbase" onclick="closeModal('createWorkflowModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                            <button type="button" class="buttonbase" id="testWorkflowBtn">Тестировать процесс</button>
+                            <button type="button" class="buttonbase" id="saveDraftBtn">Сохранить черновик</button>
+                            <button type="submit" form="createWorkflowForm" class="buttonbase" id="publishWorkflowBtn">Опубликовать процесс</button>
                         </div>
                     </div>
                 </div>
                 <div id="testWorkflowModal" class="admin-modal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h2>🧪 Тестирование процесса</h2>
-                            <button class="modal-close" onclick="closeModal('testWorkflowModal')">&times;</button>
+                            <h2>Тестирование процесса</h2>
+                            <button class="modal-close" onclick="closeModal('testWorkflowModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <div class="workflow-test">
                                 <h4>Симуляция выполнения процесса</h4>
                                 <div class="test-controls">
-                                    <button class="buttonbase" id="startTestBtn">▶️ Начать тест</button>
-                                    <button class="buttonbase" id="nextStepBtn" disabled>⏭️ Следующий этап</button>
-                                    <button class="buttonbase" id="resetTestBtn">🔄 Сбросить</button>
+                                    <button class="buttonbase" id="startTestBtn">▶ Начать тест</button>
+                                    <button class="buttonbase" id="nextStepBtn" disabled>⏭ Следующий этап</button>
+                                    <button class="buttonbase" id="resetTestBtn"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Сбросить</button>
                                 </div>
                                 <div class="test-visualization" id="testVisualization">
                                     <!-- Визуализация теста будет здесь -->
@@ -1134,13 +1135,13 @@
                     <div class="modal-content" style="max-width: 400px;">
                         <div class="modal-header">
                             <h2 id="confirmTitle">Подтверждение</h2>
-                            <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+                            <button class="modal-close" onclick="closeConfirmModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <p id="confirmMessage">Вы уверены?</p>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeConfirmModal()">Отмена</button>
+                            <button class="buttonbase" onclick="closeConfirmModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                             <button class="buttonbase" id="confirmOkBtn" style="background-color: #dc3545;">Подтвердить</button>
                         </div>
                     </div>
@@ -1161,9 +1162,9 @@
                                 <span id="taskStatusBadgeFull" class="task-status-badge status-pending">⏳ Ожидает</span>
                             </div>
                             <div class="task-modal-header-right">
-                                <button class="task-modal-btn task-modal-btn-primary" id="saveTaskFullBtn">💾 Сохранить</button>
-                                <button class="task-modal-btn task-modal-btn-danger" id="deleteTaskFullBtn">🗑️</button>
-                                <button class="task-modal-close" onclick="closeTaskModal()">✕</button>
+                                <button class="task-modal-btn task-modal-btn-primary" id="saveTaskFullBtn">Сохранить</button>
+                                <button class="task-modal-btn task-modal-btn-danger" id="deleteTaskFullBtn">Удалить</button>
+                                <button class="task-modal-close" onclick="closeTaskModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                             </div>
                         </div>
 
@@ -1173,16 +1174,16 @@
                             <div class="task-modal-left">
                                 <!-- Описание -->
                                 <div class="task-modal-section">
-                                    <div class="task-modal-section-title">📄 Описание</div>
+                                    <div class="task-modal-section-title"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Описание</div>
                                     <textarea id="taskDescriptionFull" class="task-modal-textarea" placeholder="Введите описание задачи..." rows="4"></textarea>
                                 </div>
 
                                 <!-- Свойства -->
                                 <div class="task-modal-section">
-                                    <div class="task-modal-section-title">📋 Свойства</div>
+                                    <div class="task-modal-section-title"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Свойства</div>
                                     <div class="task-properties-grid">
                                         <div class="task-property">
-                                            <label>📅 Дата начала</label>
+                                            <label><img src="../materials/icons8-календарь-96.png" class="ui-icon ui-icon-inline" alt=""> Дата начала</label>
                                             <input type="date" id="taskStartDateFull" class="task-modal-input">
                                         </div>
                                         <div class="task-property">
@@ -1190,29 +1191,29 @@
                                             <input type="date" id="taskDueDateFull" class="task-modal-input">
                                         </div>
                                         <div class="task-property">
-                                            <label>🎯 Приоритет</label>
+                                            <label>Приоритет</label>
                                             <select id="taskPriorityFull" class="task-modal-select">
-                                                <option value="low">🟢 Низкий</option>
-                                                <option value="medium">🟡 Средний</option>
-                                                <option value="high">🟠 Высокий</option>
-                                                <option value="critical">🔴 Критический</option>
+                                                <option value="low">Низкий</option>
+                                                <option value="medium">Средний</option>
+                                                <option value="high">Высокий</option>
+                                                <option value="critical">Критический</option>
                                             </select>
                                         </div>
                                         <div class="task-property">
                                             <label> Статус</label>
                                             <select id="taskStatusFull" class="task-modal-select">
                                                 <option value="pending">⏳ Ожидает</option>
-                                                <option value="in_progress">🔄 В работе</option>
-                                                <option value="completed">✅ Выполнена</option>
-                                                <option value="cancelled">❌ Отменена</option>
+                                                <option value="in_progress"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> В работе</option>
+                                                <option value="completed"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Выполнена</option>
+                                                <option value="cancelled">Отменена</option>
                                             </select>
                                         </div>
                                         <div class="task-property">
-                                            <label>👤 Исполнитель</label>
+                                            <label><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Исполнитель</label>
                                             <input type="text" id="taskAssigneeFull" class="task-modal-input" readonly>
                                         </div>
                                         <div class="task-property">
-                                            <label>👤 Создатель</label>
+                                            <label><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Создатель</label>
                                             <input type="text" id="taskCreatorFull" class="task-modal-input" readonly>
                                         </div>
                                     </div>
@@ -1220,7 +1221,7 @@
 
                                 <!-- Прогресс -->
                                 <div class="task-modal-section">
-                                    <div class="task-modal-section-title">📊 Прогресс</div>
+                                    <div class="task-modal-section-title"><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Прогресс</div>
                                     <div class="task-progress-container">
                                         <div class="task-progress-header">
                                             <span id="progressValueFull">0%</span>
@@ -1241,7 +1242,7 @@
                                 <!-- Комментарии -->
                                 <div class="task-modal-section">
                                     <div class="task-modal-section-title">
-                                        💬 Комментарии
+                                        <img src="../materials/icons8-чат-96.png" class="ui-icon ui-icon-inline" alt=""> Комментарии
                                         <span id="commentsCountFull" class="task-comments-count">0</span>
                                     </div>
                                     <div id="taskCommentsListFull" class="task-comments-list">
@@ -1256,11 +1257,11 @@
                                 <!-- Информация -->
                                 <div class="task-modal-section task-modal-meta">
                                     <div class="task-meta-item">
-                                        <span class="task-meta-label">📅 Создана</span>
+                                        <span class="task-meta-label"><img src="../materials/icons8-календарь-96.png" class="ui-icon ui-icon-inline" alt=""> Создана</span>
                                         <span id="taskCreatedDateFull" class="task-meta-value">—</span>
                                     </div>
                                     <div class="task-meta-item">
-                                        <span class="task-meta-label">🔄 Обновлена</span>
+                                        <span class="task-meta-label"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Обновлена</span>
                                         <span id="taskUpdatedDateFull" class="task-meta-value">—</span>
                                     </div>
                                 </div>
@@ -1271,10 +1272,10 @@
 
                 <!-- Модалка быстрого создания задачи (из календаря) -->
                 <div id="quickCreateTaskModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-content" style="max-width: 640px;">
                         <div class="modal-header">
-                            <h2>➕ Новая задача</h2>
-                            <button class="modal-close" onclick="closeQuickCreateTaskModal()">&times;</button>
+                            <h2>Новая задача</h2>
+                            <button class="modal-close" onclick="closeQuickCreateTaskModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <div class="form-group">
@@ -1306,7 +1307,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeQuickCreateTaskModal()">Отмена</button>
+                            <button class="buttonbase" onclick="closeQuickCreateTaskModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                             <button class="buttonbase" id="quickCreateTaskBtn">Создать</button>
                         </div>
                     </div>
@@ -1314,72 +1315,72 @@
 
                 <!-- Модалка выбора типа шаблона -->
                 <div id="templateTypeModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-content" style="max-width: 640px;">
                         <div class="modal-header">
-                            <h2>📋 Создание шаблона</h2>
-                            <button class="modal-close" onclick="closeTemplateTypeModal()">&times;</button>
+                            <h2><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Создание шаблона</h2>
+                            <button class="modal-close" onclick="closeTemplateTypeModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <p>Выберите тип шаблона:</p>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
                                 <button class="type-list-elem" id="createTaskTemplateBtn">
-                                    <div class="type-icon">📝</div>
+                                    <div class="type-icon"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон задачи</h4>
                                     <p class="type-desc">Создайте шаблон для быстрого создания задач</p>
                                 </button>
                                 <button class="type-list-elem" disabled style="opacity: 0.5;">
-                                    <div class="type-icon">📄</div>
+                                    <div class="type-icon"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон документа</h4>
                                     <p class="type-desc">Скоро</p>
                                 </button>
                                 <button class="type-list-elem" disabled style="opacity: 0.5;">
-                                    <div class="type-icon">🔄</div>
+                                    <div class="type-icon"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон процесса</h4>
                                     <p class="type-desc">Скоро</p>
                                 </button>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeTemplateTypeModal()">Отмена</button>
+                            <button class="buttonbase" onclick="closeTemplateTypeModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Модалка предпросмотра задачи -->
                 <div id="taskPreviewModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-content" style="max-width: 640px;">
                         <div class="modal-header">
-                            <h2>👁️ Предпросмотр задачи</h2>
-                            <button class="modal-close" onclick="closeTaskPreviewModal()">&times;</button>
+                            <h2> Предпросмотр задачи</h2>
+                            <button class="modal-close" onclick="closeTaskPreviewModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body" id="taskPreviewContent"></div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeTaskPreviewModal()">Закрыть</button>
+                            <button class="buttonbase" onclick="closeTaskPreviewModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Модалка предпросмотра шаблона -->
                 <div id="templateFullPreviewModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 500px; max-height: 80vh;">
+                    <div class="modal-content" style="max-width: 640px; max-height: 80vh;">
                         <div class="modal-header">
-                            <h2 id="templatePreviewTitle">👁️ Предпросмотр шаблона</h2>
-                            <button class="modal-close" onclick="closeTemplateFullPreviewModal()">&times;</button>
+                            <h2 id="templatePreviewTitle"> Предпросмотр шаблона</h2>
+                            <button class="modal-close" onclick="closeTemplateFullPreviewModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <div id="templatePreviewContent" class="template-preview" style="max-height: 60vh;"></div>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeTemplateFullPreviewModal()">Закрыть</button>
+                            <button class="buttonbase" onclick="closeTemplateFullPreviewModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
                         </div>
                     </div>
                 </div>
                 <!-- Модалка выбора пользователей -->
                 <div id="userSelectorModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 700px; max-height: 80vh;">
+                    <div class="modal-content" style="max-width: 860px; max-height: 80vh;">
                         <div class="modal-header">
-                            <h2 id="userSelectorTitle">👥 Выбор пользователей</h2>
-                            <button class="modal-close" onclick="closeUserSelectorModal()">&times;</button>
+                            <h2 id="userSelectorTitle"><img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Выбор пользователей</h2>
+                            <button class="modal-close" onclick="closeUserSelectorModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <!-- Поиск и фильтры -->
@@ -1418,17 +1419,17 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeUserSelectorModal()">Отмена</button>
+                            <button class="buttonbase" onclick="closeUserSelectorModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                             <button class="buttonbase" id="confirmUserSelectionBtn">Подтвердить</button>
                         </div>
                     </div>
                 </div>
                 <!-- Модалка управления шаблонами -->
                 <div id="manageTemplatesModal" class="admin-modal">
-                    <div class="modal-content" style="max-width: 700px;">
+                    <div class="modal-content" style="max-width: 860px;">
                         <div class="modal-header">
-                            <h2>📋 Мои шаблоны задач</h2>
-                            <button class="modal-close" onclick="closeModal('manageTemplatesModal')">&times;</button>
+                            <h2><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Мои шаблоны задач</h2>
+                            <button class="modal-close" onclick="closeModal('manageTemplatesModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
                             <div id="templatesListContainer">
@@ -1436,7 +1437,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="buttonbase" onclick="closeModal('manageTemplatesModal')">Закрыть</button>
+                            <button class="buttonbase" onclick="closeModal('manageTemplatesModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
                             <button class="buttonbase" id="addNewTemplateFromManageBtn">+ Новый шаблон</button>
                         </div>
                     </div>

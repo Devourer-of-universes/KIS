@@ -180,7 +180,7 @@ router.get('/me', async (req, res) => {
         const result = await query(
             `SELECT u.id, u.username, u.surname, u.name, u.patronymic, 
                     u.email, u.tel_num, u.avatar_uri, u.status, 
-                    u.role_id, u.is_super_admin,
+                    u.role_id, u.is_super_admin, u.department_id,
                     p.name as post_name, 
                     d.name as department_name
              FROM users u

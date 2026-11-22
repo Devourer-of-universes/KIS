@@ -22,6 +22,7 @@
                 <img src="../materials/icons8-главная-96.png" alt="workspace">
                 <span>Главная</span>
             </a>
+            <a href="../html/department.html" class="menu-item" data-page="department" id="menuMyDepartment" style="display:none;"><img src="../materials/icons8-отдел-96.png" alt="department"><span>Мой отдел</span></a>
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
                 <img src="../materials/icons8-администрирование-96.png" alt="admin">
                 <span>Администрирование</span>
@@ -165,8 +166,8 @@
                     <div class="avatar-upload">
                         <img src="" alt="Аватар" class="current-avatar" id="userAvatar">
                         <input type="file" id="avatarInput" accept="image/*" hidden>
-                        <button class="buttonbase" id="uploadAvatarBtn">Загрузить фото</button>
-                        <button class="buttonbase btn-outline" id="removeAvatarBtn">Удалить</button>
+                        <button class="buttonbase" id="uploadAvatarBtn"><img src="../materials/icons8-загрузить-96.png" class="ui-icon ui-icon-inline" alt=""> Загрузить фото</button>
+                        <button class="buttonbase btn-outline" id="removeAvatarBtn"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить</button>
                     </div>
                 </div>
                 <div class="settings-group">
@@ -266,19 +267,18 @@
                 <div class="settings-group">
                     <h3>Акцентный цвет</h3>
                     <p class="settings-hint">Выберите основной цвет интерфейса</p>
-                    <div class="accent-colors" id="accentColors">
-                        <button class="accent-color" data-color="#5194FF" style="background: #5194FF;" title="Синий (по умолчанию)"></button>
-                        <button class="accent-color" data-color="#F56E0F" style="background: #F56E0F;" title="Оранжевый"></button>
-                        <button class="accent-color" data-color="#00A231" style="background: #00A231;" title="Зелёный"></button>
-                        <button class="accent-color" data-color="#00CAB9" style="background: #00CAB9;" title="Бирюзовый"></button>
-                        <button class="accent-color" data-color="#9000A3" style="background: #9000A3;" title="Фиолетовый"></button>
-                        <button class="accent-color" data-color="#C0CA00" style="background: #C0CA00;" title="Жёлто-зелёный"></button>
-                        <button class="accent-color" data-color="#CA0003" style="background: #CA0003;" title="Красный"></button>
-                        <div class="custom-color-wrapper">
-                            <button class="accent-color custom" id="customAccentBtn" style="background: linear-gradient(135deg, #ff0000, #00ff00, #0000ff);" title="Пользовательский цвет">🎨</button>
-                            <input type="color" id="customColorPicker" style="display: none;">
-                        </div>
-                    </div>
+                                                <div class="accent-colors" id="accentColors">
+                                <button class="accent-color" data-color="#2563eb" style="background: #2563eb;" title="Blue"></button>
+                                <button class="accent-color" data-color="#0f766e" style="background: #0f766e;" title="Teal"></button>
+                                <button class="accent-color" data-color="#16a34a" style="background: #16a34a;" title="Green"></button>
+                                <button class="accent-color" data-color="#d97706" style="background: #d97706;" title="Amber"></button>
+                                <button class="accent-color" data-color="#7c3aed" style="background: #7c3aed;" title="Violet"></button>
+                                <button class="accent-color" data-color="#dc2626" style="background: #dc2626;" title="Red"></button>
+                                <button class="accent-color" data-color="#475569" style="background: #475569;" title="Slate"></button>
+
+                                <button class="accent-color custom" id="customAccentBtn" style="background: linear-gradient(135deg, #2563eb, #16a34a, #f59e0b);" title="Custom color"></button>
+                                <input type="color" id="customColorPicker" style="display: none;" value="#2563eb">
+                            </div>
                 </div>
 
                 <div class="settings-group">
@@ -309,11 +309,11 @@
 
             <!-- Безопасность -->
             <section id="security" class="settings-section">
-                <h2>🔐 Безопасность</h2>
+                <h2> Безопасность</h2>
                 
                 <!-- Активные сессии -->
                 <div class="settings-group">
-                    <h3>🟢 Активные сессии</h3>
+                    <h3>Активные сессии</h3>
                     <p class="settings-hint">Сессии, где вы сейчас авторизованы</p>
                     <div class="sessions-list" id="activeSessionsList">
                         <div style="text-align: center; padding: 20px; color: #999;">Загрузка...</div>
@@ -323,7 +323,7 @@
                 
                 <!-- История входов -->
                 <div class="settings-group">
-                    <h3>📜 История входов</h3>
+                    <h3>История входов</h3>
                     <p class="settings-hint">Последние 20 входов в систему</p>
                     <div class="history-list" id="loginHistoryList">
                         <div style="text-align: center; padding: 20px; color: #999;">Загрузка...</div>

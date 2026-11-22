@@ -1,51 +1,15 @@
 /* admin_base.css - Панель администратора */
 
-:root {
-    /* --c_bg: #f5f7fb;
-    --c_bg_txt: #1a1a2e;
-    --c_surf: #ffffff;
-    --c_surf_txt: #6c757d;
-     --c_acc: #5194ff;
-    --c_acchalf:rgba(81, 148, 255, 0.5);
-    --c_brightacc: #007bff;
-    --c_success: #10b981;
-    --c_warning: #f59e0b;
-    --c_error: #ef4444; */
+/* Theme tokens are defined globally in main.css */
 
-     /* Основные */
-    --c_bg: #F8F9FC;
-    --c_bg_txt: #1C1C28;
-    --c_surf: #FFFFFF;
-    --c_surf_txt: #6B7280;
-
-    /* Акценты */
-    --c_acc: #4F46E5;
-    --c_brightacc: #4338CA; /* Hover */
-    --c_acchalf: rgba(79, 70, 229, 0.15); /* Для фонов */
-
-    /* Статусы */
-    --c_success: #10B981;
-    --c_success-bg: rgba(16, 185, 129, 0.12);
-    --c_warning: #F59E0B;
-    --c_warning-bg: rgba(245, 158, 11, 0.12);
-    --c_error: #EF4444;
-    --c_error-bg: rgba(239, 68, 68, 0.12);
-
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 20px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --transition: all 0.25s ease;
-}
 
 /* ========== ОСНОВНОЙ КОНТЕЙНЕР ========== */
 .admin-container {
-    margin-left: 60px;
+    margin-left: var(--menu-width-collapsed);
     background: var(--c_bg);
     min-height: 100vh;
     padding: 20px;
+    transition: margin-left 0.25s ease;
 }
 
 /* ========== ШАПКА АДМИНКИ ========== */
@@ -75,10 +39,11 @@
 .stat-card {
     text-align: center;
     padding: 12px 24px;
-    background: linear-gradient(135deg, var(--c_acc),var(--c_acchalf));
+    background: var(--c_surf_alt);
+    color: var(--c_bg_txt);
+    border: 1px solid var(--c_border);
     border-radius: var(--border-radius-md);
-    color: white;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-xs);
 }
 
 .stat-number {
@@ -121,10 +86,7 @@
     color: var(--c_acc);
 }
 
-.nav-btn.active {
-    background: var(--c_acc);
-    color: white;
-}
+.nav-btn.active { background: var(--c_acc); color: var(--c_acc_text); }
 
 /* ========== СЕКЦИИ АДМИНКИ ========== */
 .admin-section {
@@ -178,7 +140,7 @@
     padding: 12px 16px;
     font-size: 14px;
     color: var(--c_bg_txt);
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
 }
 
 .admin-table tr:last-child td {
@@ -201,7 +163,7 @@
     border-radius: var(--border-radius-md);
     padding: 20px;
     transition: var(--transition);
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     box-shadow: var(--shadow-sm);
 }
 
@@ -272,7 +234,7 @@
     border-radius: var(--border-radius-lg);
     padding: 20px;
     transition: var(--transition);
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
@@ -397,7 +359,7 @@
     align-items: center;
     gap: 14px;
     padding: 20px 24px;
-    background: linear-gradient(135deg, var(--c_acc), var(--c_brightacc));
+    background: var(--ui-modal-header-bg, var(--c_surf));
     
 }
 
@@ -430,7 +392,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 0;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
 }
 
 .settings-card-item:last-child {
@@ -460,7 +422,7 @@
 
 .setting-input {
     padding: 8px 12px;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     border-radius: var(--border-radius-sm);
     font-size: 14px;
     width: 120px;
@@ -468,7 +430,7 @@
 
 .setting-select {
     padding: 8px 12px;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     border-radius: var(--border-radius-sm);
     font-size: 14px;
     background: var(--c_surf);
@@ -533,7 +495,7 @@
     align-items: center;
     padding: 16px 20px;
     background: var(--c_surf);
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
     position: relative;
 }
 
@@ -635,7 +597,7 @@
     background: var(--c_surf);
     border-radius: var(--border-radius-sm);
     transition: var(--transition);
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
 }
 
 .employee-card:hover {
@@ -729,7 +691,7 @@
     padding: 20px 32px;
     border-radius: var(--border-radius-md);
     text-align: center;
-    color: white;
+    color: var(--c_bg_txt);
     flex: 1;
     min-width: 150px;
 }
@@ -771,21 +733,7 @@
     display: flex;
 }
 
-.admin-modal .modal-content {
-    background: var(--c_surf);
-    border-radius: var(--border-radius-lg);
-    width: 90%;
-    max-width: 700px;
-    max-height: 90vh;
-    height: auto;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    animation: modalSlideIn 0.25s ease;
-    
-    /* Flex-раскладка: header, body, footer */
-    display: flex;
-    flex-direction: column;
-}
+.admin-modal .modal-content { max-width: 960px; }
 
 @keyframes modalSlideIn {
     from {
@@ -798,57 +746,19 @@
     }
 }
 
-.admin-modal .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    background: linear-gradient(135deg, var(--c_acc), var(--c_brightacc));
-    color: white;
-    flex-shrink: 0;
-}
+/* modal-header unified in main.css */
 
-.admin-modal .modal-header h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-}
+/* modal-header h2 unified in main.css */
 
-.modal-close {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: var(--border-radius-sm);
-    color: var(--c_error);
-    font-size: 40px;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition);
-}
+.modal-close { /* unified in main.css */ }
 
 .modal-close:hover {
     background: rgba(255, 255, 255, 0.3);
 }
 
-.admin-modal .modal-body {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1 1 auto;
-    min-height: 0; /* важно для flex + overflow */
-}
+/* modal-body unified in main.css */
 
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 16px 24px;
-    border-top: 1px solid #eef2f6;
-    background: var(--c_bg);
-    flex-shrink: 0;
-}
+/* modal-footer unified in main.css */
 
 /* Формы в модалках */
 .modal-form .form-section {
@@ -890,7 +800,7 @@
 .modal-form select,
 .modal-form textarea {
     padding: 10px 12px;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     border-radius: var(--border-radius-sm);
     font-size: 14px;
     transition: var(--transition);
@@ -951,7 +861,7 @@
 .field-type {
     padding: 12px;
     background: var(--c_surf);
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     border-radius: var(--border-radius-sm);
     cursor: grab;
     transition: var(--transition);
@@ -982,7 +892,7 @@
 
 .builder-toolbar {
     padding: 12px 16px;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
@@ -1055,7 +965,7 @@
     align-items: center;
     padding: 12px 16px;
     background: var(--c_surf);
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
 }
 
 .category-header h4 {
@@ -1074,7 +984,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
 }
 
 .permission-item:last-child {
@@ -1088,7 +998,7 @@
 
 .permission-select {
     padding: 6px 10px;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     border-radius: var(--border-radius-sm);
     font-size: 12px;
     min-width: 140px;
@@ -1238,7 +1148,7 @@
     height: 100px;
     border-radius: 50%;
     border: 4px solid var(--c_acc);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
 
@@ -1357,20 +1267,20 @@
 
 .stats-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
 .stats-number {
     display: block;
     font-size: 1.8em;
     font-weight: bold;
-    color: white;
+    color: var(--c_bg_txt);
     margin-bottom: 5px;
 }
 
 .stats-label {
     font-size: 0.8em;
-    color: white;
+    color: var(--c_bg_txt);
 }
 
 .user-history-section {
@@ -1504,7 +1414,7 @@
 
 .pagination-btn {
     padding: 6px 12px;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     background: var(--c_surf);
     border-radius: 6px;
     cursor: pointer;
@@ -1517,8 +1427,7 @@
 }
 
 .pagination-btn.active {
-    background: var(--c_acc);
-    color: white;
+    background: var(--c_acc); color: var(--c_acc_text);
     border-color: var(--c_acc);
 }
 
@@ -1686,11 +1595,11 @@
 }
 
 .stats-card {
-    background: linear-gradient(135deg, var(--c_acc), var(--c_brightacc));
+    background: var(--ui-modal-header-bg, var(--c_surf));
     padding: 20px;
     border-radius: 16px;
     text-align: center;
-    color: white;
+    color: var(--c_bg_txt);
 }
 
 .stats-number {
@@ -1726,7 +1635,7 @@
     display: flex;
     gap: 16px;
     padding: 12px 0;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
 }
 
 .history-item:last-child {
@@ -1796,18 +1705,18 @@
 }
 
 .stats-card {
-    background: linear-gradient(135deg, var(--c_acc), var(--c_brightacc));
+    background: var(--ui-modal-header-bg, var(--c_surf));
     padding: 20px;
     border-radius: 16px;
     text-align: center;
-    color: white;
+    color: var(--c_bg_txt);
     transition: all 0.3s ease;
     cursor: default;
 }
 
 .stats-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .stats-number {
@@ -1841,7 +1750,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
 }
 
 .stats-detail-row:last-child {
@@ -1865,7 +1774,7 @@
 /* ========== ЛОГИ ========== */
 .log-entry {
     padding: 10px 12px;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
     font-size: 13px;
     transition: background 0.2s;
 }
@@ -1919,7 +1828,7 @@
     padding: 20px;
     border-radius: 16px;
     text-align: center;
-    color: white;
+    color: var(--c_bg_txt);
     transition: transform 0.2s;
 }
 
@@ -1945,13 +1854,13 @@
     align-items: center;
     margin-bottom: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--c_border);
     flex-wrap: wrap;
 }
 
 .log-filter-select {
     padding: 6px 12px;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--c_border);
     border-radius: 20px;
     background: var(--c_surf);
     font-size: 13px;
@@ -2049,8 +1958,7 @@
 }
 
 .admin-filter-btn.active {
-    background: var(--c_acc);
-    color: white;
+    background: var(--c_acc); color: var(--c_acc_text);
 }
 
 /* Селектор типа рассылки */
@@ -2197,8 +2105,7 @@
 }
 
 .doc-tab.active {
-    background: var(--c_acc);
-    color: white;
+    background: var(--c_acc); color: var(--c_acc_text);
 }
 
 .doc-subsection {
@@ -2470,8 +2377,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: var(--c_acc);
-    color: white;
+    background: var(--c_acc); color: var(--c_acc_text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2742,8 +2648,7 @@
 }
 
 .num-preset-btn:hover {
-    background: var(--c_acc);
-    color: white;
+    background: var(--c_acc); color: var(--c_acc_text);
     border-color: var(--c_acc);
     transform: translateY(-1px);
 }
@@ -3090,7 +2995,7 @@
 
 .field-option-row button:hover {
     background: var(--c_error);
-    color: white;
+    color: var(--c_bg_txt);
 }
 
 /* Адаптивность */
@@ -3728,3 +3633,19 @@
         border-bottom: 1px solid var(--c_surf_txt);
     }
 }
+
+/* ========== ОТЧЁТЫ / АНАЛИТИКА ========== */
+.reports-header { align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.reports-subtitle { margin: 4px 0 0; color: var(--c_surf_txt); font-size: 13px; }
+.reports-toolbar { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.reports-period-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--c_surf_txt); }
+.reports-select, .reports-input { padding: 8px 10px; border: 1px solid var(--c_border, #d0d7de); border-radius: 8px; background: var(--c_bg); color: var(--c_bg_txt); font: inherit; }
+.reports-loading { padding: 24px; text-align: center; color: var(--c_surf_txt); }
+.reports-dashboard .metric-cards { margin-bottom: 20px; }
+.reports-charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.report-chart-card { background: var(--c_surf); border: 1px solid var(--c_border, rgba(0,0,0,0.08)); border-radius: 12px; padding: 14px; box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.06)); min-width: 0; }
+.report-chart-card.report-chart-wide { grid-column: span 2; }
+.report-chart-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--c_bg_txt); }
+.report-chart-wrap { position: relative; height: 280px; width: 100%; }
+.report-chart-wrap canvas { width: 100% !important; height: 100% !important; }
+@media (max-width: 1100px) { .reports-charts-grid { grid-template-columns: 1fr; } .report-chart-card.report-chart-wide { grid-column: span 1; } }

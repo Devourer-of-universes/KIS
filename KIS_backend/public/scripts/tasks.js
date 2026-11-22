@@ -75,22 +75,33 @@ function closeAllWindowsExcept(exceptWindowId) {
     });
 }
 
-// Функция автоматического открытия дашборда
+function hasAnyOpenSections() {
+    return !!document.querySelector('.base-section.active:not(#base-section-task-last)');
+}
+
+function hasAnyOpenModals() {
+    return !!document.querySelector('.admin-modal.active, .modal-overlay.active, .base-sec-modal.active');
+}
+
+function isTaskLastVisible() {
+    const section = document.getElementById('base-section-task-last');
+    return !!(section && section.classList.contains('active') && section.style.display !== 'none');
+}
+
+// Функция автоматического открытия списка задач
 function ensureTaskLastVisible() {
-    // Если есть открытые секции (кроме дашборда) или модалки — ничего не делаем
     if (hasAnyOpenSections() || hasAnyOpenModals()) {
         return;
     }
-    
-    // Если дашборд уже виден — ничего не делаем
+
     if (isTaskLastVisible()) {
         return;
     }
-    
-    // Иначе открываем дашборд
-    console.log('📊 Автоматическое открытие (все секции закрыты)');
+
     openWindow('base-section-task-last');
-    loadRecentTasks();
+    if (typeof loadRecentTasks === 'function') {
+        loadRecentTasks();
+    }
 }
 // Функция, которая вызывается после закрытия любой секции
 function onSectionClosed(closedSectionId) {
@@ -137,7 +148,7 @@ async function loadTasks() {
         if (response.ok) {
             const data = await response.json();
             currentTasks = data.tasks || [];
-            console.log('✅ Loaded', currentTasks.length, 'tasks');
+            console.log('Loaded', currentTasks.length, 'tasks');
             
             // Обновляем отображение только если секция видима
             const calendarSection = document.getElementById('base-section-calendar');
@@ -205,7 +216,7 @@ async function fetchTaskDataFull(taskId) {
 }
 
 function renderTaskFull(task) {
-    console.log('🎨 Rendering full task:', task);
+    console.log('Rendering full task:', task);
     
     // Основные поля
     document.getElementById('taskTitleFull').value = task.title || '';
@@ -277,9 +288,9 @@ function updateStatusBadgeFull(status) {
     const badge = document.getElementById('taskStatusBadgeFull');
     const statusMap = {
         pending: { label: '⏳ Ожидает', class: 'status-pending' },
-        in_progress: { label: '🔄 В работе', class: 'status-in_progress' },
-        completed: { label: '✅ Выполнена', class: 'status-completed' },
-        cancelled: { label: '❌ Отменена', class: 'status-cancelled' }
+        in_progress: { label: 'В работе', class: 'status-in_progress' },
+        completed: { label: 'Выполнена', class: 'status-completed' },
+        cancelled: { label: 'Отменена', class: 'status-cancelled' }
     };
     const info = statusMap[status] || statusMap.pending;
     badge.textContent = info.label;
@@ -707,9 +718,9 @@ function updateStatusBadge(status) {
     const badge = document.getElementById('taskStatusBadge');
     const statusMap = {
         pending: { label: '⏳ Ожидает', color: '#f59e0b' },
-        in_progress: { label: '🔄 В работе', color: '#3b82f6' },
-        completed: { label: '✅ Выполнена', color: '#10b981' },
-        cancelled: { label: '❌ Отменена', color: '#ef4444' }
+        in_progress: { label: 'В работе', color: '#3b82f6' },
+        completed: { label: 'Выполнена', color: '#10b981' },
+        cancelled: { label: 'Отменена', color: '#ef4444' }
     };
     const info = statusMap[status] || statusMap.pending;
     badge.textContent = info.label;
@@ -864,9 +875,9 @@ function updateTaskPreview() {
     const statusSpan = document.getElementById('previewStatus');
     
     if (statusSpan) {
-        let statusText = '🟡 Черновик';
+        let statusText = ' Черновик';
         if (title && title.trim()) {
-            statusText = '📝 Готов к созданию';
+            statusText = 'Готов к созданию';
         }
         statusSpan.textContent = statusText;
     }
@@ -935,7 +946,7 @@ async function createTaskFromEditor() {
         
         if (response.ok) {
             const result = await response.json();
-            showToast('✅ Задача успешно создана', 'success');
+            showToast('Задача успешно создана', 'success');
             
             // Очищаем форму
             clearTaskForm();
@@ -1056,10 +1067,10 @@ function previewTask() {
     const content = `
         <h3>${escapeHtml(title)}</h3>
         <div class="task-preview-details">
-            <p><strong>📝 Описание:</strong> ${escapeHtml(document.getElementById('taskDescription')?.value || '—')}</p>
-            <p><strong>🎯 Приоритет:</strong> ${getPriorityLabel(document.getElementById('taskPriority')?.value)}</p>
-            <p><strong>📅 Срок:</strong> ${document.getElementById('taskDeadline')?.value || '—'}</p>
-            <p><strong>👤 Исполнитель:</strong> ${document.getElementById('taskAssignee')?.selectedOptions[0]?.text || '—'}</p>
+            <p><strong>Описание:</strong> ${escapeHtml(document.getElementById('taskDescription')?.value || '—')}</p>
+            <p><strong>Приоритет:</strong> ${getPriorityLabel(document.getElementById('taskPriority')?.value)}</p>
+            <p><strong>Срок:</strong> ${document.getElementById('taskDeadline')?.value || '—'}</p>
+            <p><strong>Исполнитель:</strong> ${document.getElementById('taskAssignee')?.selectedOptions[0]?.text || '—'}</p>
         </div>
     `;
     
@@ -1112,7 +1123,7 @@ function initTaskEditorHandlers() {
                         <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
-                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()">🗑️</button>
+                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()"></button>
                 `;
                 container.appendChild(fileDiv);
             }
@@ -1143,7 +1154,7 @@ function initTaskEditorHandlers() {
                         <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
-                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()">🗑️</button>
+                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()"></button>
                 `;
                 container.appendChild(fileDiv);
             }
@@ -1200,15 +1211,15 @@ function renderUserTemplates() {
     
     container.innerHTML = `
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eef2f6;">
-            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #666;">📁 Мои шаблоны</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Мои шаблоны</h4>
         </div>
     ` + userTemplates.map(template => `
         <button class="type-list-elem" data-template-id="${template.id}" onclick="openTaskFromTemplate(${template.id})">
-            <div class="type-icon">📋</div>
+            <div class="type-icon"></div>
             <h4>${escapeHtml(template.name)}</h4>
             <p class="type-desc">${escapeHtml(template.description || 'Пользовательский шаблон')}</p>
             <div style="font-size: 11px; color: #999; margin-top: 8px;">
-                ${template.is_shared ? '👥 Общий для отдела' : '🔒 Личный'} | Использован ${template.usage_count || 0} раз
+                ${template.is_shared ? 'Общий для отдела' : 'Личный'} | Использован ${template.usage_count || 0} раз
             </div>
         </button>
     `).join('');
@@ -1339,7 +1350,7 @@ function openTaskCreate() {
     openWindow('base-section-task-create');
 }
 async function openTaskFromTemplate(templateId) {
-    console.log('📋 openTaskFromTemplate called with id:', templateId);
+    console.log('openTaskFromTemplate called with id:', templateId);
     
     // Ищем шаблон в загруженном списке
     let template = userTemplates.find(t => t.id === templateId);
@@ -1375,7 +1386,7 @@ async function openTaskFromTemplate(templateId) {
         return;
     }
     
-    console.log('✅ Template found:', template.name);
+    console.log('Template found:', template.name);
     
     // Увеличиваем счётчик использования
     try {
@@ -1465,7 +1476,7 @@ function fillFormFromTemplate(template) {
 }
 // Открытие формы в стиле Google Forms
 function openTaskFormFromTemplate(template) {
-    console.log('🎨 Opening Google Forms style for template:', template.name);
+    console.log('Opening Google Forms style for template:', template.name);
     
     // Проверяем, что секция существует
     const formSection = document.getElementById('base-section-task-create');
@@ -1484,7 +1495,7 @@ function openTaskFormFromTemplate(template) {
     const googleTitleEl = document.getElementById('googleFormTitle');
     const googleDescEl = document.getElementById('googleFormDescription');
     
-    if (titleEl) titleEl.textContent = `📝 Создание задачи`;
+    if (titleEl) titleEl.textContent = `Создание задачи`;
     if (badgeEl) badgeEl.textContent = template.name;
     if (googleTitleEl) googleTitleEl.textContent = template.name;
     if (googleDescEl) googleDescEl.textContent = template.description || 'Заполните форму для создания задачи';
@@ -1515,7 +1526,7 @@ function renderCustomFieldsInTaskForm(fields) {
     section.id = 'customFieldsSection';
     section.className = 'form-section';
     section.innerHTML = `
-        <h3>📋 Дополнительные поля</h3>
+        <h3>Дополнительные поля</h3>
         <div id="customFieldsContainer" class="custom-fields-grid"></div>
     `;
     formContainer.appendChild(section);
@@ -1565,12 +1576,12 @@ function renderCustomFieldsInTaskForm(fields) {
                 inputHtml = `
                     <div class="document-selector-wrapper">
                         <div class="selected-document" id="selected_doc_${field.key}" style="display: ${value ? 'flex' : 'none'};">
-                            <span class="doc-icon">📄</span>
+                            <span class="doc-icon"></span>
                             <span class="doc-name">${escapeHtml(value)}</span>
-                            <button type="button" class="doc-remove" onclick="clearDocument('${field.key}')">✖</button>
+                            <button type="button" class="doc-remove" onclick="clearDocument('${field.key}')"></button>
                         </div>
                         <button type="button" class="buttonbase btn-outline select-doc-btn" onclick="openDocumentSelector('${field.key}')">
-                            📁 Выбрать документ
+                            Выбрать документ
                         </button>
                         <input type="hidden" id="custom_${field.key}" value="${escapeHtml(value)}">
                     </div>
@@ -1620,7 +1631,7 @@ async function createSimpleTask() {
         notifyAssignee: document.getElementById('notifyOnAssign')?.checked || false,
         notifyOnDeadline: document.getElementById('notifyOnDeadline')?.checked || false
     };
-    console.log('📦 taskData:', taskData);  // ← ДОБАВИТЬ
+    console.log('taskData:', taskData);  // ← ДОБАВИТЬ
 
     try {
         const token = localStorage.getItem('token');
@@ -1634,7 +1645,7 @@ async function createSimpleTask() {
         });
         
         if (response.ok) {
-            showToast('✅ Задача создана', 'success');
+            showToast('Задача создана', 'success');
             
             // Очищаем форму
             document.getElementById('taskTitle').value = '';
@@ -1736,7 +1747,7 @@ function initTaskEditorHandlers() {
                         <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
-                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()">🗑️</button>
+                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()"></button>
                 `;
                 container.appendChild(fileDiv);
             }
@@ -1797,7 +1808,7 @@ async function openManageTemplates() {
     const container = document.getElementById('templatesListContainer');
     if (container) {
         if (userTemplates.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px;">📭 У вас пока нет шаблонов</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">У вас пока нет шаблонов</div>';
         } else {
             container.innerHTML = userTemplates.map(template => `
                 <div class="template-item" style="padding: 15px; border-bottom: 1px solid #eef2f6;">
@@ -1806,11 +1817,11 @@ async function openManageTemplates() {
                             <strong>${escapeHtml(template.name)}</strong>
                             <div style="font-size: 12px; color: #666;">${escapeHtml(template.description || '—')}</div>
                             <div style="font-size: 11px; margin-top: 5px;">
-                                ${template.is_shared ? '👥 Общий для отдела' : '🔒 Личный'} | Использован: ${template.usage_count || 0} раз
+                                ${template.is_shared ? 'Общий для отдела' : 'Личный'} | Использован: ${template.usage_count || 0} раз
                             </div>
                         </div>
                         <div>
-                            <button class="buttonbase" style="padding: 4px 12px;" onclick="deleteTemplate(${template.id})">🗑️</button>
+                            <button class="buttonbase" style="padding: 4px 12px;" onclick="deleteTemplate(${template.id})"></button>
                         </div>
                     </div>
                 </div>
@@ -1860,7 +1871,7 @@ function openTaskFormFromTemplate(template) {
     currentFormData = {};
     
     // Устанавливаем заголовок
-    document.getElementById('templateFormTitle').textContent = `📝 Создание задачи`;
+    document.getElementById('templateFormTitle').textContent = `Создание задачи`;
     document.getElementById('templateFormBadge').textContent = template.name;
     document.getElementById('googleFormTitle').textContent = template.name;
     document.getElementById('googleFormDescription').textContent = template.description || 'Заполните форму для создания задачи';
@@ -1906,10 +1917,10 @@ function renderGoogleFormField(field, templateData) {
     if (field.key === 'priority') {
         inputHtml = `
             <select id="${fieldId}" class="field-input" ${field.required ? 'data-required="true"' : ''}>
-                <option value="low" ${defaultValue === 'low' ? 'selected' : ''}>🟢 Низкий</option>
-                <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}>🟡 Средний</option>
-                <option value="high" ${defaultValue === 'high' ? 'selected' : ''}>🟠 Высокий</option>
-                <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}>🔴 Критический</option>
+                <option value="low" ${defaultValue === 'low' ? 'selected' : ''}> Низкий</option>
+                <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}> Средний</option>
+                <option value="high" ${defaultValue === 'high' ? 'selected' : ''}> Высокий</option>
+                <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}> Критический</option>
             </select>
         `;
     }
@@ -1953,10 +1964,10 @@ function renderGoogleFormField(field, templateData) {
                 // Специальная обработка для поля приоритета
                 inputHtml = `
                     <select id="${fieldId}" class="field-input" ${field.required ? 'data-required="true"' : ''}>
-                        <option value="low" ${defaultValue === 'low' ? 'selected' : ''}>🟢 Низкий</option>
-                        <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}>🟡 Средний</option>
-                        <option value="high" ${defaultValue === 'high' ? 'selected' : ''}>🟠 Высокий</option>
-                        <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}>🔴 Критический</option>
+                        <option value="low" ${defaultValue === 'low' ? 'selected' : ''}> Низкий</option>
+                        <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}> Средний</option>
+                        <option value="high" ${defaultValue === 'high' ? 'selected' : ''}> Высокий</option>
+                        <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}> Критический</option>
                     </select>
                 `;
             } else {
@@ -1988,7 +1999,7 @@ function renderGoogleFormField(field, templateData) {
                         <span>Выбранный пользователь</span>
                     </div>
                     <div class="selected-users-list" id="selected_${field.key}">
-                        ${defaultValue ? `<span class="selected-user-tag" data-user-id="${defaultValue.id}">👤 ${escapeHtml(defaultValue.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${defaultValue.id})">✖</button></span>` : '<span class="empty-hint">Не выбран</span>'}
+                        ${defaultValue ? `<span class="selected-user-tag" data-user-id="${defaultValue.id}">${escapeHtml(defaultValue.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${defaultValue.id})"></button></span>` : '<span class="empty-hint">Не выбран</span>'}
                     </div>
                     <button type="button" class="select-users-btn" onclick="openUserSelectorForField('${field.key}', false)">
                         + Выбрать пользователя
@@ -2006,7 +2017,7 @@ function renderGoogleFormField(field, templateData) {
                     </div>
                     <div class="selected-users-list" id="selected_${field.key}">
                         ${(defaultValue || []).map(user => `
-                            <span class="selected-user-tag" data-user-id="${user.id}">👤 ${escapeHtml(user.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${user.id})">✖</button></span>
+                            <span class="selected-user-tag" data-user-id="${user.id}">${escapeHtml(user.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${user.id})"></button></span>
                         `).join('')}
                         ${(!defaultValue || defaultValue.length === 0) ? '<span class="empty-hint">Не выбраны</span>' : ''}
                     </div>
@@ -2021,12 +2032,12 @@ function renderGoogleFormField(field, templateData) {
         case 'document':
             inputHtml = `
                 <div class="document-attachment" onclick="openDocumentSelectorForField('${field.key}')">
-                    <div class="doc-icon">📄</div>
+                    <div class="doc-icon"></div>
                     <div class="doc-info">
                         <div class="doc-name" id="doc_name_${field.key}">${defaultValue || 'Выберите документ'}</div>
                         <div class="doc-placeholder">${escapeHtml(field.placeholder || 'Нажмите, чтобы выбрать документ')}</div>
                     </div>
-                    ${defaultValue ? `<button class="doc-remove" onclick="event.stopPropagation(); clearDocumentField('${field.key}')">✖</button>` : ''}
+                    ${defaultValue ? `<button class="doc-remove" onclick="event.stopPropagation(); clearDocumentField('${field.key}')"></button>` : ''}
                 </div>
                 <input type="hidden" id="${fieldId}" value="${escapeHtml(defaultValue || '')}" ${field.required ? 'data-required="true"' : ''}>
             `;
@@ -2056,7 +2067,7 @@ function getFieldDefaultValue(field, templateData) {
             case 'priority': 
                 // Убедись, что возвращается код, а не текст
                 const defaultPriority = templateData.defaultPriority || 'medium';
-                console.log('🎯 Default priority from template:', defaultPriority);
+                console.log('Default priority from template:', defaultPriority);
                 return defaultPriority;
             case 'due_date': 
                 if (templateData.defaultDeadlineDays) {
@@ -2110,8 +2121,8 @@ function updateSelectedUsersDisplay(fieldKey, users, userIds, multiple) {
     if (multiple) {
         container.innerHTML = users.map(user => `
             <span class="selected-user-tag" data-user-id="${user.id}">
-                👤 ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
-                <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})">✖</button>
+                ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
+                <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})"></button>
             </span>
         `).join('');
         
@@ -2125,8 +2136,8 @@ function updateSelectedUsersDisplay(fieldKey, users, userIds, multiple) {
         if (user) {
             container.innerHTML = `
                 <span class="selected-user-tag" data-user-id="${user.id}">
-                    👤 ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
-                    <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})">✖</button>
+                    ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
+                    <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})"></button>
                 </span>
             `;
             if (hiddenInput) hiddenInput.value = user.id;
@@ -2236,7 +2247,7 @@ function collectFormData() {
         formData[`${fieldKey}_label`] = label;
     }
     
-    console.log('📦 Final formData:', formData);
+    console.log('Final formData:', formData);
     return formData;
 }
 
@@ -2245,7 +2256,7 @@ async function submitTaskFromTemplate() {
     const formData = collectFormData();
     if (!formData) return;
     
-    console.log('📋 Raw formData:', formData);
+    console.log('Raw formData:', formData);
     
     // Получаем приоритет
     const prioritySelect = document.querySelector('#form_field_priority');
@@ -2259,7 +2270,7 @@ async function submitTaskFromTemplate() {
     
     const validPriorities = ['low', 'medium', 'high', 'critical'];
     if (!validPriorities.includes(priorityCode)) {
-        console.warn('⚠️ Unknown priority:', priorityCode, 'using medium');
+        console.warn('Unknown priority:', priorityCode, 'using medium');
         priorityCode = 'medium';
     }
     
@@ -2323,7 +2334,7 @@ async function submitTaskFromTemplate() {
         };
     });
 
-    console.log('📦 Custom fields with types:', JSON.stringify(customFields, null, 2));
+    console.log('Custom fields with types:', JSON.stringify(customFields, null, 2));
     
     // Формируем данные для API
     const taskData = {
@@ -2339,7 +2350,7 @@ async function submitTaskFromTemplate() {
         templateId: currentFormTemplate?.id || null
     };
     
-    console.log('📤 Final taskData:', taskData);
+    console.log('Final taskData:', taskData);
     
     // Валидация
     if (!taskData.title) {
@@ -2370,7 +2381,7 @@ async function submitTaskFromTemplate() {
         
         if (response.ok) {
             const result = await response.json();
-            showToast('✅ Задача успешно создана', 'success');
+            showToast('Задача успешно создана', 'success');
             closeTaskFromTemplate();
             await loadTasks();
             await loadCalendarEvents();
@@ -2490,16 +2501,16 @@ const defaultTemplateFields = [
 // - fieldTypes (константа)
 // Типы полей с иконками
 const fieldTypes = {
-    text: { icon: '📝', name: 'Текстовое поле', defaultLabel: 'Текстовое поле' },
-    textarea: { icon: '📄', name: 'Текстовая область', defaultLabel: 'Описание' },
-    number: { icon: '🔢', name: 'Число', defaultLabel: 'Количество' },
-    date: { icon: '📅', name: 'Дата', defaultLabel: 'Дата' },
-    select: { icon: '📋', name: 'Выпадающий список', defaultLabel: 'Выберите вариант' },
-    checkbox: { icon: '☑️', name: 'Чекбокс', defaultLabel: 'Согласен' },
-    user: { icon: '👤', name: 'Выбор пользователя', defaultLabel: 'Исполнитель' },
-    'multi-user': { icon: '👥', name: 'Выбор нескольких', defaultLabel: 'Наблюдатели' },
+    text: { icon: '', name: 'Текстовое поле', defaultLabel: 'Текстовое поле' },
+    textarea: { icon: '', name: 'Текстовая область', defaultLabel: 'Описание' },
+    number: { icon: '', name: 'Число', defaultLabel: 'Количество' },
+    date: { icon: '', name: 'Дата', defaultLabel: 'Дата' },
+    select: { icon: '', name: 'Выпадающий список', defaultLabel: 'Выберите вариант' },
+    checkbox: { icon: '', name: 'Чекбокс', defaultLabel: 'Согласен' },
+    user: { icon: '', name: 'Выбор пользователя', defaultLabel: 'Исполнитель' },
+    'multi-user': { icon: '', name: 'Выбор нескольких', defaultLabel: 'Наблюдатели' },
     // В fieldTypes добавь:
-    document: { icon: '📄', name: 'Связанный документ', defaultLabel: 'Документ' },
+    document: { icon: '', name: 'Связанный документ', defaultLabel: 'Документ' },
 };
 
 // - openTemplateBuilder()
@@ -2539,7 +2550,7 @@ function openTemplateBuilder(templateId = null) {
             renderFieldsList();
             renderTemplatePreview();
             
-            document.getElementById('templateBuilderTitle').textContent = '✏️ Редактирование шаблона';
+            document.getElementById('templateBuilderTitle').textContent = 'Редактирование шаблона';
             const idSpan = document.getElementById('templateBuilderId');
             if (idSpan) idSpan.textContent = `ID: ${templateId}`;
         }
@@ -2557,7 +2568,7 @@ function openTemplateBuilder(templateId = null) {
         currentTemplateFields = [];
         renderFieldsList();
         renderTemplatePreview();
-        document.getElementById('templateBuilderTitle').textContent = '📋 Конструктор шаблона';
+        document.getElementById('templateBuilderTitle').textContent = 'Конструктор шаблона';
         const idSpan = document.getElementById('templateBuilderId');
         if (idSpan) idSpan.textContent = '';
     }
@@ -2605,7 +2616,7 @@ function openFieldEditor(fieldIndex = null) {
     const deleteBtn = document.getElementById('deleteFieldBtn');
     
     if (field) {
-        titleEl.textContent = '✏️ Редактирование поля';
+        titleEl.textContent = 'Редактирование поля';
         deleteBtn.style.display = 'block';
         document.getElementById('fieldType').value = field.type;
         document.getElementById('fieldLabel').value = field.label;
@@ -2621,7 +2632,7 @@ function openFieldEditor(fieldIndex = null) {
             renderOptionsList(['Вариант 1']);
         }
     } else {
-        titleEl.textContent = '➕ Добавление поля';
+        titleEl.textContent = 'Добавление поля';
         deleteBtn.style.display = 'none';
         document.getElementById('fieldType').value = 'text';
         document.getElementById('fieldLabel').value = '';
@@ -2764,7 +2775,7 @@ function renderFieldsList() {
     if (allFields.length === 0) {
         container.innerHTML = `
             <div class="empty-fields">
-                <div class="empty-icon">📝</div>
+                <div class="empty-icon"></div>
                 <p>Нет добавленных полей</p>
                 <small>Нажмите "Добавить поле", чтобы создать кастомное поле</small>
             </div>
@@ -2787,10 +2798,10 @@ function renderFieldsList() {
             </div>
             <div class="field-actions">
                 ${!field.isBuiltin ? `
-                    <button onclick="openFieldEditorForCustom(${idx})" title="Редактировать">✏️</button>
-                    <button onclick="deleteCustomField(${idx})" title="Удалить">🗑️</button>
+                    <button onclick="openFieldEditorForCustom(${idx})" title="Редактировать"></button>
+                    <button onclick="deleteCustomField(${idx})" title="Удалить"></button>
                 ` : `
-                    <button onclick="openFieldEditorForBuiltin('${field.key}')" title="Настроить">⚙️</button>
+                    <button onclick="openFieldEditorForBuiltin('${field.key}')" title="Настроить"></button>
                 `}
             </div>
         </div>
@@ -2802,14 +2813,14 @@ function renderFieldsList() {
 // Иконки для типов полей
 function getFieldIcon(type) {
     const icons = {
-        text: '📝',
-        textarea: '📄',
-        number: '🔢',
-        date: '📅',
-        select: '📋',
-        checkbox: '☑️',
-        user: '👤',
-        'multi-user': '👥'
+        text: '',
+        textarea: '',
+        number: '',
+        date: '',
+        select: '',
+        checkbox: '',
+        user: '',
+        'multi-user': ''
     };
     return icons[type] || '';
 }
@@ -2836,7 +2847,7 @@ function openFieldEditorForBuiltin(fieldKey) {
     editingFieldIndex = null;
     editingBuiltinFieldKey = fieldKey;
     
-    document.getElementById('fieldEditorTitle').textContent = `⚙️ Настройка: ${field.label}`;
+    document.getElementById('fieldEditorTitle').textContent = ` Настройка: ${field.label}`;
     document.getElementById('deleteFieldBtn').style.display = 'none';
     document.getElementById('fieldType').value = field.type;
     document.getElementById('fieldType').disabled = true;  // Тип нельзя менять
@@ -2892,11 +2903,11 @@ function openFieldEditorForCustom(fieldIndex) {
     if (typeSelect && !Array.from(typeSelect.options).some(opt => opt.value === 'document')) {
         const option = document.createElement('option');
         option.value = 'document';
-        option.textContent = '📄 Связанный документ';
+        option.textContent = 'Связанный документ';
         typeSelect.appendChild(option);
     }
     
-    document.getElementById('fieldEditorTitle').textContent = '✏️ Редактирование поля';
+    document.getElementById('fieldEditorTitle').textContent = 'Редактирование поля';
     document.getElementById('deleteFieldBtn').style.display = 'block';
     document.getElementById('fieldType').disabled = false;
     document.getElementById('fieldLabel').disabled = false;
@@ -2989,7 +3000,7 @@ function renderTemplatePreview() {
     ].sort((a, b) => (a.order || 999) - (b.order || 999));
     
     if (allFields.length === 0) {
-        container.innerHTML = '<div class="empty-preview">📭 Нет полей для отображения</div>';
+        container.innerHTML = '<div class="empty-preview">Нет полей для отображения</div>';
         return;
     }
     
@@ -3062,9 +3073,9 @@ function renderPreviewField(field) {
                 inputHtml = `
                     <div class="preview-document-attachment">
                         <div class="attachment-preview">
-                            <span class="attachment-icon">📄</span>
+                            <span class="attachment-icon"></span>
                             <span class="attachment-name">${escapeHtml(value || 'Не выбран')}</span>
-                            <button class="attachment-remove" type="button" disabled>✖</button>
+                            <button class="attachment-remove" type="button" disabled></button>
                         </div>
                         <button class="attachment-select-btn" type="button" disabled>Выбрать документ</button>
                     </div>
@@ -3172,7 +3183,7 @@ function previewTemplate() {
         return;
     }
     
-    document.getElementById('templatePreviewTitle').textContent = `👁️ Предпросмотр: ${escapeHtml(name)}`;
+    document.getElementById('templatePreviewTitle').textContent = `Предпросмотр: ${escapeHtml(name)}`;
     document.getElementById('templatePreviewContent').innerHTML = document.getElementById('templatePreview')?.innerHTML || 'Нет полей';
     openModal('templateFullPreviewModal');
 }
@@ -3337,19 +3348,19 @@ function renderTemplatesGrid() {
     let allItems = [];
     
     if (currentTemplateFilter === 'all' || currentTemplateFilter === 'task') {
-        allItems.push(...allTemplates.tasks.map(t => ({ ...t, type: 'task', typeIcon: '📝', typeName: 'Задача' })));
+        allItems.push(...allTemplates.tasks.map(t => ({ ...t, type: 'task', typeIcon: '', typeName: 'Задача' })));
     }
     if (currentTemplateFilter === 'all' || currentTemplateFilter === 'document') {
-        allItems.push(...allTemplates.documents.map(t => ({ ...t, type: 'document', typeIcon: '📄', typeName: 'Документ' })));
+        allItems.push(...allTemplates.documents.map(t => ({ ...t, type: 'document', typeIcon: '', typeName: 'Документ' })));
     }
     if (currentTemplateFilter === 'all' || currentTemplateFilter === 'workflow') {
-        allItems.push(...allTemplates.workflows.map(t => ({ ...t, type: 'workflow', typeIcon: '🔄', typeName: 'Процесс' })));
+        allItems.push(...allTemplates.workflows.map(t => ({ ...t, type: 'workflow', typeIcon: '', typeName: 'Процесс' })));
     }
     
     if (allItems.length === 0) {
         container.innerHTML = `
             <div class="empty-templates">
-                <div class="empty-icon">📋</div>
+                <div class="empty-icon"></div>
                 <h3>Нет шаблонов</h3>
                 <p>Создайте свой первый шаблон, чтобы ускорить работу</p>
                 <button class="buttonbase" id="emptyStateCreateBtn">+ Создать шаблон</button>
@@ -3373,11 +3384,11 @@ function renderTemplatesGrid() {
                     <p class="template-card-desc">${escapeHtml(template.description || 'Нет описания')}</p>
                     <div class="template-card-meta">
                         <span>${template.usage_count || 0} использований</span>
-                        <span>${template.is_shared ? '👥 Общий' : '🔒 Личный'}</span>
+                        <span>${template.is_shared ? 'Общий' : 'Личный'}</span>
                         <div class="template-card-actions">
-                            <button onclick="editTemplate(${template.id}, '${template.type}')" title="Редактировать">✏️</button>
-                            <button onclick="useTemplate('${template.type}', ${template.id})" title="Использовать">🚀</button>
-                            <button onclick="deleteTemplate(${template.id}, '${template.type}')" title="Удалить">🗑️</button>
+                            <button onclick="editTemplate(${template.id}, '${template.type}')" title="Редактировать"></button>
+                            <button onclick="useTemplate('${template.type}', ${template.id})" title="Использовать"></button>
+                            <button onclick="deleteTemplate(${template.id}, '${template.type}')" title="Удалить"></button>
                         </div>
                     </div>
                 </div>
@@ -3507,7 +3518,7 @@ function addCustomFieldsToForm(fields) {
         const section = document.createElement('div');
         section.id = 'customFieldsSection';
         section.className = 'form-section';
-        section.innerHTML = '<h3>📋 Дополнительные поля</h3><div id="customFieldsContainer"></div>';
+        section.innerHTML = '<h3>Дополнительные поля</h3><div id="customFieldsContainer"></div>';
         formContainer.appendChild(section);
         customSection = section;
     }
@@ -3601,10 +3612,10 @@ async function openDocumentSelector(fieldKey) {
     
     const modalHtml = `
         <div id="documentSelectorModal" class="admin-modal" style="display: flex;">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width: 640px;">
                 <div class="modal-header">
-                    <h2>📄 Выбор документа</h2>
-                    <button class="modal-close" onclick="closeDocumentSelector()">&times;</button>
+                    <h2>Выбор документа</h2>
+                    <button class="modal-close" onclick="closeDocumentSelector()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                 </div>
                 <div class="modal-body">
                     <div class="search-box" style="margin-bottom: 16px;">
@@ -3613,7 +3624,7 @@ async function openDocumentSelector(fieldKey) {
                     <div id="documentsList" class="documents-list">
                         ${mockDocuments.map(doc => `
                             <div class="document-item" onclick="selectDocument(${doc.id}, '${escapeHtml(doc.name)}')">
-                                <div class="doc-icon">📄</div>
+                                <div class="doc-icon"></div>
                                 <div class="doc-info">
                                     <div class="doc-name">${escapeHtml(doc.name)}</div>
                                     <div class="doc-type">${doc.type}</div>
@@ -3632,7 +3643,7 @@ async function openDocumentSelector(fieldKey) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="buttonbase" onclick="closeDocumentSelector()">Отмена</button>
+                    <button class="buttonbase" onclick="closeDocumentSelector()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                     <button class="buttonbase" id="confirmDocumentBtn">Подтвердить</button>
                 </div>
             </div>
@@ -3946,7 +3957,7 @@ function renderUserSelectorList() {
     const container = document.getElementById('userSelectorList');
     
     if (filteredUsersList.length === 0) {
-        container.innerHTML = '<div class="loading-users">👥 Нет пользователей</div>';
+        container.innerHTML = '<div class="loading-users">Нет пользователей</div>';
         return;
     }
     
@@ -3964,9 +3975,9 @@ function renderUserSelectorList() {
                 <div class="user-info">
                     <div class="user-name">${escapeHtml(fullName)}</div>
                     <div class="user-details">
-                        ${user.post_name ? `📌 ${escapeHtml(user.post_name)}` : ''}
-                        ${user.department_name ? ` | 🏢 ${escapeHtml(user.department_name)}` : ''}
-                        ${user.email ? ` | 📧 ${escapeHtml(user.email)}` : ''}
+                        ${user.post_name ? `${escapeHtml(user.post_name)}` : ''}
+                        ${user.department_name ? ` | ${escapeHtml(user.department_name)}` : ''}
+                        ${user.email ? ` | ${escapeHtml(user.email)}` : ''}
                     </div>
                 </div>
                 <div class="user-badge">${user.role_id === 1 ? 'Админ' : 'Пользователь'}</div>
@@ -4055,7 +4066,7 @@ async function loadUsersList() {
         if (response.ok) {
             const data = await response.json();
             window.allUsersList = data.users || [];
-            console.log('👥 Users loaded for custom fields:', window.allUsersList.length);
+            console.log('Users loaded for custom fields:', window.allUsersList.length);
         }
     } catch (error) {
         console.error('Error loading users:', error);
@@ -4073,21 +4084,22 @@ async function loadUsersList() {
 // =====================================================
 // - Все обработчики кнопок
 document.addEventListener('DOMContentLoaded', () => {
-    // Закрытие окон - ИСПРАВЛЕННЫЙ КОД
+    // Закрытие окон
     document.querySelectorAll('.sec-btn-close').forEach(btn => {
-        btn.addEventListener('click', function(e) {  // ← function вместо стрелки
+        btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const section = this.closest('.base-section');  // ← this теперь работает
+            const section = this.closest('.base-section');
             if (section) {
                 closeWindow(section.id);
             }
         });
     });
     
-    // Закрытие модальных окон по клику на фон
+    // Закрытие модальных окон/секций по клику на фон
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('base-sec-dn-modal') || e.target.classList.contains('base-sec-tn-modal')) {
             closeAllWindowsExcept(null);
+            ensureTaskLastVisible();
         }
     });
     document.getElementById('addWorkflowBtn')?.addEventListener('click', () => openWorkflowEditor());
@@ -4176,10 +4188,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-    const defaultWindow = document.getElementById('base-section-dashboard');
+    const hasTaskDeepLink = new URLSearchParams(window.location.search).has('taskId') || new URLSearchParams(window.location.search).has('id');
+    const defaultWindow = document.getElementById('base-section-dashboard') || document.getElementById('base-section-task-last');
     if (defaultWindow) {
-        defaultWindow.style.display = 'block';
-        defaultWindow.classList.add('active');
+        openWindow(defaultWindow.id);
+        if (defaultWindow.id === 'base-section-task-last' && !hasTaskDeepLink && typeof loadRecentTasks === 'function') {
+            loadRecentTasks();
+        }
+    } else {
+        ensureTaskLastVisible();
     }
     // Маршрут согласования
     loadTasks();
@@ -4334,7 +4351,7 @@ async function loadArchivedTasks() {
 function renderTasksTable(tbody, tasks, mode) {
     if (!tasks || tasks.length === 0) {
         const cols = mode === 'archived' ? 7 : 8;
-        tbody.innerHTML = `<tr><td colspan="${cols}" class="loading-row">📭 Нет задач</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${cols}" class="loading-row">Нет задач</td></tr>`;
         return;
     }
     
@@ -4531,7 +4548,7 @@ function renderTasksTableWithSort(mode, tasks) {
     if (!config) return;
     
     if (!tasks || tasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${config.cols}" class="loading-row">📭 Нет задач</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${config.cols}" class="loading-row">Нет задач</td></tr>`;
         return;
     }
     
@@ -4867,7 +4884,7 @@ function renderCustomFieldsForCreate(fields) {
                 inputHtml = `
                     <div style="display: flex; gap: 6px;">
                         <input type="text" id="${fieldId}_display" class="task-input" placeholder="Выберите пользователя..." readonly style="flex: 1; cursor: pointer;">
-                        <button class="btn-primary" onclick="openUserSelectorForCustom('${fieldId}')" style="padding: 4px 12px; font-size: 12px;">👤</button>
+                        <button class="btn-primary" onclick="openUserSelectorForCustom('${fieldId}')" style="padding: 4px 12px; font-size: 12px;"></button>
                     </div>
                     <input type="hidden" id="${fieldId}" value="">
                 `;
@@ -4928,8 +4945,8 @@ function renderViewCustomFields(task) {
 function renderCustomFieldsWithUsers(container, customFields, usersMap) {
     const keys = Object.keys(customFields);
     
-    console.log('🔍 Rendering custom fields with users:', customFields);
-    console.log('👤 Users map:', usersMap);
+    console.log('Rendering custom fields with users:', customFields);
+    console.log('Users map:', usersMap);
     
     if (keys.length === 0) {
         container.innerHTML = '';
@@ -4941,7 +4958,7 @@ function renderCustomFieldsWithUsers(container, customFields, usersMap) {
         let displayValue = '—';
         let label = key;
         
-        console.log(`🔍 Field ${key}:`, field);
+        console.log(`Field ${key}:`, field);
         
         // Если поле — объект с типом (новая структура)
         if (field && typeof field === 'object' && field.type) {
@@ -4954,7 +4971,7 @@ function renderCustomFieldsWithUsers(container, customFields, usersMap) {
                     if (value && !isNaN(value)) {
                         const userId = parseInt(value);
                         displayValue = usersMap[userId] || value;
-                        console.log(`👤 User ${userId} -> ${displayValue}`);
+                        console.log(`User ${userId} -> ${displayValue}`);
                     } else {
                         displayValue = value || '—';
                     }
@@ -4966,7 +4983,7 @@ function renderCustomFieldsWithUsers(container, customFields, usersMap) {
                             const name = usersMap[parseInt(id)];
                             return name || id;
                         }).join(', ');
-                        console.log(`👥 Multi-user ${value} -> ${displayValue}`);
+                        console.log(`Multi-user ${value} -> ${displayValue}`);
                     } else {
                         displayValue = value || '—';
                     }
@@ -5051,7 +5068,7 @@ function updateObserversDisplay(users) {
     tagsContainer.innerHTML = (users || []).map(user => `
         <span class="task-observer-tag">
             ${escapeHtml(`${user.surname || ''} ${user.name || ''}`.trim())}
-            <button class="remove-tag" onclick="removeObserver(${user.id})">✕</button>
+            <button class="remove-tag" onclick="removeObserver(${user.id})"></button>
         </span>
     `).join('');
     
@@ -5160,7 +5177,7 @@ async function submitTaskCreate() {
         
         if (response.ok) {
             const data = await response.json();
-            showToast('✅ Задача создана', 'success');
+            showToast('Задача создана', 'success');
             closeTaskCreate();
             await loadTasks();
             await loadCalendarEvents();
@@ -5187,8 +5204,7 @@ async function submitTaskCreate() {
 
 function closeTaskCreate() {
     closeWindow('base-section-task-create');
-    // Возвращаемся к дашборду
-    openWindow('base-section-dashboard');
+    openWindow('base-section-task-last');
 }
 
 
@@ -5252,7 +5268,7 @@ function openTaskCreate() {
 
 function closeTaskCreate() {
     closeWindow('base-section-task-create');
-    openWindow('base-section-dashboard');
+    openWindow('base-section-task-last');
 }
 
 function fillCreateFromTemplate(templateData) {
@@ -5388,7 +5404,7 @@ function renderCreateCustomFields(fields) {
                                 onclick="openUserSelectorForCustom('${fieldId}')" 
                                 type="button"
                                 title="Выбрать пользователя">
-                            👤
+                            
                         </button>
                     </div>
                     <input type="hidden" 
@@ -5413,7 +5429,7 @@ function renderCreateCustomFields(fields) {
                                 onclick="openUserSelectorForCustomMulti('${fieldId}')" 
                                 type="button"
                                 title="Выбрать пользователей">
-                            👥
+                            
                         </button>
                     </div>
                     <input type="hidden" 
@@ -5480,7 +5496,7 @@ function openUserSelectorForCustomMulti(fieldId) {
                 tagsContainer.innerHTML = users.map(u => `
                     <span class="task-tag">
                         ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
-                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})">✕</button>
+                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})"></button>
                     </span>
                 `).join('');
             }
@@ -5526,7 +5542,7 @@ function removeCustomUserTag(fieldId, userId) {
                 tagsContainer.innerHTML = users.map(u => `
                     <span class="task-tag">
                         ${escapeHtml(String(u.name))}
-                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})">✕</button>
+                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})"></button>
                     </span>
                 `).join('');
             });
@@ -5544,7 +5560,7 @@ function openTaskEdit(taskId) {
 
 function closeTaskEdit() {
     closeWindow('base-section-task-edit');
-    openWindow('base-section-dashboard');
+    openWindow('base-section-task-last');
 }
 
 async function fetchTaskForEdit(taskId) {
@@ -5829,7 +5845,7 @@ function updateCreateObservers(users) {
         tags.innerHTML = users.map(u => `
             <span class="task-tag">
                 ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
-                <button class="tag-remove" onclick="removeCreateObserver(${u.id})">✕</button>
+                <button class="tag-remove" onclick="removeCreateObserver(${u.id})"></button>
             </span>
         `).join('');
     } else {
@@ -5977,8 +5993,7 @@ function openTaskView(taskId) {
 
 function closeTaskView() {
     closeWindow('base-section-task-view');
-    // Возвращаемся к дашборду
-    openWindow('base-section-dashboard');
+    openWindow('base-section-task-last');
 }
 
 async function fetchTaskForView(taskId) {
@@ -6009,7 +6024,7 @@ async function fetchTaskForView(taskId) {
 function renderTaskView(task) {
     window.currentViewTask = task;
     // Заголовок
-    document.getElementById('taskViewTitle').textContent = '📋 Задача';
+    document.getElementById('taskViewTitle').textContent = 'Задача';
     document.getElementById('taskViewId').textContent = `№${task.id}`;
     document.getElementById('taskViewTitleDisplay').textContent = task.title || 'Без названия';
     
@@ -6078,9 +6093,9 @@ function updateViewStatusBadge(status) {
     const badge = document.getElementById('taskViewStatusBadge');
     const map = {
         pending: { label: '⏳ Ожидает', style: 'background: #fef3c7; color: #d97706;' },
-        in_progress: { label: '🔄 В работе', style: 'background: #dbeafe; color: #2563eb;' },
-        completed: { label: '✅ Выполнена', style: 'background: #d1fae5; color: #059669;' },
-        cancelled: { label: '❌ Отменена', style: 'background: #fee2e2; color: #dc2626;' }
+        in_progress: { label: 'В работе', style: 'background: #dbeafe; color: #2563eb;' },
+        completed: { label: 'Выполнена', style: 'background: #d1fae5; color: #059669;' },
+        cancelled: { label: 'Отменена', style: 'background: #fee2e2; color: #dc2626;' }
     };
     const info = map[status] || map.pending;
     badge.textContent = info.label;
@@ -6128,12 +6143,12 @@ function renderViewCustomFields(task) {
         }
     });
     
-    console.log('👥 User IDs from custom fields:', Array.from(userIds));
+    console.log('User IDs from custom fields:', Array.from(userIds));
     
     // Если есть пользователи — загружаем их
     if (userIds.size > 0) {
         loadUsersByIds(Array.from(userIds), (usersMap) => {
-            console.log('👤 Users map:', usersMap);
+            console.log('Users map:', usersMap);
             renderCustomFieldsWithUsers(container, customFields, usersMap);
         });
     } else {
@@ -6154,7 +6169,7 @@ async function loadUsersByIds(userIds, callback) {
         }
         
         const idsParam = userIds.join(',');
-        console.log('🔍 Loading users by ids:', idsParam);
+        console.log('Loading users by ids:', idsParam);
         
         // Маршрут в userRoutes.js — /api/users/batch
         const response = await fetch(`/api/task/userscard?ids=${idsParam}`, {
@@ -6166,7 +6181,7 @@ async function loadUsersByIds(userIds, callback) {
         
         if (response.ok) {
             const data = await response.json();
-            console.log('👥 Users loaded:', data.users);
+            console.log('Users loaded:', data.users);
             const usersMap = {};
             data.users.forEach(u => {
                 usersMap[u.id] = `${u.surname || ''} ${u.name || ''}`.trim() || u.username || 'Пользователь';
@@ -6314,3 +6329,37 @@ async function deleteTaskView(taskId) {
         showToast('Ошибка удаления', 'error');
     }
 }
+function handleTaskDeepLink() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const taskIdRaw = params.get('taskId') || params.get('id');
+        if (!taskIdRaw) return;
+
+        const taskId = /^\d+$/.test(taskIdRaw) ? parseInt(taskIdRaw, 10) : taskIdRaw;
+
+        params.delete('taskId');
+        params.delete('id');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+
+        const openTask = () => {
+            if (typeof openTaskView === 'function') {
+                openTaskView(taskId);
+            } else {
+                if (typeof openWindow === 'function') openWindow('base-section-task-last');
+                if (typeof loadRecentTasks === 'function') loadRecentTasks();
+            }
+        };
+
+        setTimeout(openTask, 0);
+    } catch (e) {
+        console.error('Task deep link error:', e);
+        try {
+            if (typeof openWindow === 'function') openWindow('base-section-task-last');
+            if (typeof loadRecentTasks === 'function') loadRecentTasks();
+        } catch (_) {}
+    }
+}
+
+document.addEventListener('DOMContentLoaded', handleTaskDeepLink);

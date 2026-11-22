@@ -24,6 +24,7 @@
                 <img src="../materials/icons8-главная-96.png" alt="workspace">
                 <span>Главная</span>
             </a>
+            <a href="../html/department.html" class="menu-item" data-page="department" id="menuMyDepartment" style="display:none;"><img src="../materials/icons8-отдел-96.png" alt="department"><span>Мой отдел</span></a>
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
                 <img src="../materials/icons8-администрирование-96.png" alt="admin">
                 <span>Администрирование</span>
@@ -108,7 +109,7 @@
                 <!-- Вкладка "Контакты" -->
                 <section class="list-tab contacts-tab" id="contactsTab" style="display: none;">
                     <button class="btn-find-users" onclick="chatManager.openFindUsersModal()" style="width: 100%; padding: 10px; margin-bottom: 15px; background: var(--c_acc); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                        🔍 Найти людей
+                        Найти людей
                     </button>
 
                     <div id="incomingRequestsBlock" style="display: none; margin-bottom: 20px;">
@@ -188,8 +189,8 @@
                             <div class="attachments-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                         </div>
                         <div class="editing-indicator" style="display: none; padding: 8px 12px; background: var(--c_acchalf, rgba(81,148,255,0.1)); border-radius: 12px; margin-bottom: 8px;">
-                            <span>✏️ Редактирование сообщения</span>
-                            <button class="cancel-edit-btn" style="margin-left: auto; background: none; border: none; cursor: pointer;">❌</button>
+                            <span><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактирование сообщения</span>
+                            <button class="cancel-edit-btn" style="margin-left: auto; background: none; border: none; cursor: pointer;"></button>
                         </div>
                     </div>
                     <div class="chat-input">
@@ -262,7 +263,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h3>Новый чат</h3>
-                <button class="modal-close" id="closeModalBtn">&times;</button>
+                <button class="modal-close" id="closeModalBtn"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -287,12 +288,12 @@
                     <div id="userListContainer" class="user-list">
                         <div style="padding: 20px; text-align: center; color: #999;">Загрузка пользователей...</div>
                     </div>
-                    <div class="hint-text">✓ Нажмите на пользователя, чтобы выбрать</div>
+                    <div class="hint-text"> Нажмите на пользователя, чтобы выбрать</div>
                 </div>
             </div>
             
             <div class="modal-footer">
-                <button class="buttonbase btn-secondary" id="cancelModalBtn">Отмена</button>
+                <button class="buttonbase btn-secondary" id="cancelModalBtn"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" id="createChatSubmitBtn">Создать</button>
             </div>
         </div>
@@ -300,15 +301,15 @@
     <div id="editMessageModal" class="custom-modal" style="display: none;">
         <div class="custom-modal-content">
             <div class="custom-modal-header">
-                <h3>✏️ Редактирование сообщения</h3>
-                <button class="custom-modal-close" onclick="closeEditModal()">&times;</button>
+                <h3><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактирование сообщения</h3>
+                <button class="custom-modal-close" onclick="closeEditModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <textarea id="editMessageInput" rows="4" placeholder="Введите текст сообщения..."></textarea>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase" onclick="closeEditModal()">Отмена</button>
-                <button class="buttonbase" id="saveEditBtn">Сохранить</button>
+                <button class="buttonbase" onclick="closeEditModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="saveEditBtn"><img src="../materials/icons8-сохранить-96.png" class="ui-icon ui-icon-inline" alt=""> Сохранить</button>
             </div>
         </div>
     </div>
@@ -317,15 +318,15 @@
     <div id="reportMessageModal" class="custom-modal" style="display: none;">
         <div class="custom-modal-content">
             <div class="custom-modal-header">
-                <h3>⚠️ Пожаловаться на сообщение</h3>
-                <button class="custom-modal-close" onclick="closeReportModal()">&times;</button>
+                <h3> Пожаловаться на сообщение</h3>
+                <button class="custom-modal-close" onclick="closeReportModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <textarea id="reportReasonInput" rows="3" placeholder="Укажите причину жалобы..."></textarea>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase" onclick="closeReportModal()">Отмена</button>
-                <button class="buttonbase" id="sendReportBtn">Отправить жалобу</button>
+                <button class="buttonbase" onclick="closeReportModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="sendReportBtn"><img src="../materials/icons8-отправить-80.png" class="ui-icon ui-icon-inline" alt=""> Отправить жалобу</button>
             </div>
         </div>
     </div>
@@ -333,16 +334,16 @@
     <div id="confirmDeleteModal" class="custom-modal" style="display: none;">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h3>🗑️ Подтверждение удаления</h3>
-                <button class="modal-close" onclick="closeConfirmDeleteModal()">&times;</button>
+                <h3> Подтверждение удаления</h3>
+                <button class="modal-close" onclick="closeConfirmDeleteModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <p>Вы уверены, что хотите удалить это сообщение?</p>
                 <p style="font-size: 12px; color: #999; margin-top: 10px;">Это действие нельзя отменить.</p>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeConfirmDeleteModal()">Отмена</button>
-                <button class="buttonbase" id="confirmDeleteBtn" style="background-color: #dc3545;">Удалить</button>
+                <button class="buttonbase" onclick="closeConfirmDeleteModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="confirmDeleteBtn" style="background-color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить</button>
             </div>
         </div>
     </div>   
@@ -350,8 +351,8 @@
     <div id="createFolderModal" class="custom-modal" style="display: none;">
         <div class="custom-modal-content">
             <div class="custom-modal-header">
-                <h3>📁 Создание папки</h3>
-                <button class="custom-modal-close" onclick="closeCreateFolderModal()">&times;</button>
+                <h3><img src="../materials/icons8-папка-120.png" class="ui-icon ui-icon-inline" alt=""> Создание папки</h3>
+                <button class="custom-modal-close" onclick="closeCreateFolderModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <div class="form-group">
@@ -360,7 +361,7 @@
                 </div>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase btn-secondary" onclick="closeCreateFolderModal()">Отмена</button>
+                <button class="buttonbase btn-secondary" onclick="closeCreateFolderModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" id="confirmCreateFolderBtn">Создать</button>
             </div>
         </div>
@@ -369,8 +370,8 @@
     <div id="editFolderModal" class="custom-modal" style="display: none;">
         <div class="custom-modal-content">
             <div class="custom-modal-header">
-                <h3>✏️ Переименовать папку</h3>
-                <button class="custom-modal-close" onclick="closeEditFolderModal()">&times;</button>
+                <h3><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Переименовать папку</h3>
+                <button class="custom-modal-close" onclick="closeEditFolderModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <div class="form-group">
@@ -379,8 +380,8 @@
                 </div>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase btn-secondary" onclick="closeEditFolderModal()">Отмена</button>
-                <button class="buttonbase" id="confirmEditFolderBtn">Сохранить</button>
+                <button class="buttonbase btn-secondary" onclick="closeEditFolderModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="confirmEditFolderBtn"><img src="../materials/icons8-сохранить-96.png" class="ui-icon ui-icon-inline" alt=""> Сохранить</button>
             </div>
         </div>
     </div>
@@ -389,25 +390,25 @@
     <div id="deleteFolderModal" class="custom-modal" style="display: none;">
         <div class="custom-modal-content" style="max-width: 400px;">
             <div class="custom-modal-header">
-                <h3>🗑️ Удалить папку</h3>
-                <button class="custom-modal-close" onclick="closeDeleteFolderModal()">&times;</button>
+                <h3> Удалить папку</h3>
+                <button class="custom-modal-close" onclick="closeDeleteFolderModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <p>Вы уверены, что хотите удалить эту папку?</p>
                 <p style="font-size: 12px; color: #999;">Чаты не будут удалены, они останутся в разделе "Все чаты".</p>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase btn-secondary" onclick="closeDeleteFolderModal()">Отмена</button>
-                <button class="buttonbase" id="confirmDeleteFolderBtn" style="background-color: #dc3545;">Удалить</button>
+                <button class="buttonbase btn-secondary" onclick="closeDeleteFolderModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="confirmDeleteFolderBtn" style="background-color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить</button>
             </div>
         </div>
     </div>
     <!-- Модалка поиска людей -->
     <div id="findUsersModal" class="custom-modal" style="display: none;">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 640px;">
             <div class="modal-header">
-                <h2>🔍 Поиск людей</h2>
-                <button class="modal-close" onclick="document.getElementById('findUsersModal').style.display='none'">&times;</button>
+                <h2>Поиск людей</h2>
+                <button class="modal-close" onclick="document.getElementById('findUsersModal').style.display='none'"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <input type="text" id="findUsersSearch" class="form-input" placeholder="Введите имя или email..." 

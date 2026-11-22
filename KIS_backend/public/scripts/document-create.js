@@ -77,13 +77,13 @@ async function renderDocTypesStep(container) {
         // Формируем HTML
         let html = `
             <div class="section-header">
-                <h2>📄 Новый документ — выберите тип</h2>
+                <h2> Новый документ — выберите тип</h2>
                 <div class="table-controls">
                     <div class="search-box">
-                        <input type="text" id="docTypeSearch" placeholder="🔍 Поиск по типам..." class="search-input" oninput="filterDocTypeCards(this.value)">
+                        <input type="text" id="docTypeSearch" placeholder=" Поиск по типам..." class="search-input" oninput="filterDocTypeCards(this.value)">
                     </div>
                     <button class="sec-btn-close" onclick="closeWindow('base-section-doc-new')">
-                        <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                        <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                     </button>
                 </div>
             </div>
@@ -94,7 +94,7 @@ async function renderDocTypesStep(container) {
         // Первая карточка — «Простой документ»
         html += `
             <button class="type-list-elem" data-type-id="__simple__" onclick="selectSimpleDocument()">
-                <div class="type-icon">📝</div>
+                <div class="type-icon"></div>
                 <h4>Простой документ</h4>
                 <p class="type-desc">Создать документ без шаблона — только название и описание</p>
                 <div class="type-meta">Базовые поля</div>
@@ -105,7 +105,7 @@ async function renderDocTypesStep(container) {
         for (const type of types) {
             const templatesCount = type.templates_count || 0;
             const hasTemplates = templatesCount > 0;
-            const icon = type.icon ? `<img src="../materials/document-icons/${type.icon}" alt="" onerror="this.parentElement.innerHTML='📄'">` : '📄';
+            const icon = type.icon ? `<img src="../materials/document-icons/${type.icon}" alt="" onerror="this.parentElement.innerHTML=''">` : '';
             
             const metaText = hasTemplates 
                 ? `${templatesCount} ${plural(templatesCount, ['шаблон', 'шаблона', 'шаблонов'])}`
@@ -137,14 +137,14 @@ async function renderDocTypesStep(container) {
         if (types.length === 0) {
             html = `
                 <div class="section-header">
-                    <h2>📄 Новый документ</h2>
+                    <h2> Новый документ</h2>
                     <button class="sec-btn-close" onclick="closeWindow('base-section-doc-new')">
-                        <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                        <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                     </button>
                 </div>
                 <div class="type-list">
                     <button class="type-list-elem" onclick="selectSimpleDocument()">
-                        <div class="type-icon">📝</div>
+                        <div class="type-icon"></div>
                         <h4>Простой документ</h4>
                         <p class="type-desc">Создать документ без шаблона — только название и описание</p>
                         <div class="type-meta">Базовые поля</div>
@@ -162,13 +162,13 @@ async function renderDocTypesStep(container) {
         console.error('Render doc types step error:', error);
         container.innerHTML = `
             <div class="section-header">
-                <h2>📄 Новый документ</h2>
+                <h2> Новый документ</h2>
                 <button class="sec-btn-close" onclick="closeWindow('base-section-doc-new')">
-                    <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                    <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                 </button>
             </div>
             <div style="padding: 40px; text-align: center; color: var(--c_error);">
-                ❌ ${escapeHtml(error.message)}
+                 ${escapeHtml(error.message)}
             </div>
         `;
     }
@@ -201,14 +201,14 @@ async function renderDocTemplatesStep(container, type) {
                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                         </svg>
                     </button>
-                    <h2>📋 ${escapeHtml(type.name)} — выберите шаблон</h2>
+                    <h2> ${escapeHtml(type.name)} — выберите шаблон</h2>
                 </div>
                 <div class="table-controls">
                     <div class="search-box">
-                        <input type="text" id="docTemplateSearch" placeholder="🔍 Поиск по шаблонам..." class="search-input" oninput="filterDocTemplateCards(this.value)">
+                        <input type="text" id="docTemplateSearch" placeholder=" Поиск по шаблонам..." class="search-input" oninput="filterDocTemplateCards(this.value)">
                     </div>
                     <button class="sec-btn-close" onclick="closeWindow('base-section-doc-new')">
-                        <img src="../materials/icons8-закрыть-80.png" alt="Закрыть">
+                        <img src="../materials/icons8-закрыть-96.png" alt="Закрыть">
                     </button>
                 </div>
             </div>
@@ -218,14 +218,14 @@ async function renderDocTemplatesStep(container, type) {
         
         for (const tmpl of templates) {
             const fieldsCount = tmpl.template_data?.fields?.length || 0;
-            const hasDocx = tmpl.template_file_uri ? '📎' : '⚠️';
+            const hasDocx = tmpl.template_file_uri ? '' : '';
             
             html += `
                 <button class="type-list-elem" 
                         data-template-id="${tmpl.id}"
                         data-template-name="${escapeHtmlAttr(tmpl.name)}"
                         onclick="selectDocumentTemplate(${tmpl.id})">
-                    <div class="type-icon">📋</div>
+                    <div class="type-icon"></div>
                     <h4>${escapeHtml(tmpl.name)}</h4>
                     <p class="type-desc">${escapeHtml(tmpl.description || 'Без описания')}</p>
                     <div class="type-meta">${hasDocx} ${fieldsCount} ${plural(fieldsCount, ['поле', 'поля', 'полей'])}</div>
@@ -244,7 +244,7 @@ async function renderDocTemplatesStep(container, type) {
                 <h2>Ошибка</h2>
             </div>
             <div style="padding: 40px; text-align: center; color: var(--c_error);">
-                ❌ ${escapeHtml(error.message)}
+                 ${escapeHtml(error.message)}
             </div>
         `;
     }
@@ -364,12 +364,12 @@ function filterDocTemplateCards(searchText) {
 
 function openDocumentCardSimple() {
     // Простой документ — только название и описание
-    document.getElementById('docEditorTitle').textContent = '📄 Новый документ';
+    document.getElementById('docEditorTitle').textContent = ' Новый документ';
     document.getElementById('docEditorTypeName').textContent = 'Простой документ';
     document.getElementById('docEditorTemplateName').textContent = 'Без шаблона';
     
     const badge = document.getElementById('docEditorStatusBadge');
-    badge.textContent = '📝 Черновик';
+    badge.textContent = ' Черновик';
     badge.className = 'doc-editor-status-badge draft';
     
     docCreateState.fieldValues = {};
@@ -386,12 +386,12 @@ function openDocumentCardWithTemplate(template, type) {
     docCreateState.selectedTemplate = template;
     docCreateState.fieldValues = {};
     
-    document.getElementById('docEditorTitle').textContent = '📄 Новый документ';
+    document.getElementById('docEditorTitle').textContent = ' Новый документ';
     document.getElementById('docEditorTypeName').textContent = type?.name || '—';
     document.getElementById('docEditorTemplateName').textContent = template?.name || 'Без шаблона';
     
     const badge = document.getElementById('docEditorStatusBadge');
-    badge.textContent = '📝 Черновик';
+    badge.textContent = ' Черновик';
     badge.className = 'doc-editor-status-badge draft';
     
     // Инициализируем значения полей дефолтными
@@ -493,7 +493,7 @@ function renderDocumentForm() {
                 inputHtml = `<div class="doc-form-user-picker">
                     <button type="button" class="doc-form-user-display" 
                             onclick="openUserSelectorForDocField('${escapeHtmlAttr(field.key)}')">
-                        ${value ? escapeHtml(value.full_name || value) : '👤 Выбрать пользователя'}
+                        ${value ? escapeHtml(value.full_name || value) : ' Выбрать пользователя'}
                     </button>
                 </div>`;
                 break;
@@ -501,7 +501,7 @@ function renderDocumentForm() {
                 inputHtml = `<div class="doc-form-user-picker">
                     <button type="button" class="doc-form-user-display" 
                             onclick="openCounterpartySelectorForDocField('${escapeHtmlAttr(field.key)}')">
-                        ${value ? escapeHtml(value.name || value) : '🏢 Выбрать контрагента'}
+                        ${value ? escapeHtml(value.name || value) : ' Выбрать контрагента'}
                     </button>
                 </div>`;
                 break;
@@ -547,7 +547,7 @@ async function refreshDocumentPreview() {
     if (!template || !template.template_file_uri) {
         container.innerHTML = `
             <div class="doc-preview-empty">
-                <div class="doc-preview-empty-icon">📄</div>
+                <div class="doc-preview-empty-icon"></div>
                 <div class="doc-preview-empty-text">Предпросмотр недоступен</div>
             </div>
         `;
@@ -589,7 +589,7 @@ async function refreshDocumentPreview() {
         if (!rawHtml || rawHtml.trim() === '') {
             container.innerHTML = `
                 <div class="doc-preview-empty">
-                    <div class="doc-preview-empty-icon">📄</div>
+                    <div class="doc-preview-empty-icon"></div>
                     <div class="doc-preview-empty-text">Пустой документ</div>
                 </div>
             `;
@@ -602,7 +602,7 @@ async function refreshDocumentPreview() {
         console.error('Preview error:', error);
         container.innerHTML = `
             <div class="doc-preview-empty">
-                <div class="doc-preview-empty-icon">⚠️</div>
+                <div class="doc-preview-empty-icon"></div>
                 <div class="doc-preview-empty-text">Не удалось создать превью</div>
             </div>
         `;
@@ -819,15 +819,15 @@ function openCounterpartyPickerModal(counterparties, fieldKey) {
     modal.style.display = 'flex';
     
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
+        <div class="modal-content" style="max-width: 920px; max-height: 80vh;">
             <div class="modal-header">
-                <h2>🏢 Выбор контрагента</h2>
-                <button class="modal-close" onclick="closeCounterpartyPickerModal()">&times;</button>
+                <h2> Выбор контрагента</h2>
+                <button class="modal-close" onclick="closeCounterpartyPickerModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <div class="search-box" style="margin-bottom: 16px;">
                     <input type="text" id="cpPickerSearch" class="form-input" 
-                           placeholder="🔍 Поиск по названию или ИНН..." 
+                           placeholder=" Поиск по названию или ИНН..." 
                            oninput="filterCounterpartyPicker(this.value)">
                 </div>
                 <div id="cpPickerList" style="max-height: 400px; overflow-y: auto;">
@@ -849,7 +849,7 @@ function openCounterpartyPickerModal(counterparties, fieldKey) {
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeCounterpartyPickerModal()">Отмена</button>
+                <button class="buttonbase" onclick="closeCounterpartyPickerModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
             </div>
         </div>
     `;

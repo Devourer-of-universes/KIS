@@ -23,6 +23,7 @@
                 <img src="../materials/icons8-главная-96.png" alt="workspace">
                 <span>Главная</span>
             </a>
+            <a href="../html/department.html" class="menu-item" data-page="department" id="menuMyDepartment" style="display:none;"><img src="../materials/icons8-отдел-96.png" alt="department"><span>Мой отдел</span></a>
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
                 <img src="../materials/icons8-администрирование-96.png" alt="admin">
                 <span>Администрирование</span>
@@ -91,7 +92,7 @@
 
     <div class="admin-container">
         <header class="admin-header">
-            <h1>⚙️ Панель администратора</h1>
+            <h1><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Панель администратора</h1>
             <div class="admin-stats">
                 <div class="stat-card">
                     <span class="stat-number">24</span>
@@ -110,14 +111,14 @@
 
         <main class="admin-main">
             <nav class="admin-nav">
-                <button class="nav-btn active" data-section="users" id="nav-btn-users">👥 Пользователи</button>
-                <button class="nav-btn" data-section="templates" id="nav-btn-templates">📝 Шаблоны</button>
-                <button class="nav-btn" data-section="system" id="nav-btn-system">⚙️ Система</button>
-                <button class="nav-btn" data-section="reports" id="nav-btn-reports">📊 Отчёты</button>
+                <button class="nav-btn active" data-section="users" id="nav-btn-users"><img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Пользователи</button>
+                <button class="nav-btn" data-section="templates" id="nav-btn-templates"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Шаблоны</button>
+                <button class="nav-btn" data-section="system" id="nav-btn-system"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Система</button>
+                <button class="nav-btn" data-section="reports" id="nav-btn-reports"><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Отчёты</button>
                 <button class="nav-btn" data-section="structure" id="nav-btn-structure"> Структура</button>
                 <button class="nav-btn" data-section="roles" id="nav-btn-roles"> Роли</button>
-                <button class="nav-btn" data-section="notifications" id="nav-btn-notifications">🔔 Уведомления</button>
-                <button class="nav-btn" data-section="documents" id="nav-btn-documents" style="display: none;">📄 Документооборот</button>
+                <button class="nav-btn" data-section="notifications" id="nav-btn-notifications"><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> Уведомления</button>
+                <button class="nav-btn" data-section="documents" id="nav-btn-documents" style="display: none;"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документооборот</button>
             </nav>
             <div class="admin-content">
                 <section id="users-section" class="admin-section active">
@@ -160,9 +161,9 @@
                                     </td>
                                     <td><span class="status-badge status-active">Активен</span></td>
                                     <td>
-                                        <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal()">✎</button>
-                                        <button class="btn-icon buttonbase" title="Заблокировать" onclick="openModal('blockUserModal')">🔒</button>
-                                        <button class="btn-icon buttonbase" title="Инфо" onclick="openUserInfo('U001')">ℹ️</button>
+                                        <button class="btn-icon buttonbase" title="Редактировать" onclick="openUserModal()"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-sm" alt=""></button>
+                                        <button class="btn-icon buttonbase" title="Заблокировать" onclick="openModal('blockUserModal')"><img src="../materials/icons8-замок-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                        <button class="btn-icon buttonbase" title="Инфо" onclick="openUserInfo('U001')"><img src="../materials/icons8-информация-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                                     </td>
                                 </tr>
                                 <!-- другие пользователи -->
@@ -188,9 +189,9 @@
                                 <span>Обновлён: 15.01.2024</span>
                             </div>
                             <div class="template-actions">
-                                <button class="buttonbase" onclick="openModal('templateEditorModal')">Редактировать</button>
+                                <button class="buttonbase" onclick="openModal('templateEditorModal')"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Редактировать</button>
                                 <button class="buttonbase">Дублировать</button>
-                                <button class="buttonbase">🗑️</button>
+                                <button class="buttonbase"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить</button>
                             </div>
                         </div>
                         <!-- другие шаблоны -->
@@ -198,10 +199,10 @@
                 </section>
                 <section id="system-section" class="admin-section">
                     <div class="section-header">
-                        <h2>⚙️ Системные настройки</h2>
+                        <h2><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Системные настройки</h2>
                         <div>
                             <button class="buttonbase" id="resetSettingsBtn" style="background-color: #6c757d;">↺ Сбросить</button>
-                            <button class="buttonbase" id="saveSystemSettings">💾 Сохранить настройки</button>
+                            <button class="buttonbase" id="saveSystemSettings">Сохранить настройки</button>
                         </div>
                     </div>
 
@@ -210,41 +211,84 @@
                     </div>
                 </section>
                 <section id="reports-section" class="admin-section">
-                    <div class="section-header">
-                        <h2>Аналитика и отчёты</h2>
+                    <div class="section-header reports-header">
+                        <div>
+                            <h2>Аналитика и отчёты</h2>
+                            <p class="reports-subtitle">Показатели компании за выбранный период</p>
+                        </div>
+                        <div class="reports-toolbar">
+                            <label class="reports-period-label">Период
+                                <select id="reportsPeriodSelect" class="reports-select">
+                                    <option value="7">7 дней</option>
+                                    <option value="30" selected>30 дней</option>
+                                    <option value="90">90 дней</option>
+                                    <option value="365">365 дней</option>
+                                    <option value="custom">Свой период</option>
+                                </select>
+                            </label>
+                            <label class="reports-period-label reports-custom-date" id="reportsFromWrap" style="display:none;">С
+                                <input type="date" id="reportsFromDate" class="reports-input">
+                            </label>
+                            <label class="reports-period-label reports-custom-date" id="reportsToWrap" style="display:none;">По
+                                <input type="date" id="reportsToDate" class="reports-input">
+                            </label>
+                            <button class="buttonbase" id="reportsRefreshBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                            <button class="buttonbase" id="reportsExportBtn"><img src="../materials/icons8-загрузить-96.png" class="ui-icon ui-icon-inline" alt=""> Выгрузить</button>
+                        </div>
                     </div>
 
-                    <div class="reports-dashboard">
-                        <div class="metric-cards">
-                            <div class="metric-card">
-                                <span class="metric-value">156</span>
-                                <span class="metric-label">Документов за месяц</span>
-                            </div>
-                            <div class="metric-card">
-                                <span class="metric-value">3.2д</span>
-                                <span class="metric-label">Среднее время согласования</span>
-                            </div>
-                            <div class="metric-card">
-                                <span class="metric-value">87%</span>
-                                <span class="metric-label">Эффективность workflow</span>
-                            </div>
+                    <div class="reports-dashboard" id="reportsDashboard">
+                        <div class="reports-loading" id="reportsLoading">Загрузка аналитики...</div>
+
+                        <div class="metric-cards" id="reportsKpis" style="display:none;">
+                            <div class="metric-card"><span class="metric-value" id="kpiDocsPeriod">—</span><span class="metric-label">Документов за период</span></div>
+                            <div class="metric-card"><span class="metric-value" id="kpiTasksPeriod">—</span><span class="metric-label">Задач за период</span></div>
+                            <div class="metric-card"><span class="metric-value" id="kpiCompletedTasks">—</span><span class="metric-label">Задач завершено</span></div>
+                            <div class="metric-card"><span class="metric-value" id="kpiActiveUsers">—</span><span class="metric-label">Активных пользователей</span></div>
+                            <div class="metric-card"><span class="metric-value" id="kpiNewUsers">—</span><span class="metric-label">Новых пользователей</span></div>
+                            <div class="metric-card"><span class="metric-value" id="kpiAvgApproval">—</span><span class="metric-label">Среднее согласование</span></div>
                         </div>
 
-                        <div class="report-actions">
-                            <button class="buttonbase">📊 Отчёт по документам</button>
-                            <button class="buttonbase">👥 Отчёт по пользователям</button>
-                            <button class="buttonbase">🔄 Анализ процессов</button>
+                        <div class="reports-charts-grid" id="reportsChartsGrid" style="display:none;">
+                            <div class="report-chart-card">
+                                <div class="report-chart-title">Документы по статусам</div>
+                                <div class="report-chart-wrap"><canvas id="chartDocsStatus"></canvas></div>
+                            </div>
+                            <div class="report-chart-card">
+                                <div class="report-chart-title">Задачи по статусам</div>
+                                <div class="report-chart-wrap"><canvas id="chartTasksStatus"></canvas></div>
+                            </div>
+                            <div class="report-chart-card report-chart-wide">
+                                <div class="report-chart-title">Динамика документов</div>
+                                <div class="report-chart-wrap"><canvas id="chartDocsOverTime"></canvas></div>
+                            </div>
+                            <div class="report-chart-card report-chart-wide">
+                                <div class="report-chart-title">Динамика задач</div>
+                                <div class="report-chart-wrap"><canvas id="chartTasksOverTime"></canvas></div>
+                            </div>
+                            <div class="report-chart-card">
+                                <div class="report-chart-title">Документы по типам</div>
+                                <div class="report-chart-wrap"><canvas id="chartDocsByType"></canvas></div>
+                            </div>
+                            <div class="report-chart-card">
+                                <div class="report-chart-title">Задачи по приоритету</div>
+                                <div class="report-chart-wrap"><canvas id="chartTasksPriority"></canvas></div>
+                            </div>
+                            <div class="report-chart-card report-chart-wide">
+                                <div class="report-chart-title">Активность сообщений</div>
+                                <div class="report-chart-wrap"><canvas id="chartMessagesOverTime"></canvas></div>
+                            </div>
                         </div>
                     </div>
                 </section>
                 <section id="structure-section" class="admin-section">
                     <div class="structure-container">
                         <header class="structure-header">
-                            <h2>🏢 Структура организации</h2>
+                            <h2>Структура организации</h2>
                             <div class="structure-main-buttons">
                                 <button class="buttonbase" id="addMainDepartmentBtn">+ Добавить подразделение</button>
-                                <button class="buttonbase" id="collapseAllBtn">Свернуть все</button>
-                                <button class="buttonbase" id="expandAllBtn">Развернуть все</button>
+                                <button class="buttonbase" id="collapseAllBtn"><img src="../materials/icons8-collapse-arrow-96.png" class="ui-icon ui-icon-inline" alt=""> Свернуть все</button>
+                                <button class="buttonbase" id="expandAllBtn"><img src="../materials/icons8-развернуть-96.png" class="ui-icon ui-icon-inline" alt=""> Развернуть все</button>
                             </div>
                         </header>
                         <div class="structure-content" id="structureContent">
@@ -254,7 +298,7 @@
                 </section>
                 <section id="roles-section" class="admin-section">
                     <div class="section-header">
-                        <h2>👑 Управление ролями</h2>
+                        <h2>Управление ролями</h2>
                         <button class="buttonbase" id="addRoleBtn">+ Создать роль</button>
                     </div>
                     
@@ -265,7 +309,7 @@
                 <!-- Секция уведомлений -->
                 <section id="notifications-section" class="admin-section">
                     <div class="section-header">
-                        <h2>🔔 Управление уведомлениями</h2>
+                        <h2><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> Управление уведомлениями</h2>
                         <button class="buttonbase" id="createNotificationBtn">+ Создать уведомление</button>
                     </div>
 
@@ -273,13 +317,13 @@
                     <div class="notifications-admin-filters">
                         <div class="filter-group">
                             <button class="admin-filter-btn active" data-filter="all" onclick="filterAdminNotifications('all')">Все</button>
-                            <button class="admin-filter-btn" data-filter="admin" onclick="filterAdminNotifications('admin')">📢 Админ</button>
-                            <button class="admin-filter-btn" data-filter="task" onclick="filterAdminNotifications('task')">📋 Задачи</button>
-                            <button class="admin-filter-btn" data-filter="document" onclick="filterAdminNotifications('document')">📄 Документы</button>
-                            <button class="admin-filter-btn" data-filter="system" onclick="filterAdminNotifications('system')">⚙️ Система</button>
+                            <button class="admin-filter-btn" data-filter="admin" onclick="filterAdminNotifications('admin')"><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> Админ</button>
+                            <button class="admin-filter-btn" data-filter="task" onclick="filterAdminNotifications('task')"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Задачи</button>
+                            <button class="admin-filter-btn" data-filter="document" onclick="filterAdminNotifications('document')"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документы</button>
+                            <button class="admin-filter-btn" data-filter="system" onclick="filterAdminNotifications('system')"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Система</button>
                         </div>
                         <div class="search-box">
-                            <input type="text" id="adminNotificationsSearch" placeholder="🔍 Поиск..." class="search-input" oninput="filterAdminNotificationsBySearch()">
+                            <input type="text" id="adminNotificationsSearch" placeholder="Поиск..." class="search-input" oninput="filterAdminNotificationsBySearch()">
                         </div>
                     </div>
 
@@ -318,22 +362,22 @@
                 <!-- ===================================================== -->
                 <section id="documents-section" class="admin-section">
                     <div class="section-header">
-                        <h2>📄 Управление документооборотом</h2>
+                        <h2><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Управление документооборотом</h2>
                     </div>
 
                     <!-- Вкладки внутри секции -->
                     <div class="doc-tabs">
                         <button class="doc-tab active" data-doc-tab="types" id="doc-tab-types">
-                            🏷️ Типы документов
+                             Типы документов
                         </button>
                         <button class="doc-tab" data-doc-tab="templates" id="doc-tab-templates">
-                            📋 Шаблоны документов
+                            <img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Шаблоны документов
                         </button>
                         <button class="doc-tab" data-doc-tab="counterparties" id="doc-tab-counterparties">
-                            🏢 Контрагенты
+                            Контрагенты
                         </button>
                         <button class="doc-tab" data-doc-tab="workflows" id="doc-tab-workflows">
-                            🔄 Шаблоны процессов
+                            <img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Шаблоны процессов
                         </button>
                     </div>
 
@@ -380,7 +424,7 @@
                             <select id="docTemplatesTypeFilter" class="form-select">
                                 <option value="">— Все типы —</option>
                             </select>
-                            <input type="text" id="docTemplatesSearch" class="form-input" placeholder="🔍 Поиск по названию...">
+                            <input type="text" id="docTemplatesSearch" class="form-input" placeholder="Поиск по названию...">
                         </div>
 
                         <div class="doc-templates-grid" id="docTemplatesGrid">
@@ -398,7 +442,7 @@
                         </div>
 
                         <div class="doc-templates-filters">
-                            <input type="text" id="counterpartiesSearch" class="form-input" placeholder="🔍 Поиск по названию или ИНН...">
+                            <input type="text" id="counterpartiesSearch" class="form-input" placeholder="Поиск по названию или ИНН...">
                             <label class="checkbox-label" style="margin-left: 12px;">
                                 <input type="checkbox" id="counterpartiesActiveOnly" checked>
                                 Только активные
@@ -458,12 +502,12 @@
                                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                                     </svg>
                                 </button>
-                                <h2 id="workflowTemplateEditorTitle">🔄 Новый шаблон процесса</h2>
+                                <h2 id="workflowTemplateEditorTitle"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Новый шаблон процесса</h2>
                                 <span class="wf-editor-badge" id="workflowTemplateEditorIdBadge"></span>
                             </div>
                             <div class="wf-editor-header-right">
-                                <button class="buttonbase btn-outline" onclick="closeWorkflowTemplateEditor()">Отмена</button>
-                                <button class="buttonbase" id="saveWorkflowTemplateBtn">💾 Сохранить</button>
+                                <button class="buttonbase btn-outline" onclick="closeWorkflowTemplateEditor()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                                <button class="buttonbase" id="saveWorkflowTemplateBtn">Сохранить</button>
                             </div>
                         </header>
 
@@ -474,7 +518,7 @@
                             <div class="wf-editor-col wf-editor-col-left">
                                 
                                 <div class="wf-editor-section">
-                                    <div class="wf-editor-section-title">📋 Основная информация</div>
+                                    <div class="wf-editor-section-title"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Основная информация</div>
                                     
                                     <div class="wf-editor-field">
                                         <label>Название *</label>
@@ -489,16 +533,16 @@
                                     <div class="wf-editor-field">
                                         <label>Тип шаблона</label>
                                         <select id="workflowTemplateScope">
-                                            <option value="personal">👤 Личный</option>
-                                            <option value="department">🏢 Для отдела</option>
-                                            <option value="corporate">🌐 Корпоративный</option>
+                                            <option value="personal"><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Личный</option>
+                                            <option value="department">Для отдела</option>
+                                            <option value="corporate"> Корпоративный</option>
                                         </select>
                                         <small class="wf-editor-hint">Корпоративные шаблоны видны всем сотрудникам компании</small>
                                     </div>
                                 </div>
                                 
                                 <div class="wf-editor-section">
-                                    <div class="wf-editor-section-title">📊 Итого</div>
+                                    <div class="wf-editor-section-title"><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Итого</div>
                                     <div class="wf-editor-stats">
                                         <div class="wf-editor-stat">
                                             <span class="wf-editor-stat-value" id="wfStepsCount">0</span>
@@ -517,20 +561,20 @@
                             <div class="wf-editor-col wf-editor-col-center">
                                 
                                 <div class="wf-editor-section wf-editor-section-full">
-                                    <div class="wf-editor-section-title">🎯 Этапы процесса</div>
+                                    <div class="wf-editor-section-title">Этапы процесса</div>
                                     
                                     <!-- Кнопки добавления -->
                                     <div class="wf-add-steps-panel">
                                         <button type="button" class="wf-add-step-btn" onclick="addWorkflowStep('approval')">
-                                            <span class="wf-add-step-icon">✅</span>
+                                            <span class="wf-add-step-icon"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""></span>
                                             <span class="wf-add-step-text">Согласование</span>
                                         </button>
                                         <button type="button" class="wf-add-step-btn" onclick="addWorkflowStep('signature')">
-                                            <span class="wf-add-step-icon">✍️</span>
+                                            <span class="wf-add-step-icon"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-sm" alt=""></span>
                                             <span class="wf-add-step-text">Подписание</span>
                                         </button>
                                         <button type="button" class="wf-add-step-btn" onclick="addWorkflowStep('review')">
-                                            <span class="wf-add-step-icon">👀</span>
+                                            <span class="wf-add-step-icon"><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""></span>
                                             <span class="wf-add-step-text">Ознакомление</span>
                                         </button>
                                     </div>
@@ -538,7 +582,7 @@
                                     <!-- Список этапов -->
                                     <div id="workflowStepsList" class="wf-steps-list-vertical">
                                         <div class="wf-empty-steps">
-                                            <div class="wf-empty-steps-icon">🎯</div>
+                                            <div class="wf-empty-steps-icon"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""></div>
                                             <div class="wf-empty-steps-text">Нет этапов</div>
                                             <div class="wf-empty-steps-hint">Добавьте первый этап, используя кнопки выше</div>
                                         </div>
@@ -555,11 +599,11 @@
                             <div class="wf-editor-col wf-editor-col-right">
                                 
                                 <div class="wf-editor-section wf-editor-section-full">
-                                    <div class="wf-editor-section-title">⚙️ Настройки этапа</div>
+                                    <div class="wf-editor-section-title"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки этапа</div>
                                     
                                     <div id="stepPropertiesPanel" class="wf-step-properties-panel">
                                         <div class="wf-no-step-selected">
-                                            <div class="wf-no-step-icon">👈</div>
+                                            <div class="wf-no-step-icon">&lsaquo;</div>
                                             <div class="wf-no-step-text">Выберите этап в центре,<br>чтобы настроить его</div>
                                         </div>
                                     </div>
@@ -574,10 +618,10 @@
         </main>
     </div>
     <div id="addUserModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content modal-lg" style="max-width: 920px;">
             <div class="modal-header">
-                <h2>👤 Добавление пользователя</h2>
-                <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
+                <h2><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Добавление пользователя</h2>
+                <button class="modal-close" onclick="closeModal('addUserModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -648,7 +692,7 @@
                                 <label for="userPassword">Пароль</label>
                                 <div style="display: flex; gap: 8px;">
                                     <input type="text" id="userPassword" readonly style="flex: 1;">
-                                    <button type="button" class="buttonbase" id="generatePasswordBtn" onclick="generateRandomPasswordField()">🎲 Сгенерировать</button>
+                                    <button type="button" class="buttonbase" id="generatePasswordBtn" onclick="generateRandomPasswordField()">Сгенерировать</button>
                                 </div>
                                 <small style="color: #999;">Генерируется автоматически</small>
                             </div>
@@ -658,42 +702,42 @@
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('addUserModal')">Отмена</button>
+                <button type="button" class="buttonbase" onclick="closeModal('addUserModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button type="submit" form="addUserForm" class="buttonbase" id="saveUserBtn">Добавить пользователя</button>
             </div>
         </div>
     </div>
     <div id="userInfoModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 750px;">
+        <div class="modal-content modal-lg" style="max-width: 750px;">
             <div class="modal-header">
                 <h2>Карточка сотрудника</h2>
-                <button class="modal-close" onclick="closeModal('userInfoModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('userInfoModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body" id="userInfoBody">
                 <div style="text-align: center; padding: 20px;">Загрузка...</div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('userInfoModal')">Закрыть</button>
-                <button class="buttonbase" onclick="openUserModal(currentUserId)">✏️ Редактировать</button>
+                <button class="buttonbase" onclick="closeModal('userInfoModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
+                <button class="buttonbase" onclick="openUserModal(currentUserId)"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактировать</button>
             </div>
         </div>
     </div>
     <div id="resetPasswordModal" class="admin-modal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h2>🔑 Сброс пароля</h2>
-                <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
+                <h2> Сброс пароля</h2>
+                <button class="modal-close" onclick="closeModal('resetPasswordModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <p>Пользователь: <strong id="resetUserName"></strong></p>
                 <div class="form-group">
                     <label>Новый пароль</label>
                     <input type="text" id="resetNewPassword" class="form-input">
-                    <button class="buttonbase" style="margin-top: 8px;" onclick="generateNewPassword()">🎲 Сгенерировать</button>
+                    <button class="buttonbase" style="margin-top: 8px;" onclick="generateNewPassword()">Сгенерировать</button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('resetPasswordModal')">Отмена</button>
+                <button class="buttonbase" onclick="closeModal('resetPasswordModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" id="confirmResetPasswordBtn">Сохранить</button>
             </div>
         </div>
@@ -701,24 +745,24 @@
     <div id="blockUserModal" class="admin-modal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h2 id="blockUserTitle">🔒 Блокировка пользователя</h2>
-                <button class="modal-close" onclick="closeModal('blockUserModal')">&times;</button>
+                <h2 id="blockUserTitle">Блокировка пользователя</h2>
+                <button class="modal-close" onclick="closeModal('blockUserModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <p id="blockUserMessage">Вы уверены, что хотите заблокировать этого пользователя?</p>
                 <p style="font-size: 12px; color: #999;">Заблокированный пользователь не сможет войти в систему.</p>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('blockUserModal')">Отмена</button>
-                <button class="buttonbase" id="confirmBlockBtn" style="background-color: #dc3545;">Заблокировать</button>
+                <button class="buttonbase" onclick="closeModal('blockUserModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="confirmBlockBtn" style="background-color: #dc3545;"><img src="../materials/icons8-замок-96.png" class="ui-icon ui-icon-inline" alt=""> Заблокировать</button>
             </div>
         </div>
     </div>  
     <div id="addEmployeeModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>👤 Добавление сотрудника в структуру</h2>
-                <button class="modal-close" onclick="closeModal('addEmployeeModal')">&times;</button>
+                <h2><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Добавление сотрудника в структуру</h2>
+                <button class="modal-close" onclick="closeModal('addEmployeeModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -838,16 +882,16 @@
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('addEmployeeModal')">Отмена</button>
-                <button type="submit" form="addEmployeeForm" class="buttonbase">➕ Добавить сотрудника</button>
+                <button type="button" class="buttonbase" onclick="closeModal('addEmployeeModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button type="submit" form="addEmployeeForm" class="buttonbase">Добавить сотрудника</button>
             </div>
         </div>
     </div>
     <div id="editEmployeeModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 640px;">
             <div class="modal-header">
-                <h2>✏️ Редактирование сотрудника</h2>
-                <button class="modal-close" onclick="closeModal('editEmployeeModal')">&times;</button>
+                <h2><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактирование сотрудника</h2>
+                <button class="modal-close" onclick="closeModal('editEmployeeModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editEmployeeId">
@@ -880,16 +924,16 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('editEmployeeModal')">Отмена</button>
+                <button class="buttonbase" onclick="closeModal('editEmployeeModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" onclick="saveEmployeeEdit()">Сохранить</button>
             </div>
         </div>
     </div>
     <div id="addDepartmentModal" class="admin-modal">
-        <div class="modal-content">
+        <div class="modal-content modal-lg">
             <div class="modal-header">
-                <h2>🏢 Добавление подразделения</h2>
-                <button class="modal-close" onclick="closeModal('addDepartmentModal')">&times;</button>
+                <h2>Добавление подразделения</h2>
+                <button class="modal-close" onclick="closeModal('addDepartmentModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -978,8 +1022,8 @@
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('addDepartmentModal')">Отмена</button>
-                <button type="submit" form="addDepartmentForm" class="buttonbase">💾 Сохранить</button>
+                <button type="button" class="buttonbase" onclick="closeModal('addDepartmentModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button type="submit" form="addDepartmentForm" class="buttonbase">Сохранить</button>
             </div>
         </div>
     </div>
@@ -987,19 +1031,19 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Заблокировать пользователя?</h2>
-                <button class="modal-close"  onclick="closeModal('blockUserModal')">&times;</button>
+                <button class="modal-close"  onclick="closeModal('blockUserModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>        
             <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('blockUserModal')">Отмена</button>
+                <button type="button" class="buttonbase" onclick="closeModal('blockUserModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button type="submit" form="addGroupForm" class="buttonbase">Заблокировать</button>
             </div>
         </div>
     </div>
     <div id="templateEditorModal" class="admin-modal">
-        <div class="modal-content template-editor-modal">
+        <div class="modal-content template-editor-modal modal-lg">
             <div class="modal-header">
-                <h2>📝 Редактор шаблона документа</h2>
-                <button class="modal-close" onclick="closeModal('templateEditorModal')">&times;</button>
+                <h2><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактор шаблона документа</h2>
+                <button class="modal-close" onclick="closeModal('templateEditorModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -1033,8 +1077,8 @@
                     <div class="builder-header">
                         <h3>Конструктор полей</h3>
                         <div class="builder-actions">
-                            <button class="buttonbase" id="previewTemplateBtn">👁️ Предпросмотр</button>
-                            <button class="buttonbase" id="saveTemplateBtn">💾 Сохранить шаблон</button>
+                            <button class="buttonbase" id="previewTemplateBtn"><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""> Предпросмотр</button>
+                            <button class="buttonbase" id="saveTemplateBtn">Сохранить шаблон</button>
                         </div>
                     </div>
 
@@ -1044,27 +1088,27 @@
                             <h4>Доступные поля</h4>
                             <div class="fields-library">
                                 <div class="field-type" data-type="text" draggable="true">
-                                    <span class="field-icon">📝</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Текстовое поле</span>
                                     <span class="field-desc">Однострочный текст</span>
                                 </div>
                                 <div class="field-type" data-type="textarea" draggable="true">
-                                    <span class="field-icon">📄</span>
+                                    <span class="field-icon"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-lg" alt=""></span>
                                     <span class="field-name">Текстовая область</span>
                                     <span class="field-desc">Многострочный текст</span>
                                 </div>
                                 <div class="field-type" data-type="number" draggable="true">
-                                    <span class="field-icon">🔢</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Число</span>
                                     <span class="field-desc">Числовое значение</span>
                                 </div>
                                 <div class="field-type" data-type="date" draggable="true">
-                                    <span class="field-icon">📅</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Дата</span>
                                     <span class="field-desc">Выбор даты</span>
                                 </div>
                                 <div class="field-type" data-type="select" draggable="true">
-                                    <span class="field-icon">📋</span>
+                                    <span class="field-icon"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-lg" alt=""></span>
                                     <span class="field-name">Выпадающий список</span>
                                     <span class="field-desc">Выбор из вариантов</span>
                                 </div>
@@ -1074,32 +1118,32 @@
                                     <span class="field-desc">Один из вариантов</span>
                                 </div>
                                 <div class="field-type" data-type="checkbox" draggable="true">
-                                    <span class="field-icon">☑️</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Чекбокс</span>
                                     <span class="field-desc">Да/Нет</span>
                                 </div>
                                 <div class="field-type" data-type="file" draggable="true">
-                                    <span class="field-icon">📎</span>
+                                    <span class="field-icon"><img src="../materials/icons8-скрепка-80.png" class="ui-icon ui-icon-sm" alt=""></span>
                                     <span class="field-name">Файл</span>
                                     <span class="field-desc">Загрузка файла</span>
                                 </div>
                                 <div class="field-type" data-type="signature" draggable="true">
-                                    <span class="field-icon">✍️</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Подпись</span>
                                     <span class="field-desc">Электронная подпись</span>
                                 </div>
                                 <div class="field-type" data-type="user" draggable="true">
-                                    <span class="field-icon">👤</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Пользователь</span>
                                     <span class="field-desc">Выбор сотрудника</span>
                                 </div>
                                 <div class="field-type" data-type="department" draggable="true">
-                                    <span class="field-icon">🏢</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Подразделение</span>
                                     <span class="field-desc">Выбор отдела</span>
                                 </div>
                                 <div class="field-type" data-type="calculated" draggable="true">
-                                    <span class="field-icon">🧮</span>
+                                    <span class="field-icon"></span>
                                     <span class="field-name">Вычисляемое поле</span>
                                     <span class="field-desc">Расчёт на основе других полей</span>
                                 </div>
@@ -1110,18 +1154,18 @@
                         <div class="builder-area">
                             <div class="builder-toolbar">
                                 <button class="buttonbase" id="addSectionBtn">+ Добавить раздел</button>
-                                <button class="buttonbase" id="clearTemplateBtn">🗑️ Очистить</button>
+                                <button class="buttonbase" id="clearTemplateBtn"> Очистить</button>
                                 <div class="layout-options">
-                                    <button class="btn-icon" title="Одна колонка">📱</button>
-                                    <button class="btn-icon" title="Две колонки" data-columns="2">📊</button>
-                                    <button class="btn-icon" title="Три колонки" data-columns="3">📋</button>
+                                    <button class="btn-icon" title="Одна колонка" aria-label="Одна колонка">1</button>
+                                    <button class="btn-icon" title="Две колонки" data-columns="2" aria-label="Две колонки">2</button>
+                                    <button class="btn-icon" title="Три колонки" data-columns="3" aria-label="Три колонки">3</button>
                                 </div>
                             </div>
 
                             <div class="template-preview" id="templatePreview">
                                 <!-- Сюда будут добавляться поля -->
                                 <div class="empty-template">
-                                    <div class="empty-icon">📝</div>
+                                    <div class="empty-icon"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон пуст</h4>
                                     <p>Перетащите поля из левой панели или добавьте раздел</p>
                                 </div>
@@ -1146,7 +1190,7 @@
 
                 <!-- Настройки шаблона -->
                 <div class="template-settings-section">
-                    <h3>⚙️ Настройки шаблона</h3>
+                    <h3><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки шаблона</h3>
                     
                     <div class="settings-grid">
                         <div class="setting-group">
@@ -1206,17 +1250,17 @@
             </div>
 
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('templateEditorModal')">Отмена</button>
-                <button class="buttonbase" id="testTemplateBtn">🧪 Тестировать шаблон</button>
-                <button class="buttonbase" id="publishTemplateBtn">🚀 Опубликовать</button>
+                <button class="buttonbase" onclick="closeModal('templateEditorModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="testTemplateBtn">Тестировать шаблон</button>
+                <button class="buttonbase" id="publishTemplateBtn">Опубликовать</button>
             </div>
         </div>
     </div>
     <div id="templatePreviewModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>👁️ Предпросмотр шаблона</h2>
-                <button class="modal-close" onclick="closeModal('templatePreviewModal')">&times;</button>
+                <h2> Предпросмотр шаблона</h2>
+                <button class="modal-close" onclick="closeModal('templatePreviewModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div id="livePreview">
@@ -1226,10 +1270,10 @@
         </div>
     </div>
     <div id="roleEditorModal" class="admin-modal">
-        <div class="modal-content role-editor-modal">
+        <div class="modal-content role-editor-modal modal-lg">
             <div class="modal-header">
-                <h2 id="roleModalTitle">👑 Создание новой роли</h2>
-                <button class="modal-close" onclick="closeModal('roleEditorModal')">&times;</button>
+                <h2 id="roleModalTitle">Создание новой роли</h2>
+                <button class="modal-close" onclick="closeModal('roleEditorModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -1256,7 +1300,7 @@
 
                     <!-- Доступ к админ-панели -->
                     <div class="form-section">
-                        <h3>🔐 Доступ к админ-панели</h3>
+                        <h3> Доступ к админ-панели</h3>
                         <div class="form-checkbox">
                             <label>
                                 <input type="checkbox" id="adminPanelAccess">
@@ -1267,12 +1311,12 @@
 
                     <!-- Права на разделы -->
                     <div class="form-section">
-                        <h3>📋 Права на разделы</h3>
+                        <h3><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Права на разделы</h3>
                         <div class="permissions-grid">
                             <!-- Пользователи -->
                             <div class="permission-category">
                                 <div class="category-header">
-                                    <h4>👥 Пользователи</h4>
+                                    <h4><img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Пользователи</h4>
                                 </div>
                                 <div class="permission-items">
                                     <div class="permission-item">
@@ -1324,7 +1368,7 @@
                             <!-- Структура -->
                             <div class="permission-category">
                                 <div class="category-header">
-                                    <h4>🏢 Структура</h4>
+                                    <h4>Структура</h4>
                                 </div>
                                 <div class="permission-items">
                                     <div class="permission-item">
@@ -1347,7 +1391,7 @@
                             <!-- Настройки -->
                             <div class="permission-category">
                                 <div class="category-header">
-                                    <h4>⚙️ Настройки</h4>
+                                    <h4><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки</h4>
                                 </div>
                                 <div class="permission-items">
                                     <div class="permission-item">
@@ -1370,7 +1414,7 @@
                             <!-- Роли -->
                             <div class="permission-category">
                                 <div class="category-header">
-                                    <h4>👑 Роли</h4>
+                                    <h4>Роли</h4>
                                 </div>
                                 <div class="permission-items">
                                     <div class="permission-item">
@@ -1407,7 +1451,7 @@
                             <!-- Бэкапы -->
                             <div class="permission-category">
                                 <div class="category-header">
-                                    <h4>💾 Бэкапы</h4>
+                                    <h4>Бэкапы</h4>
                                 </div>
                                 <div class="permission-items">
                                     <div class="permission-item">
@@ -1437,7 +1481,7 @@
                             <!-- Логи и статистика -->
                             <div class="permission-category">
                                 <div class="category-header">
-                                    <h4>📊 Логи и статистика</h4>
+                                    <h4><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Логи и статистика</h4>
                                 </div>
                                 <div class="permission-items">
                                     <div class="permission-item">
@@ -1461,7 +1505,7 @@
 
                     <!-- Дополнительные настройки -->
                     <div class="form-section">
-                        <h3>📋 Дополнительные настройки</h3>
+                        <h3><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Дополнительные настройки</h3>
                         <div class="form-checkbox">
                             <label>
                                 <input type="checkbox" name="is_default" id="roleIsDefault">
@@ -1479,16 +1523,16 @@
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('roleEditorModal')">Отмена</button>
-                <button type="submit" form="roleEditorForm" class="buttonbase" id="saveRoleBtn">💾 Сохранить роль</button>
+                <button type="button" class="buttonbase" onclick="closeModal('roleEditorModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button type="submit" form="roleEditorForm" class="buttonbase" id="saveRoleBtn">Сохранить роль</button>
             </div>
         </div>
     </div>
     <div id="roleTestModal" class="admin-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>🧪 Тестирование роли</h2>
-                <button class="modal-close" onclick="closeModal('roleTestModal')">&times;</button>
+                <h2>Тестирование роли</h2>
+                <button class="modal-close" onclick="closeModal('roleTestModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div class="role-test-preview">
@@ -1504,25 +1548,25 @@
     <div id="confirmDeleteModal" class="admin-modal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h2 id="confirmDeleteTitle">🗑️ Подтверждение удаления</h2>
-                <button class="modal-close" onclick="closeModal('confirmDeleteModal')">&times;</button>
+                <h2 id="confirmDeleteTitle"> Подтверждение удаления</h2>
+                <button class="modal-close" onclick="closeModal('confirmDeleteModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <p id="confirmDeleteMessage">Вы уверены, что хотите удалить этот элемент?</p>
                 <p style="font-size: 12px; color: #999; margin-top: 10px;">Это действие нельзя отменить.</p>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('confirmDeleteModal')">Отмена</button>
-                <button class="buttonbase" id="confirmDeleteBtn" style="background-color: #dc3545;">Удалить</button>
+                <button class="buttonbase" onclick="closeModal('confirmDeleteModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="confirmDeleteBtn" style="background-color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить</button>
             </div>
         </div>
     </div>
     <!-- Модальное окно перемещения сотрудника -->
     <div id="moveEmployeeModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 640px;">
             <div class="modal-header">
                 <h2>↷ Перемещение сотрудника</h2>
-                <button class="modal-close" onclick="closeModal('moveEmployeeModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('moveEmployeeModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <form id="moveEmployeeForm">
@@ -1549,17 +1593,17 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('moveEmployeeModal')">Отмена</button>
+                <button class="buttonbase" onclick="closeModal('moveEmployeeModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" onclick="confirmMoveEmployee()">Переместить</button>
             </div>
         </div>
     </div>
     <!-- Модальное окно управления должностями -->
     <div id="managePostsModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 640px;">
             <div class="modal-header">
-                <h2 id="managePostsTitle">📋 Управление должностями</h2>
-                <button class="modal-close" onclick="closeModal('managePostsModal')">&times;</button>
+                <h2 id="managePostsTitle"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Управление должностями</h2>
+                <button class="modal-close" onclick="closeModal('managePostsModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="managePostsDepartmentId">
@@ -1574,16 +1618,16 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('managePostsModal')">Закрыть</button>
+                <button class="buttonbase" onclick="closeModal('managePostsModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
             </div>
         </div>
     </div>
     <!-- Модалка создания уведомления -->
     <div id="createNotificationModal" class="admin-modal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 920px;">
             <div class="modal-header">
-                <h2>📢 Создание уведомления</h2>
-                <button class="modal-close" onclick="closeModal('createNotificationModal')">&times;</button>
+                <h2><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> Создание уведомления</h2>
+                <button class="modal-close" onclick="closeModal('createNotificationModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             
             <div class="modal-body">
@@ -1595,24 +1639,24 @@
                             <div class="form-group">
                                 <label for="notifCategory">Категория *</label>
                                 <select id="notifCategory" required>
-                                    <option value="admin">📢 От администратора</option>
-                                    <option value="task">📋 Задача</option>
-                                    <option value="document">📄 Документ</option>
+                                    <option value="admin"><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> От администратора</option>
+                                    <option value="task"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Задача</option>
+                                    <option value="document"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документ</option>
                                     <option value="deadline">⏰ Дедлайн</option>
-                                    <option value="message">💬 Сообщение</option>
-                                    <option value="workflow">🔄 Процесс</option>
+                                    <option value="message"><img src="../materials/icons8-чат-96.png" class="ui-icon ui-icon-inline" alt=""> Сообщение</option>
+                                    <option value="workflow"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Процесс</option>
                                     <option value="mention">@ Упоминание</option>
-                                    <option value="reminder">🔔 Напоминание</option>
-                                    <option value="system">⚙️ Системное</option>
+                                    <option value="reminder"><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> Напоминание</option>
+                                    <option value="system"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Системное</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="notifPriority">Приоритет</label>
                                 <select id="notifPriority">
-                                    <option value="low">🟢 Низкий</option>
-                                    <option value="normal" selected>🔵 Обычный</option>
-                                    <option value="high">🟠 Высокий</option>
-                                    <option value="critical">🔴 Критический</option>
+                                    <option value="low">Низкий</option>
+                                    <option value="normal" selected> Обычный</option>
+                                    <option value="high">Высокий</option>
+                                    <option value="critical">Критический</option>
                                 </select>
                             </div>
                         </div>
@@ -1626,15 +1670,15 @@
                             <div class="recipient-type-selector">
                                 <label class="radio-option">
                                     <input type="radio" name="recipientType" value="all" onchange="toggleRecipientType('all')">
-                                    <span>🌐 Всем пользователям</span>
+                                    <span> Всем пользователям</span>
                                 </label>
                                 <label class="radio-option">
                                     <input type="radio" name="recipientType" value="department" onchange="toggleRecipientType('department')">
-                                    <span>🏢 Отделу</span>
+                                    <span>Отделу</span>
                                 </label>
                                 <label class="radio-option">
                                     <input type="radio" name="recipientType" value="specific" checked onchange="toggleRecipientType('specific')">
-                                    <span>👤 Конкретным пользователям</span>
+                                    <span><img src="../materials/icons8-тестовый-аккаунт-80.png" class="ui-icon ui-icon-inline" alt=""> Конкретным пользователям</span>
                                 </label>
                             </div>
                         </div>
@@ -1654,7 +1698,7 @@
                                 <input type="text" id="notifUsersDisplay" class="form-input" 
                                     placeholder="Выберите получателей..." readonly style="flex: 1; cursor: pointer;">
                                 <button type="button" class="buttonbase" onclick="openUserSelectorForNotification()">
-                                    👥 Выбрать
+                                    <img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Выбрать
                                 </button>
                             </div>
                             <input type="hidden" id="notifUserIds" value="">
@@ -1683,10 +1727,10 @@
                                 <label for="notifLinkType">Тип объекта</label>
                                 <select id="notifLinkType" onchange="toggleLinkIdField()">
                                     <option value="">— Без привязки —</option>
-                                    <option value="task">📋 Задача</option>
-                                    <option value="document">📄 Документ</option>
-                                    <option value="chat">💬 Чат</option>
-                                    <option value="workflow">🔄 Процесс</option>
+                                    <option value="task"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Задача</option>
+                                    <option value="document"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документ</option>
+                                    <option value="chat"><img src="../materials/icons8-чат-96.png" class="ui-icon ui-icon-inline" alt=""> Чат</option>
+                                    <option value="workflow"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Процесс</option>
                                 </select>
                             </div>
                             <div class="form-group" id="linkIdGroup" style="display: none;">
@@ -1709,9 +1753,9 @@
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="buttonbase" onclick="closeModal('createNotificationModal')">Отмена</button>
-                <button type="button" class="buttonbase" onclick="previewNotification()">👁️ Предпросмотр</button>
-                <button type="submit" form="createNotificationForm" class="buttonbase" id="sendNotificationBtn">📢 Отправить</button>
+                <button type="button" class="buttonbase" onclick="closeModal('createNotificationModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button type="button" class="buttonbase" onclick="previewNotification()"><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""> Предпросмотр</button>
+                <button type="submit" form="createNotificationForm" class="buttonbase" id="sendNotificationBtn"><img src="../materials/icons8-уведомление-100.png" class="ui-icon ui-icon-inline" alt=""> Отправить</button>
             </div>
         </div>
     </div>
@@ -1720,14 +1764,14 @@
     <div id="previewNotificationModal" class="admin-modal">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header">
-                <h2>👁️ Предпросмотр</h2>
-                <button class="modal-close" onclick="closeModal('previewNotificationModal')">&times;</button>
+                <h2><img src="../materials/icons8-обработать-96.png" class="ui-icon ui-icon-inline" alt=""> Предпросмотр</h2>
+                <button class="modal-close" onclick="closeModal('previewNotificationModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div id="notificationPreviewContent"></div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('previewNotificationModal')">Закрыть</button>
+                <button class="buttonbase" onclick="closeModal('previewNotificationModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
             </div>
         </div>
     </div>
@@ -1735,10 +1779,10 @@
     <!-- МОДАЛКА: ТИП ДОКУМЕНТА -->
     <!-- ===================================================== -->
     <div id="documentTypeModal" class="admin-modal doc-modal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 860px;">
             <div class="modal-header">
-                <h2 id="documentTypeModalTitle">🏷️ Новый тип документа</h2>
-                <button class="modal-close" onclick="closeDocModal('documentTypeModal')">&times;</button>
+                <h2 id="documentTypeModalTitle"> Новый тип документа</h2>
+                <button class="modal-close" onclick="closeDocModal('documentTypeModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
 
             <div class="modal-body">
@@ -1798,7 +1842,7 @@
                                     
                                     <div class="num-var-btn-wrapper">
                                         <button type="button" class="num-var-btn" data-var="YYYY">
-                                            <span class="num-var-icon">📅</span> Год
+                                            <span class="num-var-icon"></span> Год
                                         </button>
                                         <select class="num-var-length" data-var="YYYY">
                                             <option value="2">2 (25)</option>
@@ -1808,7 +1852,7 @@
                                     
                                     <div class="num-var-btn-wrapper">
                                         <button type="button" class="num-var-btn" data-var="MM">
-                                            <span class="num-var-icon">📆</span> Месяц
+                                            <span class="num-var-icon"></span> Месяц
                                         </button>
                                         <select class="num-var-length" data-var="MM">
                                             <option value="1">1 (9)</option>
@@ -1818,7 +1862,7 @@
                                     
                                     <div class="num-var-btn-wrapper">
                                         <button type="button" class="num-var-btn" data-var="DD">
-                                            <span class="num-var-icon">📅</span> День
+                                            <span class="num-var-icon"></span> День
                                         </button>
                                         <select class="num-var-length" data-var="DD">
                                             <option value="1">1 (9)</option>
@@ -1827,13 +1871,13 @@
                                     </div>
                                     
                                     <button type="button" class="num-var-btn" data-var="TYPE" data-no-length="true">
-                                        <span class="num-var-icon">🏷️</span> Код типа
+                                        <span class="num-var-icon"></span> Код типа
                                     </button>
                                 </div>
                                 
                                 <div class="numbering-vars-actions">
                                     <button type="button" class="num-action-btn" id="numberingClearBtn">
-                                        🗑️ Очистить
+                                         Очистить
                                     </button>
                                     <button type="button" class="num-action-btn" id="numberingResetBtn">
                                         ↺ Сброс
@@ -1909,8 +1953,8 @@
             </div>
 
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeDocModal('documentTypeModal')">Отмена</button>
-                <button class="buttonbase" id="saveDocumentTypeBtn">💾 Сохранить</button>
+                <button class="buttonbase" onclick="closeDocModal('documentTypeModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="saveDocumentTypeBtn">Сохранить</button>
             </div>
         </div>
     </div>
@@ -1921,8 +1965,8 @@
     <div id="documentTemplateModal" class="admin-modal doc-modal">
         <div class="modal-content" style="max-width: 1100px; width: 95%;">
             <div class="modal-header">
-                <h2 id="documentTemplateModalTitle">📋 Новый шаблон документа</h2>
-                <button class="modal-close" onclick="closeDocModal('documentTemplateModal')">&times;</button>
+                <h2 id="documentTemplateModalTitle"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Новый шаблон документа</h2>
+                <button class="modal-close" onclick="closeDocModal('documentTemplateModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
 
             <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
@@ -1950,7 +1994,7 @@
                     </div>
 
                     <div class="form-section">
-                        <h3>📎 Файл-шаблон .docx</h3>
+                        <h3><img src="../materials/icons8-скрепка-80.png" class="ui-icon ui-icon-sm" alt=""> Файл-шаблон .docx</h3>
                         <div class="form-group">
                             <input type="file" id="documentTemplateFile" accept=".docx">
                             <small style="color: var(--c_surf_txt);">
@@ -1967,7 +2011,7 @@
                     </div>
 
                     <div class="form-section">
-                        <h3>📋 Поля шаблона</h3>
+                        <h3><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Поля шаблона</h3>
                         
                         <div class="fields-editor-layout">
                             <!-- ЛЕВАЯ ПАНЕЛЬ: список полей + кнопки добавления -->
@@ -1976,28 +2020,28 @@
                                     <div class="fields-add-title">Добавить поле:</div>
                                     <div class="fields-add-buttons">
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('text')">
-                                            <span class="afi">📝</span> Текст
+                                            <span class="afi"></span> Текст
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('textarea')">
-                                            <span class="afi">📄</span> Область
+                                            <span class="afi"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-lg" alt=""></span> Область
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('number')">
-                                            <span class="afi">🔢</span> Число
+                                            <span class="afi"></span> Число
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('date')">
-                                            <span class="afi">📅</span> Дата
+                                            <span class="afi"></span> Дата
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('select')">
-                                            <span class="afi">📋</span> Список
+                                            <span class="afi"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-lg" alt=""></span> Список
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('checkbox')">
-                                            <span class="afi">☑️</span> Флаг
+                                            <span class="afi"></span> Флаг
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('user')">
-                                            <span class="afi">👤</span> Пользователь
+                                            <span class="afi"></span> Пользователь
                                         </button>
                                         <button type="button" class="add-field-btn" onclick="addTemplateField('counterparty')">
-                                            <span class="afi">🏢</span> Контрагент
+                                            <span class="afi"></span> Контрагент
                                         </button>
                                     </div>
                                 </div>
@@ -2014,7 +2058,7 @@
                             <!-- ПРАВАЯ ПАНЕЛЬ: настройки выбранного поля -->
                             <div class="fields-editor-right" id="fieldPropertiesPanel">
                                 <div class="no-field-selected">
-                                    <div class="nfs-icon">👈</div>
+                                    <div class="nfs-icon"></div>
                                     <div class="nfs-text">Выберите поле слева<br>или добавьте новое</div>
                                 </div>
                             </div>
@@ -2022,7 +2066,7 @@
                     </div>
 
                     <div class="form-section">
-                        <h3>🔗 Маппинг плейсхолдеров</h3>
+                        <h3> Маппинг плейсхолдеров</h3>
                         <p style="font-size: 12px; color: var(--c_surf_txt); margin-bottom: 12px;">
                             Сопоставьте плейсхолдеры из .docx с полями шаблона. Например: плейсхолдер <code>{Контрагент}</code> → поле <code>counterparty.name</code>
                         </p>
@@ -2034,7 +2078,7 @@
                     </div>
 
                     <div class="form-section">
-                        <h3>⚙️ Настройки</h3>
+                        <h3><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки</h3>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="documentTemplateWorkflow">Шаблон процесса</label>
@@ -2056,8 +2100,8 @@
             </div>
 
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeDocModal('documentTemplateModal')">Отмена</button>
-                <button class="buttonbase" id="saveDocumentTemplateBtn">💾 Сохранить</button>
+                <button class="buttonbase" onclick="closeDocModal('documentTemplateModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="saveDocumentTemplateBtn">Сохранить</button>
             </div>
         </div>
     </div>
@@ -2066,10 +2110,10 @@
     <!-- МОДАЛКА: КОНТРАГЕНТ -->
     <!-- ===================================================== -->
     <div id="counterpartyModal" class="admin-modal doc-modal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 860px;">
             <div class="modal-header">
-                <h2 id="counterpartyModalTitle">🏢 Новый контрагент</h2>
-                <button class="modal-close" onclick="closeDocModal('counterpartyModal')">&times;</button>
+                <h2 id="counterpartyModalTitle">Новый контрагент</h2>
+                <button class="modal-close" onclick="closeDocModal('counterpartyModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
 
             <div class="modal-body">
@@ -2151,17 +2195,17 @@
             </div>
 
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeDocModal('counterpartyModal')">Отмена</button>
-                <button class="buttonbase" id="saveCounterpartyBtn">💾 Сохранить</button>
+                <button class="buttonbase" onclick="closeDocModal('counterpartyModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="saveCounterpartyBtn">Сохранить</button>
             </div>
         </div>
     </div>
     <!-- Модалка выбора пользователей (общая) -->
     <div id="userSelectorModal" class="admin-modal doc-modal">
-        <div class="modal-content" style="max-width: 700px; max-height: 80vh;">
+        <div class="modal-content" style="max-width: 860px; max-height: 80vh;">
             <div class="modal-header">
-                <h2 id="userSelectorTitle">👥 Выбор пользователей</h2>
-                <button class="modal-close" onclick="closeUserSelectorModal()">&times;</button>
+                <h2 id="userSelectorTitle"><img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Выбор пользователей</h2>
+                <button class="modal-close" onclick="closeUserSelectorModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div class="user-selector-filters">
@@ -2197,12 +2241,13 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeUserSelectorModal()">Отмена</button>
+                <button class="buttonbase" onclick="closeUserSelectorModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" id="confirmUserSelectionBtn" onclick="confirmUserSelection()">Подтвердить</button>
             </div>
         </div>
     </div>
     <script src="../scripts/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="../scripts/admin-documents.js"></script>
     <script src="../scripts/admin.js"></script>
 </body>

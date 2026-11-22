@@ -207,14 +207,14 @@ function renderDocumentTypes() {
     if (!tbody) return;
 
     if (documentTypesList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">📭 Нет типов документов</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row"> Нет типов документов</td></tr>';
         return;
     }
 
     tbody.innerHTML = documentTypesList.map(type => {
         const statusBadge = type.is_active
-            ? '<span class="status-badge status-active">🟢 Активен</span>'
-            : '<span class="status-badge status-inactive">⚫ Отключен</span>';
+            ? '<span class="status-badge status-active"> Активен</span>'
+            : '<span class="status-badge status-inactive"> Отключен</span>';
 
         const resetLabels = { year: 'Раз в год', month: 'Раз в месяц', never: 'Никогда' };
 
@@ -228,8 +228,8 @@ function renderDocumentTypes() {
                 <td>${type.documents_count || 0}</td>
                 <td>${statusBadge}</td>
                 <td>
-                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openDocumentTypeModal(${type.id})">✏️</button>
-                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteDocumentType(${type.id})" style="color: #dc3545;">🗑️</button>
+                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openDocumentTypeModal(${type.id})"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteDocumentType(${type.id})" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                 </td>
             </tr>
         `;
@@ -251,7 +251,7 @@ async function openDocumentTypeModal(typeId = null) {
     await loadDocumentTemplatesForSelects();
 
     if (typeId) {
-        title.textContent = '✏️ Редактирование типа документа';
+        title.textContent = ' Редактирование типа документа';
         const type = documentTypesList.find(t => t.id === typeId);
         if (type) {
             document.getElementById('documentTypeId').value = type.id;
@@ -269,7 +269,7 @@ async function openDocumentTypeModal(typeId = null) {
             document.getElementById('documentTypeIsActive').checked = type.is_active !== false;
         }
     } else {
-        title.textContent = '🏷️ Новый тип документа';
+        title.textContent = ' Новый тип документа';
         document.getElementById('documentTypeId').value = '';
         document.getElementById('documentTypeCode').disabled = false;
         document.getElementById('documentTypeNumberingPattern').value = '№{N:4}/{YYYY:4}';
@@ -377,7 +377,7 @@ function deleteDocumentType(typeId) {
     if (!type) return;
 
     showConfirmDelete(
-        '🗑️ Удаление типа документа',
+        ' Удаление типа документа',
         `Удалить тип "${type.name}"? Если есть связанные документы — тип будет деактивирован.`,
         async () => {
             try {
@@ -515,7 +515,7 @@ function renderDocumentTemplates() {
     if (documentTemplatesList.length === 0) {
         grid.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-icon"></div>
                 <h3>Нет шаблонов документов</h3>
                 <p>Создайте первый шаблон — загрузите .docx и настройте поля</p>
                 <button class="buttonbase" onclick="openDocumentTemplateModal()">+ Создать шаблон</button>
@@ -526,10 +526,10 @@ function renderDocumentTemplates() {
 
     grid.innerHTML = documentTemplatesList.map(tmpl => {
         const statusBadge = tmpl.is_active
-            ? '<span class="status-badge status-active">🟢</span>'
-            : '<span class="status-badge status-inactive">⚫</span>';
+            ? '<span class="status-badge status-active"></span>'
+            : '<span class="status-badge status-inactive"></span>';
 
-        const fileIndicator = tmpl.template_file_uri ? '📎' : '⚠️';
+        const fileIndicator = tmpl.template_file_uri ? '' : '';
 
         return `
             <div class="doc-template-card">
@@ -543,9 +543,9 @@ function renderDocumentTemplates() {
                     <span>${statusBadge}</span>
                 </div>
                 <div class="doc-template-card-actions">
-                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openDocumentTemplateModal(${tmpl.id})">✏️</button>
-                    <button class="btn-icon buttonbase" title="Скачать .docx" onclick="downloadDocumentTemplate(${tmpl.id})">📥</button>
-                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteDocumentTemplate(${tmpl.id})" style="color: #dc3545;">🗑️</button>
+                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openDocumentTemplateModal(${tmpl.id})"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                    <button class="btn-icon buttonbase" title="Скачать .docx" onclick="downloadDocumentTemplate(${tmpl.id})"><img src="../materials/icons8-скачать-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteDocumentTemplate(${tmpl.id})" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                 </div>
             </div>
         `;
@@ -573,7 +573,7 @@ async function openDocumentTemplateModal(templateId = null) {
     await loadWorkflowTemplatesForSelects();
 
     if (templateId) {
-        title.textContent = '✏️ Редактирование шаблона';
+        title.textContent = ' Редактирование шаблона';
 
         try {
             const data = await apiRequest(`/api/document-templates/${templateId}`);
@@ -622,7 +622,7 @@ async function openDocumentTemplateModal(templateId = null) {
             return;
         }
     } else {
-        title.textContent = '📋 Новый шаблон документа';
+        title.textContent = ' Новый шаблон документа';
         document.getElementById('documentTemplateId').value = '';
         renderTemplateFields();
         renderPlaceholdersMapping();
@@ -638,7 +638,7 @@ function renderTemplateFields() {
     if (currentTemplateFields.length === 0) {
         container.innerHTML = `
             <div class="empty-fields">
-                <div class="empty-icon">📝</div>
+                <div class="empty-icon"></div>
                 <p>Нет добавленных полей</p>
                 <small>Нажмите "Добавить поле", чтобы создать поле</small>
             </div>
@@ -647,22 +647,22 @@ function renderTemplateFields() {
     }
 
     const typeIcons = {
-        text: '📝', textarea: '📄', number: '🔢', date: '📅',
-        select: '📋', checkbox: '☑️', user: '👤', counterparty: '🏢'
+        text: '', textarea: '', number: '', date: '',
+        select: '', checkbox: '', user: '', counterparty: ''
     };
 
     container.innerHTML = currentTemplateFields.map((field, idx) => `
         <div class="template-field-item">
             <div class="field-info">
                 <div class="field-label">
-                    ${typeIcons[field.type] || '📝'} ${escapeHtml(field.label)}
+                    ${typeIcons[field.type] || ''} ${escapeHtml(field.label)}
                     ${field.required ? '<span style="color: var(--c_error);">*</span>' : ''}
                 </div>
                 <div class="field-key">${escapeHtml(field.key)}</div>
             </div>
             <div class="field-actions">
-                <button type="button" onclick="openTemplateFieldModal(${idx})" title="Редактировать">✏️</button>
-                <button type="button" onclick="removeTemplateField(${idx})" title="Удалить">🗑️</button>
+                <button type="button" onclick="openTemplateFieldModal(${idx})" title="Редактировать"></button>
+                <button type="button" onclick="removeTemplateField(${idx})" title="Удалить"></button>
             </div>
         </div>
     `).join('');
@@ -847,7 +847,7 @@ function deleteDocumentTemplate(templateId) {
     if (!tmpl) return;
 
     showConfirmDelete(
-        '🗑️ Удаление шаблона',
+        ' Удаление шаблона',
         `Удалить шаблон "${tmpl.name}"? Если есть связанные документы — шаблон будет деактивирован.`,
         async () => {
             try {
@@ -902,12 +902,12 @@ function renderCounterparties(total) {
     if (!tbody) return;
 
     if (counterpartiesList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="loading-row">📭 Нет контрагентов</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-row"> Нет контрагентов</td></tr>';
     } else {
         tbody.innerHTML = counterpartiesList.map(cp => {
             const statusBadge = cp.is_active
-                ? '<span class="status-badge status-active">🟢</span>'
-                : '<span class="status-badge status-inactive">⚫</span>';
+                ? '<span class="status-badge status-active"></span>'
+                : '<span class="status-badge status-inactive"></span>';
 
             return `
                 <tr>
@@ -918,8 +918,8 @@ function renderCounterparties(total) {
                     <td>${escapeHtml(cp.email || '—')}</td>
                     <td>${statusBadge}</td>
                     <td>
-                        <button class="btn-icon buttonbase" title="Редактировать" onclick="openCounterpartyModal(${cp.id})">✏️</button>
-                        <button class="btn-icon buttonbase" title="Удалить" onclick="deleteCounterparty(${cp.id})" style="color: #dc3545;">🗑️</button>
+                        <button class="btn-icon buttonbase" title="Редактировать" onclick="openCounterpartyModal(${cp.id})"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                        <button class="btn-icon buttonbase" title="Удалить" onclick="deleteCounterparty(${cp.id})" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                     </td>
                 </tr>
             `;
@@ -967,7 +967,7 @@ function openCounterpartyModal(id = null) {
     form.reset();
 
     if (id) {
-        title.textContent = '✏️ Редактирование контрагента';
+        title.textContent = ' Редактирование контрагента';
         const cp = counterpartiesList.find(c => c.id === id);
         if (cp) {
             document.getElementById('counterpartyId').value = cp.id;
@@ -985,7 +985,7 @@ function openCounterpartyModal(id = null) {
             document.getElementById('counterpartyIsActive').checked = cp.is_active !== false;
         }
     } else {
-        title.textContent = '🏢 Новый контрагент';
+        title.textContent = ' Новый контрагент';
         document.getElementById('counterpartyId').value = '';
         document.getElementById('counterpartyIsActive').checked = true;
     }
@@ -1034,7 +1034,7 @@ function deleteCounterparty(id) {
     if (!cp) return;
 
     showConfirmDelete(
-        '🗑️ Удаление контрагента',
+        ' Удаление контрагента',
         `Удалить контрагента "${cp.name}"? Если он используется в документах — будет деактивирован.`,
         async () => {
             try {
@@ -1073,7 +1073,7 @@ async function openWorkflowTemplateEditor(templateId = null) {
     if (idBadge) idBadge.textContent = '';
     
     if (templateId) {
-        document.getElementById('workflowTemplateEditorTitle').textContent = '✏️ Редактирование шаблона';
+        document.getElementById('workflowTemplateEditorTitle').textContent = ' Редактирование шаблона';
         if (idBadge) idBadge.textContent = 'ID: ' + templateId;
         
         try {
@@ -1101,7 +1101,7 @@ async function openWorkflowTemplateEditor(templateId = null) {
             return;
         }
     } else {
-        document.getElementById('workflowTemplateEditorTitle').textContent = '🔄 Новый шаблон процесса';
+        document.getElementById('workflowTemplateEditorTitle').textContent = ' Новый шаблон процесса';
     }
     
     // Открываем секцию
@@ -1156,7 +1156,7 @@ function renderWorkflowSteps() {
     if (currentWorkflowSteps.length === 0) {
         container.innerHTML = `
             <div class="wf-empty-steps">
-                <div class="wf-empty-steps-icon">🎯</div>
+                <div class="wf-empty-steps-icon"></div>
                 <div class="wf-empty-steps-text">Нет этапов</div>
                 <div class="wf-empty-steps-hint">Добавьте первый этап, используя кнопки выше</div>
             </div>
@@ -1193,14 +1193,14 @@ function renderWorkflowSteps() {
                     </div>
                     ${step.role_label ? `<div class="wf-step-role">${escapeHtml(step.role_label)}</div>` : ''}
                     <div class="wf-step-assignee ${isMissing ? 'missing' : ''}">
-                        ${isMissing ? '⚠️ ' + escapeHtml(assigneeLabel) : '👤 ' + escapeHtml(assigneeLabel)}
+                        ${isMissing ? ' ' + escapeHtml(assigneeLabel) : ' ' + escapeHtml(assigneeLabel)}
                     </div>
                 </div>
                 
                 <div class="wf-step-actions">
                     <button class="wf-step-action-btn delete" 
                             onclick="event.stopPropagation(); removeWorkflowStep(${idx})" 
-                            title="Удалить">🗑️</button>
+                            title="Удалить"></button>
                 </div>
             </div>
         `;
@@ -1307,7 +1307,7 @@ function removeWorkflowStep(idx) {
     const stepName = step.role_label || STEP_TYPE_LABELS[step.type] || 'этап';
     
     showConfirmDelete(
-        '🗑️ Удаление этапа',
+        ' Удаление этапа',
         `Удалить этап "${stepName}" из маршрута?`,
         () => {
             currentWorkflowSteps.splice(idx, 1);
@@ -1498,7 +1498,7 @@ function renderWorkflowTemplates() {
     if (workflowTemplatesList.length === 0) {
         grid.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="empty-state-icon">🔄</div>
+                <div class="empty-state-icon"></div>
                 <h3>Нет шаблонов процессов</h3>
                 <p>Создайте первый шаблон — определите этапы согласования</p>
                 <button class="buttonbase" onclick="openWorkflowTemplateEditor()">+ Создать шаблон</button>
@@ -1509,8 +1509,8 @@ function renderWorkflowTemplates() {
 
     grid.innerHTML = workflowTemplatesList.map(wf => {
         const statusBadge = wf.is_active
-            ? '<span class="status-badge status-active">🟢</span>'
-            : '<span class="status-badge status-inactive">⚫</span>';
+            ? '<span class="status-badge status-active"></span>'
+            : '<span class="status-badge status-inactive"></span>';
 
         return `
             <div class="doc-template-card">
@@ -1524,9 +1524,9 @@ function renderWorkflowTemplates() {
                     <span>${statusBadge}</span>
                 </div>
                 <div class="doc-template-card-actions">
-                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openWorkflowTemplateEditor(${wf.id})">✏️</button>
-                    <button class="btn-icon buttonbase" title="Дублировать" onclick="duplicateWorkflowTemplate(${wf.id})">📋</button>
-                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteWorkflowTemplate(${wf.id})" style="color: #dc3545;">🗑️</button>
+                    <button class="btn-icon buttonbase" title="Редактировать" onclick="openWorkflowTemplateEditor(${wf.id})"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                    <button class="btn-icon buttonbase" title="Дублировать" onclick="duplicateWorkflowTemplate(${wf.id})"><img src="../materials/icons8-скопировать-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                    <button class="btn-icon buttonbase" title="Удалить" onclick="deleteWorkflowTemplate(${wf.id})" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                 </div>
             </div>
         `;
@@ -1590,7 +1590,7 @@ function deleteWorkflowTemplate(templateId) {
     if (!wf) return;
 
     showConfirmDelete(
-        '🗑️ Удаление шаблона процесса',
+        ' Удаление шаблона процесса',
         `Удалить шаблон "${wf.name}"? Если он используется — будет деактивирован.`,
         async () => {
             try {
@@ -1671,14 +1671,14 @@ function initNumberingVarButtons() {
 let selectedFieldIndex = null;
 
 const FIELD_TYPE_ICONS = {
-    text: '📝',
-    textarea: '📄',
-    number: '🔢',
-    date: '📅',
-    select: '📋',
-    checkbox: '☑️',
-    user: '👤',
-    counterparty: '🏢'
+    text: '',
+    textarea: '',
+    number: '',
+    date: '',
+    select: '',
+    checkbox: '',
+    user: '',
+    counterparty: ''
 };
 
 const FIELD_TYPE_LABELS = {
@@ -1752,12 +1752,12 @@ function renderTemplateFields() {
     container.innerHTML = currentTemplateFields.map((field, idx) => `
         <div class="field-compact-item ${selectedFieldIndex === idx ? 'selected' : ''}" 
              onclick="selectField(${idx})">
-            <span class="fci-icon">${FIELD_TYPE_ICONS[field.type] || '📝'}</span>
+            <span class="fci-icon">${FIELD_TYPE_ICONS[field.type] || ''}</span>
             <span class="fci-label">${escapeHtml(field.label || 'Без названия')}</span>
             ${field.required ? '<span class="fci-required">*</span>' : ''}
             <button type="button" class="fci-remove" 
                     onclick="event.stopPropagation(); removeTemplateField(${idx})" 
-                    title="Удалить">✕</button>
+                    title="Удалить"></button>
         </div>
     `).join('');
 }
@@ -1790,7 +1790,7 @@ function removeTemplateField(index) {
     const fieldName = field.label || 'это поле';
     
     showConfirmDelete(
-        '🗑️ Удаление поля',
+        ' Удаление поля',
         `Удалить поле "${fieldName}"? Это действие нельзя отменить.`,
         () => {
             currentTemplateFields.splice(index, 1);
@@ -1819,7 +1819,7 @@ function renderFieldProperties() {
     if (selectedFieldIndex === null || !currentTemplateFields[selectedFieldIndex]) {
         panel.innerHTML = `
             <div class="no-field-selected">
-                <div class="nfs-icon">👈</div>
+                <div class="nfs-icon"></div>
                 <div class="nfs-text">Выберите поле слева<br>или добавьте новое</div>
             </div>
         `;
@@ -1827,7 +1827,7 @@ function renderFieldProperties() {
     }
     
     const field = currentTemplateFields[selectedFieldIndex];
-    const icon = FIELD_TYPE_ICONS[field.type] || '📝';
+    const icon = FIELD_TYPE_ICONS[field.type] || '';
     const typeLabel = FIELD_TYPE_LABELS[field.type] || 'Поле';
     
     let optionsHtml = '';
@@ -1841,7 +1841,7 @@ function renderFieldProperties() {
                         <div class="field-option-row">
                             <input type="text" value="${escapeHtml(opt)}" 
                                    onchange="updateFieldOption(${i}, this.value)">
-                            <button type="button" onclick="removeFieldOption(${i})" title="Удалить">✕</button>
+                            <button type="button" onclick="removeFieldOption(${i})" title="Удалить"></button>
                         </div>
                     `).join('')}
                 </div>
@@ -1901,7 +1901,7 @@ function renderFieldProperties() {
             <div class="field-props-actions">
                 <button type="button" class="buttonbase" style="background: #dc3545;" 
                         onclick="removeTemplateField(${selectedFieldIndex})">
-                    🗑️ Удалить поле
+                     Удалить поле
                 </button>
             </div>
         </div>
@@ -2026,9 +2026,9 @@ function closeAllDocModals() {
 let selectedStepIndex = null;
 
 const STEP_TYPE_ICONS = {
-    approval: '✅',
-    signature: '✍️',
-    review: '👀'
+    approval: '',
+    signature: '',
+    review: ''
 };
 
 const STEP_TYPE_LABELS = {
@@ -2053,18 +2053,18 @@ function getStepAssigneeLabel(step) {
     switch (type) {
         case 'user':
             return step.user?.full_name 
-                || (step.assignee_user_id ? `ID: ${step.assignee_user_id}` : '⚠️ Не выбран');
+                || (step.assignee_user_id ? `ID: ${step.assignee_user_id}` : ' Не выбран');
         case 'author':
-            return '✍️ Автор документа';
+            return ' Автор документа';
         case 'department_manager':
-            return '👔 Руководитель отдела';
+            return ' Руководитель отдела';
         case 'post': {
             const post = stepEditorPosts.find(p => p.id === step.assignee_post_id);
-            return post ? `🏷️ ${post.name}` : '🏷️ Должность не выбрана';
+            return post ? ` ${post.name}` : ' Должность не выбрана';
         }
         case 'role': {
             const role = stepEditorRoles.find(r => r.id === step.assignee_role_id);
-            return role ? `👑 ${role.name}` : '👑 Роль не выбрана';
+            return role ? ` ${role.name}` : ' Роль не выбрана';
         }
         default:
             return '—';
@@ -2085,7 +2085,7 @@ function removeWorkflowStep(index) {
     const stepName = step.role || STEP_TYPE_LABELS[step.type] || 'этап';
     
     showConfirmDelete(
-        '🗑️ Удаление этапа',
+        ' Удаление этапа',
         `Удалить этап "${stepName}" из маршрута?`,
         () => {
             currentWorkflowSteps.splice(index, 1);
@@ -2113,7 +2113,7 @@ function renderStepProperties() {
     if (selectedStepIndex === null || !currentWorkflowSteps[selectedStepIndex]) {
         panel.innerHTML = `
             <div class="wf-no-step-selected">
-                <div class="wf-no-step-icon">👈</div>
+                <div class="wf-no-step-icon"></div>
                 <div class="wf-no-step-text">Выберите этап в центре,<br>чтобы настроить его</div>
             </div>
         `;
@@ -2130,15 +2130,15 @@ function renderStepProperties() {
     panel.innerHTML = `
         <div class="wf-step-editor">
             <div class="wf-step-editor-title">
-                ✏️ Этап ${idx + 1}
+                 Этап ${idx + 1}
             </div>
             
             <div class="wf-step-editor-field">
                 <label>Тип этапа</label>
                 <select onchange="updateStepProperty(${idx}, 'type', this.value)">
-                    <option value="approval" ${step.type === 'approval' ? 'selected' : ''}>✅ Согласование</option>
-                    <option value="signature" ${step.type === 'signature' ? 'selected' : ''}>✍️ Подписание</option>
-                    <option value="review" ${step.type === 'review' ? 'selected' : ''}>👀 Ознакомление</option>
+                    <option value="approval" ${step.type === 'approval' ? 'selected' : ''}> Согласование</option>
+                    <option value="signature" ${step.type === 'signature' ? 'selected' : ''}> Подписание</option>
+                    <option value="review" ${step.type === 'review' ? 'selected' : ''}> Ознакомление</option>
                 </select>
             </div>
             
@@ -2153,11 +2153,11 @@ function renderStepProperties() {
             <div class="wf-step-editor-field">
                 <label>Кто выполняет</label>
                 <select onchange="onStepAssigneeTypeChange(${idx}, this.value)">
-                    <option value="user" ${assigneeType === 'user' ? 'selected' : ''}>👤 Конкретный пользователь</option>
-                    <option value="author" ${assigneeType === 'author' ? 'selected' : ''}>✍️ Автор документа</option>
-                    <option value="department_manager" ${assigneeType === 'department_manager' ? 'selected' : ''}>👔 Руководитель отдела автора</option>
-                    <option value="post" ${assigneeType === 'post' ? 'selected' : ''}>🏷️ Должность</option>
-                    <option value="role" ${assigneeType === 'role' ? 'selected' : ''}>👑 Роль</option>
+                    <option value="user" ${assigneeType === 'user' ? 'selected' : ''}> Конкретный пользователь</option>
+                    <option value="author" ${assigneeType === 'author' ? 'selected' : ''}> Автор документа</option>
+                    <option value="department_manager" ${assigneeType === 'department_manager' ? 'selected' : ''}> Руководитель отдела автора</option>
+                    <option value="post" ${assigneeType === 'post' ? 'selected' : ''}> Должность</option>
+                    <option value="role" ${assigneeType === 'role' ? 'selected' : ''}> Роль</option>
                 </select>
             </div>
             
@@ -2166,7 +2166,7 @@ function renderStepProperties() {
             <div class="wf-step-editor-actions">
                 <button type="button" class="buttonbase" style="background: #dc3545; width: 100%;" 
                         onclick="removeWorkflowStep(${idx})">
-                    🗑️ Удалить этап
+                     Удалить этап
                 </button>
             </div>
         </div>
@@ -2188,9 +2188,9 @@ function renderStepAssigneeFieldsHtml(idx, step) {
                         class="wf-user-picker-btn ${isMissing ? 'missing' : ''}"
                         onclick="openUserSelectorForStep(${idx})">
                     <span class="wf-user-picker-btn-text">${escapeHtml(assigneeLabel)}</span>
-                    <span class="wf-user-picker-btn-hint">👤 Выбрать</span>
+                    <span class="wf-user-picker-btn-hint"> Выбрать</span>
                 </button>
-                ${isMissing ? '<small style="color: var(--c_error); font-size: 11px;">⚠️ Выберите пользователя</small>' : ''}
+                ${isMissing ? '<small style="color: var(--c_error); font-size: 11px;"> Выберите пользователя</small>' : ''}
             </div>
         `;
     }
@@ -2200,7 +2200,7 @@ function renderStepAssigneeFieldsHtml(idx, step) {
         return `
             <div class="wf-step-editor-field">
                 <div style="padding: 10px; background: var(--c_acchalf); border-radius: 8px; font-size: 12px; color: var(--c_bg_txt); line-height: 1.5;">
-                    ℹ️ Выполнит <b>автор документа</b>.<br>
+                    ℹ Выполнит <b>автор документа</b>.<br>
                     <small style="color: var(--c_surf_txt);">Определяется при запуске.</small>
                 </div>
             </div>
@@ -2212,7 +2212,7 @@ function renderStepAssigneeFieldsHtml(idx, step) {
         return `
             <div class="wf-step-editor-field">
                 <div style="padding: 10px; background: var(--c_acchalf); border-radius: 8px; font-size: 12px; color: var(--c_bg_txt); line-height: 1.5;">
-                    ℹ️ Выполнит <b>руководитель отдела автора</b>.<br>
+                    ℹ Выполнит <b>руководитель отдела автора</b>.<br>
                     <small style="color: var(--c_surf_txt);">Определяется при запуске.</small>
                 </div>
             </div>
@@ -2464,7 +2464,7 @@ function renderUserSelectorList() {
     const container = document.getElementById('userSelectorList');
     
     if (filteredUsersList.length === 0) {
-        container.innerHTML = '<div class="loading-users">👥 Нет пользователей</div>';
+        container.innerHTML = '<div class="loading-users"> Нет пользователей</div>';
         return;
     }
     
@@ -2482,9 +2482,9 @@ function renderUserSelectorList() {
                 <div class="user-info">
                     <div class="user-name">${escapeHtml(fullName)}</div>
                     <div class="user-details">
-                        ${user.post_name ? `📌 ${escapeHtml(user.post_name)}` : ''}
-                        ${user.department_name ? ` | 🏢 ${escapeHtml(user.department_name)}` : ''}
-                        ${user.email ? ` | 📧 ${escapeHtml(user.email)}` : ''}
+                        ${user.post_name ? ` ${escapeHtml(user.post_name)}` : ''}
+                        ${user.department_name ? ` |  ${escapeHtml(user.department_name)}` : ''}
+                        ${user.email ? ` |  ${escapeHtml(user.email)}` : ''}
                     </div>
                 </div>
                 <div class="user-badge">${user.role_id === 1 ? 'Админ' : 'Пользователь'}</div>

@@ -403,12 +403,12 @@ function renderActiveSessions(sessions, currentSessionId) {
             <div class="session-item ${isCurrent ? 'current' : ''}">
                 <div class="session-info">
                     <span class="session-device">${deviceIcon} ${escapeHtml(deviceString)}</span>
-                    <span class="session-time">${isCurrent ? '🟢 Текущая сессия' : timeText}</span>
+                    <span class="session-time">${isCurrent ? ' Текущая сессия' : timeText}</span>
                     ${session.ip_address ? `<span class="session-ip">IP: ${escapeHtml(session.ip_address)}</span>` : ''}
                 </div>
                 <div class="session-location-info">
-                    <span class="session-location">📍 ${escapeHtml(locationText)}</span>
-                    ${!isCurrent ? `<button class="session-terminate-btn" onclick="terminateSession(${session.id})" title="Завершить сессию">✕</button>` : ''}
+                    <span class="session-location"> ${escapeHtml(locationText)}</span>
+                    ${!isCurrent ? `<button class="session-terminate-btn" onclick="terminateSession(${session.id})" title="Завершить сессию"></button>` : ''}
                 </div>
             </div>
         `;
@@ -444,7 +444,7 @@ function renderLoginHistory(history) {
                     <span class="history-time">${timeText}</span>
                     ${entry.ip_address ? `<span class="session-ip">IP: ${escapeHtml(entry.ip_address)}</span>` : ''}
                 </div>
-                <span class="history-location">📍 ${escapeHtml(locationText)}</span>
+                <span class="history-location"> ${escapeHtml(locationText)}</span>
             </div>
         `;
     }).join('');
@@ -501,14 +501,14 @@ window.terminateOtherSessions = async function() {
 };
 
 function getDeviceIcon(application) {
-    if (!application) return '💻';
+    if (!application) return '';
     const app = application.toLowerCase();
-    if (app.includes('chrome')) return '🌐';
-    if (app.includes('safari')) return '🧭';
-    if (app.includes('firefox')) return '🦊';
-    if (app.includes('edge')) return '🌊';
+    if (app.includes('chrome')) return '';
+    if (app.includes('safari')) return '';
+    if (app.includes('firefox')) return '';
+    if (app.includes('edge')) return '';
     if (app.includes('opera')) return 'O';
-    return '💻';
+    return '';
 }
 
 function escapeHtml(text) {
@@ -622,75 +622,84 @@ function showToast(message, type = 'info') {
 
 // Сохранение акцентного цвета
 function saveAccentColor(color) {
-    localStorage.setItem('accentColor', color);
-    updateAccent(color);
-    
-    // Обновляем активный класс на кнопках
+    const normalized = (typeof normalizeHexColor === 'function') ? normalizeHexColor(color) : color;
+    localStorage.setItem('accentColor', normalized);
+    if (typeof updateAccent === 'function') updateAccent(normalized);
+
     document.querySelectorAll('.accent-color').forEach(btn => {
-        if (btn.dataset.color === color) {
-            btn.classList.add('active');
-        } else {
+        const raw = btn.dataset.color;
+        if (!raw) {
             btn.classList.remove('active');
+            return;
         }
+        const btnColor = (typeof normalizeHexColor === 'function') ? normalizeHexColor(raw) : raw;
+        btn.classList.toggle('active', btnColor.toLowerCase() === normalized.toLowerCase());
     });
+
+    const customBtn = document.getElementById('customAccentBtn');
+    const customPicker = document.getElementById('customColorPicker');
+    if (customBtn && customPicker) {
+        const presetMatch = Array.from(document.querySelectorAll('.accent-color[data-color]')).some(btn => {
+            const c = (typeof normalizeHexColor === 'function') ? normalizeHexColor(btn.dataset.color || '') : (btn.dataset.color || '');
+            return c.toLowerCase() === normalized.toLowerCase();
+        });
+        if (presetMatch) {
+            customBtn.classList.remove('active');
+        } else {
+            customBtn.classList.add('active');
+            customBtn.style.background = normalized;
+            customPicker.value = normalized;
+        }
+    }
 }
 
 // Инициализация выбора акцентного цвета
 function initAccentColor() {
-    const savedColor = localStorage.getItem('accentColor') || '#5194FF';
+    const savedColor = (typeof normalizeHexColor === 'function') ? normalizeHexColor(localStorage.getItem('accentColor') || '#2563eb') : (localStorage.getItem('accentColor') || '#2563eb');
     const colorBtns = document.querySelectorAll('.accent-color');
     const customBtn = document.getElementById('customAccentBtn');
     const customPicker = document.getElementById('customColorPicker');
-    
-    // Применяем сохранённый цвет
-    updateAccent(savedColor);
-    
-    // Отмечаем активную кнопку
+
+    if (typeof updateAccent === 'function') updateAccent(savedColor);
+
     let found = false;
     colorBtns.forEach(btn => {
-        if (btn.dataset.color === savedColor) {
-            btn.classList.add('active');
-            found = true;
-        }
+        if (btn.id === 'customAccentBtn') return;
+        const raw = btn.dataset.color;
+        const c = raw ? ((typeof normalizeHexColor === 'function') ? normalizeHexColor(raw) : raw) : null;
+        const isMatch = !!c && c.toLowerCase() === savedColor.toLowerCase();
+        btn.classList.toggle('active', isMatch);
+        if (isMatch) found = true;
     });
-    
-    // Если сохранённого цвета нет в списке, активируем кастомный
+
     if (!found && customBtn) {
         customBtn.classList.add('active');
         customBtn.style.background = savedColor;
     }
-    
-    // Обработчики для предустановленных цветов
+    if (customPicker) customPicker.value = savedColor;
+
     colorBtns.forEach(btn => {
+        if (btn.dataset.accentBound === '1') return;
+        btn.dataset.accentBound = '1';
         btn.addEventListener('click', () => {
             const color = btn.dataset.color;
-            if (color) {
-                saveAccentColor(color);
-                // Сбрасываем кастомный
-                if (customBtn) {
-                    customBtn.classList.remove('active');
-                    customBtn.style.background = 'linear-gradient(135deg, #ff0000, #00ff00, #0000ff)';
-                }
+            if (!color) return;
+            saveAccentColor(color);
+            if (customBtn && btn.id !== 'customAccentBtn') {
+                customBtn.classList.remove('active');
+                customBtn.style.background = 'linear-gradient(135deg, #2563eb, #16a34a, #f59e0b)';
             }
         });
     });
-    
-    // Обработчик для кастомного цвета
-    if (customBtn && customPicker) {
-        customBtn.addEventListener('click', () => {
-            customPicker.click();
-        });
-        
+
+    if (customBtn && customPicker && customBtn.dataset.accentBound !== '1') {
+        customBtn.dataset.accentBound = '1';
+        customBtn.addEventListener('click', () => customPicker.click());
         customPicker.addEventListener('input', (e) => {
             const color = e.target.value;
             customBtn.style.background = color;
             customBtn.classList.add('active');
-            
-            // Убираем активный класс с предустановленных
-            colorBtns.forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
+            document.querySelectorAll('.accent-color[data-color]').forEach(btn => btn.classList.remove('active'));
             saveAccentColor(color);
         });
     }
@@ -744,12 +753,17 @@ function initEventListeners() {
     
     // Выбор темы
     document.querySelectorAll('.theme-option').forEach(option => {
+        if (option.dataset.themeBound === '1') return;
+        option.dataset.themeBound = '1';
         option.addEventListener('click', function() {
-            const theme = this.dataset.theme;
-            document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
+            const theme = this.dataset.theme === 'dark' ? 'dark' : 'light';
+            if (typeof applyTheme === 'function') {
+                applyTheme(theme);
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                document.querySelectorAll('.theme-option').forEach(opt => opt.classList.toggle('active', opt === this));
+            }
         });
     });
     

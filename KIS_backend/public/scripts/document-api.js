@@ -109,7 +109,7 @@ function renderDocuments(mode) {
     }
     
     if (documents.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="loading-row">📭 Нет документов</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="loading-row">Нет документов</td></tr>`;
         return;
     }
     
@@ -142,14 +142,14 @@ function getDocFieldValue(doc, field) {
 
 function getDocumentStatusBadge(status) {
     const labels = {
-        draft: '📝 Черновик',
-        on_approval: '⏳ На согласовании',
-        revision: '🔁 На доработке',
-        approved: '✅ Согласован',
-        signed: '✍️ Подписан',
-        registered: '📌 Зарегистрирован',
-        archived: '📦 В архиве',
-        cancelled: '❌ Отменён'
+        draft: 'Черновик',
+        on_approval: 'На согласовании',
+        revision: 'На доработке',
+        approved: 'Согласован',
+        signed: 'Подписан',
+        registered: 'Зарегистрирован',
+        archived: 'В архиве',
+        cancelled: 'Отменён'
     };
     
     const label = labels[status] || status;

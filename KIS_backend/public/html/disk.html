@@ -23,6 +23,7 @@
                 <img src="../materials/icons8-главная-96.png" alt="workspace">
                 <span>Главная</span>
             </a>
+            <a href="../html/department.html" class="menu-item" data-page="department" id="menuMyDepartment" style="display:none;"><img src="../materials/icons8-отдел-96.png" alt="department"><span>Мой отдел</span></a>
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
                 <img src="../materials/icons8-администрирование-96.png" alt="admin">
                 <span>Администрирование</span>
@@ -90,16 +91,16 @@
     </div>
     <div class="files-container" id="filesMainContainer" style="position: relative;">
         <div class="drag-overlay">
-            <div class="drag-overlay-text">📁 Отпустите файлы для загрузки</div>
+            <div class="drag-overlay-text">Отпустите файлы для загрузки</div>
         </div>
     
     <!-- ... остальной контент ... -->
         <!-- Шапка -->
         <div class="files-header">
-            <h2>📁 Файловое хранилище</h2>
+            <h2><img src="../materials/icons8-папка-120.png" class="ui-icon ui-icon-inline" alt=""> Файловое хранилище</h2>
             <div class="files-actions">
-                <input type="text" id="fileSearch" class="form-input" placeholder="🔍 Поиск файлов..." style="width: 250px;">
-                <button class="buttonbase" id="uploadFileBtn">⬆️ Загрузить файл</button>
+                <input type="text" id="fileSearch" class="form-input" placeholder="Поиск файлов..." style="width: 250px;">
+                <button class="buttonbase" id="uploadFileBtn"><img src="../materials/icons8-загрузить-96.png" class="ui-icon ui-icon-inline" alt=""> Загрузить файл</button>
                 <input type="file" id="fileUploadInput" multiple style="display: none;">
             </div>
         </div>
@@ -110,14 +111,14 @@
             <div class="files-content">
                 <!-- Хлебные крошки -->
                 <div class="files-breadcrumbs" id="filesBreadcrumbs">
-                    <span class="crumb active" data-id="root">📁 Корень</span>
+                    <span class="crumb active" data-id="root"><img src="../materials/icons8-папка-120.png" class="ui-icon ui-icon-sm" alt=""> Корень</span>
                 </div>
 
                 <div class="files-toolbar">
                     <button class="btn-create-folder" id="createFolderBtn">+ Новая папка</button>
-                    <input type="text" id="fileSearch" class="form-input" placeholder="🔍 Поиск..." style="width: 200px; margin-left: auto;">
+                    <input type="text" id="fileSearchToolbar" class="form-input search-input" placeholder="Поиск..." style="width: 200px; margin-left: auto;">
                     <div class="folder-item" onclick="loadFavorites()">
-                        <span class="folder-icon">⭐</span>
+                        <span class="folder-icon"><img src="../materials/icons8-избранное-96.png" class="ui-icon ui-icon-sm" alt=""></span>
                         <span class="folder-name">Избранное</span>
                     </div>
                 </div>
@@ -163,8 +164,8 @@
     <div id="createFolderModal" class="custom-modal" style="display: none;">
         <div class="custom-modal-content" style="max-width: 400px;">
             <div class="custom-modal-header">
-                <h3>📁 Новая папка</h3>
-                <button class="custom-modal-close" onclick="closeFolderModal()">&times;</button>
+                <h3><img src="../materials/icons8-папка-120.png" class="ui-icon ui-icon-inline" alt=""> Новая папка</h3>
+                <button class="custom-modal-close" onclick="closeFolderModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <div class="form-group">
@@ -173,7 +174,7 @@
                 </div>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase btn-secondary" onclick="closeFolderModal()">Отмена</button>
+                <button class="buttonbase btn-secondary" onclick="closeFolderModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" id="confirmCreateFolderBtn">Создать</button>
             </div>
         </div>
@@ -184,13 +185,13 @@
         <div class="custom-modal-content" style="max-width: 400px;">
             <div class="custom-modal-header">
                 <h3 id="confirmActionTitle">Подтверждение</h3>
-                <button class="custom-modal-close" onclick="closeConfirmActionModal()">&times;</button>
+                <button class="custom-modal-close" onclick="closeConfirmActionModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
                 <p id="confirmActionMessage">Вы уверены?</p>
             </div>
             <div class="custom-modal-footer">
-                <button class="buttonbase btn-secondary" onclick="closeConfirmActionModal()">Отмена</button>
+                <button class="buttonbase btn-secondary" onclick="closeConfirmActionModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 <button class="buttonbase" id="confirmActionBtn" style="background-color: #dc3545;">Подтвердить</button>
             </div>
         </div>

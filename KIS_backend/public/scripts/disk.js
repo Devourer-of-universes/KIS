@@ -87,7 +87,7 @@ async function uploadFiles(files) {
         progressContainer.innerHTML = `
             <div class="upload-progress-header">
                 <span>Загрузка файлов</span>
-                <button onclick="this.closest('.upload-progress-container').remove()" style="background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
+                <button onclick="this.closest('.upload-progress-container').remove()" style="background:none; border:none; cursor:pointer; font-size:16px; line-height:1;" aria-label="Закрыть"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="upload-progress-list" id="uploadProgressList"></div>
         `;
@@ -188,7 +188,7 @@ function openFolder(folderId, folderName) {
 
 function renderBreadcrumbs() {
     const container = document.getElementById('filesBreadcrumbs');
-    let html = `<span class="crumb ${currentFolderId === null ? 'active' : ''}" onclick="openFolder('root')">📁 Корень</span>`;
+    let html = `<span class="crumb ${currentFolderId === null ? 'active' : ''}" onclick="openFolder('root')"> Корень</span>`;
     
     currentPath.forEach((p, idx) => {
         html += ` <span style="color:var(--c_surf_txt)">/</span> `;
@@ -221,13 +221,13 @@ async function loadFolder() {
                 tr.setAttribute('data-id', f.id);
                 tr.setAttribute('data-type', 'folder');
                 tr.innerHTML = `
-                    <td><div class="file-icon-wrapper" style="background: rgba(255, 193, 7, 0.15); color: #ffc107;">📁</div></td>
+                    <td><div class="file-icon-wrapper" style="background: rgba(255, 193, 7, 0.15); color: #ffc107;"><img src="../materials/icons8-папка-96.png" class="ui-icon ui-icon-inline" alt=""></div></td>
                     <td><strong>${escapeHtml(f.name)}</strong></td>
                     <td>—</td>
                     <td>${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
                     <td>
-                        <button class="btn-icon" onclick="event.stopPropagation(); window.open('${f.file_uri}', '_blank')" title="Скачать" style="color: var(--c_acc);">📥</button>
-                        <button class="btn-icon" onclick="event.stopPropagation(); deleteFolder(${f.id})" style="color: #dc3545;">🗑️</button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); window.open('${f.file_uri}', '_blank')" title="Скачать" style="color: var(--c_acc);"><img src="../materials/icons8-скачать-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); deleteFolder(${f.id})" title="Удалить" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                     </td>
                 `;
                 tr.onclick = () => openFolder(f.id, f.name);
@@ -242,7 +242,7 @@ async function loadFolder() {
         // 2. Файлы
         if (data.files) {
             data.files.forEach(f => {
-                const typeIcons = { doc: '📝', excel: '📊', ppt: '📽️', pdf: '📕', image: '🖼️', archive: '📦', other: '📄' };
+                const typeIcons = { doc: '', excel: '', ppt: '', pdf: '', image: '', archive: '', other: '' };
                 const typeClasses = { doc: 'bg-doc', excel: 'bg-excel', ppt: 'bg-ppt', pdf: 'bg-pdf', image: 'bg-image', archive: 'bg-archive', other: 'bg-other' };
                 
                 const tr = document.createElement('tr');
@@ -250,13 +250,13 @@ async function loadFolder() {
                 tr.setAttribute('data-id', f.id);
                 tr.setAttribute('data-type', 'file');
                 tr.innerHTML = `
-                    <td><div class="file-icon-wrapper ${typeClasses[f.file_type] || 'bg-other'}">${typeIcons[f.file_type] || '📄'}</div></td>
+                    <td><div class="file-icon-wrapper ${typeClasses[f.file_type] || 'bg-other'}"><img src="../materials/icons8-файл-96.png" class="ui-icon ui-icon-inline" alt=""></div></td>
                     <td>${escapeHtml(f.file_name)}</td>
                     <td>${formatSize(f.file_size)}</td>
                     <td>${new Date(f.created_at).toLocaleDateString('ru-RU')}</td>
                     <td>
-                        <button class="btn-icon" onclick="event.stopPropagation(); window.open('${f.file_uri}', '_blank')" title="Скачать" style="color: var(--c_acc);">📥</button>
-                        <button class="btn-icon" onclick="event.stopPropagation(); deleteFile(${f.id})" style="color: #dc3545;">🗑️</button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); window.open('${f.file_uri}', '_blank')" title="Скачать" style="color: var(--c_acc);"><img src="../materials/icons8-скачать-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); deleteFile(${f.id})" title="Удалить" style="color: #dc3545;"><img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                     </td>
                 `;
                 tr.ondragstart = (e) => handleDragStart(e, f.id, 'file');
@@ -267,7 +267,7 @@ async function loadFolder() {
         }
 
         if (tbody.innerHTML === '') {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px;">📭 Папка пуста</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px;"> Папка пуста</td></tr>';
         }
         
     } catch (e) {
@@ -337,7 +337,7 @@ async function handleDrop(e, targetFolderId) {
 // Удаление
 async function deleteFile(id) {
     showCustomConfirm(
-        '🗑️ Удаление файла',
+        ' Удаление файла',
         'Вы уверены, что хотите удалить этот файл? Это действие нельзя отменить.',
         async () => {
             try {
@@ -357,7 +357,7 @@ async function deleteFile(id) {
 
 async function deleteFolder(id) {
     showCustomConfirm(
-        '🗑️ Удаление папки',
+        ' Удаление папки',
         'Удалить папку? Все файлы внутри также будут удалены.',
         async () => {
             try {
@@ -395,7 +395,7 @@ async function loadStats() {
 
         const typeList = document.getElementById('fileTypesList');
         const typeNames = { doc: 'Документы', excel: 'Таблицы', ppt: 'Презентации', pdf: 'PDF', image: 'Изображения', archive: 'Архивы', other: 'Другое' };
-        const typeIcons = { doc: '📝', excel: '📊', ppt: '📽️', pdf: '📕', image: '🖼️', archive: '📦', other: '📄' };
+        const typeIcons = { doc: '', excel: '', ppt: '', pdf: '', image: '', archive: '', other: '' };
         const typeClasses = { doc: 'bg-doc', excel: 'bg-excel', ppt: 'bg-ppt', pdf: 'bg-pdf', image: 'bg-image', archive: 'bg-archive', other: 'bg-other' };
 
         typeList.innerHTML = Object.keys(typeNames).map(type => {

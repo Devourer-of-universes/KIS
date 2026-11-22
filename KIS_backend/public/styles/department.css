@@ -1,0 +1,17 @@
+
+/* Department page */
+.department-page { padding: 24px; min-height: 100vh; }
+.department-header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; margin-bottom:20px; }
+.department-header h1 { margin:0; font-size:28px; color:var(--c_bg_txt); }
+.department-subtitle { margin:6px 0 0; color:var(--c_surf_txt); font-size:14px; }
+.dept-state { padding:32px; text-align:center; color:var(--c_surf_txt); background:var(--c_surf); border-radius:12px; border:1px solid var(--c_border, rgba(0,0,0,.08)); }
+.department-main { display:flex; flex-direction:column; gap:20px; }
+.department-charts .report-chart-wrap { height:260px; }
+.dept-structure-section .section-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.dept-structure-section h2 { margin:0; font-size:20px; color:var(--c_bg_txt); }
+.dept-structure-section .structure-container { background:transparent; }
+.dept-structure-section .structure-content { padding:0; }
+.dept-structure-section .structure-group-item { margin-bottom:10px; }
+.dept-structure-section .group-manager .manager-name { font-weight:600; }
+.dept-employee-meta { font-size:12px; color:var(--c_surf_txt); margin-top:2px; }
+@media (max-width: 900px){ .department-page{padding:16px;} .department-header h1{font-size:24px;} }

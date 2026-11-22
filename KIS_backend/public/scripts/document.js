@@ -74,22 +74,33 @@ function closeAllWindowsExcept(exceptWindowId) {
     });
 }
 
-// Функция автоматического открытия дашборда
+function hasAnyOpenSections() {
+    return !!document.querySelector('.base-section.active:not(#base-section-doc-last)');
+}
+
+function hasAnyOpenModals() {
+    return !!document.querySelector('.admin-modal.active, .modal-overlay.active');
+}
+
+function isDocLastVisible() {
+    const section = document.getElementById('base-section-doc-last');
+    return !!(section && section.classList.contains('active') && section.style.display !== 'none');
+}
+
+// Функция автоматического открытия списка документов
 function ensureDocLastVisible() {
-    // Если есть открытые секции (кроме дашборда) или модалки — ничего не делаем
     if (hasAnyOpenSections() || hasAnyOpenModals()) {
         return;
     }
-    
-    // Если дашборд уже виден — ничего не делаем
+
     if (isDocLastVisible()) {
         return;
     }
-    
-    // Иначе открываем дашборд
-    console.log('📊 Автоматическое открытие (все секции закрыты)');
+
     openWindow('base-section-doc-last');
-    loadDocuments();
+    if (typeof loadDocuments === 'function') {
+        loadDocuments('recent');
+    }
 }
 // Функция, которая вызывается после закрытия любой секции
 function onSectionClosed(closedSectionId) {
@@ -335,7 +346,7 @@ function renderUserSelectorList() {
     const container = document.getElementById('userSelectorList');
     
     if (filteredUsersList.length === 0) {
-        container.innerHTML = '<div class="loading-users">👥 Нет пользователей</div>';
+        container.innerHTML = '<div class="loading-users">Нет пользователей</div>';
         return;
     }
     
@@ -353,9 +364,9 @@ function renderUserSelectorList() {
                 <div class="user-info">
                     <div class="user-name">${escapeHtml(fullName)}</div>
                     <div class="user-details">
-                        ${user.post_name ? `📌 ${escapeHtml(user.post_name)}` : ''}
-                        ${user.department_name ? ` | 🏢 ${escapeHtml(user.department_name)}` : ''}
-                        ${user.email ? ` | 📧 ${escapeHtml(user.email)}` : ''}
+                        ${user.post_name ? `${escapeHtml(user.post_name)}` : ''}
+                        ${user.department_name ? ` | ${escapeHtml(user.department_name)}` : ''}
+                        ${user.email ? ` | ${escapeHtml(user.email)}` : ''}
                     </div>
                 </div>
                 <div class="user-badge">${user.role_id === 1 ? 'Админ' : 'Пользователь'}</div>
@@ -440,14 +451,14 @@ window.closeUserSelectorModal = closeUserSelectorModal;
 // =====================================================
 // - Все обработчики кнопок
 document.addEventListener('DOMContentLoaded', () => {
-    // Закрытие окон - ИСПРАВЛЕННЫЙ КОД
+    // Закрытие окон
     document.querySelectorAll('.sec-btn-close').forEach(btn => {
-        btn.addEventListener('click', function(e) {  // ← function вместо стрелки
+        btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const section = this.closest('.base-section');  // ← this теперь работает
+            const section = this.closest('.base-section');
             if (section) {
                 closeWindow(section.id);
-                openWindow('base-section-docs-last');
+                openWindow('base-section-doc-last');
             }
         });
     });
@@ -456,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('base-sec-dn-modal') || e.target.classList.contains('base-sec-tn-modal')) {
             closeAllWindowsExcept(null);
-            openWindow('base-section-docs-last');
+            openWindow('base-section-doc-last');
         }
     });
 
@@ -472,8 +483,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });   
-    
+
+    handleDocumentDeepLink();
 });
+
+function handleDocumentDeepLink() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const docId = params.get('docId') || params.get('documentId') || params.get('id');
+
+        if (!docId) {
+            openWindow('base-section-doc-last');
+            if (typeof loadDocuments === 'function') loadDocuments('recent');
+            return;
+        }
+
+        // Убираем параметр из URL, чтобы не переоткрывать при обновлении/навигации внутри страницы
+        params.delete('docId');
+        params.delete('documentId');
+        params.delete('id');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+
+        const openDoc = () => {
+            if (typeof openDocumentView === 'function') {
+                openDocumentView(docId);
+            } else {
+                openWindow('base-section-doc-last');
+                if (typeof loadDocuments === 'function') loadDocuments('recent');
+            }
+        };
+
+        // Даём инициализации страницы завершиться
+        setTimeout(openDoc, 0);
+    } catch (e) {
+        console.error('Document deep link error:', e);
+        openWindow('base-section-doc-last');
+        if (typeof loadDocuments === 'function') loadDocuments('recent');
+    }
+}
 
 
 

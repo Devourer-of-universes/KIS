@@ -24,6 +24,7 @@
                 <img src="../materials/icons8-главная-96.png" alt="workspace">
                 <span>Главная</span>
             </a>
+            <a href="../html/department.html" class="menu-item" data-page="department" id="menuMyDepartment" style="display:none;"><img src="../materials/icons8-отдел-96.png" alt="department"><span>Мой отдел</span></a>
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display: none;">
                 <img src="../materials/icons8-администрирование-96.png" alt="admin">
                 <span>Администрирование</span>
@@ -104,16 +105,16 @@
                         <h1 id="profileFullName">Загрузка...</h1>
                         <div class="profile-badges">
                             <span class="badge role-badge" id="profileRole">Пользователь</span>
-                            <span class="badge status-badge status-active" id="profileStatusBadge">🟢 Активен</span>
+                            <span class="badge status-badge status-active" id="profileStatusBadge">Активен</span>
                         </div>
                         <p class="profile-position" id="profilePosition">Должность не указана</p>
                         <p class="profile-department" id="profileDepartment">Отдел не указан</p>
                     </div>
                 </div>
                 <div class="profile-actions">
-                    <button class="buttonbase" id="profileEditBtn">✏️ Редактировать</button>
-                    <button class="buttonbase btn-outline" id="profileSaveBtn" style="display: none;">💾 Сохранить</button>
-                    <button class="buttonbase btn-outline" id="profileCancelBtn" style="display: none;">Отмена</button>
+                    <button class="buttonbase" id="profileEditBtn"><img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактировать</button>
+                    <button class="buttonbase btn-outline" id="profileSaveBtn" style="display: none;"><img src="../materials/icons8-сохранить-96.png" class="ui-icon ui-icon-inline" alt=""> Сохранить</button>
+                    <button class="buttonbase btn-outline" id="profileCancelBtn" style="display: none;"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                 </div>
             </div>
 
@@ -124,7 +125,7 @@
                     <!-- Контактная информация -->
                     <div class="profile-card">
                         <div class="profile-card-header">
-                            <h3>📋 Контактная информация</h3>
+                            <h3><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Контактная информация</h3>
                         </div>
                         <div class="profile-card-body">
                             <div class="profile-field">
@@ -152,7 +153,7 @@
                     <!-- Рабочая информация -->
                     <div class="profile-card">
                         <div class="profile-card-header">
-                            <h3>🏢 Рабочая информация</h3>
+                            <h3>Рабочая информация</h3>
                         </div>
                         <div class="profile-card-body">
                             <div class="profile-field">
@@ -177,7 +178,7 @@
                     <!-- Изменить пароль -->
                     <div class="profile-card">
                         <div class="profile-card-header">
-                            <h3>🔒 Смена пароля</h3>
+                            <h3>Смена пароля</h3>
                         </div>
                         <div class="profile-card-body">
                             <div class="profile-field">
@@ -203,7 +204,7 @@
                     <!-- Статистика -->
                     <div class="profile-card stats-card">
                         <div class="profile-card-header">
-                            <h3>📊 Статистика</h3>
+                            <h3><img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Статистика</h3>
                         </div>
                         <div class="profile-card-body">
                             <div class="stats-grid" id="profileStats">
@@ -243,8 +244,8 @@
     <div id="noteModal" class="admin-modal" style="display: none;">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header">
-                <h2 id="noteModalTitle">📌 Моя заметка</h2>
-                <button class="modal-close" onclick="closeModal('noteModal')">&times;</button>
+                <h2 id="noteModalTitle"><img src="../materials/icons8-закладка-лента-120.png" class="ui-icon ui-icon-inline" alt=""> Моя заметка</h2>
+                <button class="modal-close" onclick="closeModal('noteModal')"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <form id="noteForm">
@@ -260,8 +261,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="buttonbase" onclick="closeModal('noteModal')">Отмена</button>
-                <button class="buttonbase" id="saveNoteBtn" onclick="saveNote()">💾 Сохранить</button>
+                <button class="buttonbase" onclick="closeModal('noteModal')"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="saveNoteBtn" onclick="saveNote()"><img src="../materials/icons8-сохранить-96.png" class="ui-icon ui-icon-inline" alt=""> Сохранить</button>
             </div>
         </div>
     </div>

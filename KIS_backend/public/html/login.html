@@ -39,13 +39,12 @@
             </div>
 
             <div class="banner-content">
-                <!-- Верхняя часть: логотип и слоган -->
+                <!-- Верхняя часть: логотип -->
                 <div class="banner-top">
                     <div class="banner-logo">
                         <img src="../materials/logo.svg" alt="logo">
                         <span>КИС ЦРП</span>
                     </div>
-                    <h2>Одно окно для всех<br>рабочих процессов</h2>
                 </div>
                 
                 <!-- Центральная часть: Карусель -->
@@ -62,25 +61,7 @@
                 </div>
                 
                 <div class="banner-bottom">
-                    <div class="banner-features">
-                        <div class="feature-item">
-                            <span class="feature-icon"></span>
-                            <span>Быстро</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon"></span>
-                            <span>Безопасно</span>
-                        </div>
-                        <div class="feature-item">
-                            <span class="feature-icon"></span>
-                            <span>Доступно</span>
-                        </div>
-                    </div>
-                    
-                    <div class="cat-placeholder" id="catPlaceholder">
-                        <span style="font-size: 40px;">🐈</span>
-                        <span style="font-size: 11px; opacity: 0.6;">(тут будет кот)</span>
-                    </div>
+                    <h2 class="banner-tagline">Одно окно для всех<br>рабочих процессов</h2>
                 </div>
             </div>
         </div>
@@ -119,7 +100,7 @@
 
                 <!-- ЭКРАН 2: ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
                 <div class="auth-screen" id="screen-forgot">
-                    <div class="auth-icon">🔑</div>
+                    <div class="auth-icon"></div>
                     <h3>Восстановление доступа</h3>
                     <p class="auth-desc">Для восстановления пароля или логина обратитесь к администратору системы или в отдел кадров.</p>
                     <p class="auth-desc"><strong>Администратор:</strong> admin@company.ru</p>
@@ -128,7 +109,7 @@
 
                 <!-- ЭКРАН 3: РЕГИСТРАЦИЯ -->
                 <div class="auth-screen" id="screen-register">
-                    <div class="auth-icon">📝</div>
+                    <div class="auth-icon"></div>
                     <h3>Регистрация</h3>
                     <p class="auth-desc">Самостоятельная регистрация в системе <strong>запрещена</strong>.</p>
                     <p class="auth-desc">Учётные записи создаются ответственным сотрудником отдела кадров или администратором.</p>
@@ -166,7 +147,7 @@
             const errorType = urlParams.get('error');
             
             if (errorType === 'blocked') {
-                errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                errorDiv.textContent = 'Ваша учетная запись заблокирована. Обратитесь к администратору.';
                 errorDiv.style.display = 'block';
             } else if (errorType === 'unauthorized') {
                 errorDiv.textContent = '⏰ Сессия истекла. Пожалуйста, войдите заново.';
@@ -225,7 +206,7 @@
                 console.error('Login error:', error);
                 
                 if (error.message && error.message.includes('заблокирована')) {
-                    errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                    errorDiv.textContent = 'Ваша учетная запись заблокирована. Обратитесь к администратору.';
                 } else {
                     errorDiv.textContent = error.message || 'Неверный логин или пароль';
                 }

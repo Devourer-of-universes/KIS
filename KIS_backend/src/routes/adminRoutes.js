@@ -759,6 +759,122 @@ router.get('/departments/:id/employees', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// ========== МОЙ ОТДЕЛ (РУКОВОДИТЕЛЬ) ==========
+async function getManagedDepartmentIds(userId) {
+    const managed = await query(`SELECT id FROM departments WHERE manager_id = $1`, [userId]);
+    if (managed.rows.length === 0) return null;
+    const rootId = managed.rows[0].id;
+    const all = await query(`SELECT id, parent_department_id FROM departments`);
+    const children = new Map();
+    for (const d of all.rows) {
+        const p = d.parent_department_id;
+        if (!children.has(p)) children.set(p, []);
+        children.get(p).push(d.id);
+    }
+    const ids = [];
+    const stack = [rootId];
+    const seen = new Set();
+    while (stack.length) {
+        const cur = stack.pop();
+        if (seen.has(cur)) continue;
+        seen.add(cur);
+        ids.push(cur);
+        for (const ch of (children.get(cur) || [])) stack.push(ch);
+    }
+    return { rootId, ids };
+}
+
+router.get('/my-department', authMiddleware, async (req, res) => {
+    try {
+        const info = await getManagedDepartmentIds(req.userId);
+        if (!info) return res.json({ managed: false });
+
+        const deptRes = await query(`SELECT * FROM departments WHERE id = $1`, [info.rootId]);
+        const departments = await query(`SELECT * FROM departments WHERE id = ANY($1::int[]) ORDER BY id`, [info.ids]);
+        const users = await query(`
+            SELECT u.id, u.surname, u.name, u.patronymic, u.avatar_uri, u.status, u.department_id,
+                   u.email, u.tel_num, u.last_seen_at,
+                   p.name as post_name, r.name as role_name
+            FROM users u
+            LEFT JOIN posts p ON u.post_id = p.id
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE u.deleted_at IS NULL AND u.department_id = ANY($1::int[])
+            ORDER BY u.surname, u.name
+        `, [info.ids]);
+
+        const usersMap = new Map();
+        for (const u of users.rows) usersMap.set(u.id, u);
+        const deptMap = new Map();
+        for (const d of departments.rows) {
+            deptMap.set(d.id, { ...d, children: [], employees: [], manager: d.manager_id ? usersMap.get(d.manager_id) || null : null });
+        }
+        for (const u of users.rows) {
+            if (deptMap.has(u.department_id)) deptMap.get(u.department_id).employees.push(u);
+        }
+        let root = null;
+        for (const d of deptMap.values()) {
+            if (d.id === info.rootId) root = d;
+            if (d.parent_department_id && deptMap.has(d.parent_department_id)) deptMap.get(d.parent_department_id).children.push(d);
+        }
+
+        res.json({ managed: true, department: deptRes.rows[0] || null, structure: root, employee_count: users.rows.length, department_ids: info.ids });
+    } catch (error) {
+        console.error('Get my department error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/my-department/stats', authMiddleware, async (req, res) => {
+    try {
+        const info = await getManagedDepartmentIds(req.userId);
+        if (!info) return res.json({ managed: false });
+
+        const clampDays = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(3650, Math.max(1, n)) : 30; };
+        let fromDate, toDate;
+        const now = new Date();
+        if (req.query.from || req.query.to) {
+            const fromRaw = req.query.from ? new Date(req.query.from) : new Date(now.getTime() - 30 * 86400000);
+            const toRaw = req.query.to ? new Date(req.query.to) : now;
+            fromDate = isNaN(fromRaw.getTime()) ? new Date(now.getTime() - 30 * 86400000) : fromRaw;
+            toDate = isNaN(toRaw.getTime()) ? now : toRaw;
+        } else {
+            const days = clampDays(req.query.days || 30);
+            toDate = now; fromDate = new Date(now.getTime() - days * 86400000);
+        }
+        if (fromDate > toDate) { const t = fromDate; fromDate = toDate; toDate = t; }
+        const toInc = new Date(toDate); toInc.setHours(23,59,59,999);
+        const fromIso = fromDate.toISOString(); const toIso = toInc.toISOString();
+        const days = Math.max(1, Math.ceil((toInc - fromDate) / 86400000));
+        const ids = info.ids;
+        const safe = async (fn, fb) => { try { return await fn(); } catch (e) { console.warn('My-dept stats query failed:', e.message); return fb; } };
+
+        const employeesTotal = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM users WHERE deleted_at IS NULL AND department_id = ANY($1::int[])`, [ids])).rows[0].c, 0);
+        const employeesActive = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM users WHERE deleted_at IS NULL AND status='active' AND department_id = ANY($1::int[])`, [ids])).rows[0].c, 0);
+
+        const tasksTotal = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM tasks WHERE deleted_at IS NULL AND department_id = ANY($1::int[])`, [ids])).rows[0].c, 0);
+        const tasksPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM tasks WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND created_at >= $2 AND created_at <= $3`, [ids, fromIso, toIso])).rows[0].c, 0);
+        const tasksOverdue = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM tasks WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND status NOT IN ('completed','cancelled') AND due_date < CURRENT_DATE`, [ids])).rows[0].c, 0);
+        const tasksCompletedPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM tasks WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND status='completed' AND completed_at >= $2 AND completed_at <= $3`, [ids, fromIso, toIso])).rows[0].c, 0);
+        const tasksByStatus = await safe(async () => (await query(`SELECT COALESCE(status,'unknown') status, COUNT(*)::int count FROM tasks WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND created_at >= $2 AND created_at <= $3 GROUP BY 1 ORDER BY count DESC`, [ids, fromIso, toIso])).rows, []);
+        const tasksOverTime = await safe(async () => (await query(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*)::int count FROM tasks WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND created_at >= $2 AND created_at <= $3 GROUP BY 1 ORDER BY 1`, [ids, fromIso, toIso])).rows, []);
+
+        const docsPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM documents WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND created_at >= $2 AND created_at <= $3`, [ids, fromIso, toIso])).rows[0].c, 0);
+        const docsByStatus = await safe(async () => (await query(`SELECT COALESCE(status,'unknown') status, COUNT(*)::int count FROM documents WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND created_at >= $2 AND created_at <= $3 GROUP BY 1 ORDER BY count DESC`, [ids, fromIso, toIso])).rows, []);
+        const docsOverTime = await safe(async () => (await query(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*)::int count FROM documents WHERE deleted_at IS NULL AND department_id = ANY($1::int[]) AND created_at >= $2 AND created_at <= $3 GROUP BY 1 ORDER BY 1`, [ids, fromIso, toIso])).rows, []);
+
+        res.json({
+            managed: true,
+            period: { from: fromIso, to: toIso, days },
+            kpis: { employees_total: employeesTotal, employees_active: employeesActive, tasks_total: tasksTotal, tasks_period: tasksPeriod, tasks_overdue: tasksOverdue, tasks_completed_period: tasksCompletedPeriod, documents_period: docsPeriod },
+            charts: { tasks_by_status: tasksByStatus, tasks_over_time: tasksOverTime, documents_by_status: docsByStatus, documents_over_time: docsOverTime }
+        });
+    } catch (error) {
+        console.error('Get my department stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ========== УПРАВЛЕНИЕ ДОЛЖНОСТЯМИ ==========
 // Получение всех должностей
 router.get('/posts', authMiddleware, async (req, res) => {
@@ -966,43 +1082,28 @@ router.get('/logs', authMiddleware, async (req, res) => {
 });
 
 // Получение статистики
-router.get('/stats', authMiddleware, async (req, res) => {
+router.get('/stats', authMiddleware, adminPanelAccess, checkPermission('stats', 'view'), async (req, res) => {
     try {
         const stats = {};
-        
-        // Всего пользователей
         const totalUsers = await query(`SELECT COUNT(*) FROM users WHERE deleted_at IS NULL`);
         stats.total_users = parseInt(totalUsers.rows[0].count);
-        
-        // Активных сегодня (last_seen_at > now() - interval '1 day')
         const activeUsers = await query(`
             SELECT COUNT(*) FROM users 
             WHERE last_seen_at > NOW() - INTERVAL '1 day' AND deleted_at IS NULL
         `);
         stats.active_users = parseInt(activeUsers.rows[0].count);
-        
-        // Всего чатов
         const totalChats = await query(`SELECT COUNT(*) FROM chats`);
         stats.total_chats = parseInt(totalChats.rows[0].count);
-        
-        // Групповые и личные чаты
         const groupChats = await query(`SELECT COUNT(*) FROM chats WHERE is_group = true`);
         stats.group_chats = parseInt(groupChats.rows[0].count);
         const privateChats = await query(`SELECT COUNT(*) FROM chats WHERE is_group = false`);
         stats.private_chats = parseInt(privateChats.rows[0].count);
-        
-        // Всего сообщений
         const totalMessages = await query(`SELECT COUNT(*) FROM messages WHERE is_deleted = false`);
         stats.total_messages = parseInt(totalMessages.rows[0].count);
-        
-        // Всего файлов
         const totalFiles = await query(`SELECT COUNT(*) FROM message_attachments`);
         stats.total_files = parseInt(totalFiles.rows[0].count);
-        // Заблокированные пользователи
         const blockedUsers = await query(`SELECT COUNT(*) FROM users WHERE status = 'blocked' AND deleted_at IS NULL`);
         stats.blocked_users = parseInt(blockedUsers.rows[0].count);
-
-        // Новые пользователи за месяц
         const newUsersMonth = await query(`
             SELECT COUNT(*) FROM users 
             WHERE created_at > NOW() - INTERVAL '30 days' AND deleted_at IS NULL
@@ -1015,10 +1116,127 @@ router.get('/stats', authMiddleware, async (req, res) => {
     }
 });
 
+// Детальная аналитика для вкладки "Отчёты"
+router.get('/reports', authMiddleware, adminPanelAccess, checkPermission('stats', 'view'), async (req, res) => {
+    try {
+        const clampDays = (v) => {
+            const n = parseInt(v, 10);
+            if (!Number.isFinite(n)) return 30;
+            return Math.min(3650, Math.max(1, n));
+        };
+        let fromDate; let toDate;
+        const now = new Date();
+        if (req.query.from || req.query.to) {
+            const fromRaw = req.query.from ? new Date(req.query.from) : new Date(now.getTime() - 30 * 86400000);
+            const toRaw = req.query.to ? new Date(req.query.to) : now;
+            fromDate = isNaN(fromRaw.getTime()) ? new Date(now.getTime() - 30 * 86400000) : fromRaw;
+            toDate = isNaN(toRaw.getTime()) ? now : toRaw;
+        } else {
+            const days = clampDays(req.query.days || 30);
+            toDate = now;
+            fromDate = new Date(now.getTime() - days * 86400000);
+        }
+        if (fromDate > toDate) { const tmp = fromDate; fromDate = toDate; toDate = tmp; }
+        const toDateInclusive = new Date(toDate);
+        toDateInclusive.setHours(23,59,59,999);
+        const fromIso = fromDate.toISOString();
+        const toIso = toDateInclusive.toISOString();
+        const days = Math.max(1, Math.ceil((toDateInclusive - fromDate) / 86400000));
 
+        const safe = async (fn, fallback) => { try { return await fn(); } catch (e) { console.warn('Report query failed:', e.message); return fallback; } };
 
+        const totalUsers = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM users WHERE deleted_at IS NULL`)).rows[0].c, 0);
+        const activeUsersPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM users WHERE deleted_at IS NULL AND last_seen_at >= $1 AND last_seen_at <= $2`, [fromIso, toIso])).rows[0].c, 0);
+        const newUsersPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM users WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2`, [fromIso, toIso])).rows[0].c, 0);
 
+        const docsTotal = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM documents WHERE deleted_at IS NULL`)).rows[0].c, 0);
+        const docsPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM documents WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2`, [fromIso, toIso])).rows[0].c, 0);
+        const docsByStatus = await safe(async () => (await query(`
+            SELECT COALESCE(status,'unknown') AS status, COUNT(*)::int AS count
+            FROM documents WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2
+            GROUP BY COALESCE(status,'unknown') ORDER BY count DESC
+        `, [fromIso, toIso])).rows, []);
+        const docsOverTime = await safe(async () => (await query(`
+            SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+            FROM documents WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2
+            GROUP BY 1 ORDER BY 1
+        `, [fromIso, toIso])).rows, []);
+        const docsByType = await safe(async () => (await query(`
+            SELECT COALESCE(dt.name,'Без типа') AS name, COUNT(*)::int AS count
+            FROM documents d LEFT JOIN document_types dt ON d.document_type_id = dt.id
+            WHERE d.deleted_at IS NULL AND d.created_at >= $1 AND d.created_at <= $2
+            GROUP BY COALESCE(dt.name,'Без типа') ORDER BY count DESC LIMIT 10
+        `, [fromIso, toIso])).rows, []);
 
+        const tasksTotal = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM tasks WHERE deleted_at IS NULL`)).rows[0].c, 0);
+        const tasksPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM tasks WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2`, [fromIso, toIso])).rows[0].c, 0);
+        const tasksCompletedPeriod = await safe(async () => (await query(`
+            SELECT COUNT(*)::int AS c FROM tasks
+            WHERE deleted_at IS NULL AND status='completed' AND completed_at >= $1 AND completed_at <= $2
+        `, [fromIso, toIso])).rows[0].c, 0);
+        const tasksByStatus = await safe(async () => (await query(`
+            SELECT COALESCE(status,'unknown') AS status, COUNT(*)::int AS count
+            FROM tasks WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2
+            GROUP BY COALESCE(status,'unknown') ORDER BY count DESC
+        `, [fromIso, toIso])).rows, []);
+        const tasksByPriority = await safe(async () => (await query(`
+            SELECT COALESCE(priority,'unknown') AS priority, COUNT(*)::int AS count
+            FROM tasks WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2
+            GROUP BY COALESCE(priority,'unknown') ORDER BY count DESC
+        `, [fromIso, toIso])).rows, []);
+        const tasksOverTime = await safe(async () => (await query(`
+            SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+            FROM tasks WHERE deleted_at IS NULL AND created_at >= $1 AND created_at <= $2
+            GROUP BY 1 ORDER BY 1
+        `, [fromIso, toIso])).rows, []);
+
+        const messagesPeriod = await safe(async () => (await query(`SELECT COUNT(*)::int AS c FROM messages WHERE is_deleted = false AND created_at >= $1 AND created_at <= $2`, [fromIso, toIso])).rows[0].c, 0);
+        const messagesOverTime = await safe(async () => (await query(`
+            SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+            FROM messages WHERE is_deleted = false AND created_at >= $1 AND created_at <= $2
+            GROUP BY 1 ORDER BY 1
+        `, [fromIso, toIso])).rows, []);
+
+        const avgApprovalDays = await safe(async () => {
+            const r = await query(`
+                SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) / 86400) AS avg_days
+                FROM workflow_instances
+                WHERE status = 'completed' AND completed_at IS NOT NULL AND started_at IS NOT NULL
+                  AND completed_at >= $1 AND completed_at <= $2
+            `, [fromIso, toIso]);
+            const v = r.rows[0]?.avg_days;
+            return v == null ? null : Number(v);
+        }, null);
+
+        res.json({
+            period: { from: fromIso, to: toIso, days },
+            kpis: {
+                total_users: totalUsers,
+                active_users_period: activeUsersPeriod,
+                new_users_period: newUsersPeriod,
+                documents_total: docsTotal,
+                documents_period: docsPeriod,
+                tasks_total: tasksTotal,
+                tasks_period: tasksPeriod,
+                tasks_completed_period: tasksCompletedPeriod,
+                messages_period: messagesPeriod,
+                avg_approval_days: avgApprovalDays
+            },
+            charts: {
+                documents_by_status: docsByStatus,
+                documents_over_time: docsOverTime,
+                documents_by_type: docsByType,
+                tasks_by_status: tasksByStatus,
+                tasks_by_priority: tasksByPriority,
+                tasks_over_time: tasksOverTime,
+                messages_over_time: messagesOverTime
+            }
+        });
+    } catch (error) {
+        console.error('Get reports error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ========== РЕЗЕРВНОЕ КОПИРОВАНИЕ ==========
 

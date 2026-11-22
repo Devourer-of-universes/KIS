@@ -1,33 +1,14 @@
 /* chat.css - Исправленная версия */
 
-:root {
-    --c_bg: #f5f7fb;
-    --c_bg_txt: #1a1a2e;
-    --c_surf: #ffffff;
-    --c_surf_txt: #6c757d;
-    --c_acc: #5194ff;
-    --c_acchalf: rgba(81, 148, 255, 0.5);
-    --с_brightacc: #007bff;
-    --c_success: #10b981;
-    --c_warning: #f59e0b;
-    --c_error: #ef4444;
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 20px;
-    --border-radius-xl: 28px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --transition-fast: 0.2s ease;
-    --transition: 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-}
+/* Theme tokens are defined globally in main.css */
+
 
 body {
     background-color: var(--c_bg);
 }
 
 .chat-container {
-    margin-left: 60px;
+    margin-left: var(--menu-width-collapsed);
     display: flex;
     flex-direction: row;
     background-color: var(--c_bg);
@@ -35,7 +16,7 @@ body {
     height: 100vh;
     padding: 15px;
     justify-content: space-between;
-    transition: margin-left var(--transition);
+    transition: margin-left 0.25s ease;
     animation: containerFadeIn 0.4s ease;
 }
 
@@ -67,7 +48,7 @@ body {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    box-shadow: 5px 4px 4px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-sm);
     transition: all var(--transition-fast);
     animation: slideInLeft 0.3s ease;
     height: calc(100vh - 30px);
@@ -191,7 +172,7 @@ body {
 
 /* Элемент чата */
 .chat-list-element {
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-md);
     background-color: var(--c_surf);
     display: flex;
     flex-direction: row;
@@ -254,7 +235,7 @@ body {
     width: 24px;
     height: 24px;
     flex-shrink: 0;
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
     font-size: 12px;
     display: flex;
     justify-content: center;
@@ -276,7 +257,7 @@ body {
     /* background-color: var(--c_surf); */
     /* border-radius: 34px; */
     overflow: hidden;
-    box-shadow: 5px 4px 4px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-sm);
     height: calc(100vh - 30px);
 }
 
@@ -331,7 +312,7 @@ body {
     width: 50px;
     height: 50px;
     margin-right: 20px;
-    background-color: white;
+    background-color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 .chat-avatar .avatar-letter {
     width: 50px;
@@ -342,7 +323,7 @@ body {
     align-items: center;
     justify-content: center;
     background: var(--c_acchalf, rgba(81, 148, 255, 0.3));
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
     font-weight: bold;
     text-transform: uppercase;
 }
@@ -471,7 +452,7 @@ body {
 
 .message.sent .message-content {
     background: var(--c_acc);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 
 .message:hover .message-content {
@@ -652,7 +633,7 @@ body {
     position: relative;
     z-index: 10;
     border-radius: 34px;
-    box-shadow: 5px 4px 4px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-sm);
     transition: all var(--transition-fast);
     animation: slideInRight 0.3s ease;
 }
@@ -815,7 +796,7 @@ body {
 
 .sidebar-media-header {
     background-color: var(--c_acc);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
     font-size: 18px;
     text-align: center;
     border-radius: 16px;
@@ -842,8 +823,8 @@ body {
 }
 
 .sidebar-media-group-btn.active {
-    background: var(--c_acc, #5194ff);
-    color: white;
+    background: var(--ui-modal-header-bg, var(--c_surf));
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 
 .sidebar-media-group-btn:hover:not(.active) {
@@ -889,7 +870,7 @@ body {
 .grid-image-item:hover {
     transform: scale(1.03);
     z-index: 2;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
 }
 
 .grid-image-item img {
@@ -983,7 +964,7 @@ body {
     background: var(--c_surf, white);
     border-radius: 20px;
     padding: 4px 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
     z-index: 10;
 }
 
@@ -1018,7 +999,7 @@ body {
 .message-context-menu {
     background: var(--c_surf, white);
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
     z-index: 10000;
     min-width: 180px;
     overflow: hidden;
@@ -1037,8 +1018,8 @@ body {
 }
 
 .context-menu-item:active {
-    background: var(--c_acc, #5194ff);
-    color: white;
+    background: var(--ui-modal-header-bg, var(--c_surf));
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 /* Плавающая кнопка */
 .floating-create-btn {
@@ -1051,7 +1032,7 @@ body {
     background: var(--c_acc);
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     z-index: 100;
     display: flex;
@@ -1062,7 +1043,7 @@ body {
 .floating-create-btn:hover {
     transform: scale(1.05);
     background: var(--c_brightacc);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .floating-create-btn:active {
@@ -1160,7 +1141,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
     text-transform: uppercase;
 }
 
@@ -1223,51 +1204,17 @@ body {
     }
 }
 
-.modal-header {
-    padding: 20px 24px;
-    background: var(--c_acc, #5194ff);
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+/* modal-header unified in main.css */
 
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.2em;
-}
+/* modal-header h3 unified in main.css */
 
-.modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background 0.2s;
-}
+/* modal-close unified in main.css */
 
-.modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
+/* modal-close unified in main.css */
 
-.modal-body {
-    padding: 24px;
-}
+/* modal-body unified in main.css */
 
-.modal-footer {
-    padding: 16px 24px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    border-top: 1px solid var(--c_surf_txt, #e0e0e0);
-}
+/* modal-footer unified in main.css */
 
 .form-group {
     margin-bottom: 20px;
@@ -1416,7 +1363,7 @@ body {
     display: inline-block;
     padding: 4px 12px;
     background: var(--c_acchalf);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
     font-size: 11px;
     font-weight: 500;
     border-radius: 20px;
@@ -1478,7 +1425,7 @@ body {
 
 .folder-item.active {
     background: var(--c_acc);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 
 .folder-icon {
@@ -1513,7 +1460,7 @@ body {
 
 .folders-scroll-btn:hover {
     background: var(--c_acc);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 
 .folders-scroll-left {
@@ -1630,7 +1577,7 @@ body {
 
 .message.sent .forwarded-message {
     background: rgba(255, 255, 255, 0.15);
-    border-left-color: white;
+    border-left-color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 
 .message.sent .forwarded-message div[style*="color: var(--c_acc)"] {
@@ -1663,7 +1610,7 @@ body {
 
 .chat-tab.active {
     background: var(--c_acc);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }
 
 .tab-badge {
@@ -1671,7 +1618,7 @@ body {
     top: 2px;
     right: 2px;
     background: #ef4444;
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
     font-size: 10px;
     padding: 2px 5px;
     border-radius: 10px;
@@ -1686,7 +1633,7 @@ body {
     background: var(--c_surf);
     border-radius: 10px;
     margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
 }
 
 .contact-avatar {
@@ -1728,9 +1675,9 @@ body {
     transition: all 0.2s;
 }
 
-.btn-accept { background: #10b981; color: white; }
-.btn-decline { background: #ef4444; color: white; }
-.btn-write { background: var(--c_acc); color: white; }
+.btn-accept { background: #10b981; color: var(--ui-modal-header-text, var(--c_bg_txt)); }
+.btn-decline { background: #ef4444; color: var(--ui-modal-header-text, var(--c_bg_txt)); }
+.btn-write { background: var(--c_acc); color: var(--ui-modal-header-text, var(--c_bg_txt)); }
 .btn-add-contact { background: var(--c_acchalf); color: var(--c_acc); }
 
 .btn-accept:hover, .btn-write:hover { opacity: 0.8; }
@@ -1810,5 +1757,5 @@ body {
 }
 #incomingRequestsBlock .badge-count {
     background: var(--c_acc);
-    color: white;
+    color: var(--ui-modal-header-text, var(--c_bg_txt));
 }

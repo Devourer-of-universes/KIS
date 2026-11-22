@@ -7,6 +7,11 @@ let menuState = 'collapsed'; // collapsed, expanded, pinned
 
 // Загрузка состояния меню
 function loadMenuState() {
+    if (!leftMenu) {
+        updateContentMargin();
+        return;
+    }
+
     const savedState = localStorage.getItem('menuState');
     if (savedState === 'expanded') {
         menuState = 'expanded';
@@ -29,17 +34,12 @@ function saveMenuState() {
 }
 
 function updateContentMargin() {
-    let menuWidth;
-    if (menuState === 'collapsed') {
-        menuWidth = 70;
-    } else {
-        menuWidth = 260;
-    }
-    
-    document.querySelectorAll('.chat-container, .base-container, .settings-container, .admin-container').forEach(container => {
+    const menuWidth = menuState === 'collapsed' ? 72 : 260;
+
+    document.querySelectorAll('.chat-container, .base-container, .settings-container, .admin-container, .profile-container, .files-container').forEach(container => {
         if (container) {
             container.style.marginLeft = menuWidth + 'px';
-            container.style.transition = 'margin-left 0.3s ease';
+            container.style.transition = 'margin-left 0.25s ease';
         }
     });
 }
@@ -87,81 +87,53 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMenuState();
 });
 
-// ========== УПРАВЛЕНИЕ ТЕМАМИ ==========
-function updateColorScheme(color_scheme){
-    const root = document.documentElement;    
-    switch(color_scheme) {
-        case 'light':
-            root.style.setProperty('--c_bg', '#e8e8e8');
-            root.style.setProperty('--c_bg_txt', '#000000');
-            root.style.setProperty('--c_surf', '#ffffff');
-            root.style.setProperty('--c_surf_txt', '#9b9b9b');
-            break;
-        case 'dark':
-            root.style.setProperty('--c_bg', '#32343e');
-            root.style.setProperty('--c_bg_txt', '#ffffff');
-            root.style.setProperty('--c_surf', '#3d3f4a');
-            root.style.setProperty('--c_surf_txt', '#9b9b9b');
-            break;
-        default:
-            console.warn('Unknown color scheme:', color_scheme);
-    }
+// ========== Theme and accent ==========
+function normalizeHexColor(color) {
+    if (typeof color !== 'string') return '#2563eb';
+    let hex = color.trim().replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(ch => ch + ch).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(hex)) return '#2563eb';
+    return `#${hex.toLowerCase()}`;
 }
-function updateAccent(acc_color) {
-    const root = document.documentElement;
-    root.style.setProperty('--c_acc', acc_color);
-    
-    // Генерируем затемнённую версию для hover и активных состояний
-    const darkenedColor = darkenColor(acc_color, 20);
-    root.style.setProperty('--c_brightacc', darkenedColor);
-    
-    const accentTransparent = hexToRgba(acc_color, 0.5);
-    root.style.setProperty('--c_acchalf', accentTransparent);
-}
-// Функция для затемнения цвета
-function darkenColor(hex, percent) {
-    // Убираем # если есть
-    hex = hex.replace('#', '');
-    
-    // Преобразуем в RGB
-    let r = parseInt(hex.substring(0, 2), 16);
-    let g = parseInt(hex.substring(2, 4), 16);
-    let b = parseInt(hex.substring(4, 6), 16);
-    
-    // Затемняем
-    r = Math.max(0, Math.floor(r * (1 - percent / 100)));
-    g = Math.max(0, Math.floor(g * (1 - percent / 100)));
-    b = Math.max(0, Math.floor(b * (1 - percent / 100)));
-    
-    // Преобразуем обратно в hex
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
-// ========== ИНИЦИАЛИЗАЦИЯ АКЦЕНТНОГО ЦВЕТА (ГЛОБАЛЬНО) ==========
-function initAccentColorGlobal() {
-    const savedColor = localStorage.getItem('accentColor') || '#5194FF';
-    updateAccent(savedColor);
-}
-// Вспомогательная функция для затемнения цвета
-function adjustBrightness(hex, percent) {
-    // Упрощённая версия — можно оставить как есть или убрать
-    return hex;
+
+function hexToRgbParts(hex) {
+    const normalized = normalizeHexColor(hex).replace('#', '');
+    return {
+        r: parseInt(normalized.substring(0, 2), 16),
+        g: parseInt(normalized.substring(2, 4), 16),
+        b: parseInt(normalized.substring(4, 6), 16)
+    };
 }
 
 function hexToRgba(hex, opacity) {
-    hex = hex.replace('#', '');   
-    let r, g, b;
-    if (hex.length === 3) {
-        r = parseInt(hex[0] + hex[0], 16);
-        g = parseInt(hex[1] + hex[1], 16);
-        b = parseInt(hex[2] + hex[2], 16);
-    } else if (hex.length === 6) {
-        r = parseInt(hex.substring(0, 2), 16);
-        g = parseInt(hex.substring(2, 4), 16);
-        b = parseInt(hex.substring(4, 6), 16);
-    } else {
-        return hex;
-    } 
+    const { r, g, b } = hexToRgbParts(hex);
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+function darkenColor(hex, percent) {
+    let { r, g, b } = hexToRgbParts(hex);
+    r = Math.max(0, Math.floor(r * (1 - percent / 100)));
+    g = Math.max(0, Math.floor(g * (1 - percent / 100)));
+    b = Math.max(0, Math.floor(b * (1 - percent / 100)));
+    return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function getPreferredTheme() {
+    return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+}
+
+function updateAccent(acc_color) {
+    const root = document.documentElement;
+    const color = normalizeHexColor(acc_color || localStorage.getItem('accentColor') || '#2563eb');
+    root.style.setProperty('--c_acc', color);
+    root.style.setProperty('--c_brightacc', darkenColor(color, 12));
+    root.style.setProperty('--c_acchalf', hexToRgba(color, 0.14));
+    root.style.setProperty('--c_acc_soft', hexToRgba(color, 0.08));
+}
+
+function initAccentColorGlobal() {
+    const savedColor = localStorage.getItem('accentColor') || '#2563eb';
+    updateAccent(savedColor);
 }
 
 // ========== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ДЛЯ МЕНЮ ==========
@@ -195,7 +167,7 @@ async function loadUserDataForMenu() {
             const userRoleSpan = document.getElementById('userRole');
             if (userRoleSpan) {
                 if (user.is_super_admin) {
-                    userRoleSpan.textContent = '👑 Супер-админ';
+                    userRoleSpan.textContent = 'Супер-админ';
                 } else if (user.role_id === 1) {
                     userRoleSpan.textContent = 'Администратор';
                 } else {
@@ -214,7 +186,7 @@ async function loadUserDataForMenu() {
             const dropdownRole = document.getElementById('dropdownRole');
             if (dropdownRole) {
                 if (user.is_super_admin) {
-                    dropdownRole.textContent = '👑 Супер-администратор';
+                    dropdownRole.textContent = 'Супер-администратор';
                 } else if (user.role_id === 1) {
                     dropdownRole.textContent = 'Администратор';
                 } else {
@@ -227,6 +199,14 @@ async function loadUserDataForMenu() {
             if (adminMenuItem) {
                 const hasAdminAccess = user.is_super_admin || user.role_id === 1;
                 adminMenuItem.style.display = hasAdminAccess ? 'flex' : 'none';
+            }
+            // Пункт "Мой отдел" для руководителей
+            const myDeptItem = document.getElementById('menuMyDepartment');
+            if (myDeptItem) {
+                fetch('/api/admin/my-department', { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => { if (d && d.managed) myDeptItem.style.display = 'flex'; })
+                    .catch(() => {});
             }
             
             return user;
@@ -291,61 +271,54 @@ function highlightActivePage() {
 
 // ========== УПРАВЛЕНИЕ ТЕМОЙ ==========
 
-// Применение темы к странице
+// Apply theme to DOM
 function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    updateColorScheme(theme);
-    
-    // Меняем иконку на картинку
+    const normalized = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', normalized);
+
     const themeIconImg = document.getElementById('themeIconImg');
     if (themeIconImg) {
-        if (theme === 'light') {
-            themeIconImg.src = '../materials/icons8-солнце-96.png'; // Путь к солнцу
-            themeIconImg.alt = 'Светлая тема';
+        if (normalized === 'light') {
+            themeIconImg.src = '../materials/icons8-солнце-96.png';
+            themeIconImg.alt = 'Light theme';
         } else {
-            themeIconImg.src = '../materials/icons8-луна-96.png'; // Путь к луне
-            themeIconImg.alt = 'Тёмная тема';
+            themeIconImg.src = '../materials/icons8-луна-96.png';
+            themeIconImg.alt = 'Dark theme';
         }
     }
-    
-    // Если у тебя где-то остался старый span с эмодзи, на всякий случай обновляем и его
-    const themeIconSpan = document.querySelector('.theme-icon');
-    if (themeIconSpan) {
-        themeIconSpan.textContent = theme === 'light' ? '☀️' : '🌙';
+
+    const themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) {
+        themeBtn.classList.remove('light', 'dark');
+        themeBtn.classList.add(normalized);
     }
-    
-    localStorage.setItem('theme', theme);
+
+    try {
+        document.querySelectorAll('.theme-option[data-theme]').forEach(option => {
+            option.classList.toggle('active', option.dataset.theme === normalized);
+        });
+    } catch (e) {}
+
+    localStorage.setItem('theme', normalized);
 }
 
-// Инициализация темы
 function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    const themeBtn = document.getElementById('themeToggle');
-    
-    // Применяем сохранённую тему
+    const savedTheme = (typeof getPreferredTheme === 'function') ? getPreferredTheme() : (localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
     applyTheme(savedTheme);
-    
-    if (!themeBtn) return;
-    
-    // Обработчик клика
+
+    const themeBtn = document.getElementById('themeToggle');
+    if (!themeBtn || themeBtn.dataset.themeBound === '1') return;
+    themeBtn.dataset.themeBound = '1';
+
     themeBtn.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        
-        // Добавляем анимацию вращения
         themeBtn.classList.add('rotate');
-        
-        // Применяем новую тему после короткой задержки для анимации
-        setTimeout(() => {
-            applyTheme(newTheme);
-        }, 50);
-        
-        // Убираем класс анимации
-        setTimeout(() => {
-            themeBtn.classList.remove('rotate');
-        }, 400);
+        setTimeout(() => applyTheme(newTheme), 30);
+        setTimeout(() => themeBtn.classList.remove('rotate'), 300);
     });
 }
+
 // ========== ИНИЦИАЛИЗАЦИЯ ВЫПАДАЮЩЕГО МЕНЮ АВАТАРА ==========
 function initUserDropdown() {
     const avatarBtn = document.getElementById('userAvatarBtn');
@@ -353,15 +326,18 @@ function initUserDropdown() {
     const userMenu = document.getElementById('userMenu');
     
     if (avatarBtn && dropdown && userMenu) {
+        if (avatarBtn.dataset.bound === '1') return;
+        avatarBtn.dataset.bound = '1';
         avatarBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            userMenu.classList.toggle('open');
-            dropdown.classList.toggle('show'); // для совместимости
+            e.preventDefault();
+            const isOpen = userMenu.classList.toggle('open');
+            dropdown.classList.toggle('show', isOpen);
         });
         
         // Закрываем при клике вне
         document.addEventListener('click', (e) => {
-            if (!avatarBtn.contains(e.target) && !dropdown.contains(e.target)) {
+            if (!userMenu.contains(e.target)) {
                 userMenu.classList.remove('open');
                 dropdown.classList.remove('show');
             }
@@ -375,7 +351,7 @@ function initUserDropdown() {
             });
         });
         
-        // ❗ НЕ вешаем ничего на .dropdown-header — пусть браузер сам переходит по ссылке
+        // Не вешаем обработчик на .dropdown-header — браузер сам переходит по ссылке
     }
 }
 
@@ -418,26 +394,20 @@ function initLogout() {
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
+// Apply saved accent early for all pages
+try { initAccentColorGlobal(); } catch (e) {}
+
+// ========== Initialization ==========
 document.addEventListener('DOMContentLoaded', async () => {
-    initAccentColorGlobal();
-    // Загружаем данные пользователя
-    await loadUserDataForMenu();
-    
-    // Загружаем непрочитанные сообщения
-    loadUnreadCount();
-    
-    // Подсвечиваем активную страницу
-    highlightActivePage();
-    
-    // Инициализируем тему
-    initTheme();
-    
-    // Инициализируем выпадающее меню
-    initUserDropdown();
-    
-    // Инициализируем кнопки выхода
-    initLogout();
-    
-    // Обновляем непрочитанные каждые 30 секунд
-    setInterval(loadUnreadCount, 30000);
+    try { initAccentColorGlobal(); } catch (e) {}
+    try { await loadUserDataForMenu(); } catch (e) { console.error('loadUserDataForMenu error:', e); }
+    try { loadUnreadCount(); } catch (e) { console.error('loadUnreadCount error:', e); }
+    try { highlightActivePage(); } catch (e) { console.error('highlightActivePage error:', e); }
+    try { initTheme(); } catch (e) { console.error('initTheme error:', e); }
+    try { initUserDropdown(); } catch (e) { console.error('initUserDropdown error:', e); }
+    try { initLogout(); } catch (e) { console.error('initLogout error:', e); }
+
+    setInterval(() => {
+        try { loadUnreadCount(); } catch (e) {}
+    }, 30000);
 });

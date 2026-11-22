@@ -54,7 +54,7 @@ function renderProfile(user) {
 
     // Роль
     let roleText = 'Пользователь';
-    if (user.is_super_admin) roleText = '👑 Супер-админ';
+    if (user.is_super_admin) roleText = 'Супер-админ';
     else if (user.role_id === 1) roleText = 'Администратор';
     document.getElementById('profileRole').textContent = roleText;
 
@@ -63,19 +63,19 @@ function renderProfile(user) {
     const statusDot = document.getElementById('profileStatus');
     
     if (user.status === 'active') {
-        statusBadge.textContent = '🟢 Активен';
+        statusBadge.textContent = ' Активен';
         statusBadge.className = 'badge status-badge status-active';
         statusDot.className = 'profile-avatar-status online';
     } else if (user.status === 'away') {
-        statusBadge.textContent = '🌙 Не беспокоить';
+        statusBadge.textContent = ' Не беспокоить';
         statusBadge.className = 'badge status-badge status-away';
         statusDot.className = 'profile-avatar-status away';
     } else if (user.status === 'blocked') {
-        statusBadge.textContent = '🔴 Заблокирован';
+        statusBadge.textContent = ' Заблокирован';
         statusBadge.className = 'badge status-badge status-blocked';
         statusDot.className = 'profile-avatar-status offline';
     } else {
-        statusBadge.textContent = '⚫ Не в сети';
+        statusBadge.textContent = ' Не в сети';
         statusBadge.className = 'badge status-badge status-offline';
         statusDot.className = 'profile-avatar-status offline';
     }

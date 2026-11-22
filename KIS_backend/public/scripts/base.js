@@ -14,7 +14,9 @@ const btn_fav = document.querySelector('#top-menu-btn-favourites');
 const btn_dashboard = document.querySelector('#top-menu-btn-dashboard');
 
 // Обработчики кнопок
-btn_dashboard.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-dashboard'); });
+if (btn_dashboard) {
+    btn_dashboard.addEventListener('click', (e) => { e.stopPropagation(); openWindow('base-section-dashboard'); });
+}
 // - Глобальные переменные (currentCalendarDate, calendarEvents, currentTasks и т.д.)
 let currentCalendarDate = new Date();
 let calendarEvents = [];
@@ -146,7 +148,7 @@ function ensureDashboardVisible() {
     }
     
     // Иначе открываем дашборд
-    console.log('📊 Автоматическое открытие дашборда (все секции закрыты)');
+    console.log('Автоматическое открытие дашборда (все секции закрыты)');
     openWindow('base-section-dashboard');
 }
 // Функция, которая вызывается после закрытия любой секции
@@ -179,7 +181,7 @@ let currentNoteId = null;
 // Открытие модалки создания заметки
 function openNoteModal(type) {
     currentNoteType = type;
-    document.getElementById('noteModalTitle').textContent = type === 'personal' ? ' Моя заметка' : '👥 Общая заметка';
+    document.getElementById('noteModalTitle').textContent = type === 'personal' ? ' Моя заметка' : 'Общая заметка';
     document.getElementById('noteTitle').value = '';
     document.getElementById('noteContent').value = '';
     document.getElementById('noteId').value = '';
@@ -284,7 +286,7 @@ function renderNotes(containerId, notes, isPersonal) {
     if (!container) return;
     
     if (!notes || notes.length === 0) {
-        container.innerHTML = '<div class="empty-notes">📭 Нет заметок</div>';
+        container.innerHTML = '<div class="empty-notes">Нет заметок</div>';
         return;
     }
     
@@ -316,12 +318,12 @@ function renderNotes(containerId, notes, isPersonal) {
                 
                 <button class="note-delete" 
                         onclick="event.stopPropagation(); confirmDeleteNote('${note.id}')" 
-                        title="Удалить">✕</button>
+                        title="Удалить"></button>
                 
                 <div class="note-text">${escapeHtml(note.content)}</div>
                 
                 <div class="note-meta">
-                    <span class="note-author">${isPersonal ? '' : '👤 ' + escapeHtml(authorName)}</span>
+                    <span class="note-author">${isPersonal ? '' : '' + escapeHtml(authorName)}</span>
                     <span class="note-date">${dateStr}</span>
                 </div>
             </div>
@@ -402,7 +404,7 @@ function initNoteDragDrop() {
 // Удаление заметки с подтверждением
 function confirmDeleteNote(noteId) {
     showConfirm(
-        '🗑️ Удаление заметки',
+        'Удаление заметки',
         'Вы уверены, что хотите удалить эту заметку?',
         async () => {
             try {
@@ -461,7 +463,7 @@ async function loadCalendarEvents() {
         if (response.ok) {
             const data = await response.json();
             events = data.events || [];
-            console.log('📊 Raw events from API:', events.length);
+            console.log('Raw events from API:', events.length);
         } else {
             console.warn('Failed to load calendar events, using empty');
         }
@@ -503,7 +505,7 @@ async function loadCalendarEvents() {
                         if (dateStr === formatDateLocal(dueDate)) {
                             calendarEvents.push({
                                 id: `deadline_${task.id}`,
-                                title: `⚡ ${task.title}`,
+                                title: `${task.title}`,
                                 date: dateStr,
                                 type: 'deadline',
                                 status: task.status || 'pending',
@@ -534,7 +536,7 @@ async function loadCalendarEvents() {
                     
                     calendarEvents.push({
                         id: `deadline_${task.id}`,
-                        title: `⚡ ${task.title}`,
+                        title: `${task.title}`,
                         date: dateStr,
                         type: 'deadline',
                         status: task.status || 'pending',
@@ -581,10 +583,10 @@ async function loadCalendarEvents() {
             }
         });
         
-        console.log('✅ Calendar events processed:');
-        console.log('  📋 Tasks:', calendarEvents.filter(e => e.type === 'task').length);
-        console.log('  ⚡ Deadlines:', calendarEvents.filter(e => e.type === 'deadline').length);
-        console.log('  📅 Total:', calendarEvents.length);
+        console.log('Calendar events processed:');
+        console.log('  Tasks:', calendarEvents.filter(e => e.type === 'task').length);
+        console.log('  Deadlines:', calendarEvents.filter(e => e.type === 'deadline').length);
+        console.log('  Total:', calendarEvents.length);
         
         // Отладка: сколько задач на каждую дату
         const tasksByDate = {};
@@ -593,7 +595,7 @@ async function loadCalendarEvents() {
                 tasksByDate[e.date] = (tasksByDate[e.date] || 0) + 1;
             }
         });
-        console.log('📋 Tasks distribution:', tasksByDate);
+        console.log('Tasks distribution:', tasksByDate);
         
         // Обновляем календари
         renderMiniCalendar();
@@ -740,7 +742,7 @@ function getGanttDateRange() {
         const day = String(currentGanttDate.getDate()).padStart(2, '0');
         const dateStr = `${year}-${month}-${day}`;
         dates.push(dateStr);
-        console.log('📅 Gantt day range (fixed):', dates);
+        console.log('Gantt day range (fixed):', dates);
     } else if (currentZoom === 'week') {
         // Режим НЕДЕЛЯ: 7 дней (с понедельника по воскресенье)
         const weekStart = new Date(currentGanttDate);
@@ -753,7 +755,7 @@ function getGanttDateRange() {
             const date = String(day.getDate()).padStart(2, '0');
             dates.push(`${year}-${month}-${date}`);
         }
-        console.log('📅 Gantt week range:', dates);
+        console.log('Gantt week range:', dates);
     } else if (currentZoom === 'month') {
         // Режим МЕСЯЦ: все дни текущего месяца
         if (!ganttStartDate) {
@@ -768,7 +770,7 @@ function getGanttDateRange() {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
             dates.push(dateStr);
         }
-        console.log('📅 Gantt month range:', dates.length, 'days');
+        console.log('Gantt month range:', dates.length, 'days');
     }
     
     return dates;
@@ -845,9 +847,9 @@ function renderFullscreenTasks() {
         let dueStatus = '';
         if (task.due_date) {
             const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24));
-            if (daysLeft < 0) dueStatus = '⚠️ Просрочена';
+            if (daysLeft < 0) dueStatus = 'Просрочена';
             else if (daysLeft <= 3) dueStatus = `⏰ ${daysLeft} дн.`;
-            else dueStatus = `📅 ${daysLeft} дн.`;
+            else dueStatus = `${daysLeft} дн.`;
         }
         
         // Период задачи
@@ -861,7 +863,7 @@ function renderFullscreenTasks() {
         }
         
         return `
-            <div class="task-item" onclick="openTaskView(${task.id})">
+            <div class="task-item" onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'">
                 <input type="checkbox" class="task-checkbox" 
                        ${task.status === 'completed' ? 'checked' : ''}
                        onclick="event.stopPropagation(); toggleTaskStatus(${task.id}, event)">
@@ -1177,7 +1179,7 @@ function renderDayView(tasks, barsContainer, axisHeader) {
                 box-sizing: border-box;
             `;
             colHeader.textContent = task.name;
-            colHeader.onclick = () => openTaskView(task.id);
+            colHeader.onclick = () => { window.location.href = '/html/tasks.html?taskId=' + encodeURIComponent(task.id); };
             column.appendChild(colHeader);
             
             // Тело колонки (сетка времени) — полная высота
@@ -1236,9 +1238,9 @@ function renderDayView(tasks, barsContainer, axisHeader) {
             bar.innerHTML = `
                 <div style="font-weight: 600; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.name}</div>
                 <div style="font-size: 8px; opacity: 0.8;">${formatTime(taskStart)} - ${formatTime(taskEnd)}</div>
-                ${task.progress > 0 ? `<div style="font-size: 8px; opacity: 0.7; margin-top: 2px;">📊 ${task.progress}%</div>` : ''}
+                ${task.progress > 0 ? `<div style="font-size: 8px; opacity: 0.7; margin-top: 2px;">${task.progress}%</div>` : ''}
             `;
-            bar.onclick = () => openTaskView(task.id);
+            bar.onclick = () => { window.location.href = '/html/tasks.html?taskId=' + encodeURIComponent(task.id); };
             
             bar.addEventListener('mouseenter', function() {
                 this.style.transform = 'scaleX(1.03)';
@@ -1287,7 +1289,7 @@ function renderDayView(tasks, barsContainer, axisHeader) {
                     border-radius: 4px;
                     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
                 `;
-                label.textContent = `⚡ ${formatTime(taskEnd)}`;
+                label.textContent = `${formatTime(taskEnd)}`;
                 colBody.appendChild(label);
             }
             
@@ -1475,7 +1477,7 @@ function renderWeekView(tasks, barsContainer, axisHeader) {
                     white-space: nowrap;
                 `;
                 bar.textContent = task.name;
-                bar.onclick = () => openTaskView(task.id);
+                bar.onclick = () => { window.location.href = '/html/tasks.html?taskId=' + encodeURIComponent(task.id); };
                 
                 // Прогресс
                 if (task.progress > 0) {
@@ -1655,7 +1657,7 @@ function renderMonthView(tasks, barsContainer, axisHeader) {
                 white-space: nowrap;
             `;
             bar.textContent = widthPx > 30 ? task.name : '';
-            bar.onclick = () => openTaskView(task.id);
+            bar.onclick = () => { window.location.href = '/html/tasks.html?taskId=' + encodeURIComponent(task.id); };
             
             if (task.progress > 0) {
                 const progressFill = document.createElement('div');
@@ -1753,12 +1755,12 @@ function renderGanttTasksAndBars(tasks, minDate, maxDate) {
         const priorityClass = task.priority || 'medium';
         
         return `
-            <div class="gantt-task-row" onclick="openTaskView(${task.id})">
+            <div class="gantt-task-row" onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'">
                 <div class="gantt-task-info">
                     <div class="gantt-task-title">${escapeHtml(task.name)}</div>
                     <div class="gantt-task-meta">
                         <span class="gantt-task-assignee">
-                            👤 ${escapeHtml(assignee)}
+                            ${escapeHtml(assignee)}
                         </span>
                     </div>
                 </div>
@@ -1819,7 +1821,7 @@ function renderGanttTasksAndBars(tasks, minDate, maxDate) {
         // Tooltip при наведении
         bar.addEventListener('mouseenter', (e) => showGanttTooltip(e, task));
         bar.addEventListener('mouseleave', hideGanttTooltip);
-        bar.onclick = () => openTaskView(task.id);
+        bar.onclick = () => { window.location.href = '/html/tasks.html?taskId=' + encodeURIComponent(task.id); };
         
         barRow.appendChild(bar);
         barsContainer.appendChild(barRow);
@@ -1836,11 +1838,11 @@ function showGanttTooltip(event, task) {
     ganttTooltip.className = 'gantt-tooltip';
     ganttTooltip.innerHTML = `
         <div class="tooltip-title">${escapeHtml(task.name)}</div>
-        <div class="tooltip-row"><span>📅 Начало:</span><span>${formatDate(task.start)}</span></div>
+        <div class="tooltip-row"><span>Начало:</span><span>${formatDate(task.start)}</span></div>
         <div class="tooltip-row"><span>⏰ Окончание:</span><span>${formatDate(task.end)}</span></div>
-        <div class="tooltip-row"><span>📊 Прогресс:</span><span>${task.progress || 0}%</span></div>
-        <div class="tooltip-row"><span>🎯 Приоритет:</span><span>${getPriorityLabel(task.priority)}</span></div>
-        <div class="tooltip-row"><span>👤 Исполнитель:</span><span>${task.assignee_name ? escapeHtml(task.assignee_name) : 'Не назначен'}</span></div>
+        <div class="tooltip-row"><span>Прогресс:</span><span>${task.progress || 0}%</span></div>
+        <div class="tooltip-row"><span>Приоритет:</span><span>${getPriorityLabel(task.priority)}</span></div>
+        <div class="tooltip-row"><span>Исполнитель:</span><span>${task.assignee_name ? escapeHtml(task.assignee_name) : 'Не назначен'}</span></div>
     `;
     
     document.body.appendChild(ganttTooltip);
@@ -2015,7 +2017,7 @@ async function exportGanttToPNG() {
 function renderGantt() {
     const calendarSection = document.getElementById('base-section-calendar');
     if (!calendarSection || calendarSection.style.display !== 'block') {
-        console.log('⏸️ Calendar section not visible, skipping Gantt render');
+        console.log('⏸ Calendar section not visible, skipping Gantt render');
         return;
     }
     
@@ -2033,7 +2035,7 @@ function renderGantt() {
         ganttEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     }
     
-    console.log('🎨 renderGantt called, zoom:', currentZoom, 'date:', currentGanttDate.toISOString().slice(0, 10));
+    console.log('renderGantt called, zoom:', currentZoom, 'date:', currentGanttDate.toISOString().slice(0, 10));
     
     const activeTasks = currentTasks.filter(task => task.status !== 'completed');
     const tasksWithDates = activeTasks.filter(task => task.start_date && task.due_date);
@@ -2074,7 +2076,7 @@ function initGantt() {
     
     // Инициализируем с задержкой
     ganttInitTimeout = setTimeout(() => {
-        console.log('🎬 Initializing Gantt...');
+        console.log(' Initializing Gantt...');
         initGanttControls();
         
         // Делаем рендер с дополнительной задержкой
@@ -2095,7 +2097,7 @@ async function loadTasks() {
         if (response.ok) {
             const data = await response.json();
             currentTasks = data.tasks || [];
-            console.log('✅ Loaded', currentTasks.length, 'tasks');
+            console.log('Loaded', currentTasks.length, 'tasks');
             
             // Обновляем отображение только если секция видима
             const calendarSection = document.getElementById('base-section-calendar');
@@ -2183,7 +2185,7 @@ function updateCalendarSelectors() {
 
 // Открытие полноэкранного календаря
 function openFullCalendar() {
-    console.log('📅 Opening full calendar');
+    console.log('Opening full calendar');
     
     // Синхронизируем календарь с текущим периодом Ганта
     if (currentZoom === 'month') {
@@ -2225,12 +2227,12 @@ function openCalendarModal() {
 function openDateModal(year, month, day) {
     // Формируем дату в правильном формате
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    console.log('📅 Opening date modal for:', dateStr);
-    console.log('📊 Available events:', calendarEvents.length);
+    console.log('Opening date modal for:', dateStr);
+    console.log('Available events:', calendarEvents.length);
     
     // Фильтруем события на эту дату
     const eventsOnDate = calendarEvents.filter(e => e.date === dateStr);
-    console.log('📋 Events on date:', eventsOnDate.length);
+    console.log('Events on date:', eventsOnDate.length);
     
     // Разделяем на задачи и дедлайны
     const tasksOnDate = eventsOnDate.filter(e => e.type === 'task' && e.status !== 'completed' && e.status !== 'cancelled');
@@ -2239,12 +2241,12 @@ function openDateModal(year, month, day) {
     // Функции для приоритетов
     function getPriorityLabel(priority) {
         const labels = {
-            'critical': '🔴 Критический',
-            'high': '🟠 Высокий',
-            'medium': '🟡 Средний',
-            'low': '🟢 Низкий'
+            'critical': ' Критический',
+            'high': ' Высокий',
+            'medium': ' Средний',
+            'low': ' Низкий'
         };
-        return labels[priority] || '🟡 Средний';
+        return labels[priority] || ' Средний';
     }
     
     function getPriorityClass(priority) {
@@ -2260,28 +2262,28 @@ function openDateModal(year, month, day) {
     // Строим HTML модалки
     const modalHtml = `
         <div id="dateModal" class="admin-modal" style="display: flex;">
-            <div class="modal-content" style="max-width: 500px; max-height: 80vh;">
+            <div class="modal-content" style="max-width: 640px; max-height: 80vh;">
                 <div class="modal-header">
-                    <h2>📅 ${day}.${month}.${year}</h2>
-                    <button class="modal-close" onclick="closeDateModal()">&times;</button>
+                    <h2>${day}.${month}.${year}</h2>
+                    <button class="modal-close" onclick="closeDateModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                 </div>
                 <div class="modal-body" style="overflow-y: auto;">
                     <!-- Статистика -->
                     <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
                         <div style="background: rgba(81,148,255,0.1); padding: 6px 14px; border-radius: 8px; font-size: 13px;">
-                            📋 Задачи: <strong>${tasksOnDate.length}</strong>
+                            Задачи: <strong>${tasksOnDate.length}</strong>
                         </div>
                         <div style="background: rgba(252,121,46,0.1); padding: 6px 14px; border-radius: 8px; font-size: 13px;">
-                            ⚡ Дедлайны: <strong>${deadlinesOnDate.length}</strong>
+                            Дедлайны: <strong>${deadlinesOnDate.length}</strong>
                         </div>
                     </div>
                     
-                    <h3 style="font-size: 15px; margin-bottom: 12px;">📋 События на этот день</h3>
+                    <h3 style="font-size: 15px; margin-bottom: 12px;">События на этот день</h3>
                     <div id="dateEventsList">
                         ${eventsOnDate.length === 0 ? '<p style="color: #999; text-align: center; padding: 20px;">Нет событий на этот день</p>' : 
                             eventsOnDate.map(event => {
                                 const isDeadline = event.type === 'deadline';
-                                const icon = isDeadline ? '⚡' : '📋';
+                                const icon = isDeadline ? '' : '';
                                 const typeLabel = isDeadline ? 'Дедлайн' : 'Задача';
                                 const bgColor = isDeadline ? 'rgba(252,121,46,0.05)' : 'rgba(81,148,255,0.05)';
                                 
@@ -2293,30 +2295,30 @@ function openDateModal(year, month, day) {
                                 let deadlineClass = '';
                                 
                                 if (event.status === 'completed') {
-                                    deadlineStatus = '✅ Выполнена';
+                                    deadlineStatus = 'Выполнена';
                                     deadlineClass = 'deadline-completed';
                                 } else if (daysLeft < 0) {
-                                    deadlineStatus = '⚠️ Просрочена';
+                                    deadlineStatus = 'Просрочена';
                                     deadlineClass = 'deadline-overdue';
                                 } else if (daysLeft <= 3) {
                                     deadlineStatus = `⏰ ${daysLeft} дн.`;
                                     deadlineClass = 'deadline-urgent';
                                 } else {
-                                    deadlineStatus = `📅 ${daysLeft} дн.`;
+                                    deadlineStatus = `${daysLeft} дн.`;
                                     deadlineClass = 'deadline-normal';
                                 }
                                 
                                 // Название события
-                                const displayTitle = isDeadline ? event.title.replace('⚡ ', '') : event.title;
+                                const displayTitle = isDeadline ? event.title.replace('', '') : event.title;
                                 
                                 return `
-                                    <div class="date-event-item" onclick="closeDateModal(); openTaskView(${event.taskId || event.id})" style="cursor: pointer; padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: ${bgColor}; transition: all 0.2s;">
+                                    <div class="date-event-item" onclick="closeDateModal(); window.location.href='/html/tasks.html?taskId=' + encodeURIComponent(${event.taskId || event.id})" style="cursor: pointer; padding: 12px; border-bottom: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: ${bgColor}; transition: all 0.2s;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                                             <strong>${icon} ${escapeHtml(displayTitle)}</strong>
                                             <span style="font-size: 11px; color: ${isDeadline ? '#f97316' : 'var(--c_acc)'}; font-weight: 500;">${typeLabel}</span>
                                         </div>
                                         <div style="font-size: 12px; color: #666; margin-top: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                                            <span>${event.assignee ? '👤 ' + escapeHtml(event.assignee) : ' Без исполнителя'}</span>
+                                            <span>${event.assignee ? '' + escapeHtml(event.assignee) : ' Без исполнителя'}</span>
                                             <span class="${deadlineClass}">${deadlineStatus}</span>
                                         </div>
                                         ${event.priority ? `<div style="margin-top: 4px;"><span class="priority-badge ${getPriorityClass(event.priority)}">${getPriorityLabel(event.priority)}</span></div>` : ''}
@@ -2331,7 +2333,7 @@ function openDateModal(year, month, day) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="buttonbase" onclick="closeDateModal()">Закрыть</button>
+                    <button class="buttonbase" onclick="closeDateModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"> Закрыть</button>
                 </div>
             </div>
         </div>
@@ -2407,7 +2409,7 @@ async function fetchTaskDataFull(taskId) {
 }
 
 function renderTaskFull(task) {
-    console.log('🎨 Rendering full task:', task);
+    console.log('Rendering full task:', task);
     
     // Основные поля
     document.getElementById('taskTitleFull').value = task.title || '';
@@ -2479,9 +2481,9 @@ function updateStatusBadgeFull(status) {
     const badge = document.getElementById('taskStatusBadgeFull');
     const statusMap = {
         pending: { label: '⏳ Ожидает', class: 'status-pending' },
-        in_progress: { label: '🔄 В работе', class: 'status-in_progress' },
-        completed: { label: '✅ Выполнена', class: 'status-completed' },
-        cancelled: { label: '❌ Отменена', class: 'status-cancelled' }
+        in_progress: { label: 'В работе', class: 'status-in_progress' },
+        completed: { label: 'Выполнена', class: 'status-completed' },
+        cancelled: { label: 'Отменена', class: 'status-cancelled' }
     };
     const info = statusMap[status] || statusMap.pending;
     badge.textContent = info.label;
@@ -2909,9 +2911,9 @@ function updateStatusBadge(status) {
     const badge = document.getElementById('taskStatusBadge');
     const statusMap = {
         pending: { label: '⏳ Ожидает', color: '#f59e0b' },
-        in_progress: { label: '🔄 В работе', color: '#3b82f6' },
-        completed: { label: '✅ Выполнена', color: '#10b981' },
-        cancelled: { label: '❌ Отменена', color: '#ef4444' }
+        in_progress: { label: 'В работе', color: '#3b82f6' },
+        completed: { label: 'Выполнена', color: '#10b981' },
+        cancelled: { label: 'Отменена', color: '#ef4444' }
     };
     const info = statusMap[status] || statusMap.pending;
     badge.textContent = info.label;
@@ -3066,9 +3068,9 @@ function updateTaskPreview() {
     const statusSpan = document.getElementById('previewStatus');
     
     if (statusSpan) {
-        let statusText = '🟡 Черновик';
+        let statusText = ' Черновик';
         if (title && title.trim()) {
-            statusText = '📝 Готов к созданию';
+            statusText = 'Готов к созданию';
         }
         statusSpan.textContent = statusText;
     }
@@ -3137,7 +3139,7 @@ async function createTaskFromEditor() {
         
         if (response.ok) {
             const result = await response.json();
-            showToast('✅ Задача успешно создана', 'success');
+            showToast('Задача успешно создана', 'success');
             
             // Очищаем форму
             clearTaskForm();
@@ -3153,7 +3155,7 @@ async function createTaskFromEditor() {
             setTimeout(() => {
                 const goToTask = confirm(`Задача "${title}" создана. Перейти к ней?`);
                 if (goToTask && result.task) {
-                    openTaskView(result.task.id);
+                    window.location.href = `/html/tasks.html?taskId=${encodeURIComponent(result.task.id)}`;
                 }
             }, 500);
         } else {
@@ -3258,10 +3260,10 @@ function previewTask() {
     const content = `
         <h3>${escapeHtml(title)}</h3>
         <div class="task-preview-details">
-            <p><strong>📝 Описание:</strong> ${escapeHtml(document.getElementById('taskDescription')?.value || '—')}</p>
-            <p><strong>🎯 Приоритет:</strong> ${getPriorityLabel(document.getElementById('taskPriority')?.value)}</p>
-            <p><strong>📅 Срок:</strong> ${document.getElementById('taskDeadline')?.value || '—'}</p>
-            <p><strong>👤 Исполнитель:</strong> ${document.getElementById('taskAssignee')?.selectedOptions[0]?.text || '—'}</p>
+            <p><strong>Описание:</strong> ${escapeHtml(document.getElementById('taskDescription')?.value || '—')}</p>
+            <p><strong>Приоритет:</strong> ${getPriorityLabel(document.getElementById('taskPriority')?.value)}</p>
+            <p><strong>Срок:</strong> ${document.getElementById('taskDeadline')?.value || '—'}</p>
+            <p><strong>Исполнитель:</strong> ${document.getElementById('taskAssignee')?.selectedOptions[0]?.text || '—'}</p>
         </div>
     `;
     
@@ -3275,10 +3277,10 @@ function closeTaskPreviewModal() {
 // - getPriorityLabel()
 function getPriorityLabel(priority) {
     switch(priority) {
-        case 'low': return '🟢 Низкий';
-        case 'medium': return '🟡 Средний';
-        case 'high': return '🟠 Высокий';
-        case 'critical': return '🔴 Критический';
+        case 'low': return ' Низкий';
+        case 'medium': return ' Средний';
+        case 'high': return ' Высокий';
+        case 'critical': return ' Критический';
         default: return priority;
     }
 }
@@ -3324,7 +3326,7 @@ function initTaskEditorHandlers() {
                         <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
-                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()">🗑️</button>
+                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()"></button>
                 `;
                 container.appendChild(fileDiv);
             }
@@ -3355,7 +3357,7 @@ function initTaskEditorHandlers() {
                         <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
-                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()">🗑️</button>
+                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()"></button>
                 `;
                 container.appendChild(fileDiv);
             }
@@ -3412,15 +3414,15 @@ function renderUserTemplates() {
     
     container.innerHTML = `
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eef2f6;">
-            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #666;">📁 Мои шаблоны</h4>
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Мои шаблоны</h4>
         </div>
     ` + userTemplates.map(template => `
         <button class="type-list-elem" data-template-id="${template.id}" onclick="openTaskFromTemplate(${template.id})">
-            <div class="type-icon">📋</div>
+            <div class="type-icon"></div>
             <h4>${escapeHtml(template.name)}</h4>
             <p class="type-desc">${escapeHtml(template.description || 'Пользовательский шаблон')}</p>
             <div style="font-size: 11px; color: #999; margin-top: 8px;">
-                ${template.is_shared ? '👥 Общий для отдела' : '🔒 Личный'} | Использован ${template.usage_count || 0} раз
+                ${template.is_shared ? 'Общий для отдела' : 'Личный'} | Использован ${template.usage_count || 0} раз
             </div>
         </button>
     `).join('');
@@ -3551,7 +3553,7 @@ function openTaskCreate() {
     openWindow('base-section-task-create');
 }
 async function openTaskFromTemplate(templateId) {
-    console.log('📋 openTaskFromTemplate called with id:', templateId);
+    console.log('openTaskFromTemplate called with id:', templateId);
     
     // Ищем шаблон в загруженном списке
     let template = userTemplates.find(t => t.id === templateId);
@@ -3587,7 +3589,7 @@ async function openTaskFromTemplate(templateId) {
         return;
     }
     
-    console.log('✅ Template found:', template.name);
+    console.log('Template found:', template.name);
     
     // Увеличиваем счётчик использования
     try {
@@ -3677,7 +3679,7 @@ function fillFormFromTemplate(template) {
 }
 // Открытие формы в стиле Google Forms
 function openTaskFormFromTemplate(template) {
-    console.log('🎨 Opening Google Forms style for template:', template.name);
+    console.log('Opening Google Forms style for template:', template.name);
     
     // Проверяем, что секция существует
     const formSection = document.getElementById('base-section-task-create');
@@ -3696,7 +3698,7 @@ function openTaskFormFromTemplate(template) {
     const googleTitleEl = document.getElementById('googleFormTitle');
     const googleDescEl = document.getElementById('googleFormDescription');
     
-    if (titleEl) titleEl.textContent = `📝 Создание задачи`;
+    if (titleEl) titleEl.textContent = `Создание задачи`;
     if (badgeEl) badgeEl.textContent = template.name;
     if (googleTitleEl) googleTitleEl.textContent = template.name;
     if (googleDescEl) googleDescEl.textContent = template.description || 'Заполните форму для создания задачи';
@@ -3727,7 +3729,7 @@ function renderCustomFieldsInTaskForm(fields) {
     section.id = 'customFieldsSection';
     section.className = 'form-section';
     section.innerHTML = `
-        <h3>📋 Дополнительные поля</h3>
+        <h3>Дополнительные поля</h3>
         <div id="customFieldsContainer" class="custom-fields-grid"></div>
     `;
     formContainer.appendChild(section);
@@ -3777,12 +3779,12 @@ function renderCustomFieldsInTaskForm(fields) {
                 inputHtml = `
                     <div class="document-selector-wrapper">
                         <div class="selected-document" id="selected_doc_${field.key}" style="display: ${value ? 'flex' : 'none'};">
-                            <span class="doc-icon">📄</span>
+                            <span class="doc-icon"></span>
                             <span class="doc-name">${escapeHtml(value)}</span>
-                            <button type="button" class="doc-remove" onclick="clearDocument('${field.key}')">✖</button>
+                            <button type="button" class="doc-remove" onclick="clearDocument('${field.key}')"></button>
                         </div>
                         <button type="button" class="buttonbase btn-outline select-doc-btn" onclick="openDocumentSelector('${field.key}')">
-                            📁 Выбрать документ
+                            Выбрать документ
                         </button>
                         <input type="hidden" id="custom_${field.key}" value="${escapeHtml(value)}">
                     </div>
@@ -3832,7 +3834,7 @@ async function createSimpleTask() {
         notifyAssignee: document.getElementById('notifyOnAssign')?.checked || false,
         notifyOnDeadline: document.getElementById('notifyOnDeadline')?.checked || false
     };
-    console.log('📦 taskData:', taskData);  // ← ДОБАВИТЬ
+    console.log('taskData:', taskData);  // ← ДОБАВИТЬ
 
     try {
         const token = localStorage.getItem('token');
@@ -3846,7 +3848,7 @@ async function createSimpleTask() {
         });
         
         if (response.ok) {
-            showToast('✅ Задача создана', 'success');
+            showToast('Задача создана', 'success');
             
             // Очищаем форму
             document.getElementById('taskTitle').value = '';
@@ -3948,7 +3950,7 @@ function initTaskEditorHandlers() {
                         <span class="file-name">${escapeHtml(file.name)}</span>
                         <span class="file-size">(${(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
-                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()">🗑️</button>
+                    <button class="file-remove" onclick="this.closest('.uploaded-file').remove()"></button>
                 `;
                 container.appendChild(fileDiv);
             }
@@ -4009,7 +4011,7 @@ async function openManageTemplates() {
     const container = document.getElementById('templatesListContainer');
     if (container) {
         if (userTemplates.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px;">📭 У вас пока нет шаблонов</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">У вас пока нет шаблонов</div>';
         } else {
             container.innerHTML = userTemplates.map(template => `
                 <div class="template-item" style="padding: 15px; border-bottom: 1px solid #eef2f6;">
@@ -4018,11 +4020,11 @@ async function openManageTemplates() {
                             <strong>${escapeHtml(template.name)}</strong>
                             <div style="font-size: 12px; color: #666;">${escapeHtml(template.description || '—')}</div>
                             <div style="font-size: 11px; margin-top: 5px;">
-                                ${template.is_shared ? '👥 Общий для отдела' : '🔒 Личный'} | Использован: ${template.usage_count || 0} раз
+                                ${template.is_shared ? 'Общий для отдела' : 'Личный'} | Использован: ${template.usage_count || 0} раз
                             </div>
                         </div>
                         <div>
-                            <button class="buttonbase" style="padding: 4px 12px;" onclick="deleteTemplate(${template.id})">🗑️</button>
+                            <button class="buttonbase" style="padding: 4px 12px;" onclick="deleteTemplate(${template.id})"></button>
                         </div>
                     </div>
                 </div>
@@ -4072,7 +4074,7 @@ function openTaskFormFromTemplate(template) {
     currentFormData = {};
     
     // Устанавливаем заголовок
-    document.getElementById('templateFormTitle').textContent = `📝 Создание задачи`;
+    document.getElementById('templateFormTitle').textContent = `Создание задачи`;
     document.getElementById('templateFormBadge').textContent = template.name;
     document.getElementById('googleFormTitle').textContent = template.name;
     document.getElementById('googleFormDescription').textContent = template.description || 'Заполните форму для создания задачи';
@@ -4118,10 +4120,10 @@ function renderGoogleFormField(field, templateData) {
     if (field.key === 'priority') {
         inputHtml = `
             <select id="${fieldId}" class="field-input" ${field.required ? 'data-required="true"' : ''}>
-                <option value="low" ${defaultValue === 'low' ? 'selected' : ''}>🟢 Низкий</option>
-                <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}>🟡 Средний</option>
-                <option value="high" ${defaultValue === 'high' ? 'selected' : ''}>🟠 Высокий</option>
-                <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}>🔴 Критический</option>
+                <option value="low" ${defaultValue === 'low' ? 'selected' : ''}> Низкий</option>
+                <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}> Средний</option>
+                <option value="high" ${defaultValue === 'high' ? 'selected' : ''}> Высокий</option>
+                <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}> Критический</option>
             </select>
         `;
     }
@@ -4165,10 +4167,10 @@ function renderGoogleFormField(field, templateData) {
                 // Специальная обработка для поля приоритета
                 inputHtml = `
                     <select id="${fieldId}" class="field-input" ${field.required ? 'data-required="true"' : ''}>
-                        <option value="low" ${defaultValue === 'low' ? 'selected' : ''}>🟢 Низкий</option>
-                        <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}>🟡 Средний</option>
-                        <option value="high" ${defaultValue === 'high' ? 'selected' : ''}>🟠 Высокий</option>
-                        <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}>🔴 Критический</option>
+                        <option value="low" ${defaultValue === 'low' ? 'selected' : ''}> Низкий</option>
+                        <option value="medium" ${defaultValue === 'medium' ? 'selected' : ''}> Средний</option>
+                        <option value="high" ${defaultValue === 'high' ? 'selected' : ''}> Высокий</option>
+                        <option value="critical" ${defaultValue === 'critical' ? 'selected' : ''}> Критический</option>
                     </select>
                 `;
             } else {
@@ -4200,7 +4202,7 @@ function renderGoogleFormField(field, templateData) {
                         <span>Выбранный пользователь</span>
                     </div>
                     <div class="selected-users-list" id="selected_${field.key}">
-                        ${defaultValue ? `<span class="selected-user-tag" data-user-id="${defaultValue.id}">👤 ${escapeHtml(defaultValue.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${defaultValue.id})">✖</button></span>` : '<span class="empty-hint">Не выбран</span>'}
+                        ${defaultValue ? `<span class="selected-user-tag" data-user-id="${defaultValue.id}">${escapeHtml(defaultValue.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${defaultValue.id})"></button></span>` : '<span class="empty-hint">Не выбран</span>'}
                     </div>
                     <button type="button" class="select-users-btn" onclick="openUserSelectorForField('${field.key}', false)">
                         + Выбрать пользователя
@@ -4218,7 +4220,7 @@ function renderGoogleFormField(field, templateData) {
                     </div>
                     <div class="selected-users-list" id="selected_${field.key}">
                         ${(defaultValue || []).map(user => `
-                            <span class="selected-user-tag" data-user-id="${user.id}">👤 ${escapeHtml(user.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${user.id})">✖</button></span>
+                            <span class="selected-user-tag" data-user-id="${user.id}">${escapeHtml(user.name)} <button type="button" onclick="removeSelectedUser('${field.key}', ${user.id})"></button></span>
                         `).join('')}
                         ${(!defaultValue || defaultValue.length === 0) ? '<span class="empty-hint">Не выбраны</span>' : ''}
                     </div>
@@ -4233,12 +4235,12 @@ function renderGoogleFormField(field, templateData) {
         case 'document':
             inputHtml = `
                 <div class="document-attachment" onclick="openDocumentSelectorForField('${field.key}')">
-                    <div class="doc-icon">📄</div>
+                    <div class="doc-icon"></div>
                     <div class="doc-info">
                         <div class="doc-name" id="doc_name_${field.key}">${defaultValue || 'Выберите документ'}</div>
                         <div class="doc-placeholder">${escapeHtml(field.placeholder || 'Нажмите, чтобы выбрать документ')}</div>
                     </div>
-                    ${defaultValue ? `<button class="doc-remove" onclick="event.stopPropagation(); clearDocumentField('${field.key}')">✖</button>` : ''}
+                    ${defaultValue ? `<button class="doc-remove" onclick="event.stopPropagation(); clearDocumentField('${field.key}')"></button>` : ''}
                 </div>
                 <input type="hidden" id="${fieldId}" value="${escapeHtml(defaultValue || '')}" ${field.required ? 'data-required="true"' : ''}>
             `;
@@ -4268,7 +4270,7 @@ function getFieldDefaultValue(field, templateData) {
             case 'priority': 
                 // Убедись, что возвращается код, а не текст
                 const defaultPriority = templateData.defaultPriority || 'medium';
-                console.log('🎯 Default priority from template:', defaultPriority);
+                console.log('Default priority from template:', defaultPriority);
                 return defaultPriority;
             case 'due_date': 
                 if (templateData.defaultDeadlineDays) {
@@ -4322,8 +4324,8 @@ function updateSelectedUsersDisplay(fieldKey, users, userIds, multiple) {
     if (multiple) {
         container.innerHTML = users.map(user => `
             <span class="selected-user-tag" data-user-id="${user.id}">
-                👤 ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
-                <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})">✖</button>
+                ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
+                <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})"></button>
             </span>
         `).join('');
         
@@ -4337,8 +4339,8 @@ function updateSelectedUsersDisplay(fieldKey, users, userIds, multiple) {
         if (user) {
             container.innerHTML = `
                 <span class="selected-user-tag" data-user-id="${user.id}">
-                    👤 ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
-                    <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})">✖</button>
+                    ${escapeHtml(user.surname)} ${escapeHtml(user.name)}
+                    <button type="button" onclick="removeSelectedUser('${fieldKey}', ${user.id})"></button>
                 </span>
             `;
             if (hiddenInput) hiddenInput.value = user.id;
@@ -4448,7 +4450,7 @@ function collectFormData() {
         formData[`${fieldKey}_label`] = label;
     }
     
-    console.log('📦 Final formData:', formData);
+    console.log('Final formData:', formData);
     return formData;
 }
 
@@ -4457,7 +4459,7 @@ async function submitTaskFromTemplate() {
     const formData = collectFormData();
     if (!formData) return;
     
-    console.log('📋 Raw formData:', formData);
+    console.log('Raw formData:', formData);
     
     // Получаем приоритет
     const prioritySelect = document.querySelector('#form_field_priority');
@@ -4471,7 +4473,7 @@ async function submitTaskFromTemplate() {
     
     const validPriorities = ['low', 'medium', 'high', 'critical'];
     if (!validPriorities.includes(priorityCode)) {
-        console.warn('⚠️ Unknown priority:', priorityCode, 'using medium');
+        console.warn('Unknown priority:', priorityCode, 'using medium');
         priorityCode = 'medium';
     }
     
@@ -4535,7 +4537,7 @@ async function submitTaskFromTemplate() {
         };
     });
 
-    console.log('📦 Custom fields with types:', JSON.stringify(customFields, null, 2));
+    console.log('Custom fields with types:', JSON.stringify(customFields, null, 2));
     
     // Формируем данные для API
     const taskData = {
@@ -4551,7 +4553,7 @@ async function submitTaskFromTemplate() {
         templateId: currentFormTemplate?.id || null
     };
     
-    console.log('📤 Final taskData:', taskData);
+    console.log('Final taskData:', taskData);
     
     // Валидация
     if (!taskData.title) {
@@ -4582,7 +4584,7 @@ async function submitTaskFromTemplate() {
         
         if (response.ok) {
             const result = await response.json();
-            showToast('✅ Задача успешно создана', 'success');
+            showToast('Задача успешно создана', 'success');
             closeTaskFromTemplate();
             await loadTasks();
             await loadCalendarEvents();
@@ -4594,7 +4596,7 @@ async function submitTaskFromTemplate() {
             // Предложение открыть созданную задачу
             setTimeout(() => {
                 if (result.task && confirm('Задача создана. Открыть?')) {
-                    openTaskView(result.task.id);
+                    window.location.href = `/html/tasks.html?taskId=${encodeURIComponent(result.task.id)}`;
                 }
             }, 300);
         } else {
@@ -4702,16 +4704,16 @@ const defaultTemplateFields = [
 // - fieldTypes (константа)
 // Типы полей с иконками
 const fieldTypes = {
-    text: { icon: '📝', name: 'Текстовое поле', defaultLabel: 'Текстовое поле' },
-    textarea: { icon: '📄', name: 'Текстовая область', defaultLabel: 'Описание' },
-    number: { icon: '🔢', name: 'Число', defaultLabel: 'Количество' },
-    date: { icon: '📅', name: 'Дата', defaultLabel: 'Дата' },
-    select: { icon: '📋', name: 'Выпадающий список', defaultLabel: 'Выберите вариант' },
-    checkbox: { icon: '☑️', name: 'Чекбокс', defaultLabel: 'Согласен' },
-    user: { icon: '👤', name: 'Выбор пользователя', defaultLabel: 'Исполнитель' },
-    'multi-user': { icon: '👥', name: 'Выбор нескольких', defaultLabel: 'Наблюдатели' },
+    text: { icon: '', name: 'Текстовое поле', defaultLabel: 'Текстовое поле' },
+    textarea: { icon: '', name: 'Текстовая область', defaultLabel: 'Описание' },
+    number: { icon: '', name: 'Число', defaultLabel: 'Количество' },
+    date: { icon: '', name: 'Дата', defaultLabel: 'Дата' },
+    select: { icon: '', name: 'Выпадающий список', defaultLabel: 'Выберите вариант' },
+    checkbox: { icon: '', name: 'Чекбокс', defaultLabel: 'Согласен' },
+    user: { icon: '', name: 'Выбор пользователя', defaultLabel: 'Исполнитель' },
+    'multi-user': { icon: '', name: 'Выбор нескольких', defaultLabel: 'Наблюдатели' },
     // В fieldTypes добавь:
-    document: { icon: '📄', name: 'Связанный документ', defaultLabel: 'Документ' },
+    document: { icon: '', name: 'Связанный документ', defaultLabel: 'Документ' },
 };
 
 // - openTemplateBuilder()
@@ -4751,7 +4753,7 @@ function openTemplateBuilder(templateId = null) {
             renderFieldsList();
             renderTemplatePreview();
             
-            document.getElementById('templateBuilderTitle').textContent = '✏️ Редактирование шаблона';
+            document.getElementById('templateBuilderTitle').textContent = 'Редактирование шаблона';
             const idSpan = document.getElementById('templateBuilderId');
             if (idSpan) idSpan.textContent = `ID: ${templateId}`;
         }
@@ -4769,7 +4771,7 @@ function openTemplateBuilder(templateId = null) {
         currentTemplateFields = [];
         renderFieldsList();
         renderTemplatePreview();
-        document.getElementById('templateBuilderTitle').textContent = '📋 Конструктор шаблона';
+        document.getElementById('templateBuilderTitle').textContent = 'Конструктор шаблона';
         const idSpan = document.getElementById('templateBuilderId');
         if (idSpan) idSpan.textContent = '';
     }
@@ -4817,7 +4819,7 @@ function openFieldEditor(fieldIndex = null) {
     const deleteBtn = document.getElementById('deleteFieldBtn');
     
     if (field) {
-        titleEl.textContent = '✏️ Редактирование поля';
+        titleEl.textContent = 'Редактирование поля';
         deleteBtn.style.display = 'block';
         document.getElementById('fieldType').value = field.type;
         document.getElementById('fieldLabel').value = field.label;
@@ -4833,7 +4835,7 @@ function openFieldEditor(fieldIndex = null) {
             renderOptionsList(['Вариант 1']);
         }
     } else {
-        titleEl.textContent = '➕ Добавление поля';
+        titleEl.textContent = 'Добавление поля';
         deleteBtn.style.display = 'none';
         document.getElementById('fieldType').value = 'text';
         document.getElementById('fieldLabel').value = '';
@@ -4976,7 +4978,7 @@ function renderFieldsList() {
     if (allFields.length === 0) {
         container.innerHTML = `
             <div class="empty-fields">
-                <div class="empty-icon">📝</div>
+                <div class="empty-icon"></div>
                 <p>Нет добавленных полей</p>
                 <small>Нажмите "Добавить поле", чтобы создать кастомное поле</small>
             </div>
@@ -4999,10 +5001,10 @@ function renderFieldsList() {
             </div>
             <div class="field-actions">
                 ${!field.isBuiltin ? `
-                    <button onclick="openFieldEditorForCustom(${idx})" title="Редактировать">✏️</button>
-                    <button onclick="deleteCustomField(${idx})" title="Удалить">🗑️</button>
+                    <button onclick="openFieldEditorForCustom(${idx})" title="Редактировать"></button>
+                    <button onclick="deleteCustomField(${idx})" title="Удалить"></button>
                 ` : `
-                    <button onclick="openFieldEditorForBuiltin('${field.key}')" title="Настроить">⚙️</button>
+                    <button onclick="openFieldEditorForBuiltin('${field.key}')" title="Настроить"></button>
                 `}
             </div>
         </div>
@@ -5014,14 +5016,14 @@ function renderFieldsList() {
 // Иконки для типов полей
 function getFieldIcon(type) {
     const icons = {
-        text: '📝',
-        textarea: '📄',
-        number: '🔢',
-        date: '📅',
-        select: '📋',
-        checkbox: '☑️',
-        user: '👤',
-        'multi-user': '👥'
+        text: '',
+        textarea: '',
+        number: '',
+        date: '',
+        select: '',
+        checkbox: '',
+        user: '',
+        'multi-user': ''
     };
     return icons[type] || '';
 }
@@ -5048,7 +5050,7 @@ function openFieldEditorForBuiltin(fieldKey) {
     editingFieldIndex = null;
     editingBuiltinFieldKey = fieldKey;
     
-    document.getElementById('fieldEditorTitle').textContent = `⚙️ Настройка: ${field.label}`;
+    document.getElementById('fieldEditorTitle').textContent = ` Настройка: ${field.label}`;
     document.getElementById('deleteFieldBtn').style.display = 'none';
     document.getElementById('fieldType').value = field.type;
     document.getElementById('fieldType').disabled = true;  // Тип нельзя менять
@@ -5104,11 +5106,11 @@ function openFieldEditorForCustom(fieldIndex) {
     if (typeSelect && !Array.from(typeSelect.options).some(opt => opt.value === 'document')) {
         const option = document.createElement('option');
         option.value = 'document';
-        option.textContent = '📄 Связанный документ';
+        option.textContent = 'Связанный документ';
         typeSelect.appendChild(option);
     }
     
-    document.getElementById('fieldEditorTitle').textContent = '✏️ Редактирование поля';
+    document.getElementById('fieldEditorTitle').textContent = 'Редактирование поля';
     document.getElementById('deleteFieldBtn').style.display = 'block';
     document.getElementById('fieldType').disabled = false;
     document.getElementById('fieldLabel').disabled = false;
@@ -5201,7 +5203,7 @@ function renderTemplatePreview() {
     ].sort((a, b) => (a.order || 999) - (b.order || 999));
     
     if (allFields.length === 0) {
-        container.innerHTML = '<div class="empty-preview">📭 Нет полей для отображения</div>';
+        container.innerHTML = '<div class="empty-preview">Нет полей для отображения</div>';
         return;
     }
     
@@ -5274,9 +5276,9 @@ function renderPreviewField(field) {
                 inputHtml = `
                     <div class="preview-document-attachment">
                         <div class="attachment-preview">
-                            <span class="attachment-icon">📄</span>
+                            <span class="attachment-icon"></span>
                             <span class="attachment-name">${escapeHtml(value || 'Не выбран')}</span>
-                            <button class="attachment-remove" type="button" disabled>✖</button>
+                            <button class="attachment-remove" type="button" disabled></button>
                         </div>
                         <button class="attachment-select-btn" type="button" disabled>Выбрать документ</button>
                     </div>
@@ -5384,7 +5386,7 @@ function previewTemplate() {
         return;
     }
     
-    document.getElementById('templatePreviewTitle').textContent = `👁️ Предпросмотр: ${escapeHtml(name)}`;
+    document.getElementById('templatePreviewTitle').textContent = `Предпросмотр: ${escapeHtml(name)}`;
     document.getElementById('templatePreviewContent').innerHTML = document.getElementById('templatePreview')?.innerHTML || 'Нет полей';
     openModal('templateFullPreviewModal');
 }
@@ -5549,19 +5551,19 @@ function renderTemplatesGrid() {
     let allItems = [];
     
     if (currentTemplateFilter === 'all' || currentTemplateFilter === 'task') {
-        allItems.push(...allTemplates.tasks.map(t => ({ ...t, type: 'task', typeIcon: '📝', typeName: 'Задача' })));
+        allItems.push(...allTemplates.tasks.map(t => ({ ...t, type: 'task', typeIcon: '', typeName: 'Задача' })));
     }
     if (currentTemplateFilter === 'all' || currentTemplateFilter === 'document') {
-        allItems.push(...allTemplates.documents.map(t => ({ ...t, type: 'document', typeIcon: '📄', typeName: 'Документ' })));
+        allItems.push(...allTemplates.documents.map(t => ({ ...t, type: 'document', typeIcon: '', typeName: 'Документ' })));
     }
     if (currentTemplateFilter === 'all' || currentTemplateFilter === 'workflow') {
-        allItems.push(...allTemplates.workflows.map(t => ({ ...t, type: 'workflow', typeIcon: '🔄', typeName: 'Процесс' })));
+        allItems.push(...allTemplates.workflows.map(t => ({ ...t, type: 'workflow', typeIcon: '', typeName: 'Процесс' })));
     }
     
     if (allItems.length === 0) {
         container.innerHTML = `
             <div class="empty-templates">
-                <div class="empty-icon">📋</div>
+                <div class="empty-icon"></div>
                 <h3>Нет шаблонов</h3>
                 <p>Создайте свой первый шаблон, чтобы ускорить работу</p>
                 <button class="buttonbase" id="emptyStateCreateBtn">+ Создать шаблон</button>
@@ -5585,11 +5587,11 @@ function renderTemplatesGrid() {
                     <p class="template-card-desc">${escapeHtml(template.description || 'Нет описания')}</p>
                     <div class="template-card-meta">
                         <span>${template.usage_count || 0} использований</span>
-                        <span>${template.is_shared ? '👥 Общий' : '🔒 Личный'}</span>
+                        <span>${template.is_shared ? 'Общий' : 'Личный'}</span>
                         <div class="template-card-actions">
-                            <button onclick="editTemplate(${template.id}, '${template.type}')" title="Редактировать">✏️</button>
-                            <button onclick="useTemplate('${template.type}', ${template.id})" title="Использовать">🚀</button>
-                            <button onclick="deleteTemplate(${template.id}, '${template.type}')" title="Удалить">🗑️</button>
+                            <button onclick="editTemplate(${template.id}, '${template.type}')" title="Редактировать"></button>
+                            <button onclick="useTemplate('${template.type}', ${template.id})" title="Использовать"></button>
+                            <button onclick="deleteTemplate(${template.id}, '${template.type}')" title="Удалить"></button>
                         </div>
                     </div>
                 </div>
@@ -5719,7 +5721,7 @@ function addCustomFieldsToForm(fields) {
         const section = document.createElement('div');
         section.id = 'customFieldsSection';
         section.className = 'form-section';
-        section.innerHTML = '<h3>📋 Дополнительные поля</h3><div id="customFieldsContainer"></div>';
+        section.innerHTML = '<h3>Дополнительные поля</h3><div id="customFieldsContainer"></div>';
         formContainer.appendChild(section);
         customSection = section;
     }
@@ -5813,10 +5815,10 @@ async function openDocumentSelector(fieldKey) {
     
     const modalHtml = `
         <div id="documentSelectorModal" class="admin-modal" style="display: flex;">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width: 640px;">
                 <div class="modal-header">
-                    <h2>📄 Выбор документа</h2>
-                    <button class="modal-close" onclick="closeDocumentSelector()">&times;</button>
+                    <h2>Выбор документа</h2>
+                    <button class="modal-close" onclick="closeDocumentSelector()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                 </div>
                 <div class="modal-body">
                     <div class="search-box" style="margin-bottom: 16px;">
@@ -5825,7 +5827,7 @@ async function openDocumentSelector(fieldKey) {
                     <div id="documentsList" class="documents-list">
                         ${mockDocuments.map(doc => `
                             <div class="document-item" onclick="selectDocument(${doc.id}, '${escapeHtml(doc.name)}')">
-                                <div class="doc-icon">📄</div>
+                                <div class="doc-icon"></div>
                                 <div class="doc-info">
                                     <div class="doc-name">${escapeHtml(doc.name)}</div>
                                     <div class="doc-type">${doc.type}</div>
@@ -5844,7 +5846,7 @@ async function openDocumentSelector(fieldKey) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="buttonbase" onclick="closeDocumentSelector()">Отмена</button>
+                    <button class="buttonbase" onclick="closeDocumentSelector()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
                     <button class="buttonbase" id="confirmDocumentBtn">Подтвердить</button>
                 </div>
             </div>
@@ -6334,7 +6336,7 @@ function renderUserSelectorList() {
     const container = document.getElementById('userSelectorList');
     
     if (filteredUsersList.length === 0) {
-        container.innerHTML = '<div class="loading-users">👥 Нет пользователей</div>';
+        container.innerHTML = '<div class="loading-users">Нет пользователей</div>';
         return;
     }
     
@@ -6352,9 +6354,9 @@ function renderUserSelectorList() {
                 <div class="user-info">
                     <div class="user-name">${escapeHtml(fullName)}</div>
                     <div class="user-details">
-                        ${user.post_name ? `📌 ${escapeHtml(user.post_name)}` : ''}
-                        ${user.department_name ? ` | 🏢 ${escapeHtml(user.department_name)}` : ''}
-                        ${user.email ? ` | 📧 ${escapeHtml(user.email)}` : ''}
+                        ${user.post_name ? `${escapeHtml(user.post_name)}` : ''}
+                        ${user.department_name ? ` | ${escapeHtml(user.department_name)}` : ''}
+                        ${user.email ? ` | ${escapeHtml(user.email)}` : ''}
                     </div>
                 </div>
                 <div class="user-badge">${user.role_id === 1 ? 'Админ' : 'Пользователь'}</div>
@@ -6443,7 +6445,7 @@ async function loadUsersList() {
         if (response.ok) {
             const data = await response.json();
             window.allUsersList = data.users || [];
-            console.log('👥 Users loaded for custom fields:', window.allUsersList.length);
+            console.log('Users loaded for custom fields:', window.allUsersList.length);
         }
     } catch (error) {
         console.error('Error loading users:', error);
@@ -6511,12 +6513,19 @@ async function loadDashboardStats() {
         const statsChats = document.getElementById('statsChats');
         const statsUnread = document.getElementById('statsUnread');
         
-        if (statsTasks) statsTasks.textContent = activeTasks.length;
-        if (statsCompleted) statsCompleted.textContent = completedTasks.length;
-        if (statsDocs) statsDocs.textContent = '0';
-        if (statsProcesses) statsProcesses.textContent = '0';
-        if (statsChats) statsChats.textContent = chats.length;
-        if (statsUnread) statsUnread.textContent = unread;
+        const docsCount = '0';
+        const processesCount = '0';
+        const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setTxt('statsTasks', activeTasks.length);
+        setTxt('statsCompleted', completedTasks.length);
+        setTxt('statsDocs', docsCount);
+        setTxt('statsProcesses', processesCount);
+        setTxt('statsChats', chats.length);
+        setTxt('statsUnread', unread);
+        setTxt('statsTasksDup', activeTasks.length);
+        setTxt('statsCompletedDup', completedTasks.length);
+        setTxt('statsDocsDup', docsCount);
+        setTxt('statsUnreadDup', unread);
         
         // Прогресс месяца
         const totalTasks = tasks.length;
@@ -6541,15 +6550,27 @@ let notificationsData = [];
 
 // Иконки по категориям (emoji как fallback, PNG потом)
 const NOTIFICATION_ICONS = {
-    admin:     '../materials/icons8-администратор-microsoft-96.png',
+    admin:     '../materials/icons8-уведомление-100.png',
     task:      '../materials/icons8-задача-90.png',
     document:  '../materials/icons8-документ-100.png',
-    deadline:  '../materials/icons8-дедлайн-96.png',
-    message:   '../materials/icons8-сообщение-64.png',
-    workflow:  '../materials/icons8-обработать-96.png',
-    mention:   '../materials/icons8-@-90.png',
+    deadline:  '../materials/icons8-календарь-96.png',
+    message:   '../materials/icons8-чат-96.png',
+    workflow:  '../materials/icons8-процесс-96.png',
+    mention:   '../materials/icons8-чат-100.png',
     reminder:  '../materials/icons8-уведомление-100.png',
-    system:    '../materials/icons8-модуль-90.png',
+    system:    '../materials/icons8-информация-96.png',
+};
+
+const NOTIFICATION_CATEGORY_LABELS = {
+    admin: 'Админ',
+    task: 'Задача',
+    document: 'Документ',
+    deadline: 'Дедлайн',
+    message: 'Чат',
+    workflow: 'Процесс',
+    mention: 'Упоминание',
+    reminder: 'Напоминание',
+    system: 'Система'
 };
 
 // Загрузка уведомлений
@@ -6587,29 +6608,29 @@ function renderNotifications() {
         container.innerHTML = '<div class="empty-notifications">Нет уведомлений</div>';
         return;
     }
+
+    const categoryLabel = (cat) => (typeof NOTIFICATION_CATEGORY_LABELS !== 'undefined' && NOTIFICATION_CATEGORY_LABELS[cat]) || cat || 'Система';
     
     container.innerHTML = filtered.map(notif => {
-        const iconSrc = NOTIFICATION_ICONS[notif.category] || NOTIFICATION_ICONS.system;
+        const category = notif.category || 'system';
+        const iconSrc = NOTIFICATION_ICONS[category] || NOTIFICATION_ICONS.system;
         const isUnread = !notif.is_read;
         const timeAgo = formatNotificationTime(notif.created_at);
         const priorityBadge = notif.priority === 'critical' || notif.priority === 'high' 
-            ? `<span class="notification-priority ${notif.priority}">${notif.priority === 'critical' ? 'Критично' : 'Важно'}</span>` 
+            ? `<span class="notification-priority ${notif.priority}">${notif.priority === 'critical' ? 'Важно' : 'Высокий'}</span>` 
             : '';
         
-        // Определяем отправителя
-        let senderHtml = '';
-        if (notif.category === 'admin' && notif.sender_name) {
-            senderHtml = `<span class="notification-sender">от ${escapeHtml(notif.sender_name)}</span>`;
-        } else if (notif.category === 'task') {
-            senderHtml = `<span class="notification-sender">Система</span>`;
+        let metaParts = [`<span class="notification-type"><img src="${iconSrc}" class="ui-icon ui-icon-inline" alt=""> ${escapeHtml(categoryLabel(category))}</span>`];
+        if (notif.sender_name) {
+            metaParts.push(`<span class="notification-sender">${escapeHtml(notif.sender_name)}</span>`);
         }
         
         return `
             <div class="notification-item ${isUnread ? 'unread' : ''}" 
-                 data-category="${notif.category}"
+                 data-category="${escapeHtml(category)}"
                  data-id="${notif.id}"
                  onclick="openNotification(${notif.id})">
-                <div class="notification-icon">
+                <div class="notification-icon" aria-hidden="true">
                     <img src="${iconSrc}" alt="" loading="lazy">
                 </div>
                 <div class="notification-content">
@@ -6617,14 +6638,13 @@ function renderNotifications() {
                         <span class="notification-title">${escapeHtml(notif.title || 'Уведомление')}</span>
                         ${priorityBadge}
                     </div>
-                    <div class="notification-text">${escapeHtml(notif.content || '')}</div>
+                    <div class="notification-text">${escapeHtml(notif.content || 'Без описания')}</div>
                     <div class="notification-footer">
-                        ${senderHtml}
+                        <div class="notification-meta">${metaParts.join('<span class="notification-meta-dot">•</span>')}</div>
                         <span class="notification-time">${timeAgo}</span>
                     </div>
                 </div>
-                ${isUnread ? '<div class="notification-unread-dot"></div>' : ''}
-                <button class="notification-delete" onclick="event.stopPropagation(); deleteNotification(${notif.id})">✕</button>
+                <button class="notification-delete" title="Удалить" onclick="event.stopPropagation(); deleteNotification(${notif.id})"><img src="../materials/icons8-закрыть-96.png" class="ui-icon" alt=""></button>
             </div>
         `;
     }).join('');
@@ -6647,22 +6667,23 @@ async function openNotification(notifId) {
     if (notif.link_type && notif.link_id) {
         switch (notif.link_type) {
             case 'task':
-                if (typeof openTaskView === 'function') {
-                    openTaskView(notif.link_id);
-                } else if (typeof openTaskEdit === 'function') {
-                    openTaskEdit(notif.link_id);
-                }
+                window.location.href = `/html/tasks.html?taskId=${encodeURIComponent(notif.link_id)}`;
                 break;
             case 'chat':
-                window.location.href = `/html/chat.html?chat=${notif.link_id}`;
+                window.location.href = `/html/chat.html?chat=${encodeURIComponent(notif.link_id)}`;
                 break;
             case 'document':
-                showToast('Документ: ' + notif.title, 'info');
-                break;
             case 'workflow':
-                showToast('Процесс: ' + notif.title, 'info');
+                window.location.href = `/html/documents.html?docId=${encodeURIComponent(notif.link_id)}`;
+                break;
+            default:
+                if (notif.link_url) {
+                    window.location.href = notif.link_url;
+                }
                 break;
         }
+    } else if (notif.link_url) {
+        window.location.href = notif.link_url;
     }
 }
 
@@ -6862,7 +6883,7 @@ async function loadAttentionDocuments() {
         
         list.innerHTML = documents.map(doc => {
             const isSignature = doc.current_step_type === 'signature';
-            const icon = isSignature ? '✍️' : '✅';
+            const icon = isSignature ? '' : '';
             const actionText = isSignature ? 'Подписать' : 'Согласовать';
             
             const dateStr = doc.reg_number 
@@ -6870,7 +6891,7 @@ async function loadAttentionDocuments() {
                 : new Date(doc.updated_at || doc.route_created_at).toLocaleDateString('ru-RU');
             
             return `
-                <div class="attention-item" onclick="openDocumentView(${doc.id})">
+                <div class="attention-item" onclick="window.location.href='/html/documents.html?docId=${encodeURIComponent(doc.id)}'">
                     <div class="attention-icon">${icon}</div>
                     <div class="attention-info">
                         <div class="attention-title">${escapeHtml(doc.title)}</div>
@@ -6930,7 +6951,7 @@ async function loadDashboardProfile() {
         
         // 3. Роль
         let roleText = 'Пользователь';
-        if (user.is_super_admin) roleText = '👑 Супер-админ';
+        if (user.is_super_admin) roleText = 'Супер-админ';
         else if (user.role_id === 1) roleText = 'Администратор';
         safeSetText('profileRole', roleText);
 
@@ -6955,8 +6976,7 @@ async function loadDashboardProfile() {
 // =====================================================
 
 function openFullMyDepartment() {
-    showToast('Раздел "Мой отдел" в разработке', 'info');
-    // В будущем: открытие отдельной секции с полной информацией об отделе
+    window.location.href = '../html/department.html';
 }
 
 // =====================================================
@@ -6964,23 +6984,22 @@ function openFullMyDepartment() {
 // =====================================================
 // - Все обработчики кнопок
 document.addEventListener('DOMContentLoaded', () => {
-    // Закрытие окон - ИСПРАВЛЕННЫЙ КОД
+    // Закрытие окон
     document.querySelectorAll('.sec-btn-close').forEach(btn => {
-        btn.addEventListener('click', function(e) {  // ← function вместо стрелки
+        btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const section = this.closest('.base-section');  // ← this теперь работает
+            const section = this.closest('.base-section');
             if (section) {
                 closeWindow(section.id);
-                openWindow('base-section-docs-last');
             }
         });
     });
     
-    // Закрытие модальных окон по клику на фон
+    // Закрытие модальных окон/секций по клику на фон
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('base-sec-dn-modal') || e.target.classList.contains('base-sec-tn-modal')) {
             closeAllWindowsExcept(null);
-            openWindow('base-section-docs-last');
+            ensureDashboardVisible();
         }
     });
     document.getElementById('addWorkflowBtn')?.addEventListener('click', () => openWorkflowEditor());
@@ -7071,8 +7090,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const defaultWindow = document.getElementById('base-section-dashboard');
     if (defaultWindow) {
-        defaultWindow.style.display = 'block';
-        defaultWindow.classList.add('active');
+        openWindow('base-section-dashboard');
+    } else {
+        ensureDashboardVisible();
     }
     // Маршрут согласования
     const flowManager = new ApprovalFlowManager();
@@ -7180,7 +7200,7 @@ function renderDashboardTasks() {
         // УБИРАЕМ .slice(0, 5) — показываем все задачи
     
     if (activeTasks.length === 0) {
-        container.innerHTML = '<div class="empty-tasks">Нет активных задач ✅</div>';
+        container.innerHTML = '<div class="empty-tasks">Нет активных задач </div>';
         return;
     }
     
@@ -7191,17 +7211,17 @@ function renderDashboardTasks() {
     container.innerHTML = activeTasks.map(task => {
         // Определяем статус дедлайна
         let dueClass = 'ok';
-        let dueLabel = '✅ В срок';
+        let dueLabel = 'В срок';
         if (task.due_date) {
             const daysLeft = Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24));
             if (daysLeft < 0) {
                 dueClass = 'overdue';
-                dueLabel = '⚠️ Просрочена';
+                dueLabel = 'Просрочена';
             } else if (daysLeft <= 3) {
                 dueClass = 'soon';
                 dueLabel = `⏰ ${daysLeft} дн.`;
             } else {
-                dueLabel = `📅 ${daysLeft} дн.`;
+                dueLabel = `${daysLeft} дн.`;
             }
         }
         
@@ -7213,13 +7233,13 @@ function renderDashboardTasks() {
         };
         
         return `
-            <div class="dashboard-task-item" onclick="openTaskView(${task.id})" style="border-left-color: ${getPriorityColor(task.priority)};">
+            <div class="dashboard-task-item" onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'" style="border-left-color: ${getPriorityColor(task.priority)};">
                 <div class="task-info">
                     <div class="task-title">${escapeHtml(task.title)}</div>
                     <div class="task-meta">
-                        <span>👤 ${task.assignee_name || 'Не назначен'}</span>
-                        ${task.progress ? `<span>📊 ${task.progress}%</span>` : ''}
-                        ${task.due_date ? `<span>📅 ${dueLabel}</span>` : ''}
+                        <span>${task.assignee_name || 'Не назначен'}</span>
+                        ${task.progress ? `<span>${task.progress}%</span>` : ''}
+                        ${task.due_date ? `<span>${dueLabel}</span>` : ''}
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
@@ -7241,7 +7261,7 @@ async function loadTasks() {
         if (response.ok) {
             const data = await response.json();
             currentTasks = data.tasks || [];
-            console.log('✅ Loaded', currentTasks.length, 'tasks');
+            console.log('Loaded', currentTasks.length, 'tasks');
             
             // Обновляем все места, где отображаются задачи
             renderDashboardTasks(); // ← НОВОЕ
@@ -7336,7 +7356,7 @@ async function loadArchivedTasks() {
 function renderTasksTable(tbody, tasks, mode) {
     if (!tasks || tasks.length === 0) {
         const cols = mode === 'archived' ? 7 : 8;
-        tbody.innerHTML = `<tr><td colspan="${cols}" class="loading-row">📭 Нет задач</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${cols}" class="loading-row">Нет задач</td></tr>`;
         return;
     }
     
@@ -7389,7 +7409,7 @@ function renderTasksTable(tbody, tasks, mode) {
         let row = '';
         if (mode === 'archived') {
             row = `
-                <tr onclick="openTaskView(${task.id})">
+                <tr onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'">
                     <td>#${task.id}</td>
                     <td><strong>${escapeHtml(task.title)}</strong></td>
                     <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
@@ -7401,7 +7421,7 @@ function renderTasksTable(tbody, tasks, mode) {
             `;
         } else {
             row = `
-                <tr onclick="openTaskView(${task.id})">
+                <tr onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'">
                     <td>#${task.id}</td>
                     <td><strong>${escapeHtml(task.title)}</strong></td>
                     <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
@@ -7533,7 +7553,7 @@ function renderTasksTableWithSort(mode, tasks) {
     if (!config) return;
     
     if (!tasks || tasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${config.cols}" class="loading-row">📭 Нет задач</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${config.cols}" class="loading-row">Нет задач</td></tr>`;
         return;
     }
     
@@ -7587,7 +7607,7 @@ function renderTasksTableWithSort(mode, tasks) {
         let row = '';
         if (mode === 'archived') {
             row = `
-                <tr onclick="openTaskView(${task.id})">
+                <tr onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'">
                     <td>#${task.id}</td>
                     <td><strong>${escapeHtml(task.title)}</strong></td>
                     <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
@@ -7599,7 +7619,7 @@ function renderTasksTableWithSort(mode, tasks) {
             `;
         } else {
             row = `
-                <tr onclick="openTaskView(${task.id})">
+                <tr onclick="window.location.href='/html/tasks.html?taskId=${encodeURIComponent(task.id)}'">
                     <td>#${task.id}</td>
                     <td><strong>${escapeHtml(task.title)}</strong></td>
                     <td><span class="priority-badge ${priorityClass}">${priorityLabel}</span></td>
@@ -7869,7 +7889,7 @@ function renderCustomFieldsForCreate(fields) {
                 inputHtml = `
                     <div style="display: flex; gap: 6px;">
                         <input type="text" id="${fieldId}_display" class="task-input" placeholder="Выберите пользователя..." readonly style="flex: 1; cursor: pointer;">
-                        <button class="btn-primary" onclick="openUserSelectorForCustom('${fieldId}')" style="padding: 4px 12px; font-size: 12px;">👤</button>
+                        <button class="btn-primary" onclick="openUserSelectorForCustom('${fieldId}')" style="padding: 4px 12px; font-size: 12px;"></button>
                     </div>
                     <input type="hidden" id="${fieldId}" value="">
                 `;
@@ -7930,8 +7950,8 @@ function renderViewCustomFields(task) {
 function renderCustomFieldsWithUsers(container, customFields, usersMap) {
     const keys = Object.keys(customFields);
     
-    console.log('🔍 Rendering custom fields with users:', customFields);
-    console.log('👤 Users map:', usersMap);
+    console.log('Rendering custom fields with users:', customFields);
+    console.log('Users map:', usersMap);
     
     if (keys.length === 0) {
         container.innerHTML = '';
@@ -7943,7 +7963,7 @@ function renderCustomFieldsWithUsers(container, customFields, usersMap) {
         let displayValue = '—';
         let label = key;
         
-        console.log(`🔍 Field ${key}:`, field);
+        console.log(`Field ${key}:`, field);
         
         // Если поле — объект с типом (новая структура)
         if (field && typeof field === 'object' && field.type) {
@@ -7956,7 +7976,7 @@ function renderCustomFieldsWithUsers(container, customFields, usersMap) {
                     if (value && !isNaN(value)) {
                         const userId = parseInt(value);
                         displayValue = usersMap[userId] || value;
-                        console.log(`👤 User ${userId} -> ${displayValue}`);
+                        console.log(`User ${userId} -> ${displayValue}`);
                     } else {
                         displayValue = value || '—';
                     }
@@ -7968,7 +7988,7 @@ function renderCustomFieldsWithUsers(container, customFields, usersMap) {
                             const name = usersMap[parseInt(id)];
                             return name || id;
                         }).join(', ');
-                        console.log(`👥 Multi-user ${value} -> ${displayValue}`);
+                        console.log(`Multi-user ${value} -> ${displayValue}`);
                     } else {
                         displayValue = value || '—';
                     }
@@ -8053,7 +8073,7 @@ function updateObserversDisplay(users) {
     tagsContainer.innerHTML = (users || []).map(user => `
         <span class="task-observer-tag">
             ${escapeHtml(`${user.surname || ''} ${user.name || ''}`.trim())}
-            <button class="remove-tag" onclick="removeObserver(${user.id})">✕</button>
+            <button class="remove-tag" onclick="removeObserver(${user.id})"></button>
         </span>
     `).join('');
     
@@ -8162,7 +8182,7 @@ async function submitTaskCreate() {
         
         if (response.ok) {
             const data = await response.json();
-            showToast('✅ Задача создана', 'success');
+            showToast('Задача создана', 'success');
             closeTaskCreate();
             await loadTasks();
             await loadCalendarEvents();
@@ -8390,7 +8410,7 @@ function renderCreateCustomFields(fields) {
                                 onclick="openUserSelectorForCustom('${fieldId}')" 
                                 type="button"
                                 title="Выбрать пользователя">
-                            👤
+                            
                         </button>
                     </div>
                     <input type="hidden" 
@@ -8415,7 +8435,7 @@ function renderCreateCustomFields(fields) {
                                 onclick="openUserSelectorForCustomMulti('${fieldId}')" 
                                 type="button"
                                 title="Выбрать пользователей">
-                            👥
+                            
                         </button>
                     </div>
                     <input type="hidden" 
@@ -8482,7 +8502,7 @@ function openUserSelectorForCustomMulti(fieldId) {
                 tagsContainer.innerHTML = users.map(u => `
                     <span class="task-tag">
                         ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
-                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})">✕</button>
+                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})"></button>
                     </span>
                 `).join('');
             }
@@ -8528,7 +8548,7 @@ function removeCustomUserTag(fieldId, userId) {
                 tagsContainer.innerHTML = users.map(u => `
                     <span class="task-tag">
                         ${escapeHtml(String(u.name))}
-                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})">✕</button>
+                        <button class="tag-remove" onclick="removeCustomUserTag('${fieldId}', ${u.id})"></button>
                     </span>
                 `).join('');
             });
@@ -8831,7 +8851,7 @@ function updateCreateObservers(users) {
         tags.innerHTML = users.map(u => `
             <span class="task-tag">
                 ${escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())}
-                <button class="tag-remove" onclick="removeCreateObserver(${u.id})">✕</button>
+                <button class="tag-remove" onclick="removeCreateObserver(${u.id})"></button>
             </span>
         `).join('');
     } else {
@@ -9011,7 +9031,7 @@ async function fetchTaskForView(taskId) {
 function renderTaskView(task) {
     window.currentViewTask = task;
     // Заголовок
-    document.getElementById('taskViewTitle').textContent = '📋 Задача';
+    document.getElementById('taskViewTitle').textContent = 'Задача';
     document.getElementById('taskViewId').textContent = `№${task.id}`;
     document.getElementById('taskViewTitleDisplay').textContent = task.title || 'Без названия';
     
@@ -9080,9 +9100,9 @@ function updateViewStatusBadge(status) {
     const badge = document.getElementById('taskViewStatusBadge');
     const map = {
         pending: { label: '⏳ Ожидает', style: 'background: #fef3c7; color: #d97706;' },
-        in_progress: { label: '🔄 В работе', style: 'background: #dbeafe; color: #2563eb;' },
-        completed: { label: '✅ Выполнена', style: 'background: #d1fae5; color: #059669;' },
-        cancelled: { label: '❌ Отменена', style: 'background: #fee2e2; color: #dc2626;' }
+        in_progress: { label: 'В работе', style: 'background: #dbeafe; color: #2563eb;' },
+        completed: { label: 'Выполнена', style: 'background: #d1fae5; color: #059669;' },
+        cancelled: { label: 'Отменена', style: 'background: #fee2e2; color: #dc2626;' }
     };
     const info = map[status] || map.pending;
     badge.textContent = info.label;
@@ -9130,12 +9150,12 @@ function renderViewCustomFields(task) {
         }
     });
     
-    console.log('👥 User IDs from custom fields:', Array.from(userIds));
+    console.log('User IDs from custom fields:', Array.from(userIds));
     
     // Если есть пользователи — загружаем их
     if (userIds.size > 0) {
         loadUsersByIds(Array.from(userIds), (usersMap) => {
-            console.log('👤 Users map:', usersMap);
+            console.log('Users map:', usersMap);
             renderCustomFieldsWithUsers(container, customFields, usersMap);
         });
     } else {
@@ -9156,7 +9176,7 @@ async function loadUsersByIds(userIds, callback) {
         }
         
         const idsParam = userIds.join(',');
-        console.log('🔍 Loading users by ids:', idsParam);
+        console.log('Loading users by ids:', idsParam);
         
         // Маршрут в userRoutes.js — /api/users/batch
         const response = await fetch(`/api/task/userscard?ids=${idsParam}`, {
@@ -9168,7 +9188,7 @@ async function loadUsersByIds(userIds, callback) {
         
         if (response.ok) {
             const data = await response.json();
-            console.log('👥 Users loaded:', data.users);
+            console.log('Users loaded:', data.users);
             const usersMap = {};
             data.users.forEach(u => {
                 usersMap[u.id] = `${u.surname || ''} ${u.name || ''}`.trim() || u.username || 'Пользователь';

@@ -1,35 +1,7 @@
 /* login.css - Страница авторизации */
 
-:root {
-     /* Основные */
-    --c_bg: #F8F9FC;
-    --c_bg_txt: #1C1C28;
-    --c_surf: #FFFFFF;
-    --c_surf_txt: #6B7280;
+/* Theme tokens are defined globally in main.css */
 
-    /* Акценты */
-    --c_acc: #4F46E5;
-    --c_brightacc: #4338CA; /* Hover */
-    --c_acchalf: rgba(79, 70, 229, 0.15); /* Для фонов */
-
-    /* Статусы */
-    --c_success: #10B981;
-    --c_success-bg: rgba(16, 185, 129, 0.12);
-    --c_warning: #F59E0B;
-    --c_warning-bg: rgba(245, 158, 11, 0.12);
-    --c_error: #EF4444;
-    --c_error-bg: rgba(239, 68, 68, 0.12);
-
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 20px;
-    --border-radius-xl: 32px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
-    --transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-}
 
 * {
     margin: 0;
@@ -162,17 +134,24 @@ body {
     width: 50%;
     max-width: 700px;
     height: 85vh;
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c_acc) 12%, var(--c_surf)) 0%, color-mix(in srgb, var(--c_brightacc) 10%, var(--c_surf_alt)) 50%, color-mix(in srgb, var(--c_acc) 8%, var(--c_surf)) 100%);
     border-radius: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--c_border);
+    box-shadow: var(--shadow-xl);
     padding: 40px;
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
     animation: slideInLeft 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    color: white;
+    color: var(--c_bg_txt);
+}
+
+[data-theme="dark"] .welcome-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-xl), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    color: #ffffff;
 }
 
 /* Светящиеся пятна */
@@ -286,8 +265,8 @@ body {
     align-items: center;
     gap: 12px;
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--c_surf) 70%, transparent);
+    border: 1px solid var(--c_border);
     border-radius: 100px;
     backdrop-filter: blur(10px);
     margin-bottom: 24px;
@@ -302,17 +281,16 @@ body {
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.5px;
+    color: var(--c_bg_txt);
 }
 
-.banner-top h2 {
-    font-size: 36px;
-    font-weight: 700;
-    line-height: 1.2;
-    margin: 0;
-    background: linear-gradient(to right, #ffffff, #a5b4fc);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+[data-theme="dark"] .banner-logo {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .banner-logo span {
+    color: #ffffff;
 }
 
 /* Центральная часть — Карусель */
@@ -327,7 +305,7 @@ body {
     position: relative;
     width: 180px;
     height: 180px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--c_acc) 18%, transparent) 0%, transparent 70%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -339,8 +317,12 @@ body {
     position: absolute;
     width: 100%; height: 100%;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid color-mix(in srgb, var(--c_acc) 20%, var(--c_border));
     animation: pulseRing 3s infinite;
+}
+
+[data-theme="dark"] .icon-carousel::before {
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 @keyframes pulseRing {
@@ -356,7 +338,18 @@ body {
     object-fit: contain;
     opacity: 0;
     animation: fadeCycle 12s infinite;
+    filter: drop-shadow(0 0 15px rgba(81, 148, 255, 0.35));
+}
+
+/* Material icons in carousel are white; adapt for light banner */
+.carousel-icon[src*="icons8"] {
+    filter: brightness(0) opacity(0.82) drop-shadow(0 0 12px rgba(37, 99, 235, 0.18));
+}
+[data-theme="dark"] .carousel-icon {
     filter: drop-shadow(0 0 15px rgba(81, 148, 255, 0.5));
+}
+[data-theme="dark"] .carousel-icon[src*="icons8"] {
+    filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(81, 148, 255, 0.5));
 }
 
 .carousel-icon:nth-child(1) { animation-delay: 0s; }
@@ -378,44 +371,25 @@ body {
 /* Нижняя часть */
 .banner-bottom {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 20px;
-}
-
-.banner-features {
-    display: flex;
-    gap: 20px;
-}
-
-.feature-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 500;
-    backdrop-filter: blur(10px);
-}
-
-.feature-icon {
-    font-size: 16px;
-}
-
-.cat-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    padding: 16px 24px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    color: rgba(255, 255, 255, 0.6);
-    min-width: 120px;
+    align-items: flex-end;
+    padding-top: 16px;
+}
+
+.banner-tagline {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+    text-align: center;
+    color: var(--c_bg_txt);
+}
+
+[data-theme="dark"] .banner-tagline {
+    background: linear-gradient(to right, #ffffff, #a5b4fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 /* =====================================================

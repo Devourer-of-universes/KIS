@@ -123,7 +123,7 @@
             const errorType = urlParams.get('error');
             
             if (errorType === 'blocked') {
-                errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                errorDiv.textContent = ' Ваша учетная запись заблокирована. Обратитесь к администратору.';
                 errorDiv.style.display = 'block';
             } else if (errorType === 'unauthorized') {
                 errorDiv.textContent = '⏰ Сессия истекла. Пожалуйста, войдите заново.';
@@ -183,7 +183,7 @@
                 console.error('Login error:', error);
                 
                 if (error.message && error.message.includes('заблокирована')) {
-                    errorDiv.textContent = '🔒 Ваша учетная запись заблокирована. Обратитесь к администратору.';
+                    errorDiv.textContent = ' Ваша учетная запись заблокирована. Обратитесь к администратору.';
                 } else {
                     errorDiv.textContent = error.message || 'Неверный логин или пароль';
                 }

@@ -22,7 +22,7 @@ let docCreateState = {
 // ВХОДНАЯ ТОЧКА
 // =====================================================
 
-async function openDocumentCreate() {
+function openDocumentCreate() {
     // Сброс состояния
     docCreateState = {
         step: 'types',
@@ -43,7 +43,7 @@ async function openDocumentCreate() {
 // РЕНДЕР ШАГОВ (внутри одной секции)
 // =====================================================
 
-async function renderDocCreateStep(step, payload = {}) {
+ async function renderDocCreateStep(step, payload = {}) {
     const container = document.getElementById('docCreateContainer');
     if (!container) return;
     
@@ -62,7 +62,7 @@ async function renderDocCreateStep(step, payload = {}) {
 // ШАГ 1 — ТИПЫ ДОКУМЕНТОВ
 // =====================================================
 
-async function renderDocTypesStep(container) {
+ async function renderDocTypesStep(container) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/document-types?active_only=true', {
@@ -178,7 +178,7 @@ async function renderDocTypesStep(container) {
 // ШАГ 2 — ШАБЛОНЫ ВЫБРАННОГО ТИПА
 // =====================================================
 
-async function renderDocTemplatesStep(container, type) {
+ async function renderDocTemplatesStep(container, type) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(
@@ -264,7 +264,7 @@ function selectSimpleDocument() {
 
 // Выбор типа документа
 // Вспомогательная: грузит полный объект шаблона (с template_data) по ID
-async function fetchFullTemplate(templateId) {
+ async function fetchFullTemplate(templateId) {
     const token = localStorage.getItem('token');
     const response = await fetch(`/api/document-templates/${templateId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -276,7 +276,7 @@ async function fetchFullTemplate(templateId) {
 }
 
 // Выбор типа документа
-async function selectDocumentType(typeId) {
+ async function selectDocumentType(typeId) {
     try {
         const token = localStorage.getItem('token');
         const typeRes = await fetch(`/api/document-types/${typeId}`, {
@@ -318,7 +318,7 @@ async function selectDocumentType(typeId) {
 }
 
 // Выбор шаблона
-async function selectDocumentTemplate(templateId) {
+ async function selectDocumentTemplate(templateId) {
     try {
         const fullTemplate = await fetchFullTemplate(templateId);
         openDocumentCardWithTemplate(fullTemplate, docCreateState.selectedType);
@@ -539,7 +539,7 @@ function debouncedRefreshPreview() {
 // LIVE-PREVIEW
 // =====================================================
 
-async function refreshDocumentPreview() {
+ async function refreshDocumentPreview() {
     const container = document.getElementById('docPreviewContent');
     if (!container) return;
     
@@ -613,16 +613,16 @@ async function refreshDocumentPreview() {
 // СОХРАНЕНИЕ
 // =====================================================
 
-async function saveDocumentDraft() {
+ async function saveDocumentDraft() {
     return await saveDocumentWithStatus('draft');
 }
 
-async function saveDocument() {
+ async function saveDocument() {
     const currentStatus = docCreateState.currentStatus || 'draft';
     return await saveDocumentWithStatus(currentStatus);
 }
 
-async function saveDocumentWithStatus(status) {
+ async function saveDocumentWithStatus(status) {
     // Определяем название
     let title = docCreateState.fieldValues.title;
     

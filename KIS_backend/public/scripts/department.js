@@ -43,14 +43,14 @@ function deptPeriodParams() {
     return 'days=' + encodeURIComponent(val);
 }
 
-async function apiGet(url) {
+ async function apiGet(url) {
     const token = localStorage.getItem('token');
     const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     return resp.json();
 }
 
-async function loadDepartmentPage() {
+ async function loadDepartmentPage() {
     const loading = document.getElementById('deptLoading');
     const denied = document.getElementById('deptAccessDenied');
     const main = document.getElementById('deptMain');
@@ -175,10 +175,10 @@ function renderDeptCharts(data){
     const dt=_fillSeries(c.documents_over_time,p.from,p.to); _makeChart('deptChartDocsTime',{type:'line',data:{labels:dt.labels,datasets:[{label:'Документы',data:dt.values,borderColor:'#4f8cff',backgroundColor:'rgba(79,140,255,.15)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{display:false}}}});
 }
 
-function exportDeptCharts(){
+ async function exportDeptCharts(){
     const ids=['deptChartTasksStatus','deptChartDocsStatus','deptChartTasksTime','deptChartDocsTime'];
     const names=['dept-tasks-status','dept-docs-status','dept-tasks-dynamics','dept-docs-dynamics'];
     const ts=new Date().toISOString().slice(0,10); let n=0;
     ids.forEach((id,i)=>{ const ch=_deptCharts[id]; if(!ch) return; const a=document.createElement('a'); a.href=ch.toBase64Image('image/png',1); a.download=`report-${names[i]}-${ts}.png`; document.body.appendChild(a); a.click(); a.remove(); n++; });
-    if(!n) alert('Нет диаграмм для выгрузки');
+    if(!n) await uiAlert('Нет диаграмм для выгрузки');
 }

@@ -1,3 +1,138 @@
+// ========== ГЛОБАЛЬНЫЕ ДИАЛОГИ (ВМЕСТО ALERT/CONFIRM/PROMPT) ==========
+// Правило системы: нативные alert/confirm/prompt не используются.
+// Все диалоги — модальные окна в стиле интерфейса.
+let uiDialogQueue = Promise.resolve();
+
+function uiEscapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+}
+
+function uiRenderDialog(options, resolve) {
+    document.getElementById('uiDialogModal')?.remove();
+
+    const {
+        title = 'Внимание',
+        message = '',
+        confirmText = 'ОК',
+        cancelText = null,
+        inputValue = null,
+        placeholder = '',
+        multiline = false,
+        presets = []
+    } = options;
+
+    let inputHtml = '';
+    if (inputValue !== null) {
+        const presetHtml = presets.length
+            ? '<div class="ui-dialog-presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">' +
+              presets.map(p => '<button type="button" class="buttonbase btn-small" data-ui-preset="' + uiEscapeHtml(p) + '">' + uiEscapeHtml(p) + '</button>').join('') +
+              '</div>'
+            : '';
+        const fieldHtml = multiline
+            ? '<textarea id="uiDialogInput" class="form-input" rows="4" placeholder="' + uiEscapeHtml(placeholder) + '" style="width:100%;margin-top:10px;resize:vertical;"></textarea>'
+            : '<input id="uiDialogInput" class="form-input" type="text" placeholder="' + uiEscapeHtml(placeholder) + '" style="width:100%;margin-top:14px;">';
+        inputHtml = presetHtml + fieldHtml;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'uiDialogModal';
+    overlay.className = 'admin-modal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', uiEscapeHtml(title));
+    overlay.innerHTML = `
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>${uiEscapeHtml(title)}</h2>
+                <button type="button" class="modal-close" data-ui-cancel title="Закрыть">
+                    <img src="/materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть">
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="white-space:pre-wrap;">${uiEscapeHtml(message)}</div>
+                ${inputHtml}
+            </div>
+            <div class="modal-footer">
+                ${cancelText !== null ? `<button type="button" class="buttonbase" data-ui-cancel>${uiEscapeHtml(cancelText)}</button>` : ''}
+                <button type="button" class="buttonbase" data-ui-confirm>${uiEscapeHtml(confirmText)}</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => overlay.classList.add('active'));
+
+    const input = overlay.querySelector('#uiDialogInput');
+    if (input) {
+        input.value = inputValue == null ? '' : String(inputValue);
+        setTimeout(() => { input.focus(); input.select(); }, 0);
+        overlay.querySelectorAll('[data-ui-preset]').forEach(btn => btn.addEventListener('click', () => {
+            input.value = btn.getAttribute('data-ui-preset');
+            input.focus();
+        }));
+    }
+
+    let done = false;
+    let onKey;
+    const finish = value => {
+        if (done) return;
+        done = true;
+        document.removeEventListener('keydown', onKey, true);
+        overlay.classList.remove('active');
+        overlay.remove();
+        const stillActive = document.querySelectorAll('.admin-modal.active').length > 0;
+        document.body.style.overflow = stillActive ? 'hidden' : '';
+        resolve(value);
+    };
+
+    overlay.querySelector('[data-ui-confirm]').addEventListener('click', () => finish(input ? input.value : true));
+    overlay.querySelectorAll('[data-ui-cancel]').forEach(btn => btn.addEventListener('click', () => finish(input ? null : false)));
+    overlay.addEventListener('click', e => { if (e.target === overlay) finish(input ? null : false); });
+
+    onKey = e => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            finish(input ? null : false);
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            overlay.querySelector('[data-ui-confirm]').click();
+        }
+    };
+    document.addEventListener('keydown', onKey, true);
+}
+
+function uiOpenDialog(options) {
+    const task = uiDialogQueue.then(() => new Promise(resolve => uiRenderDialog(options, resolve)));
+    uiDialogQueue = task.catch(() => {});
+    return task;
+}
+
+function uiAlert(message, title = 'Внимание') {
+    return uiOpenDialog({ title, message: String(message ?? ''), confirmText: 'ОК' });
+}
+
+function uiConfirm(message, title = 'Подтверждение', confirmText = 'Да', cancelText = 'Отмена') {
+    return uiOpenDialog({ title, message: String(message ?? ''), confirmText, cancelText });
+}
+
+function uiPrompt(message, defaultValue = '', title = 'Ввод', placeholder = '', options = {}) {
+    return uiOpenDialog({
+        title,
+        message: String(message ?? ''),
+        confirmText: 'ОК',
+        cancelText: 'Отмена',
+        inputValue: defaultValue == null ? '' : String(defaultValue),
+        placeholder,
+        multiline: !!options.multiline,
+        presets: Array.isArray(options.presets) ? options.presets : []
+    });
+}
+
+window.uiAlert = uiAlert;
+window.uiConfirm = uiConfirm;
+window.uiPrompt = uiPrompt;
+
 // ========== УПРАВЛЕНИЕ ЛЕВЫМ МЕНЮ ==========
 const leftMenu = document.querySelector('.left-menu');
 const toggleBtn = document.querySelector('.toggle-btn');
@@ -137,7 +272,7 @@ function initAccentColorGlobal() {
 }
 
 // ========== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ДЛЯ МЕНЮ ==========
-async function loadUserDataForMenu() {
+ async function loadUserDataForMenu() {
     try {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -197,7 +332,9 @@ async function loadUserDataForMenu() {
             // Показываем/скрываем пункт администрирования
             const adminMenuItem = document.querySelector('.menu-item[data-page="admin"]');
             if (adminMenuItem) {
-                const hasAdminAccess = user.is_super_admin || user.role_id === 1;
+                const perms = user.permissions || user.role_permissions || {};
+                const ap = perms.admin_panel;
+                const hasAdminAccess = user.is_super_admin || user.role_id === 1 || ap === true || ap === 'all' || ap?.access === true || ap?.access === 'all' || perms.all === true;
                 adminMenuItem.style.display = hasAdminAccess ? 'flex' : 'none';
             }
             // Пункт "Мой отдел" для руководителей
@@ -217,7 +354,7 @@ async function loadUserDataForMenu() {
 }
 
 // ========== ЗАГРУЗКА НЕПРОЧИТАННЫХ СООБЩЕНИЙ ==========
-async function loadUnreadCount() {
+ async function loadUnreadCount() {
     try {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -356,7 +493,7 @@ function initUserDropdown() {
 }
 
 // ========== ВЫХОД ИЗ СИСТЕМЫ ==========
-async function logout() {
+ async function logout() {
     try {
         const token = localStorage.getItem('token');
         if (token) {
@@ -377,7 +514,7 @@ function initLogout() {
     // Кнопка выхода в старом меню (если есть)
     const oldLogoutBtn = document.querySelector('.logout-item .left_menu_pagelink');
     if (oldLogoutBtn) {
-        oldLogoutBtn.addEventListener('click', async (e) => {
+        oldLogoutBtn.addEventListener('click',  async (e) => {
             e.preventDefault();
             await logout();
         });
@@ -386,7 +523,7 @@ function initLogout() {
     // Кнопка выхода в новом выпадающем меню
     const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
     if (dropdownLogoutBtn) {
-        dropdownLogoutBtn.addEventListener('click', async (e) => {
+        dropdownLogoutBtn.addEventListener('click',  async (e) => {
             e.preventDefault();
             await logout();
         });
@@ -398,7 +535,7 @@ function initLogout() {
 try { initAccentColorGlobal(); } catch (e) {}
 
 // ========== Initialization ==========
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded',  async () => {
     try { initAccentColorGlobal(); } catch (e) {}
     try { await loadUserDataForMenu(); } catch (e) { console.error('loadUserDataForMenu error:', e); }
     try { loadUnreadCount(); } catch (e) { console.error('loadUnreadCount error:', e); }

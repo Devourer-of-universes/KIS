@@ -1315,25 +1315,25 @@
 
                 <!-- Модалка выбора типа шаблона -->
                 <div id="templateTypeModal" class="admin-modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 640px;">
+                    <div class="modal-content modal-md">
                         <div class="modal-header">
                             <h2><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-inline" alt=""> Создание шаблона</h2>
                             <button class="modal-close" onclick="closeTemplateTypeModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
                         </div>
                         <div class="modal-body">
-                            <p>Выберите тип шаблона:</p>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
-                                <button class="type-list-elem" id="createTaskTemplateBtn">
+                            <p class="modal-lead">Выберите тип шаблона, который хотите создать.</p>
+                            <div class="type-picker-grid">
+                                <button class="type-list-elem type-picker-card" id="createTaskTemplateBtn">
                                     <div class="type-icon"><img src="../materials/icons8-задачи-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон задачи</h4>
-                                    <p class="type-desc">Создайте шаблон для быстрого создания задач</p>
+                                    <p class="type-desc">Для быстрого создания типовых задач</p>
                                 </button>
-                                <button class="type-list-elem" disabled style="opacity: 0.5;">
+                                <button class="type-list-elem type-picker-card" disabled>
                                     <div class="type-icon"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон документа</h4>
                                     <p class="type-desc">Скоро</p>
                                 </button>
-                                <button class="type-list-elem" disabled style="opacity: 0.5;">
+                                <button class="type-list-elem type-picker-card" disabled>
                                     <div class="type-icon"><img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-lg" alt=""></div>
                                     <h4>Шаблон процесса</h4>
                                     <p class="type-desc">Скоро</p>

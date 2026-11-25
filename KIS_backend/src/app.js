@@ -62,6 +62,7 @@ const documentAccessRoutes = require('./routes/documentAccessRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const fileRoutes = require('./routes/fileRoutes');
+const moderationRoutes = require('./routes/moderationRoutes');
 
 // Проверка статуса
 app.get('/api/status', (req, res) => {
@@ -87,6 +88,7 @@ app.use('/api', workflowTemplateRoutes);
 app.use('/api', documentSignatureRoutes);
 app.use('/api', documentAccessRoutes);
 app.use('/api', documentRoutes);
+app.use('/api/moderation', moderationRoutes);
 app.use('/api', contactRoutes);
 
 // Статические файлы (uploads)

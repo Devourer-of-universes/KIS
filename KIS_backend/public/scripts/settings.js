@@ -4,7 +4,7 @@
 let currentUser = null;
 
 // ========== 1. ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ==========
-async function loadUserData() {
+ async function loadUserData() {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -94,7 +94,7 @@ function fillProfileData(user) {
 }
 
 // ========== 2. ОБНОВЛЕНИЕ КОНТАКТОВ ==========
-async function updateContactInfo(field, value) {
+ async function updateContactInfo(field, value) {
     if (!value || value === '') return;
     
     try {
@@ -125,7 +125,7 @@ async function updateContactInfo(field, value) {
 }
 
 // ========== 3. СМЕНА ПАРОЛЯ ==========
-async function changePassword() {
+ async function changePassword() {
     const currentPassword = document.getElementById('currentPassword')?.value;
     const newPassword = document.getElementById('newPassword')?.value;
     const confirmPassword = document.getElementById('confirmPassword')?.value;
@@ -177,7 +177,7 @@ async function changePassword() {
 
 // ========== 4. АВАТАР ==========
 // Загрузка аватара
-async function uploadAvatar(event) {
+ async function uploadAvatar(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -227,7 +227,7 @@ async function uploadAvatar(event) {
 }
 
 // Удаление аватара
-async function removeAvatar() {
+ async function removeAvatar() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/auth/remove-avatar', {
@@ -259,7 +259,7 @@ async function removeAvatar() {
 
 // ========== 5. НАСТРОЙКИ УВЕДОМЛЕНИЙ ==========
 // Загрузка настроек уведомлений из БД
-async function loadNotificationSettings() {
+ async function loadNotificationSettings() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/users/notification-settings', {
@@ -289,7 +289,7 @@ async function loadNotificationSettings() {
 }
 
 // Сохранение настроек уведомлений
-async function saveNotificationSettings() {
+ async function saveNotificationSettings() {
     const settings = {
         new_tasks: document.getElementById('notify_new_tasks')?.checked || false,
         doc_status_change: document.getElementById('notify_doc_status')?.checked || false,
@@ -354,7 +354,7 @@ function saveCompactMode(checked) {
 
 // ========== 7. СЕССИИ ==========
 /// Загрузка сессий
-async function loadSessions() {
+ async function loadSessions() {
     try {
         const token = localStorage.getItem('token');
         
@@ -451,7 +451,7 @@ function renderLoginHistory(history) {
 }
 
 // Обновляем функцию terminateSession
-window.terminateSession = async function(sessionId) {
+window.terminateSession =  async function(sessionId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/auth/sessions/${sessionId}`, {
@@ -476,7 +476,7 @@ window.terminateSession = async function(sessionId) {
 };
 
 // Обновляем функцию terminateOtherSessions
-window.terminateOtherSessions = async function() {
+window.terminateOtherSessions =  async function() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/auth/sessions/terminate-others', {
@@ -534,7 +534,7 @@ function formatSessionTime(dateString) {
 }
 
 // Глобальная функция для завершения сессии (должна быть доступна из onclick)
-window.terminateSession = async function(sessionId) {
+window.terminateSession =  async function(sessionId) {
     console.log('Terminating session:', sessionId);
     
     try {
@@ -563,7 +563,7 @@ window.terminateSession = async function(sessionId) {
 };
 
 // Глобальная функция для завершения всех других сессий
-window.terminateOtherSessions = async function() {
+window.terminateOtherSessions =  async function() {
     console.log('Terminating all other sessions');
     
     try {

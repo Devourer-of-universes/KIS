@@ -6,7 +6,7 @@
 
 let isEditingProfile = false;
 
-async function loadProfileData() {
+ async function loadProfileData() {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -108,7 +108,7 @@ function renderProfile(user) {
 // СТАТИСТИКА В ПРОФИЛЕ
 // =====================================================
 
-async function loadProfileStats() {
+ async function loadProfileStats() {
     try {
         const token = localStorage.getItem('token');
 
@@ -190,7 +190,7 @@ function toggleProfileEdit() {
     }
 }
 
-async function saveProfile() {
+ async function saveProfile() {
     const email = document.getElementById('profileEmailInput').value.trim();
     const telNum = document.getElementById('profilePhoneInput').value.trim();
     const birthday = document.getElementById('profileBirthdayInput').value;
@@ -233,7 +233,7 @@ async function saveProfile() {
 // СМЕНА ПАРОЛЯ
 // =====================================================
 
-async function changeProfilePassword() {
+ async function changeProfilePassword() {
     const currentPassword = document.getElementById('profileCurrentPassword').value;
     const newPassword = document.getElementById('profileNewPassword').value;
     const confirmPassword = document.getElementById('profileConfirmPassword').value;

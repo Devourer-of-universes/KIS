@@ -69,7 +69,7 @@
     flex-wrap: wrap;
 }
 
-.nav-btn {
+.nav-btn, a.nav-btn {
     padding: 10px 20px;
     border: none;
     background: transparent;
@@ -715,24 +715,6 @@
 }
 
 /* ========== МОДАЛЬНЫЕ ОКНА ========== */
-.admin-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 4000;
-}
-
-.admin-modal.active {
-    display: flex;
-}
-
 .admin-modal .modal-content { max-width: 960px; }
 
 @keyframes modalSlideIn {
@@ -749,12 +731,6 @@
 /* modal-header unified in main.css */
 
 /* modal-header h2 unified in main.css */
-
-.modal-close { /* unified in main.css */ }
-
-.modal-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
 
 /* modal-body unified in main.css */
 

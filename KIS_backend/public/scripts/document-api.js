@@ -17,7 +17,7 @@ let documentsByMode = {
  * Загрузка документов для секции
  * @param {string} mode - 'recent' | 'at-work' | 'archive'
  */
-async function loadDocuments(mode) {
+ async function loadDocuments(mode) {
     const tbodyId = {
         'recent': 'recentDocsBody',
         'at-work': 'atWorkDocsBody',

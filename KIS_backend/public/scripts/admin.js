@@ -5,6 +5,7 @@ const btn_system = document.querySelector('#nav-btn-system');
 const btn_reports = document.querySelector('#nav-btn-reports');
 const btn_structure = document.querySelector('#nav-btn-structure');
 const btn_roles = document.querySelector('#nav-btn-roles');
+const btn_moderation = document.querySelector('#nav-btn-moderation');
 const btn_addUser = document.querySelector('#addUserBtn');
 
 btn_users.addEventListener('click', function(e){
@@ -34,6 +35,14 @@ btn_reports.addEventListener('click', function(e){
     setActiveNavButton(this);
     initReportsDashboard();
 })
+
+if (btn_moderation) btn_moderation.addEventListener('click', function(e){
+    e.stopPropagation();
+    openAdminSection('moderation-section');
+    setActiveNavButton(this);
+    initModerationAdmin();
+    loadModerationReports();
+});
 
 btn_structure.addEventListener('click', function(e){
     e.stopPropagation();
@@ -158,6 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadSystemSettings();
         
         // 5. Инициализируем обработчики
+        initModerationAdmin();
         initEventListeners();
         
     } catch (error) {
@@ -174,7 +184,9 @@ function getFirstVisibleSection() {
         { id: 'structure-section', permission: hasPermission('structure', 'view') },
         { id: 'roles-section', permission: hasPermission('roles', 'view') },
         { id: 'system-section', permission: hasPermission('settings', 'view') },
-        { id: 'reports-section', permission: hasPermission('stats', 'view') }
+        { id: 'reports-section', permission: hasPermission('stats', 'view') },
+        { id: 'notifications-section', permission: canAccessAdminPanel() },
+        { id: 'moderation-section', permission: hasPermission('moderation', 'view') || hasPermission('moderation', 'manage') }
     ];
     
     for (const section of sections) {
@@ -447,23 +459,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-function openDocSingleModal(modalId) {
+function openModal(modalId) {
     // Закрываем все открытые модалки
     document.querySelectorAll('.admin-modal.active').forEach(modal => {
         modal.classList.remove('active');
+        modal.style.display = '';
     });
     
     const modal = document.getElementById(modalId);
     if (modal) {
+        modal.style.display = 'flex';
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
+}
+
+function openDocSingleModal(modalId) {
+    openModal(modalId);
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('active');
+        modal.style.display = '';
         modal.style.zIndex = ''; // сбрасываем z-index
     }
     
@@ -493,7 +512,7 @@ document.addEventListener('keydown', function(e) {
 
 let currentEditingUserId = null;
 
-async function loadUserDataToForm(userId) {
+ async function loadUserDataToForm(userId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/users/${userId}`, {
@@ -567,7 +586,7 @@ function openUserModal(userId = null) {
 }
 
 // Загрузка списка подразделений для формы
-async function loadDepartmentsForSelect(selectId) {
+ async function loadDepartmentsForSelect(selectId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -592,7 +611,7 @@ async function loadDepartmentsForSelect(selectId) {
 }
 
 // Загрузка списка должностей для формы
-async function loadPostsForUserForm(departmentId) {
+ async function loadPostsForUserForm(departmentId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/posts/department/${departmentId}`, {
@@ -615,7 +634,7 @@ async function loadPostsForUserForm(departmentId) {
 }
 
 // Загрузка списка ролей
-async function loadRolesForUserForm() {
+ async function loadRolesForUserForm() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/roles', {
@@ -805,7 +824,7 @@ let currentHistoryPage = 1;
 let historyTotal = 0;
 let isLoadingHistory = false;
 
-async function openUserInfoModal(userId) {
+ async function openUserInfoModal(userId) {
     currentUserId = userId;
     currentHistoryPage = 1;
     const body = document.getElementById('userInfoBody');
@@ -974,7 +993,7 @@ async function openUserInfoModal(userId) {
 }
 
 // Загрузка истории пользователя
-async function loadUserHistory(userId, page) {
+ async function loadUserHistory(userId, page) {
     if (isLoadingHistory) return;
     isLoadingHistory = true;
     
@@ -1494,8 +1513,8 @@ class TemplateBuilder {
         console.log('Редактирование поля:', fieldId);
     }
     
-    deleteField(fieldId) {
-        if (confirm('Удалить это поле?')) {
+    async deleteField(fieldId) {
+        if (await uiConfirm('Удалить это поле?')) {
             this.fields = this.fields.filter(f => f.id !== fieldId);
             const fieldElement = document.querySelector(`[data-field-id="${fieldId}"]`);
             if (fieldElement) {
@@ -1549,8 +1568,8 @@ class TemplateBuilder {
         });
     }
     
-    editSection(sectionId) {
-        const newTitle = prompt('Введите название раздела:');
+    async editSection(sectionId) {
+        const newTitle = await uiPrompt('Введите название раздела:');
         if (newTitle) {
             const section = this.sections.find(s => s.id === sectionId);
             section.title = newTitle;
@@ -1560,8 +1579,8 @@ class TemplateBuilder {
         }
     }
     
-    deleteSection(sectionId) {
-        if (confirm('Удалить этот раздел и все его поля?')) {
+    async deleteSection(sectionId) {
+        if (await uiConfirm('Удалить этот раздел и все его поля?')) {
             this.sections = this.sections.filter(s => s.id !== sectionId);
             const sectionElement = document.querySelector(`[data-section-id="${sectionId}"]`);
             if (sectionElement) {
@@ -1581,8 +1600,8 @@ class TemplateBuilder {
         document.querySelector(`[data-columns="${columns}"]`).classList.add('active');
     }
     
-    clearTemplate() {
-        if (confirm('Очистить весь шаблон? Это действие нельзя отменить.')) {
+    async clearTemplate() {
+        if (await uiConfirm('Очистить весь шаблон? Это действие нельзя отменить.')) {
             this.fields = [];
             this.sections = [];
             this.selectedField = null;
@@ -1661,7 +1680,7 @@ class TemplateBuilder {
         return inputs[field.type] || '<input type="text" disabled>';
     }
     
-    saveTemplate() {
+    async saveTemplate() {
         const templateData = {
             name: document.getElementById('templateName').value,
             category: document.getElementById('templateCategory').value,
@@ -1674,14 +1693,14 @@ class TemplateBuilder {
         };
         
         if (!templateData.name) {
-            alert('Введите название шаблона');
+            await uiAlert('Введите название шаблона');
             return;
         }
         const templates = JSON.parse(localStorage.getItem('documentTemplates') || '[]');
         templates.push(templateData);
         localStorage.setItem('documentTemplates', JSON.stringify(templates));
         
-        alert('Шаблон успешно сохранен!');
+        await uiAlert('Шаблон успешно сохранен!');
         console.log('Сохраненный шаблон:', templateData);
     }
     
@@ -1713,7 +1732,7 @@ let usersList = [];
 let currentSearchTerm = '';
 
 // Загрузка списка пользователей
-async function loadUsers(page = 1, search = '') {
+ async function loadUsers(page = 1, search = '') {
     currentPage = page;
     currentSearchTerm = search;
     
@@ -1848,7 +1867,7 @@ function renderUsersTable(users) {
     document.getElementById('showingTo').textContent = end;
     document.getElementById('totalCount').textContent = filteredUsers.length;
 }
-function deleteUser(userId) {
+ function deleteUser(userId) {
     showConfirmDelete(
         'Удаление пользователя',
         'Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.',
@@ -1931,7 +1950,7 @@ function escapeHtml(text) {
 }
 
 // Обновление роли пользователя
-async function updateUserRole(userId, roleId) {
+ async function updateUserRole(userId, roleId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/users/${userId}`, {
@@ -1981,7 +2000,7 @@ function openBlockUserModal(userId, userName, currentStatus) {
     
     openDocSingleModal('blockUserModal');
     
-    document.getElementById('confirmBlockBtn').onclick = async () => {
+    document.getElementById('confirmBlockBtn').onclick =  async () => {
         const newStatus = isBlocking ? 'blocked' : 'active';
         
         try {
@@ -2042,7 +2061,7 @@ function openResetPasswordModal(userId, username) {
     document.getElementById('resetNewPassword').value = generateRandomPassword(12);
     openDocSingleModal('resetPasswordModal');
     
-    document.getElementById('confirmResetPasswordBtn').onclick = async () => {
+    document.getElementById('confirmResetPasswordBtn').onclick =  async () => {
         const newPassword = document.getElementById('resetNewPassword').value.trim();
         if (!newPassword || newPassword.length < 6) {
             showToast('Пароль должен содержать минимум 6 символов', 'error');
@@ -2148,7 +2167,7 @@ function generateLoginFromFields() {
 let rolesList = [];
 
 // Загрузка ролей
-async function loadRoles() {
+ async function loadRoles() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/roles', {
@@ -2232,18 +2251,18 @@ function getRoleDescription(roleName, permissions) {
 }
 
 // Открытие модалки редактирования роли
-function openEditRoleModal(roleId) {
+ async function openEditRoleModal(roleId) {
     const role = rolesList.find(r => r.id === roleId);
     if (!role) return;
     
     // TODO: открыть модалку с формой редактирования
-    alert(`Редактирование роли: ${role.name}\nПрава: ${JSON.stringify(role.permissions, null, 2)}`);
+    await uiAlert(`Редактирование роли: ${role.name}\nПрава: ${JSON.stringify(role.permissions, null, 2)}`);
 }
 
 // Удаление роли
-async function deleteRole(roleId) {
+ async function deleteRole(roleId) {
     const role = rolesList.find(r => r.id === roleId);
-    if (!confirm(`Удалить роль "${role.name}"?`)) return;
+    if (!await uiConfirm(`Удалить роль "${role.name}"?`)) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -2289,7 +2308,7 @@ function openRoleModal(roleId = null) {
 }
 
 // Загрузка данных роли для редактирования
-async function loadRoleData(roleId) {
+ async function loadRoleData(roleId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/roles/${roleId}`, {
@@ -2367,9 +2386,30 @@ function resetPermissions() {
 
 // Загрузка прав в форму
 function loadPermissionsToForm(permissions) {
-    for (const [key, value] of Object.entries(permissions)) {
-        const select = document.querySelector(`.permission-select[name="${key}"]`);
-        if (select) select.value = value;
+    document.querySelectorAll('.permission-select').forEach(select => { select.value = 'none'; });
+    const flat = {};
+    for (const [k, v] of Object.entries(permissions || {})) {
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+            for (const [action, val] of Object.entries(v)) flat[`${k}_${action}`] = val;
+        } else {
+            flat[k] = v;
+        }
+    }
+    for (const [key, value] of Object.entries(flat)) {
+        let select = document.querySelector(`.permission-select[name="${key}"]`);
+        if (!select) {
+            // try by data-resource/action
+            const parts = key.split('_');
+            if (parts.length >= 2) {
+                const action = parts.pop();
+                const resource = parts.join('_');
+                select = document.querySelector(`.permission-select[data-resource="${resource}"][data-action="${action}"]`);
+            }
+        }
+        if (!select) continue;
+        if (value === true || value === 'all') select.value = 'all';
+        else if (value === false || value === 'none') select.value = 'none';
+        else select.value = String(value);
     }
 }
 
@@ -2446,13 +2486,14 @@ document.getElementById('roleEditorForm')?.addEventListener('submit', async func
         const token = localStorage.getItem('token');
         let response;
         
+        if (document.getElementById('roleEditorModal')?.dataset.isSuperAdmin === '1') {
+            showToast('Роль супер-админа нельзя изменять', 'error');
+            return;
+        }
         if (currentEditingRoleId) {
             response = await fetch(`/api/admin/roles/${currentEditingRoleId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(formData)
             });
         } else {
@@ -2495,13 +2536,33 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
 });
 
 function applyPreset(preset) {
+    document.querySelectorAll('.permission-select').forEach(s => s.value = 'none');
     const presets = {
-        readonly: { documents_view: 'all', tasks_view: 'department', users_view: 'department' },
-        user: { documents_view: 'all', documents_create: 'all', tasks_view: 'all', tasks_create: 'all' },
-        manager: { documents_view: 'all', documents_create: 'all', documents_approve: 'all', tasks_view: 'all', tasks_create: 'all', tasks_assign: 'department' },
-        admin: { admin_access: 'full', admin_roles: 'full', admin_settings: 'full', admin_logs: 'read' }
+        user: {
+            admin_panel:'none', department_page:'none', docflow_page:'none',
+            users_view:'none', users_create:'none', users_edit:'none', users_delete:'none',
+            structure_view:'none', structure_edit:'none', roles_view:'none', roles_create:'none', roles_edit:'none', roles_delete:'none',
+            settings_view:'none', settings_edit:'none', stats_view:'none', moderation_view:'none', moderation_manage:'none'
+        },
+        manager: {
+            admin_panel:'none', department_page:'all', docflow_page:'all',
+            users_view:'department', users_create:'none', users_edit:'none', users_delete:'none',
+            structure_view:'all', structure_edit:'none', roles_view:'none', roles_create:'none', roles_edit:'none', roles_delete:'none',
+            settings_view:'none', settings_edit:'none', stats_view:'all', moderation_view:'none', moderation_manage:'none'
+        },
+        clerk: {
+            admin_panel:'none', department_page:'none', docflow_page:'all',
+            users_view:'department', users_create:'none', users_edit:'none', users_delete:'none',
+            structure_view:'all', structure_edit:'none', roles_view:'none', roles_create:'none', roles_edit:'none', roles_delete:'none',
+            settings_view:'none', settings_edit:'none', stats_view:'none', moderation_view:'none', moderation_manage:'none'
+        },
+        admin: {
+            admin_panel:'all', department_page:'all', docflow_page:'all',
+            users_view:'all', users_create:'all', users_edit:'all', users_delete:'all',
+            structure_view:'all', structure_edit:'all', roles_view:'all', roles_create:'all', roles_edit:'all', roles_delete:'all',
+            settings_view:'all', settings_edit:'all', stats_view:'all', moderation_view:'all', moderation_manage:'all'
+        }
     };
-    
     const presetData = presets[preset] || {};
     for (const [key, value] of Object.entries(presetData)) {
         const select = document.querySelector(`.permission-select[name="${key}"]`);
@@ -2516,7 +2577,7 @@ function applyPreset(preset) {
 // ========== СТРУКТУРА ОРГАНИЗАЦИИ ==========
 
 // Загрузка структуры
-async function loadStructure() {
+ async function loadStructure() {
     const container = document.getElementById('structureContent');
     container.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка...</div>';
     
@@ -2806,7 +2867,7 @@ function expandAllNodes() {
         icon.textContent = '▼';
     });
 }
-async function loadDepartmentTreeForSelect(selectId, selectedId = null) {
+ async function loadDepartmentTreeForSelect(selectId, selectedId = null) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -2838,7 +2899,7 @@ async function loadDepartmentTreeForSelect(selectId, selectedId = null) {
     }
 }
 // Открытие модалки добавления подразделения
-async function openAddDepartmentModal(parentId = null) {
+ async function openAddDepartmentModal(parentId = null) {
     const modal = document.getElementById('addDepartmentModal');
     const title = modal.querySelector('.modal-header h2');
     
@@ -2862,7 +2923,7 @@ async function openAddDepartmentModal(parentId = null) {
     
     openDocSingleModal('addDepartmentModal');
 }
-async function openEditDepartmentModal(deptId, deptName) {
+ async function openEditDepartmentModal(deptId, deptName) {
     const modal = document.getElementById('addDepartmentModal');
     const title = modal.querySelector('.modal-header h2');
     
@@ -2908,7 +2969,7 @@ async function openEditDepartmentModal(deptId, deptName) {
 }
 
 // Загрузка сотрудников отдела для селекта руководителя
-async function loadDepartmentEmployeesForSelect(departmentId, selectedManagerId = null) {
+ async function loadDepartmentEmployeesForSelect(departmentId, selectedManagerId = null) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/departments/${departmentId}/employees`, {
@@ -3017,7 +3078,7 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
     }
     closeModal('confirmDeleteModal');
 });
-function deleteDepartment(deptId, deptName) {
+ function deleteDepartment(deptId, deptName) {
     // Закрываем текущую модалку (если открыта)
     closeModal('managePostsModal');
     
@@ -3047,7 +3108,7 @@ function deleteDepartment(deptId, deptName) {
     );
 }
 
-function deletePostWithConfirm(postId, postName) {
+ function deletePostWithConfirm(postId, postName) {
     showConfirmDelete(
         'Удаление должности',
         `Вы уверены, что хотите удалить должность "${postName}"? Сотрудники с этой должностью останутся без должности.`,
@@ -3084,7 +3145,7 @@ function deletePostWithConfirm(postId, postName) {
 let currentMoveEmployee = null;
 
 // Открытие модалки перемещения
-async function openMoveEmployeeModal(employeeId, currentDeptId) {
+ async function openMoveEmployeeModal(employeeId, currentDeptId) {
     currentMoveEmployee = { id: employeeId, currentDeptId };
     
     // Загружаем данные сотрудника
@@ -3124,7 +3185,7 @@ async function openMoveEmployeeModal(employeeId, currentDeptId) {
 }
 
 // Загрузка списка подразделений для селекта
-async function loadDepartmentsForSelect(selectId, selectedId = null) {
+ async function loadDepartmentsForSelect(selectId, selectedId = null) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -3163,7 +3224,7 @@ async function loadDepartmentsForSelect(selectId, selectedId = null) {
     }
 }
 // Загрузка списка должностей
-async function loadPostsForSelect(selectId) {
+ async function loadPostsForSelect(selectId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/posts', {
@@ -3186,7 +3247,7 @@ async function loadPostsForSelect(selectId) {
 }
 
 // Подтверждение перемещения
-async function confirmMoveEmployee() {
+ async function confirmMoveEmployee() {
     const employeeId = document.getElementById('moveEmployeeId').value;
     const departmentId = document.getElementById('moveDepartmentId').value;
     const postId = document.getElementById('movePostId').value || null;
@@ -3230,7 +3291,7 @@ async function confirmMoveEmployee() {
 
 // ========== РЕДАКТИРОВАНИЕ СОТРУДНИКА ==========
 
-async function openEditEmployeeModal(employeeId) {
+ async function openEditEmployeeModal(employeeId) {
     const modal = document.getElementById('editEmployeeModal');
     if (!modal) return;
     
@@ -3285,7 +3346,7 @@ async function openEditEmployeeModal(employeeId) {
     }
 }
 
-async function loadDepartmentsForSelect(selectId, selectedId = null) {
+ async function loadDepartmentsForSelect(selectId, selectedId = null) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -3310,7 +3371,7 @@ async function loadDepartmentsForSelect(selectId, selectedId = null) {
         console.error('Error loading departments:', error);
     }
 }
-async function loadPostsForDepartmentSelect(selectId, departmentId) {
+ async function loadPostsForDepartmentSelect(selectId, departmentId) {
     if (!departmentId) {
         const select = document.getElementById(selectId);
         if (select) {
@@ -3342,7 +3403,7 @@ async function loadPostsForDepartmentSelect(selectId, departmentId) {
 }
 
 // Сохранение изменений сотрудника
-async function saveEmployeeEdit() {
+ async function saveEmployeeEdit() {
     const employeeId = document.getElementById('editEmployeeId').value;
     const departmentId = document.getElementById('editEmployeeDepartment').value || null;
     const postId = document.getElementById('editEmployeePost').value || null;
@@ -3378,7 +3439,7 @@ async function saveEmployeeEdit() {
 let currentDepartmentPosts = null;
 
 // Открытие модалки управления должностями
-async function openManagePostsModal(departmentId, departmentName) {
+ async function openManagePostsModal(departmentId, departmentName) {
     document.getElementById('managePostsTitle').textContent = `Должности: ${departmentName}`;
     document.getElementById('managePostsDepartmentId').value = departmentId;
     document.getElementById('newPostName').value = '';
@@ -3388,7 +3449,7 @@ async function openManagePostsModal(departmentId, departmentName) {
 }
 
 // Загрузка должностей для отдела
-async function loadPostsForDepartment(departmentId) {
+ async function loadPostsForDepartment(departmentId) {
     const container = document.getElementById('postsList');
     container.innerHTML = '<div style="text-align: center; padding: 20px;">Загрузка...</div>';
     
@@ -3421,7 +3482,7 @@ async function loadPostsForDepartment(departmentId) {
 }
 
 // Добавление должности
-async function addPost() {
+ async function addPost() {
     const departmentId = document.getElementById('managePostsDepartmentId').value;
     const name = document.getElementById('newPostName').value.trim();
     
@@ -3453,8 +3514,8 @@ async function addPost() {
 }
 
 // Удаление должности
-async function deletePost(postId) {
-    if (!confirm('Удалить эту должность? Сотрудники с этой должностью останутся без должности.')) return;
+ async function deletePost(postId) {
+    if (!await uiConfirm('Удалить эту должность? Сотрудники с этой должностью останутся без должности.')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -3492,7 +3553,7 @@ async function deletePost(postId) {
 let currentSettings = {};
 
 // Загрузка настроек
-async function loadSystemSettings() {
+ async function loadSystemSettings() {
     const container = document.getElementById('settingsContainer');
     container.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка...</div>';
     
@@ -3849,7 +3910,7 @@ function renderSettingsForm() {
 }
 
 // Сохранение настроек
-async function saveSystemSettings() {
+ async function saveSystemSettings() {
     const settings = {
         // Общие
         org_name: document.getElementById('org_name')?.value || '',
@@ -3914,8 +3975,8 @@ async function saveSystemSettings() {
 }
 
 // Сброс настроек
-async function resetSystemSettings() {
-    if (!confirm('Сбросить все настройки к значениям по умолчанию?')) return;
+ async function resetSystemSettings() {
+    if (!await uiConfirm('Сбросить все настройки к значениям по умолчанию?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -3964,7 +4025,7 @@ function initSettingsButtons() {
     if (createBackupBtn) {
         const newBtn = createBackupBtn.cloneNode(true);
         createBackupBtn.parentNode.replaceChild(newBtn, createBackupBtn);
-        newBtn.onclick = async () => {
+        newBtn.onclick =  async () => {
             showToast('Создание резервной копии...', 'info');
             try {
                 const token = localStorage.getItem('token');
@@ -4008,7 +4069,7 @@ function initSettingsButtons() {
         newBtn.onclick = openStatsModal;
     }
 }
-async function openLogsModal() {
+ async function openLogsModal() {
     const modal = document.createElement('div');
     modal.className = 'admin-modal';
     modal.style.display = 'flex';
@@ -4053,7 +4114,7 @@ async function openLogsModal() {
     document.getElementById('logFilter').onchange = () => loadLogs();
 }
 
-async function loadLogs() {
+ async function loadLogs() {
     const container = document.getElementById('logsContainer');
     const filter = document.getElementById('logFilter')?.value || 'all';
     
@@ -4133,7 +4194,7 @@ function exportLogs() {
     URL.revokeObjectURL(url);
     showToast('Логи экспортированы', 'success');
 }
-async function openStatsModal() {
+ async function openStatsModal() {
     const modal = document.createElement('div');
     modal.className = 'admin-modal';
     modal.style.display = 'flex';
@@ -4165,7 +4226,7 @@ async function openStatsModal() {
     document.getElementById('refreshStatsBtn').onclick = () => loadStats();
 }
 
-async function loadStats() {
+ async function loadStats() {
     const container = document.getElementById('statsContainer');
     
     container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="empty-icon">⏳</div><p>Загрузка статистики...</p></div>';
@@ -4272,7 +4333,7 @@ document.getElementById('viewBackupsBtn')?.addEventListener('click', async () =>
     await openBackupsModal();
 });
 
-async function openBackupsModal() {
+ async function openBackupsModal() {
     const modal = document.createElement('div');
     modal.className = 'admin-modal';
     modal.style.display = 'flex';
@@ -4301,7 +4362,7 @@ async function openBackupsModal() {
     document.getElementById('refreshBackupsBtn').onclick = () => loadBackupsList();
 }
 
-async function loadBackupsList() {
+ async function loadBackupsList() {
     const container = document.getElementById('backupsListContainer');
     
     try {
@@ -4364,8 +4425,8 @@ async function downloadBackup(backupId) {
     }
 }
 
-async function deleteBackup(backupId) {
-    if (!confirm('Удалить эту резервную копию?')) return;
+ async function deleteBackup(backupId) {
+    if (!await uiConfirm('Удалить эту резервную копию?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -4384,8 +4445,8 @@ async function deleteBackup(backupId) {
     }
 }
 
-async function restoreBackup(backupId) {
-    if (!confirm('Восстановить базу данных из этого бэкапа? Все текущие данные будут заменены!')) return;
+ async function restoreBackup(backupId) {
+    if (!await uiConfirm('Восстановить базу данных из этого бэкапа? Все текущие данные будут заменены!')) return;
     
     showToast('Восстановление...', 'info');
     
@@ -4410,7 +4471,7 @@ async function restoreBackup(backupId) {
 let currentUserPermissions = {};
 
 // Загрузка прав текущего пользователя
-async function loadUserPermissions() {
+ async function loadUserPermissions() {
     try {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -4452,26 +4513,23 @@ async function loadUserPermissions() {
 
 // Проверка конкретного права
 function hasPermission(resource, action = 'view') {
-    // Супер-админ имеет все права
     if (window.currentUser?.is_super_admin) return true;
-    
-    // Проверяем право в загруженных правах
-    const resourcePerm = currentUserPermissions[resource];
+    const perms = currentUserPermissions || {};
+    if (perms.all === true) return true;
+    const resourcePerm = perms[resource];
     if (!resourcePerm) return false;
-    
-    // Если resourcePerm — это объект с действиями
+    if (resourcePerm === true || resourcePerm === 'all') return true;
     if (typeof resourcePerm === 'object') {
-        return resourcePerm[action] === true;
+        const val = resourcePerm[action];
+        return val === true || val === 'all' || (Array.isArray(val) && val.length > 0);
     }
-    
-    // Если resourcePerm — это просто true/false (полный доступ к ресурсу)
-    return resourcePerm === true;
+    return false;
 }
 
-// Проверка доступа к админ-панели
 function canAccessAdminPanel() {
     if (window.currentUser?.is_super_admin) return true;
-    return currentUserPermissions.admin_panel === true;
+    const ap = (currentUserPermissions || {}).admin_panel;
+    return ap === true || ap === 'all' || (ap && typeof ap === 'object' && (ap.access === true || ap.access === 'all')) || hasPermission('admin_panel', 'access');
 }
 // Применение прав доступа к интерфейсу
 function applyPermissionsToUI() {
@@ -4486,13 +4544,16 @@ function applyPermissionsToUI() {
     const canViewRoles = hasPermission('roles', 'view');
     
     // Скрываем/показываем вкладки в навигации
+    const canViewModeration = hasPermission('moderation', 'view') || hasPermission('moderation', 'manage');
     const navItems = {
         'users-section': canViewUsers,
         'templates-section': canViewTemplates,
         'system-section': canViewSettings,
         'reports-section': canViewStats,
         'structure-section': canViewStructure,
-        'roles-section': canViewRoles
+        'roles-section': canViewRoles,
+        'notifications-section': canAccessAdminPanel(),
+        'moderation-section': canViewModeration
     };
     
     for (const [sectionId, visible] of Object.entries(navItems)) {
@@ -4584,7 +4645,7 @@ const NOTIF_CATEGORY_LABELS = {
 };
 
 // ----- ЗАГРУЗКА УВЕДОМЛЕНИЙ -----
-async function loadAdminNotifications(page = 1) {
+ async function loadAdminNotifications(page = 1) {
     adminNotificationsPage = page;
     const tbody = document.getElementById('adminNotificationsBody');
     if (!tbody) return;
@@ -4775,7 +4836,7 @@ function toggleRecipientType(type) {
 }
 
 // Загрузка отделов
-async function loadDepartmentsForNotification() {
+ async function loadDepartmentsForNotification() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -4967,8 +5028,8 @@ document.getElementById('createNotificationForm')?.addEventListener('submit', as
 });
 
 // ----- УДАЛЕНИЕ -----
-async function deleteAdminNotification(notifId) {
-    if (!confirm('Удалить это уведомление?')) return;
+ async function deleteAdminNotification(notifId) {
+    if (!await uiConfirm('Удалить это уведомление?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -5072,7 +5133,7 @@ function _reportsPeriodParams() {
     return 'days=' + encodeURIComponent(val);
 }
 
-async function loadReportsDashboard() {
+ async function loadReportsDashboard() {
     const loading = document.getElementById('reportsLoading');
     const kpis = document.getElementById('reportsKpis');
     const grid = document.getElementById('reportsChartsGrid');
@@ -5232,3 +5293,287 @@ function exportReportsCharts() {
     if (!exported) showErrorToast('Нет диаграмм для выгрузки');
     else showSuccessToast('Выгружено диаграмм: ' + exported);
 }
+
+
+// ==================== МОДЕРАЦИЯ ====================
+let moderationReports = [];
+let moderationReportCounts = {};
+let moderationCurrentStatus = 'open';
+
+const moderationStatusLabels = {
+    open: 'Открытые жалобы',
+    reviewed: 'Рассмотренные',
+    resolved: 'Решённые',
+    dismissed: 'Отклонённые',
+    all: 'Все'
+};
+
+function initModerationAdmin() {
+    const tabs = document.getElementById('moderationStatusTabs');
+    if (tabs && !tabs.dataset.bound) {
+        tabs.dataset.bound = '1';
+        tabs.addEventListener('click', e => {
+            const tab = e.target.closest('[data-status]');
+            if (!tab) return;
+            setModerationStatusFilter(tab.dataset.status);
+            loadModerationReports();
+        });
+    }
+    renderModerationStatusTabs();
+}
+
+function moderationCount(status) {
+    if (moderationReportCounts && moderationReportCounts[status] !== undefined) return moderationReportCounts[status];
+    if (status === 'all') {
+        return Object.entries(moderationReportCounts || {})
+            .filter(([key]) => key !== 'all')
+            .reduce((sum, [, value]) => sum + (Number(value) || 0), 0);
+    }
+    return 0;
+}
+
+function setModerationStatusFilter(status) {
+    moderationCurrentStatus = status;
+    renderModerationStatusTabs();
+}
+
+function renderModerationStatusTabs() {
+    const tabs = document.getElementById('moderationStatusTabs');
+    if (!tabs) return;
+    tabs.innerHTML = ['open', 'reviewed', 'resolved', 'dismissed', 'all'].map(status => {
+        const active = status === moderationCurrentStatus ? ' active' : '';
+        return `<button type="button" class="buttonbase btn-small moderation-tab${active}" data-status="${status}">${moderationStatusLabels[status]} <span style="opacity:.7;">(${moderationCount(status)})</span></button>`;
+    }).join('');
+}
+
+ async function loadModerationReports() {
+    const tbody = document.getElementById('moderationReportsBody');
+    if (!tbody) return;
+    if (!hasPermission('moderation', 'view') && !hasPermission('moderation', 'manage')) {
+        tbody.innerHTML = '<tr><td colspan="10" class="loading-row">Нет доступа</td></tr>'; return;
+    }
+    tbody.innerHTML = '<tr><td colspan="10" class="loading-row">Загрузка...</td></tr>';
+    try {
+        const token = localStorage.getItem('token');
+        const status = moderationCurrentStatus;
+        const res = await fetch(`/api/moderation/reports?status=${encodeURIComponent(status)}&limit=100`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка загрузки');
+        moderationReports = data.reports || [];
+        moderationReportCounts = data.counts || {};
+        renderModerationStatusTabs();
+        renderModerationReports();
+    } catch (e) {
+        console.error('loadModerationReports error:', e);
+        tbody.innerHTML = `<tr><td colspan="10" class="loading-row">Ошибка: ${escapeHtml(e.message || 'загрузки')}</td></tr>`;
+    }
+}
+
+function moderationStatusBadge(status) {
+    const map = { open: ['Открыта', '#dc3545'], reviewed: ['Рассмотрена', '#f59e0b'], resolved: ['Решена', '#16a34a'], dismissed: ['Отклонена', '#6b7280'] };
+    const [label, color] = map[status] || [status, '#6b7280'];
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:${color}22;color:${color};font-size:12px;font-weight:600;">${label}</span>`;
+}
+
+function focusModerationStatusFilter(status) {
+    setModerationStatusFilter(status);
+}
+
+function focusModerationReviewedFilter() {
+    focusModerationStatusFilter('reviewed');
+}
+
+function moderationReportActions(r) {
+    const buttons = [];
+    if (r.status === 'open') {
+        buttons.push(`<button class="buttonbase btn-small" onclick="moderationResolveReport(${r.id}, 'reviewed')">Рассмотреть</button>`);
+    }
+    if (r.status !== 'resolved') {
+        buttons.push(`<button class="buttonbase btn-small" style="background:#16a34a;color:#fff;" onclick="moderationResolveReport(${r.id}, 'resolved')">Подтвердить</button>`);
+    }
+    if (r.status !== 'dismissed') {
+        buttons.push(`<button class="buttonbase btn-small" onclick="moderationResolveReport(${r.id}, 'dismissed')">Отклонить</button>`);
+    }
+    if (r.status !== 'open') {
+        buttons.push(`<button class="buttonbase btn-small" onclick="moderationResolveReport(${r.id}, 'open')">Переоткрыть</button>`);
+    }
+    return buttons.join('');
+}
+
+function renderModerationReports() {
+    const tbody = document.getElementById('moderationReportsBody');
+    if (!tbody) return;
+    if (!moderationReports.length) { tbody.innerHTML = '<tr><td colspan="10" class="loading-row">Жалоб нет</td></tr>'; return; }
+    const canManage = hasPermission('moderation', 'manage');
+    tbody.innerHTML = moderationReports.map(r => {
+        const reporter = `${escapeHtml(r.reporter_surname || '')} ${escapeHtml(r.reporter_name || '')}`.trim();
+        const reported = `${escapeHtml(r.reported_surname || '')} ${escapeHtml(r.reported_name || '')}`.trim();
+        const msg = escapeHtml((r.message_content || '').slice(0, 120));
+        const reason = escapeHtml((r.reason || '').slice(0, 120));
+        const date = r.created_at ? new Date(r.created_at).toLocaleString('ru-RU') : '—';
+        const resolution = r.resolution_note
+            ? escapeHtml(r.resolution_note.slice(0, 100))
+            : '—';
+        const resolver = r.resolved_by
+            ? `<br><span style="font-size:11px;color:var(--c_surf_txt);">${escapeHtml(r.resolved_surname || '')} ${escapeHtml(r.resolved_name || '')}</span>`
+            : '';
+        return `<tr>
+            <td>${r.id}</td><td>${moderationStatusBadge(r.status)}</td><td>${escapeHtml(r.chat_name || ('Чат #' + r.chat_id))}</td>
+            <td>${reported || '—'}</td><td>${reporter || '—'}</td>
+            <td title="${escapeHtml(r.reason || '')}">${reason}</td>
+            <td title="${escapeHtml(r.message_content || '')}">${msg}${r.message_deleted ? ' <span style="color:#dc3545">(удалено)</span>' : ''}</td>
+            <td>${date}</td>
+            <td title="${escapeHtml(r.resolution_note || '')}">${resolution}${resolver}</td>
+            <td style="white-space:nowrap;">
+                <button class="buttonbase btn-small" onclick="openModerationChat(${r.chat_id}, ${r.id})">Чат</button>
+                ${canManage ? `<button class="buttonbase btn-small" onclick="moderationWarn(${r.reported_user_id}, ${r.message_id}, ${r.id})">Предупр.</button>` : ''}
+                ${canManage && !r.message_deleted ? `<button class="buttonbase btn-small" style="background:#dc3545;color:#fff;" onclick="moderationDeleteMessage(${r.message_id}, ${r.id})">Удалить</button>` : ''}
+                ${canManage ? moderationReportActions(r) : ''}
+            </td></tr>`;
+    }).join('');
+}
+
+ async function openModerationChat(chatId, reportId) {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/moderation/chats/${chatId}/messages?limit=100`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка загрузки чата');
+        const reportedMessageId = reportId
+            ? (moderationReports.find(r => r.id === reportId)?.message_id || null)
+            : null;
+        document.getElementById('moderationChatModalTitle').textContent = data.chat?.name || `Чат #${chatId}`;
+        const participants = (data.participants || []).map(p => `${escapeHtml(p.surname || '')} ${escapeHtml(p.name || '')}`.trim()).join(', ');
+        document.getElementById('moderationChatMeta').innerHTML = `Участники: ${participants || '—'} ${reportId ? `<span style="margin-left:10px;">Жалоба #${reportId}</span>` : ''}`;
+        const canManage = hasPermission('moderation', 'manage');
+        document.getElementById('moderationChatMessages').innerHTML = (data.messages || []).map(m => {
+            const author = `${escapeHtml(m.surname || '')} ${escapeHtml(m.name || '')}`.trim();
+            const date = m.created_at ? new Date(m.created_at).toLocaleString('ru-RU') : '';
+            const deleted = !!m.is_deleted;
+            const isReported = m.id === reportedMessageId;
+            const borderColor = isReported ? 'var(--ui-accent, var(--c_acc, #5194ff))' : 'var(--c_border,rgba(0,0,0,.08))';
+            const background = deleted ? 'rgba(220,53,69,.06)' : isReported ? 'var(--ui-accent-soft, rgba(81,148,255,.12))' : 'var(--c_surf)';
+            return `<div id="moderation-msg-${m.id}" style="padding:10px 12px;border:1px solid ${borderColor};border-radius:10px;background:${background};${isReported ? 'box-shadow:0 0 0 2px var(--ui-accent-soft, rgba(81,148,255,.12));' : ''}">
+                <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--c_surf_txt);margin-bottom:4px;">
+                    <span><strong style="color:var(--c_bg_txt);">${author}</strong> · ${date}${isReported ? ' <span style="display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--ui-accent, var(--c_acc, #5194ff));color:#fff;font-size:11px;font-weight:600;">Жалоба</span>' : ''}</span>
+                    ${canManage && !deleted ? `<span style="display:flex;gap:6px;"><button class="buttonbase btn-small" onclick="moderationWarn(${m.user_id}, ${m.id}, ${reportId || 'null'})">Предупр.</button><button class="buttonbase btn-small" style="background:#dc3545;color:#fff;" onclick="moderationDeleteMessage(${m.id}, ${reportId || 'null'})">Удалить</button></span>` : deleted ? '<span style="color:#dc3545;">Удалено</span>' : ''}
+                </div>
+                <div style="white-space:pre-wrap;${deleted ? 'font-style:italic;opacity:.8;' : ''}">${escapeHtml(m.content || '')}</div>
+            </div>`;
+        }).join('') || '<div class="loading-row">Сообщений нет</div>';
+        if (reportedMessageId) {
+            requestAnimationFrame(() => {
+                document.getElementById(`moderation-msg-${reportedMessageId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            });
+        }
+        openModal('moderationChatModal');
+    } catch (e) { console.error(e); showToast(e.message || 'Ошибка загрузки чата', 'error'); }
+}
+
+ async function moderationWarn(userId, messageId, reportId) {
+    if (!hasPermission('moderation', 'manage')) return;
+    const reason = await uiPrompt(
+        'Причина предупреждения:',
+        'Нарушение правил общения в чате',
+        'Предупреждение пользователю',
+        'Уточните причину...',
+        { multiline: true, presets: [
+            'Нарушение правил общения в чате',
+            'Оскорбления или грубость',
+            'Спам или реклама',
+            'Разглашение конфиденциальной информации',
+            'Другое'
+        ] }
+    );
+    if (reason === null) return;
+    if (!reason.trim()) {
+        await uiAlert('Укажите причину предупреждения.', 'Ошибка');
+        return;
+    }
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/moderation/warnings', { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({ userId, messageId, reportId, reason: reason.trim() }) });
+        const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Ошибка');
+        showToast('Предупреждение отправлено', 'success'); focusModerationStatusFilter('reviewed'); loadModerationReports();
+    } catch (e) { showToast(e.message || 'Ошибка', 'error'); }
+}
+
+ async function moderationDeleteMessage(messageId, reportId) {
+    if (!hasPermission('moderation', 'manage')) return;
+    const reason = await uiPrompt(
+        'Причина удаления (увидит автор):',
+        'Нарушение правил общения',
+        'Удаление сообщения',
+        'Уточните причину...',
+        { multiline: true, presets: [
+            'Нарушение правил общения',
+            'Оскорбления или грубость',
+            'Спам или реклама',
+            'Разглашение конфиденциальной информации',
+            'Другое'
+        ] }
+    );
+    if (reason === null) return;
+    if (!reason.trim()) {
+        await uiAlert('Укажите причину удаления.', 'Ошибка');
+        return;
+    }
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/moderation/messages/${messageId}`, { method:'DELETE', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({ reason: reason.trim(), reportId }) });
+        const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Ошибка');
+        showToast('Сообщение удалено, автор уведомлён', 'success');
+        focusModerationStatusFilter('reviewed');
+        loadModerationReports();
+        const modal = document.getElementById('moderationChatModal');
+        if (modal?.classList.contains('active')) { const chatId = moderationReports.find(r => r.id === reportId)?.chat_id; if (chatId) openModerationChat(chatId, reportId); }
+    } catch (e) { showToast(e.message || 'Ошибка', 'error'); }
+}
+
+ async function moderationResolveReport(reportId, status, note = null) {
+    if (!hasPermission('moderation', 'manage')) return;
+
+    if (note === null && (status === 'resolved' || status === 'dismissed')) {
+        const presets = status === 'resolved'
+            ? ['Нарушение подтверждено', 'Сообщение удалено', 'Пользователь предупреждён']
+            : ['Нарушение не подтверждено', 'Жалоба необоснованна', 'Ложное срабатывание'];
+        note = await uiPrompt(
+            status === 'resolved' ? 'Комментарий к решению:' : 'Причина отклонения:',
+            status === 'resolved' ? 'Нарушение подтверждено' : 'Нарушение не подтверждено',
+            status === 'resolved' ? 'Подтвердить жалобу' : 'Отклонить жалобу',
+            'Укажите комментарий...',
+            { multiline: true, presets }
+        );
+        if (note === null) return;
+        if (!note.trim()) {
+            await uiAlert('Укажите комментарий.', 'Ошибка');
+            return;
+        }
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/moderation/reports/${reportId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ status, resolutionNote: (note || '').trim() })
+        });
+        const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Ошибка');
+        const messages = {
+            open: 'Жалоба переоткрыта',
+            reviewed: 'Жалоба рассмотрена',
+            resolved: 'Нарушение подтверждено',
+            dismissed: 'Жалоба отклонена'
+        };
+        showToast(messages[status] || 'Статус обновлён', 'success');
+        focusModerationStatusFilter(status);
+        loadModerationReports();
+    } catch (e) { showToast(e.message || 'Ошибка', 'error'); }
+}
+
+window.openModal = openModal;
+window.loadModerationReports = loadModerationReports;
+window.openModerationChat = openModerationChat;
+window.moderationWarn = moderationWarn;
+window.moderationDeleteMessage = moderationDeleteMessage;
+window.moderationResolveReport = moderationResolveReport;

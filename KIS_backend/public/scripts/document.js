@@ -249,7 +249,7 @@ function closeUserSelectorModal() {
 }
 
 // Загрузка пользователей для селектора
-async function loadUsersForSelector() {
+ async function loadUsersForSelector() {
     const container = document.getElementById('userSelectorList');
     container.innerHTML = '<div class="loading-users">Загрузка пользователей...</div>';
     
@@ -278,7 +278,7 @@ async function loadUsersForSelector() {
 }
 
 // Загрузка отделов для фильтра
-async function loadDepartmentsForSelector() {
+ async function loadDepartmentsForSelector() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {

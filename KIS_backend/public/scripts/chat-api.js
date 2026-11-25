@@ -69,7 +69,7 @@ class ChatManager {
             console.error('Failed to load messages:', error);
             const messagesContainer = document.getElementById('messagesContainer');
             if (messagesContainer) {
-                messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: red;"> Ошибка загрузки сообщений</div>';
+                messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">❌ Ошибка загрузки сообщений</div>';
             }
         }
     }
@@ -106,7 +106,7 @@ class ChatManager {
                 }));
                 
                 // Убираем временное сообщение через 300мс (когда придет new-message от сервера)
-                setTimeout(() => {
+                setTimeout( () => {
                     this.messages = this.messages.filter(m => !m.is_temp);
                     this.renderMessages();
                 }, 300);
@@ -145,7 +145,7 @@ class ChatManager {
     initWebSocket() {
         const token = localStorage.getItem('token');
         if (!token) {
-            console.warn(' No token, WebSocket not initialized');
+            console.warn('❌ No token, WebSocket not initialized');
             return;
         }
         
@@ -154,17 +154,17 @@ class ChatManager {
         const wsHost = window.location.host || 'localhost:3000';
         const wsUrl = `${wsProtocol}//${wsHost}?token=${token}`;
         
-        console.log(' Connecting to WebSocket:', wsUrl.replace(/token=[^&]+/, 'token=***'));
+        console.log('🔌 Connecting to WebSocket:', wsUrl.replace(/token=[^&]+/, 'token=***'));
         
         try {
             this.ws = new WebSocket(wsUrl);
         } catch (error) {
-            console.error(' WebSocket constructor error:', error);
+            console.error('❌ WebSocket constructor error:', error);
             return;
         }
         
         this.ws.onopen = () => {
-            console.log(' WebSocket connected');
+            console.log('✅ WebSocket connected');
             
             // Отправляем событие подключения
             this.ws.send(JSON.stringify({
@@ -179,7 +179,7 @@ class ChatManager {
         this.ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                console.log(' WebSocket message:', data);
+                console.log('📨 WebSocket message:', data);
                 this.handleWebSocketMessage(data);
             } catch (error) {
                 console.error('WebSocket message error:', error);
@@ -187,15 +187,15 @@ class ChatManager {
         };
         
         this.ws.onerror = (error) => {
-            console.error(' WebSocket error:', error);
+            console.error('❌ WebSocket error:', error);
         };
         
         this.ws.onclose = (event) => {
-            console.log(' WebSocket disconnected, code:', event.code, 'reason:', event.reason);
+            console.log('🔌 WebSocket disconnected, code:', event.code, 'reason:', event.reason);
             // Попытка переподключения через 3 секунды
             setTimeout(() => {
                 if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
-                    console.log(' Reconnecting WebSocket...');
+                    console.log('🔄 Reconnecting WebSocket...');
                     this.initWebSocket();
                 }
             }, 3000);
@@ -211,13 +211,13 @@ class ChatManager {
                     type: 'join-chats',
                     chatIds: chatIds
                 }));
-                console.log(' Joined chats:', chatIds);
+                console.log('📡 Joined chats:', chatIds);
             }
         }
     }
     
     handleWebSocketMessage(data) {
-        console.log(' WebSocket message received:', data);
+        console.log('📨 WebSocket message received:', data);
         
         switch (data.type) {
             case 'new-message':
@@ -294,10 +294,10 @@ class ChatManager {
                 break;
                 
             case 'connection-confirmed':
-                console.log(' WebSocket connection confirmed for user:', data.userId);
+                console.log('✅ WebSocket connection confirmed for user:', data.userId);
                 break;
             case 'joined-chats':
-                console.log(' Joined chats:', data.chatIds);
+                console.log('✅ Joined chats:', data.chatIds);
                 break;    
             case 'error':
                 console.error('WebSocket error from server:', data.message);
@@ -410,7 +410,7 @@ class ChatManager {
                     <img src="../materials/icons8-избранное-96.png" 
                          alt="Избранное" 
                          style="width:100%;height:100%;object-fit:cover;"
-                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--c_acc);color:white;font-size:24px;\'></div>';">
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--c_acc);color:white;font-size:24px;\'>📌</div>';">
                 `;
                 displayName = 'Избранное';
             } else if (chat.is_group) {
@@ -457,8 +457,8 @@ class ChatManager {
     }
     formatLastMessage(message) {
         if (!message) return 'Нет сообщений';
-        if (message.content && message.content.startsWith('')) return ' Фото';
-        if (message.content && message.content.startsWith('')) return ' Файл';
+        if (message.content && message.content.startsWith('📷')) return '📷 Фото';
+        if (message.content && message.content.startsWith('📎')) return '📎 Файл';
         return this.escapeHtml(message.content.substring(0, 40));
     }
     downloadFile(url, fileName) {
@@ -501,8 +501,8 @@ class ChatManager {
             const isOwn = msg.user_id === currentUserId;
             
             // Проверяем тип сообщения
-            const isImage = msg.content && msg.content.startsWith('');
-            const isFile = msg.content && msg.content.startsWith('');
+            const isImage = msg.content && msg.content.startsWith('📷');
+            const isFile = msg.content && msg.content.startsWith('📎');
             
                         let contentHtml = '';
             
@@ -517,18 +517,18 @@ class ChatManager {
                     let originalHtml = '';
                     const origText = forwardData.text || '';
                     
-                    if (origText.startsWith('')) {
+                    if (origText.startsWith('📷')) {
                         const imageUrl = origText.split('\n')[1];
                         if (imageUrl) {
                             originalHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 8px; cursor: pointer;">`;
                         }
-                    } else if (origText.startsWith('')) {
+                    } else if (origText.startsWith('📎')) {
                         const lines = origText.split('\n');
-                        const fileName = lines[0].replace(' ', '');
+                        const fileName = lines[0].replace('📎 ', '');
                         const fileUrl = lines[1] || '';
                         originalHtml = `
                             <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; margin-top: 8px;">
-                                <span></span>
+                                <span>📎</span>
                                 <span style="font-size: 13px;">${fileName}</span>
                             </div>
                         `;
@@ -539,7 +539,7 @@ class ChatManager {
                     contentHtml = `
                         <div class="forwarded-message" style="border-left: 3px solid var(--c_acc); padding-left: 10px; margin-bottom: 4px;">
                             <div style="font-size: 11px; color: var(--c_acc); font-weight: 600; margin-bottom: 4px;">
-                                ↪ Переслано от: ${this.escapeHtml(forwardData.from)}
+                                ↪️ Переслано от: ${this.escapeHtml(forwardData.from)}
                             </div>
                             ${originalHtml}
                         </div>
@@ -550,8 +550,8 @@ class ChatManager {
                 }
             } else {
                 // Обычная логика для старых сообщений
-                const isImage = msg.content && msg.content.startsWith('');
-                const isFile = msg.content && msg.content.startsWith('');
+                const isImage = msg.content && msg.content.startsWith('📷');
+                const isFile = msg.content && msg.content.startsWith('📎');
                 
                 if (isImage) {
                     const lines = msg.content.split('\n');
@@ -559,11 +559,11 @@ class ChatManager {
                     contentHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy" style="max-width: 300px; max-height: 200px; border-radius: 12px; cursor: pointer; margin-top: 4px;">`;
                 } else if (isFile) {
                     const lines = msg.content.split('\n');
-                    const fileName = lines[0].replace(' ', '');
+                    const fileName = lines[0].replace('📎 ', '');
                     const fileUrl = lines[1] || '';
                     contentHtml = `
                         <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; margin-top: 4px;">
-                            <span style="font-size: 20px;"></span>
+                            <span style="font-size: 20px;">📎</span>
                             <span style="font-size: 13px; font-weight: 500; word-break: break-all;">${fileName}</span>
                         </div>
                     `;
@@ -626,23 +626,20 @@ class ChatManager {
         
         let menuItems = `
             <div class="context-menu-item" onclick="chatManager.forwardMessage(${messageId})">
-                ↪ Переслать
+                ↪️ Переслать
+            </div>
+            <div class="context-menu-item" onclick="chatManager.reportMessage(${messageId})">
+                <img src="../materials/icons8-предупреждение-96.png" class="ui-icon ui-icon-inline" alt=""> Пожаловаться
             </div>
         `;
         
         if (isOwn) {
             menuItems += `
                 <div class="context-menu-item" onclick="chatManager.startEditing(${messageId})">
-                     Редактировать
+                    ✏️ Редактировать
                 </div>
                 <div class="context-menu-item" onclick="chatManager.deleteMessage(${messageId})">
-                     Удалить
-                </div>
-            `;
-        } else {
-            menuItems += `
-                <div class="context-menu-item" onclick="chatManager.reportMessage(${messageId})">
-                     Пожаловаться
+                    🗑️ Удалить
                 </div>
             `;
         }
@@ -687,15 +684,15 @@ class ChatManager {
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 450px; max-height: 80vh;">
                 <div class="modal-header">
-                    <h2>↪ Переслать сообщение</h2>
-                    <button class="modal-close" onclick="document.getElementById('forwardModal').remove()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
+                    <h2>↪️ Переслать сообщение</h2>
+                    <button class="modal-close" onclick="document.getElementById('forwardModal').remove()">&times;</button>
                 </div>
                 <div class="modal-body" style="padding: 0; overflow-y: auto;">
                     <div style="padding: 16px; background: var(--c_bg); border-bottom: 1px solid var(--c_surf_txt);">
                         <div style="font-size: 12px; color: var(--c_surf_txt); margin-bottom: 4px;">Исходное сообщение от ${escapeHtml(message.surname || '')} ${escapeHtml(message.name || '')}:</div>
                         <div style="font-size: 14px; color: var(--c_bg_txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${escapeHtml(message.content.substring(0, 80))}${message.content.length > 80 ? '...' : ''}
-                            ${message.attachments?.length ? ' ' : ''}
+                            ${message.attachments?.length ? ' 📎' : ''}
                         </div>
                     </div>
                     
@@ -704,12 +701,12 @@ class ChatManager {
                         <div class="forward-chat-list">
                             ${availableChats.map(chat => {
                                 let name = chat.name || 'Чат';
-                                let avatar = '';
+                                let avatar = '💬';
                                 if (chat.name === 'Избранное') {
                                     name = 'Избранное';
                                     avatar = `<img src="../materials/icons8-избранное-96.png" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                                 } else if (chat.is_group) {
-                                    avatar = '';
+                                    avatar = '👥';
                                 } else {
                                     const other = chat.participants?.find(p => p.id !== window.currentUser?.id);
                                     if (other) {
@@ -804,7 +801,7 @@ class ChatManager {
         textarea.value = oldContent;
         modal.style.display = 'flex';
         
-        const saveHandler = async () => {
+        const saveHandler =  async () => {
             const newContent = textarea.value.trim();
             if (!newContent || newContent === oldContent) {
                 closeEditModal();
@@ -826,7 +823,7 @@ class ChatManager {
                     await this.loadChatMedia(this.currentChatId);
                     closeEditModal();
                 } else {
-                    alert('Ошибка редактирования');
+                    await uiAlert('Ошибка редактирования');
                 }
             } catch (error) {
                 console.error('Edit error:', error);
@@ -900,29 +897,50 @@ class ChatManager {
                 await this.loadChatMedia(this.currentChatId);
                 this.cancelEditing();
             } else {
-                alert('Ошибка редактирования');
+                await uiAlert('Ошибка редактирования');
             }
         } catch (error) {
             console.error('Edit error:', error);
         }
     }
-    // Жалоба (через модалку)
+    // Жалоба (через модалку с выбором причины)
     async reportMessage(messageId) {
         this.closeContextMenu();
         const modal = document.getElementById('reportMessageModal');
         const textarea = document.getElementById('reportReasonInput');
+        const customWrap = document.getElementById('reportCustomReasonWrap');
         const sendBtn = document.getElementById('sendReportBtn');
-        
+        if (!modal || !sendBtn) return;
+
+        const radios = Array.from(modal.querySelectorAll('input[name="reportReason"]'));
+        radios.forEach(r => { r.checked = false; });
         textarea.value = '';
+        if (customWrap) customWrap.style.display = 'none';
+
+        const syncCustomField = () => {
+            const selected = modal.querySelector('input[name="reportReason"]:checked');
+            const needCustom = !!selected && selected.value === 'Другое';
+            if (customWrap) customWrap.style.display = needCustom ? 'block' : 'none';
+            if (needCustom) setTimeout(() => textarea.focus(), 0);
+        };
+        radios.forEach(r => { r.onchange = syncCustomField; });
+
         modal.style.display = 'flex';
-        
-        const sendHandler = async () => {
-            const reason = textarea.value.trim();
-            if (!reason) {
-                alert('Укажите причину жалобы');
+        sendBtn.onclick =  async () => {
+            const selected = modal.querySelector('input[name="reportReason"]:checked');
+            if (!selected) {
+                showToast('Выберите причину жалобы', 'error');
                 return;
             }
-            
+            let reason = selected.value;
+            if (reason === 'Другое') {
+                reason = textarea.value.trim();
+                if (!reason) {
+                    showToast('Укажите свою причину жалобы', 'error');
+                    textarea.focus();
+                    return;
+                }
+            }
             try {
                 const response = await fetch(`/api/chats/messages/${messageId}/report`, {
                     method: 'POST',
@@ -932,19 +950,18 @@ class ChatManager {
                     },
                     body: JSON.stringify({ reason })
                 });
-                
+                const data = await response.json().catch(() => ({}));
                 if (response.ok) {
-                    alert('Жалоба отправлена администратору');
-                    closeReportModal();
+                    showToast(data.message || 'Жалоба отправлена модератору', 'success');
+                    this.closeReportModal();
                 } else {
-                    alert('Ошибка отправки жалобы');
+                    showToast(data.error || 'Ошибка отправки жалобы', 'error');
                 }
             } catch (error) {
                 console.error('Report error:', error);
+                showToast('Ошибка отправки жалобы', 'error');
             }
         };
-        
-        sendBtn.onclick = sendHandler;
     }
 
     // Функции закрытия модалок
@@ -965,7 +982,7 @@ class ChatManager {
 
     // Отрисовка ссылок в сайдбаре
     renderLinks(links) {
-        console.log(' Rendering links, count:', links.length);
+        console.log('🔗 Rendering links, count:', links.length);
         
         const linksContainer = document.querySelector('.sidebar-media-group-links');
         if (!linksContainer) {
@@ -984,7 +1001,7 @@ class ChatManager {
                     ${links.map(link => `
                         <tr class="media-files-element" onclick="window.open('${link.url}', '_blank')">
                             <td class="media-files-element-name">
-                                <span class="file-icon"></span> 
+                                <span class="file-icon">🔗</span> 
                                 <span class="link-url">${this.escapeHtml(link.url.substring(0, 50))}${link.url.length > 50 ? '...' : ''}</span>
                             </td>
                             <td class="media-files-element-senddate">${this.formatDate(link.date)}</td>
@@ -1056,8 +1073,8 @@ class ChatManager {
             editIndicator.className = 'editing-indicator';
             editIndicator.style.cssText = 'display: none; align-items: center; gap: 10px; padding: 8px 15px; background: var(--c_acchalf); border-radius: 20px; margin-bottom: 10px;';
             editIndicator.innerHTML = `
-                <span> Редактирование сообщения</span>
-                <button class="cancel-edit-btn" style="background: none; border: none; cursor: pointer; color: #ff6b6b;"> Отмена</button>
+                <span>✏️ Редактирование сообщения</span>
+                <button class="cancel-edit-btn" style="background: none; border: none; cursor: pointer; color: #ff6b6b;">✖️ Отмена</button>
             `;
             const chatInputSection = document.querySelector('.chat-input-section');
             if (chatInputSection) {
@@ -1118,7 +1135,7 @@ class ChatManager {
             });
         }
         // Контекстное меню для папок
-        document.addEventListener('contextmenu', (e) => {
+        document.addEventListener('contextmenu',  (e) => {
             const folderItem = e.target.closest('.folder-item');
             if (folderItem && folderItem.dataset.folderId && folderItem.dataset.folderId !== 'all') {
                 e.preventDefault();
@@ -1151,7 +1168,7 @@ class ChatManager {
         if (attachBtn && fileInput) {
             attachBtn.addEventListener('click', () => fileInput.click());
             
-            fileInput.addEventListener('change', async (e) => {
+            fileInput.addEventListener('change', (e) => {
                 const files = Array.from(e.target.files);
                 
                 for (const file of files) {
@@ -1243,7 +1260,7 @@ class ChatManager {
             modal.classList.remove('active');
         };
         
-        document.getElementById('createChatSubmitBtn').onclick = async () => {
+        document.getElementById('createChatSubmitBtn').onclick =  async () => {
             await this.createNewChat();
             modal.classList.remove('active');
         };
@@ -1260,7 +1277,7 @@ class ChatManager {
 
         // Отправка сообщения (с учётом режима редактирования)
         if (messageInput) {
-            messageInput.addEventListener('keypress', (e) => {
+            messageInput.addEventListener('keypress',  (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     if (this.editingMessageId) {
@@ -1366,7 +1383,7 @@ class ChatManager {
         const selectedUserIds = Array.from(this.selectedUsers);
         
         if (selectedUserIds.length === 0) {
-            alert('Выберите хотя бы одного пользователя');
+            await uiAlert('Выберите хотя бы одного пользователя');
             return;
         }
         
@@ -1376,14 +1393,14 @@ class ChatManager {
             if (this.isGroupMode()) {
                 const groupName = document.getElementById('groupNameInput').value.trim();
                 if (!groupName) {
-                    alert('Введите название группы');
+                    await uiAlert('Введите название группы');
                     return;
                 }
                 const result = await api.chats.create(selectedUserIds, groupName, true);
                 chatId = result.chatId;
             } else {
                 if (selectedUserIds.length > 1) {
-                    alert('Для личного чата выберите только одного пользователя');
+                    await uiAlert('Для личного чата выберите только одного пользователя');
                     return;
                 }
                 const result = await api.chats.create(selectedUserIds, null, false);
@@ -1402,7 +1419,7 @@ class ChatManager {
             if (typeof showToast === 'function') {
                 showToast(error.message || 'Ошибка создания чата', 'error');
             } else {
-                alert(error.message || 'Ошибка создания чата');
+                await uiAlert(error.message || 'Ошибка создания чата');
             }
         }
     }
@@ -1504,9 +1521,9 @@ class ChatManager {
     // Для групповых чатов
     getGroupAvatar(chat) {
         if (chat.avatar_uri && chat.avatar_uri !== 'null' && chat.avatar_uri !== '') {
-            return `<img src="${chat.avatar_uri}" alt="group" onerror="this.onerror=null; this.parentElement.innerHTML = '<div class=\"avatar-letter\"></div>'">`;
+            return `<img src="${chat.avatar_uri}" alt="group" onerror="this.onerror=null; this.parentElement.innerHTML = '<div class=\"avatar-letter\">👥</div>'">`;
         }
-        return `<div class="avatar-letter"></div>`;
+        return `<div class="avatar-letter">👥</div>`;
     }
    // Сброс состояния (когда чат не выбран)
     resetChatView() {
@@ -1785,7 +1802,7 @@ class ChatManager {
             });
             
             const data = await response.json();
-            console.log(' Media data received:', data);
+            console.log('📁 Media data received:', data);
             
             // Сохраняем файлы и изображения
             this.files = data.files || [];
@@ -1796,7 +1813,7 @@ class ChatManager {
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             
             for (const msg of this.messages) {
-                if (msg.content && !msg.content.startsWith('') && !msg.content.startsWith('')) {
+                if (msg.content && !msg.content.startsWith('📷') && !msg.content.startsWith('📎')) {
                     const urls = msg.content.match(urlRegex);
                     if (urls) {
                         for (const url of urls) {
@@ -1811,7 +1828,7 @@ class ChatManager {
                 }
             }
             this.links = links;
-            console.log(' Links found:', links.length);
+            console.log('🔗 Links found:', links.length);
             // === КОНЕЦ НОВОГО КОДА ===
             
             // Отображаем
@@ -1826,7 +1843,7 @@ class ChatManager {
 
     // Отрисовка изображений в сайдбаре
     renderImages(images) {
-        console.log(' Rendering images, count:', images.length);
+        console.log('🖼️ Rendering images, count:', images.length);
         
         const imagesContainer = document.querySelector('.sidebar-media-group-images');
         if (!imagesContainer) {
@@ -1852,12 +1869,12 @@ class ChatManager {
         html += '</div>';
         
         imagesContainer.innerHTML = html;
-        console.log(' Images rendered');
+        console.log('✅ Images rendered');
     }
 
     // Отрисовка файлов в сайдбаре
     renderFiles(files) {
-        console.log(' Rendering files, count:', files.length);
+        console.log('📄 Rendering files, count:', files.length);
         
         const filesContainer = document.querySelector('.sidebar-media-group-files .media-files');
         if (!filesContainer) {
@@ -1873,7 +1890,7 @@ class ChatManager {
         filesContainer.innerHTML = files.map(file => `
             <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url || file.file_uri}', '${file.name || file.file_name}')">
                 <td class="media-files-element-name">
-                    <span class="file-icon"></span> ${this.escapeHtml(file.name || file.file_name)}
+                    <span class="file-icon">📄</span> ${this.escapeHtml(file.name || file.file_name)}
                 </td>
                 <td class="media-files-element-size">${file.size || '—'}</td>
                 <td class="media-files-element-senddate">${this.formatDate(file.created_at || file.uploaded_at)}</td>
@@ -1931,9 +1948,9 @@ class ChatManager {
     // Для групповых чатов
     getGroupAvatar(chat) {
         if (chat.avatar_uri && chat.avatar_uri !== 'null' && chat.avatar_uri !== '') {
-            return `<img src="${chat.avatar_uri}" alt="group"  onerror="this.onerror=null; this.parentElement.innerHTML = '<div class=\"avatar-letter\"></div>'">`;
+            return `<img src="${chat.avatar_uri}" alt="group"  onerror="this.onerror=null; this.parentElement.innerHTML = '<div class=\"avatar-letter\">👥</div>'">`;
         }
-        return `<div class="avatar-letter" ></div>`;
+        return `<div class="avatar-letter" >👥</div>`;
     }
 
 
@@ -1944,7 +1961,7 @@ class ChatManager {
         if (file && file.url) {
             this.downloadFile(file.url, fileName);
         } else {
-            alert(`Файл "${fileName}" не найден на сервере`);
+            await uiAlert(`Файл "${fileName}" не найден на сервере`);
         }
     }
     // Загрузка файла
@@ -1967,7 +1984,7 @@ class ChatManager {
             }
             
             const result = await response.json();
-            console.log(' File uploaded:', result);
+            console.log('📎 File uploaded:', result);
             
             // ← ГЛАВНОЕ: обновляем сообщения и список чатов
             await this.loadMessages(chatId);
@@ -2008,8 +2025,8 @@ class ChatManager {
         container.style.display = 'block';
         list.innerHTML = this.pendingAttachments.map((file, idx) => `
             <div class="pending-attachment">
-                <span>${file.type.startsWith('image/') ? '' : ''} ${this.escapeHtml(file.name)}</span>
-                <button class="remove-attachment" onclick="chatManager.removePendingAttachment(${idx})"></button>
+                <span>${file.type.startsWith('image/') ? '🖼️' : '📎'} ${this.escapeHtml(file.name)}</span>
+                <button class="remove-attachment" onclick="chatManager.removePendingAttachment(${idx})">✖️</button>
             </div>
         `).join('');
     }
@@ -2052,7 +2069,7 @@ class ChatManager {
         // Обработчик подтверждения
         const confirmBtn = document.getElementById('confirmDeleteBtn');
         const oldHandler = confirmBtn.onclick;
-        confirmBtn.onclick = async () => {
+        confirmBtn.onclick =  async () => {
             await this.executeDelete();
             closeConfirmDeleteModal();
         };
@@ -2075,7 +2092,7 @@ class ChatManager {
                 await this.loadChatMedia(this.currentChatId); // ← ОБНОВЛЯЕМ МЕДИА
                 await this.loadChats();
             } else {
-                alert('Ошибка удаления');
+                await uiAlert('Ошибка удаления');
             }
         } catch (error) {
             console.error('Delete error:', error);
@@ -2133,7 +2150,7 @@ class ChatManager {
         
         let html = `
             <div class="folder-item ${this.currentFolderId === 'all' ? 'active' : ''}" data-folder-id="all" onclick="chatManager.selectFolder('all')">
-                <span class="folder-icon"></span>
+                <span class="folder-icon">💬</span>
                 <span class="folder-name">Все чаты</span>
             </div>
         `;
@@ -2141,7 +2158,7 @@ class ChatManager {
         for (const folder of this.folders) {
             html += `
                 <div class="folder-item ${this.currentFolderId === folder.id ? 'active' : ''}" data-folder-id="${folder.id}" onclick="chatManager.selectFolder(${folder.id})">
-                    <span class="folder-icon"></span>
+                    <span class="folder-icon">📁</span>
                     <span class="folder-name">${this.escapeHtml(folder.name)}</span>
                 </div>
             `;
@@ -2184,7 +2201,7 @@ class ChatManager {
 
     // Создание новой папки
     async createFolder() {
-        const name = prompt('Введите название папки:');
+        const name = await uiPrompt('Введите название папки:');
         if (!name || name.trim() === '') return;
         
         try {
@@ -2203,13 +2220,13 @@ class ChatManager {
             await this.loadFolders();
         } catch (error) {
             console.error('Failed to create folder:', error);
-            alert('Ошибка создания папки');
+            await uiAlert('Ошибка создания папки');
         }
     }
 
     // Редактирование папки
     async editFolder(folderId, currentName) {
-        const newName = prompt('Введите новое название папки:', currentName);
+        const newName = await uiPrompt('Введите новое название папки:', currentName);
         if (!newName || newName.trim() === '' || newName === currentName) return;
         
         try {
@@ -2228,13 +2245,13 @@ class ChatManager {
             await this.loadFolders();
         } catch (error) {
             console.error('Failed to update folder:', error);
-            alert('Ошибка переименования папки');
+            await uiAlert('Ошибка переименования папки');
         }
     }
 
     // Удаление папки
     async deleteFolder(folderId) {
-        // if (!confirm('Удалить эту папку? Чаты не будут удалены.')) return;
+        // if (!await uiConfirm('Удалить эту папку? Чаты не будут удалены.')) return;
         
         try {
             const token = localStorage.getItem('token');
@@ -2254,7 +2271,7 @@ class ChatManager {
             await this.loadChats();
         } catch (error) {
             console.error('Failed to delete folder:', error);
-            alert('Ошибка удаления папки');
+            await uiAlert('Ошибка удаления папки');
         }
     }
     showCreateFolderModal() {
@@ -2272,10 +2289,10 @@ class ChatManager {
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
         
-        newConfirmBtn.onclick = async () => {
+        newConfirmBtn.onclick =  async () => {
             const name = input.value.trim();
             if (!name) {
-                alert('Введите название папки');
+                await uiAlert('Введите название папки');
                 return;
             }
             await this.createFolder(name);
@@ -2300,7 +2317,7 @@ class ChatManager {
             await this.loadFolders();
         } catch (error) {
             console.error('Failed to create folder:', error);
-            alert('Ошибка создания папки');
+            await uiAlert('Ошибка создания папки');
         }
     }
     // Показать модалку редактирования папки
@@ -2318,7 +2335,7 @@ class ChatManager {
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
         
-        newConfirmBtn.onclick = async () => {
+        newConfirmBtn.onclick =  async () => {
             const newName = input.value.trim();
             if (!newName || newName === currentName) {
                 modal.style.display = 'none';
@@ -2341,7 +2358,7 @@ class ChatManager {
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
         
-        newConfirmBtn.onclick = async () => {
+        newConfirmBtn.onclick =  async () => {
             await this.deleteFolder(folderId);
             modal.style.display = 'none';
         };
@@ -2365,7 +2382,7 @@ class ChatManager {
             await this.loadFolders();
         } catch (error) {
             console.error('Failed to rename folder:', error);
-            alert('Ошибка переименования папки');
+            await uiAlert('Ошибка переименования папки');
         }
     }
     showFolderContextMenu(event, folderId, folderName) {
@@ -2389,10 +2406,10 @@ class ChatManager {
         
         menu.innerHTML = `
             <div class="context-menu-item" onclick="chatManager.showEditFolderModal(${folderId}, '${this.escapeHtml(folderName)}')">
-                 Переименовать
+                ✏️ Переименовать
             </div>
             <div class="context-menu-item" onclick="chatManager.showDeleteFolderModal(${folderId})">
-                 Удалить
+                🗑️ Удалить
             </div>
         `;
         
@@ -2434,14 +2451,14 @@ class ChatManager {
         
         let menuItems = `
             <div class="context-menu-item" style="font-weight: 600; border-bottom: 1px solid #eee;">
-                 Переместить в папку
+                📁 Переместить в папку
             </div>
         `;
         
         // Добавляем пункт "Все чаты" (убрать из папки)
         menuItems += `
             <div class="context-menu-item" onclick="chatManager.moveChatToFolder(${chatId}, null)">
-                 Все чаты
+                📬 Все чаты
             </div>
         `;
         
@@ -2449,7 +2466,7 @@ class ChatManager {
         for (const folder of folders) {
             menuItems += `
                 <div class="context-menu-item" onclick="chatManager.moveChatToFolder(${chatId}, ${folder.id})">
-                     ${this.escapeHtml(folder.name)}
+                    📁 ${this.escapeHtml(folder.name)}
                 </div>
             `;
         }
@@ -2509,7 +2526,7 @@ class ChatManager {
             
         } catch (error) {
             console.error('Failed to move chat:', error);
-            alert('Ошибка перемещения чата');
+            await uiAlert('Ошибка перемещения чата');
         }
     }
 
@@ -2586,8 +2603,8 @@ class ChatManager {
                             <div style="font-size: 12px; color: var(--c_surf_txt);">Хочет добавить вас</div>
                         </div>
                         <div style="display: flex; gap: 4px;">
-                            <button class="btn-accept" onclick="chatManager.respondContact(${u.id}, 'accept')" title="Принять"></button>
-                            <button class="btn-decline" onclick="chatManager.respondContact(${u.id}, 'decline')" title="Отклонить"></button>
+                            <button class="btn-accept" onclick="chatManager.respondContact(${u.id}, 'accept')" title="Принять">✓</button>
+                            <button class="btn-decline" onclick="chatManager.respondContact(${u.id}, 'decline')" title="Отклонить">✕</button>
                         </div>
                     </div>
                 `).join('');
@@ -2707,7 +2724,7 @@ class ChatManager {
                 let actionHtml = '';
                 
                 if (acceptedIds.has(user.id)) {
-                    actionHtml = `<span style="color: var(--c_success); font-size: 12px;"> В контактах</span>`;
+                    actionHtml = `<span style="color: var(--c_success); font-size: 12px;">✓ В контактах</span>`;
                 } else if (outgoingIds.has(user.id)) {
                     actionHtml = `<span style="color: var(--c_warning); font-size: 12px;">⏳ Заявка отправлена</span>`;
                 } else if (incomingIds.has(user.id)) {
@@ -2773,6 +2790,17 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+// На странице чата base.js не подключён — создаём локальный showToast, если его нет
+if (typeof window.showToast !== 'function') {
+    window.showToast = function(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+    };
+}
+
 // Инициализация при загрузке страницы
 let chatManager;
 document.addEventListener('DOMContentLoaded', () => {

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     // Создание папки
-    document.getElementById('createFolderBtn').onclick = async () => {
+    document.getElementById('createFolderBtn').onclick = () => {
         document.getElementById('newFolderName').value = '';
         document.getElementById('createFolderModal').style.display = 'flex';
         document.getElementById('newFolderName').focus();
@@ -77,7 +77,7 @@ document.getElementById('fileUploadInput').onchange = (e) => {
 };
 
 // 3. Сама логика загрузки с прогресс-баром
-async function uploadFiles(files) {
+ async function uploadFiles(files) {
     // Создаём контейнер для прогресса, если его нет
     let progressContainer = document.getElementById('uploadProgressContainer');
     if (!progressContainer) {
@@ -198,7 +198,7 @@ function renderBreadcrumbs() {
     container.innerHTML = html;
 }
 
-async function loadFolder() {
+ async function loadFolder() {
     renderBreadcrumbs();
     const tbody = document.getElementById('filesTableBody');
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Загрузка...</td></tr>';
@@ -301,7 +301,7 @@ function handleDragLeave(e) {
     e.currentTarget.classList.remove('drag-over');
 }
 
-async function handleDrop(e, targetFolderId) {
+ async function handleDrop(e, targetFolderId) {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
     
@@ -335,7 +335,7 @@ async function handleDrop(e, targetFolderId) {
 }
 
 // Удаление
-async function deleteFile(id) {
+ function deleteFile(id) {
     showCustomConfirm(
         ' Удаление файла',
         'Вы уверены, что хотите удалить этот файл? Это действие нельзя отменить.',
@@ -355,7 +355,7 @@ async function deleteFile(id) {
     );
 }
 
-async function deleteFolder(id) {
+ function deleteFolder(id) {
     showCustomConfirm(
         ' Удаление папки',
         'Удалить папку? Все файлы внутри также будут удалены.',
@@ -382,7 +382,7 @@ function formatSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-async function loadStats() {
+ async function loadStats() {
     // ... (оставляем как было, только не забываем, что /api/files/stats работает)
     try {
         const res = await fetch('/api/files/stats', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
@@ -414,7 +414,7 @@ function closeFolderModal() {
 }
 
 // Обработчик кнопки "Создать" в модалке папки
-document.getElementById('confirmCreateFolderBtn').onclick = async () => {
+document.getElementById('confirmCreateFolderBtn').onclick =  async () => {
     const name = document.getElementById('newFolderName').value.trim();
     if (!name) {
         showToast('Введите название папки', 'error');

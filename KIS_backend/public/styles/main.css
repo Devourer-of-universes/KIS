@@ -1361,6 +1361,15 @@ table.data-table tbody tr:hover td {
     display: flex;
     flex-direction: column;
 }
+.modal-content > form,
+.admin-modal .modal-content > form,
+.modal-container > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
 .modal-content.modal-sm, .admin-modal .modal-content.modal-sm { width: min(100%, 520px); max-width: 520px; }
 .modal-content.modal-md, .admin-modal .modal-content.modal-md { width: min(100%, 720px); max-width: 720px; }
 .modal-content.modal-lg, .admin-modal .modal-content.modal-lg { width: min(100%, 920px); max-width: 920px; }
@@ -1413,9 +1422,52 @@ table.data-table tbody tr:hover td {
     color: var(--ui-text);
 }
 
+/* Внутренние отступы простых модалок; формы используют свои секции */
+.modal-body:not(:has(.modal-form)) {
+    padding: 20px 24px;
+}
+
 .modal-close,
-.sec-btn-close,
 .task-modal-close,
+.task-close-btn {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ui-text-muted);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.modal-close:hover,
+.task-modal-close:hover,
+.task-close-btn:hover {
+    background: var(--ui-accent-soft);
+    border-color: color-mix(in srgb, var(--ui-accent) 35%, var(--ui-border));
+    color: var(--ui-accent);
+}
+.modal-close:focus-visible,
+.task-modal-close:focus-visible,
+.task-close-btn:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 2px;
+}
+.modal-close img,
+.task-modal-close img,
+.task-close-btn img,
+.custom-modal-close img {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border-radius: 0;
+}
 .user-selector-item.selected {
     background: rgba(81, 148, 255, 0.1);
 }
@@ -1637,11 +1689,19 @@ table.data-table tbody tr:hover td {
 
 .custom-modal-content {
     background: var(--c_surf, white);
-    border-radius: 20px;
+    border-radius: var(--ui-modal-radius, 20px);
     width: 450px;
     max-width: 90%;
+    max-height: calc(100vh - 48px);
     box-shadow: var(--ui-modal-shadow);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.custom-modal-content > .custom-modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .custom-modal-header {
@@ -1651,6 +1711,19 @@ table.data-table tbody tr:hover td {
     padding: 16px 20px;
     background: var(--c_acc, #5194ff);
     color: white;
+    flex-shrink: 0;
+    position: relative;
+}
+.custom-modal-header::after,
+.custom-modal .modal-header::after {
+    content: '';
+    position: absolute;
+    left: 20px;
+    bottom: -1px;
+    width: 56px;
+    height: 2px;
+    background: var(--ui-accent, var(--c_acc, #5194ff));
+    border-radius: 2px;
 }
 
 .custom-modal-header h3 {
@@ -1665,12 +1738,16 @@ table.data-table tbody tr:hover td {
     font-size: 24px;
     cursor: pointer;
     padding: 0;
-    width: 32px;
-    height: 32px;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+}
+
+.custom-modal-close img {
+    filter: var(--icon-filter-on-accent) !important;
 }
 
 .custom-modal-close:hover {
@@ -1702,6 +1779,7 @@ table.data-table tbody tr:hover td {
     gap: 12px;
     padding: 16px 20px;
     border-top: 1px solid var(--c_surf_txt, #eee);
+    flex-shrink: 0;
 }
 .toast-notification{
     position: fixed;
@@ -1731,6 +1809,7 @@ table.data-table tbody tr:hover td {
 .base-sec-modal .modal-content, .admin-modal .modal-content, .modal-container, .modal-content { background: var(--ui-modal-bg); border: 1px solid var(--ui-border); box-shadow: var(--ui-modal-shadow); border-radius: var(--ui-modal-radius); }
 .base-sec-modal .modal-header, .admin-modal .modal-header, .modal-header { background: transparent; color: var(--ui-text); border-bottom: 1px solid var(--ui-border); }
 .base-sec-modal .modal-footer, .admin-modal .modal-footer, .modal-footer { background: var(--ui-modal-footer-bg); border-top: 1px solid var(--ui-border); }
+.modal-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; padding: 16px 24px; }
 .base-table, .admin-table, .tasks-table, .docs-table { background: var(--ui-table-bg); border: 1px solid var(--ui-table-border); border-radius: var(--ui-table-radius); }
 .base-table th, .admin-table th, .tasks-table th, .docs-table th { background: var(--ui-table-header-bg); color: var(--ui-table-header-text); border-bottom: 1px solid var(--ui-table-border); }
 .base-table td, .admin-table td, .tasks-table td, .docs-table td { color: var(--ui-text); border-bottom: 1px solid var(--ui-table-border); }
@@ -1790,3 +1869,37 @@ img[src*="Focused"],
 img[src*="avatar_for_profile"] {
     filter: none !important;
 }
+
+
+/* Type picker / selection modals */
+.modal-lead { margin: 0 0 16px; color: var(--ui-text-muted); font-size: 14px; line-height: 1.5; }
+.type-picker-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.type-picker-card { width: 100%; min-height: 168px; padding: 20px 16px; gap: 10px; background: var(--ui-surface-2); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: none; text-align: center; align-items: center; justify-content: flex-start; }
+.type-picker-card:hover:not(:disabled) { background: color-mix(in srgb, var(--c_acc) 8%, var(--ui-surface)); border-color: color-mix(in srgb, var(--c_acc) 35%, var(--ui-border)); transform: translateY(-2px); box-shadow: var(--ui-shadow-sm); }
+.type-picker-card:disabled,.type-picker-card[disabled] { opacity:.55; cursor:not-allowed; transform:none; }
+.type-picker-card .type-icon { width:56px; height:56px; margin:0; border-radius:14px; background: color-mix(in srgb, var(--c_acc) 10%, var(--ui-surface)); border:1px solid color-mix(in srgb, var(--c_acc) 18%, var(--ui-border)); }
+.type-picker-card .type-icon img { width:28px; height:28px; padding:0; background:transparent; border-radius:0; object-fit:contain; }
+.type-picker-card h4 { margin:0; font-size:15px; font-weight:600; color:var(--ui-text); }
+.type-picker-card .type-desc { margin:0; font-size:13px; line-height:1.45; color:var(--ui-text-muted); }
+
+/* modal scroll safety */
+.modal-body,
+.custom-modal-body,
+.admin-modal .modal-body,
+.modal-container .modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.custom-modal-content,
+.admin-modal .modal-content,
+.modal-content {
+    max-height: calc(100vh - 48px);
+}
+
+
+/* ===== Фильтры статусов модерации ===== */
+.moderation-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 14px; }
+.moderation-tabs .buttonbase { border: 1px solid var(--ui-border); background: var(--ui-surface); color: var(--ui-text); }
+.moderation-tabs .buttonbase:hover { border-color: var(--ui-accent); color: var(--ui-accent); }
+.moderation-tabs .buttonbase.active { background: var(--ui-accent); color: var(--ui-accent-contrast); border-color: var(--ui-accent); }

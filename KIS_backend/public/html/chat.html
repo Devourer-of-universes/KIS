@@ -316,13 +316,47 @@
 
     <!-- Модальное окно для жалобы -->
     <div id="reportMessageModal" class="custom-modal" style="display: none;">
-        <div class="custom-modal-content">
+        <div class="custom-modal-content modal-sm">
             <div class="custom-modal-header">
-                <h3> Пожаловаться на сообщение</h3>
+                <h3><img src="../materials/icons8-предупреждение-96.png" class="ui-icon ui-icon-inline" alt=""> Пожаловаться на сообщение</h3>
                 <button class="custom-modal-close" onclick="closeReportModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="custom-modal-body">
-                <textarea id="reportReasonInput" rows="3" placeholder="Укажите причину жалобы..."></textarea>
+                <p class="report-modal-hint">Выберите причину жалобы. Модератор получит её вместе с текстом сообщения.</p>
+                <div class="report-reason-list" id="reportReasonList">
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Не соответствует правилам мессенджера">
+                        <span>Не соответствует правилам мессенджера</span>
+                    </label>
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Спам или реклама">
+                        <span>Спам или реклама</span>
+                    </label>
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Оскорбление или грубость">
+                        <span>Оскорбление или грубость</span>
+                    </label>
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Угрозы или преследование">
+                        <span>Угрозы или преследование</span>
+                    </label>
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Неприемлемый контент">
+                        <span>Неприемлемый контент</span>
+                    </label>
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Распространение личной информации">
+                        <span>Распространение личной информации</span>
+                    </label>
+                    <label class="report-reason-option">
+                        <input type="radio" name="reportReason" value="Другое">
+                        <span>Другое (укажите свою причину)</span>
+                    </label>
+                </div>
+                <div class="report-custom-reason" id="reportCustomReasonWrap" style="display:none;">
+                    <label for="reportReasonInput">Своя причина жалобы</label>
+                    <textarea id="reportReasonInput" rows="3" maxlength="500" placeholder="Опишите, что не так с сообщением..."></textarea>
+                </div>
             </div>
             <div class="custom-modal-footer">
                 <button class="buttonbase" onclick="closeReportModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
@@ -332,13 +366,17 @@
     </div>
     <!-- Модальное окно подтверждения удаления -->
     <div id="confirmDeleteModal" class="custom-modal" style="display: none;">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 440px;">
             <div class="modal-header">
-                <h3> Подтверждение удаления</h3>
+                <h3 id="confirmDeleteTitle">Подтверждение удаления</h3>
                 <button class="modal-close" onclick="closeConfirmDeleteModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
             </div>
             <div class="modal-body">
-                <p>Вы уверены, что хотите удалить это сообщение?</p>
+                <p id="confirmDeleteText">Вы уверены, что хотите удалить это сообщение?</p>
+                <div id="moderationDeleteReasonWrap" style="display:none; margin-top:12px;">
+                    <label for="moderationDeleteReason" style="display:block; font-size:12px; margin-bottom:6px; color:var(--c_surf_txt);">Причина удаления (увидит автор)</label>
+                    <textarea id="moderationDeleteReason" rows="3" style="width:100%; resize:vertical;" placeholder="Например: нарушение правил общения"></textarea>
+                </div>
                 <p style="font-size: 12px; color: #999; margin-top: 10px;">Это действие нельзя отменить.</p>
             </div>
             <div class="modal-footer">

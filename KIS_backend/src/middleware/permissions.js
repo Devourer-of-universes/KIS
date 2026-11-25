@@ -26,10 +26,10 @@ const checkPermission = (resource, action = 'view') => {
             
             const permissions = result.rows[0].permissions || {};
             
-            // Проверяем конкретное право
-            const hasPermission = permissions[resource]?.[action] === true;
-            
-            if (!hasPermission && !permissions[resource] === true) {
+            const resPerm = permissions[resource];
+            const val = resPerm && typeof resPerm === 'object' ? resPerm[action] : resPerm;
+            const hasPermission = permissions.all === true || resPerm === true || val === true || val === 'all' || (Array.isArray(val) && val.length > 0);
+            if (!hasPermission) {
                 return res.status(403).json({ error: `Нет права на ${action} ресурса ${resource}` });
             }
             
@@ -65,7 +65,9 @@ const adminPanelAccess = async (req, res, next) => {
         
         const permissions = result.rows[0].permissions || {};
         
-        if (!permissions.admin_panel) {
+        const ap = permissions.admin_panel;
+        const hasAdminPanel = permissions.all === true || ap === true || ap === 'all' || (ap && typeof ap === 'object' && (ap.access === true || ap.access === 'all'));
+        if (!hasAdminPanel) {
             return res.status(403).json({ error: 'Доступ к панели администратора запрещён' });
         }
         

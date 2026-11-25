@@ -1,3 +1,12 @@
+// Fallbacks when loaded outside full admin page
+if (typeof openAdminSection !== 'function') window.openAdminSection = function(id){ document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active')); document.getElementById(id)?.classList.add('active'); };
+if (typeof setActiveNavButton !== 'function') window.setActiveNavButton = function(btn){ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn?.classList.add('active'); };
+if (typeof showToast !== 'function') window.showToast =  async function(msg,type='info'){ console[type==='error'?'error':'log'](msg); await uiAlert(msg); };
+if (typeof debounce !== 'function') window.debounce = function(fn,ms=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+if (typeof escapeHtml !== 'function') window.escapeHtml = function(str){ return String(str??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); };
+if (typeof openDocSingleModal !== 'function') window.openDocSingleModal = function(id){ const m=document.getElementById(id); if(!m) return; document.querySelectorAll('.admin-modal.active').forEach(x=>{ if(x.id!==id) x.classList.remove('active'); }); m.classList.add('active'); document.body.classList.add('modal-open'); };
+if (typeof closeDocModal !== 'function') window.closeDocModal = function(id){ const m=document.getElementById(id); if(!m) return; m.classList.remove('active'); if(!document.querySelectorAll('.admin-modal.active').length) document.body.classList.remove('modal-open'); };
+
 // =====================================================
 // АДМИН-ПАНЕЛЬ: МОДУЛЬ ДОКУМЕНТООБОРОТА
 // =====================================================
@@ -103,24 +112,22 @@ function initDocumentAdmin() {
 function initDocumentAdminButton() {
     const btn = document.getElementById('nav-btn-documents');
     if (!btn) return;
-
-    // Проверяем права
     const perms = window.currentUser?.permissions?.documents || {};
-    const hasAccess = 
+    const hasAccess =
         window.currentUser?.is_super_admin === true ||
         perms.manage_types === true ||
         perms.manage_templates === true ||
         perms.manage_counterparties === true;
-
     if (hasAccess) {
         btn.style.display = '';
-        btn.addEventListener('click', () => {
-            openAdminSection('documents-section');
-            setActiveNavButton(btn);
-            // Загружаем данные при первом входе
-            loadDocumentTypes();
-            loadWorkflowTemplatesForSelects();
-        });
+        if (btn.tagName === 'BUTTON' && document.getElementById('documents-section')) {
+            btn.addEventListener('click', () => {
+                openAdminSection('documents-section');
+                setActiveNavButton(btn);
+                loadDocumentTypes();
+                loadWorkflowTemplatesForSelects();
+            });
+        }
     }
 }
 
@@ -1570,7 +1577,7 @@ async function duplicateWorkflowTemplate(templateId) {
     const wf = workflowTemplatesList.find(w => w.id === templateId);
     if (!wf) return;
 
-    const newName = prompt('Название копии:', `${wf.name} (копия)`);
+    const newName = await uiPrompt('Название копии:', `${wf.name} (копия)`);
     if (!newName) return;
 
     try {

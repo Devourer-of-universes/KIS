@@ -120,38 +120,32 @@ class Message {
     // Жалоба на сообщение
     static async report(messageId, reporterId, reason) {
         const message = await query(
-            `SELECT m.*, u.surname, u.name 
+            `SELECT m.*, u.surname, u.name
              FROM messages m
              JOIN users u ON m.user_id = u.id
              WHERE m.id = $1 AND m.is_deleted = false`,
             [messageId]
         );
-        
-        if (message.rows.length === 0) {
-            throw new Error('Message not found');
-        }
-        
-        // Создаем уведомление для админов
-        const admins = await User.getAdmins();
-        
-        for (const admin of admins) {
+        if (message.rows.length === 0) throw new Error('Message not found');
+        const msg = message.rows[0];
+        const report = await query(
+            `INSERT INTO message_reports (message_id, chat_id, reported_user_id, reporter_id, reason)
+             VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+            [messageId, msg.chat_id, msg.user_id, reporterId, reason]
+        );
+        const moderators = await query(`
+            SELECT u.id FROM users u JOIN roles ro ON ro.id=u.role_id
+            WHERE u.deleted_at IS NULL AND u.status='active' AND u.id <> $1
+              AND (u.is_super_admin=true OR COALESCE((ro.permissions->'moderation'->>'view')::boolean,false)=true OR COALESCE((ro.permissions->'moderation'->>'manage')::boolean,false)=true OR COALESCE((ro.permissions->>'admin_panel')::boolean,false)=true)
+        `, [reporterId]);
+        for (const mod of moderators.rows) {
             await query(
-                `INSERT INTO notifications (user_id, type, title, content, data)
-                 VALUES ($1, 'report', 'Жалоба на сообщение', 
-                         'Пользователь пожаловался на сообщение', 
-                         $2)`,
-                [admin.id, JSON.stringify({
-                    messageId: messageId,
-                    messageContent: message.rows[0].content,
-                    messageAuthor: `${message.rows[0].surname} ${message.rows[0].name}`,
-                    reporterId: reporterId,
-                    reason: reason,
-                    chatId: message.rows[0].chat_id
-                })]
+                `INSERT INTO notifications (user_id, category, priority, title, content, link_type, link_id, sender_id)
+                 VALUES ($1,'system','high','Жалоба на сообщение',$2,'chat_report',$3,$4)`,
+                [mod.id, `Жалоба на сообщение от ${msg.surname} ${msg.name}. Причина: ${reason}`, report.rows[0].id, reporterId]
             );
         }
-        
-        return true;
+        return { success: true, reportId: report.rows[0].id };
     }
 
     // Поиск сообщений

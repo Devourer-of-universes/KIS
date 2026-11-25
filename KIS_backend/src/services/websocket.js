@@ -243,13 +243,9 @@ async function sendOfflineNotifications(chatId, senderId, messageData) {
         if (!isOnline) {
             // Создаем уведомление в БД
             await query(
-                `INSERT INTO notifications (user_id, type, title, content, data)
-                 VALUES ($1, 'message', 'Новое сообщение', $2, $3)`,
-                [participant.user_id, messageData.content, JSON.stringify({
-                    chatId: chatId,
-                    messageId: messageData.id,
-                    senderName: `${messageData.surname} ${messageData.name}`
-                })]
+                `INSERT INTO notifications (user_id, category, priority, title, content, link_type, link_id, sender_id)
+                 VALUES ($1, 'message', 'normal', 'Новое сообщение', $2, 'chat', $3, $4)`,
+                [participant.user_id, messageData.content, chatId, messageData.user_id]
             );
         }
     }

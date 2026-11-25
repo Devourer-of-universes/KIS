@@ -15,7 +15,7 @@ function setToken(token) {
 }
 
 // Базовый запрос с авторизацией
-async function request(endpoint, options = {}) {
+ async function request(endpoint, options = {}) {
     const url = `${API_URL}${endpoint}`;
     const headers = {
         'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ const api = {
             body: JSON.stringify(userData)
         }),
         
-        login: async (emailOrUsername, password) => {
+        login:  async (emailOrUsername, password) => {
             try {
                 const result = await request('/auth/login', {
                     method: 'POST',

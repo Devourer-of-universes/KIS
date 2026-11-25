@@ -12,7 +12,7 @@ let docViewState = {
 // ВХОДНАЯ ТОЧКА
 // =====================================================
 
-async function openDocumentView(docId) {
+ async function openDocumentView(docId) {
     docViewState.documentId = docId;
     docViewState.document = null;
     docViewState.attachments = [];
@@ -41,7 +41,7 @@ function closeDocumentView() {
 // ЗАГРУЗКА
 // =====================================================
 
-async function loadDocumentForView(docId) {
+ async function loadDocumentForView(docId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/documents/${docId}`, {
@@ -329,8 +329,8 @@ function renderDocViewAttachments(attachments) {
     `).join('');
 }
 
-async function deleteDocViewAttachment(attachmentId) {
-    if (!confirm('Удалить этот файл?')) return;
+ async function deleteDocViewAttachment(attachmentId) {
+    if (!await uiConfirm('Удалить этот файл?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-async function handleDocViewFileUpload(e) {
+ async function handleDocViewFileUpload(e) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     
@@ -593,8 +593,8 @@ function renderDocViewActions(doc) {
         }
     }
 }
-async function archiveDocument(docId) {
-    if (!confirm('Переместить документ в архив? После этого он станет неактивным.')) return;
+ async function archiveDocument(docId) {
+    if (!await uiConfirm('Переместить документ в архив? После этого он станет неактивным.')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -635,7 +635,7 @@ function openDocumentEdit(docId) {
     // TODO: открыть base-section-document-card с заполненными полями
 }
 
-async function submitDocumentForApproval(docId) {
+function submitDocumentForApproval(docId) {
     const doc = docViewState.document;
     if (!doc) return;
     
@@ -648,7 +648,7 @@ async function submitDocumentForApproval(docId) {
     openSubmitApprovalModal(doc, steps);
 }
 
-async function registerDocument(docId) {
+ async function registerDocument(docId) {
     // 1. Получаем превью номера
     try {
         const token = localStorage.getItem('token');
@@ -702,7 +702,7 @@ async function registerDocument(docId) {
         
         document.body.appendChild(modal);
         
-        document.getElementById('confirmRegisterDocBtn').onclick = async () => {
+        document.getElementById('confirmRegisterDocBtn').onclick =  async () => {
             const btn = document.getElementById('confirmRegisterDocBtn');
             btn.disabled = true;
             btn.textContent = '⏳...';
@@ -742,8 +742,8 @@ function closeRegisterDocModal() {
     document.getElementById('registerDocModal')?.remove();
 }
 
-async function deleteDocView() {
-    if (!confirm('Удалить документ? Это действие нельзя отменить.')) return;
+ async function deleteDocView() {
+    if (!await uiConfirm('Удалить документ? Это действие нельзя отменить.')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -767,7 +767,7 @@ async function deleteDocView() {
 // PREVIEW
 // =====================================================
 
-async function loadDocViewPreview(doc) {
+ async function loadDocViewPreview(doc) {
     const container = document.getElementById('docViewPreviewContent');
     
     // Если есть сгенерированный файл — генерим preview из него
@@ -824,7 +824,7 @@ async function loadDocViewPreview(doc) {
     }
 }
 
-async function refreshDocViewPreview() {
+ async function refreshDocViewPreview() {
     if (docViewState.document) {
         await loadDocViewPreview(docViewState.document);
     }
@@ -840,7 +840,7 @@ function formatFileSize(bytes) {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
-async function submitDocumentForApproval(docId) {
+ async function submitDocumentForApproval(docId) {
     const doc = docViewState.document;
     if (!doc) return;
     
@@ -987,7 +987,7 @@ async function openSubmitApprovalModal(doc, steps, templates) {
     if (needsTemplate) {
         const select = document.getElementById('submitApprovalTemplateSelect');
         
-        const loadTemplateSteps = async (templateId) => {
+        const loadTemplateSteps =  async (templateId) => {
             window.__modalRouteState.selectedTemplateId = templateId ? parseInt(templateId) : null;
             
             if (!templateId) {
@@ -1045,7 +1045,7 @@ async function openSubmitApprovalModal(doc, steps, templates) {
     }
     
     // Кнопка "Отправить"
-    document.getElementById('confirmSubmitApprovalBtn').onclick = async () => {
+    document.getElementById('confirmSubmitApprovalBtn').onclick =  async () => {
         const comment = document.getElementById('submitApprovalComment').value.trim();
         
         const select = document.getElementById('submitApprovalTemplateSelect');
@@ -1338,7 +1338,7 @@ function closeSubmitApprovalModal() {
 }
 
 // Отправка
-async function doSubmitApproval(docId, comment, workflowTemplateId, routeSteps, saveAsTemplateName) {
+ async function doSubmitApproval(docId, comment, workflowTemplateId, routeSteps, saveAsTemplateName) {
     const btn = document.getElementById('confirmSubmitApprovalBtn');
     if (btn) {
         btn.disabled = true;
@@ -1483,14 +1483,14 @@ function updateModalStepAssigneeType(idx, newType) {
 }
 
 // Удалить этап
-function removeModalStep(idx) {
+ async function removeModalStep(idx) {
     const state = window.__modalRouteState;
     if (!state) return;
     
     const step = state.steps[idx];
     const stepName = step.role_label || 'этап';
     
-    if (!confirm(`Удалить этап "${stepName}"?`)) return;
+    if (!await uiConfirm(`Удалить этап "${stepName}"?`)) return;
     
     state.steps.splice(idx, 1);
     
@@ -1689,7 +1689,7 @@ function openApproveModal(docId) {
     
     document.body.appendChild(modal);
     
-    document.getElementById('confirmApproveBtn').onclick = async () => {
+    document.getElementById('confirmApproveBtn').onclick =  async () => {
         const comment = document.getElementById('approveComment').value.trim();
         await doApprove(docId, comment);
     };
@@ -1699,7 +1699,7 @@ function closeApproveModal() {
     document.getElementById('approveDocModal')?.remove();
 }
 
-async function doApprove(docId, comment) {
+ async function doApprove(docId, comment) {
     const btn = document.getElementById('confirmApproveBtn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
     
@@ -1776,7 +1776,7 @@ function openRejectModal(docId) {
     
     document.body.appendChild(modal);
     
-    document.getElementById('confirmRejectBtn').onclick = async () => {
+    document.getElementById('confirmRejectBtn').onclick =  async () => {
         const comment = document.getElementById('rejectComment').value.trim();
         if (!comment) {
             showToast('Укажите причину отклонения', 'error');
@@ -1790,7 +1790,7 @@ function closeRejectModal() {
     document.getElementById('rejectDocModal')?.remove();
 }
 
-async function doReject(docId, comment) {
+ async function doReject(docId, comment) {
     const btn = document.getElementById('confirmRejectBtn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
     

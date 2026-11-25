@@ -138,7 +138,7 @@ function getPriorityLabel(priority) {
 
 // - loadTasks()
 // Загрузка задач из БД
-async function loadTasks() {
+ async function loadTasks() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/tasks', {
@@ -185,7 +185,7 @@ function openTaskView(taskId) {
     fetchTaskDataFull(taskId);
 }
 
-async function fetchTaskDataFull(taskId) {
+ async function fetchTaskDataFull(taskId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/tasks/${taskId}`, {
@@ -301,7 +301,7 @@ function updateProgressFull(value) {
     document.getElementById('progressValueFull').textContent = value + '%';
 }
 
-async function loadCommentsFull(taskId) {
+ async function loadCommentsFull(taskId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/tasks/${taskId}/comments`, {
@@ -347,7 +347,7 @@ function renderCommentsFull(comments) {
     }).join('');
 }
 
-async function addCommentFull(taskId) {
+ async function addCommentFull(taskId) {
     const content = document.getElementById('newCommentFull')?.value.trim();
     if (!content) {
         showToast('Введите текст комментария', 'error');
@@ -379,7 +379,7 @@ async function addCommentFull(taskId) {
     }
 }
 
-async function saveTaskFull(taskId) {
+ async function saveTaskFull(taskId) {
     const title = document.getElementById('taskTitleFull')?.value.trim();
     const description = document.getElementById('taskDescriptionFull')?.value;
     const startDate = document.getElementById('taskStartDateFull')?.value;
@@ -435,8 +435,8 @@ async function saveTaskFull(taskId) {
     }
 }
 
-async function deleteTaskFull(taskId) {
-    if (!confirm('Удалить эту задачу?')) return;
+ async function deleteTaskFull(taskId) {
+    if (!await uiConfirm('Удалить эту задачу?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -471,7 +471,7 @@ function closeTaskModal() {
 }
 // - saveTask()
 // Сохранение задачи
-async function saveTask(taskId) {
+ async function saveTask(taskId) {
     const title = document.getElementById('taskTitle')?.value.trim();
     const description = document.getElementById('taskDescription')?.value;
     const startDate = document.getElementById('taskStartDate')?.value;
@@ -552,7 +552,7 @@ async function saveTask(taskId) {
 }
 // - addComment()
 // Добавление комментария
-async function addComment(taskId) {
+ async function addComment(taskId) {
     const content = document.getElementById('newComment')?.value.trim();
     if (!content) {
         showToast('Введите текст комментария', 'error');
@@ -593,8 +593,8 @@ async function addComment(taskId) {
 }
 // - deleteTask()
 // Удаление задачи
-async function deleteTask(taskId) {
-    if (!confirm('Удалить эту задачу?')) return;
+ async function deleteTask(taskId) {
+    if (!await uiConfirm('Удалить эту задачу?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -644,7 +644,7 @@ function closeQuickCreateTaskModal() {
     closeModal('quickCreateTaskModal');
 }
 
-async function quickCreateTask() {
+ async function quickCreateTask() {
     const title = document.getElementById('quickTaskTitle')?.value.trim();
     const description = document.getElementById('quickTaskDesc')?.value;
     const startDate = document.getElementById('quickTaskStart')?.value;
@@ -690,7 +690,7 @@ async function quickCreateTask() {
 
 // - toggleTaskStatus()
 // Переключение статуса задачи
-async function toggleTaskStatus(taskId, event) {
+ async function toggleTaskStatus(taskId, event) {
     event.stopPropagation();
     const task = currentTasks.find(t => t.id === taskId);
     if (!task) return;
@@ -777,7 +777,7 @@ function renderComments(comments) {
 // =====================================================
 // - loadTaskAssignees()
 // Загрузка списка пользователей для выбора исполнителя
-async function loadTaskAssignees() {
+ async function loadTaskAssignees() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/users', {
@@ -807,7 +807,7 @@ async function loadTaskAssignees() {
 }
 // - loadRelatedChats()
 // Загрузка списка чатов для привязки
-async function loadRelatedChats() {
+ async function loadRelatedChats() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/chats', {
@@ -884,7 +884,7 @@ function updateTaskPreview() {
 }
 // - createTaskFromEditor()
 // Создание задачи
-async function createTaskFromEditor() {
+ async function createTaskFromEditor() {
     const title = document.getElementById('taskTitle')?.value.trim();
     const description = document.getElementById('taskDescription')?.value;
     const taskType = document.getElementById('taskType')?.value;
@@ -959,8 +959,8 @@ async function createTaskFromEditor() {
             closeWindow('base-section-task-new');
             
             // Показываем уведомление с предложением перейти к задаче
-            setTimeout(() => {
-                const goToTask = confirm(`Задача "${title}" создана. Перейти к ней?`);
+            setTimeout( async () => {
+                const goToTask = await uiConfirm(`Задача "${title}" создана. Перейти к ней?`);
                 if (goToTask && result.task) {
                     openTaskView(result.task.id);
                 }
@@ -998,7 +998,7 @@ function clearTaskForm() {
 }
 // - saveTaskDraft()
 // Сохранение черновика
-async function saveTaskDraft() {
+function saveTaskDraft() {
     const title = document.getElementById('taskTitle')?.value;
     if (!title) {
         showToast('Введите название задачи перед сохранением', 'error');
@@ -1024,11 +1024,11 @@ async function saveTaskDraft() {
 }
 // - loadTaskDraft()
 // Загрузка черновика
-function loadTaskDraft() {
+ async function loadTaskDraft() {
     const saved = localStorage.getItem('taskDraft');
     if (saved) {
         const draft = JSON.parse(saved);
-        if (confirm('Найден сохранённый черновик. Загрузить?')) {
+        if (await uiConfirm('Найден сохранённый черновик. Загрузить?')) {
             document.getElementById('taskTitle').value = draft.title || '';
             document.getElementById('taskDescription').value = draft.description || '';
             document.getElementById('taskType').value = draft.taskType || 'simple';
@@ -1181,7 +1181,7 @@ function initTaskEditorHandlers() {
 // 8. ВЫБОР ТИПА ЗАДАЧИ (СЕКЦИЯ TASK-NEW-TYPESELECTOR)
 // =====================================================
 // - loadUserTemplates()
-async function loadUserTemplates() {
+ async function loadUserTemplates() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/task-templates', {
@@ -1349,7 +1349,7 @@ function openTaskCreate() {
     // Открываем секцию
     openWindow('base-section-task-create');
 }
-async function openTaskFromTemplate(templateId) {
+ async function openTaskFromTemplate(templateId) {
     console.log('openTaskFromTemplate called with id:', templateId);
     
     // Ищем шаблон в загруженном списке
@@ -1403,7 +1403,7 @@ async function openTaskFromTemplate(templateId) {
     openTaskFormFromTemplate(template);
 }
 // При выборе шаблона из списка
-async function selectTemplateForCreate(templateId) {
+ async function selectTemplateForCreate(templateId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/task-templates/${templateId}`, {
@@ -1602,7 +1602,7 @@ function renderCustomFieldsInTaskForm(fields) {
 }
 
 // Создание задачи
-async function createSimpleTask() {
+ async function createSimpleTask() {
     const title = document.getElementById('taskTitle')?.value.trim();
     const deadline = document.getElementById('taskDeadline')?.value;
     const assignee = document.getElementById('taskAssignee')?.value;
@@ -1670,7 +1670,7 @@ async function createSimpleTask() {
 }
 
 // Загрузка пользователей для селектов
-async function loadTaskUsers() {
+ async function loadTaskUsers() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/users', {
@@ -1757,7 +1757,7 @@ function initTaskEditorHandlers() {
 }
 
 // Создание шаблона
-async function createTemplate() {
+ async function createTemplate() {
     const name = document.getElementById('templateName')?.value.trim();
     const description = document.getElementById('templateDescription')?.value;
     const templateDataStr = document.getElementById('templateData')?.value;
@@ -1802,7 +1802,7 @@ async function createTemplate() {
 }
 
 // Управление шаблонами
-async function openManageTemplates() {
+ async function openManageTemplates() {
     await loadUserTemplates();
     
     const container = document.getElementById('templatesListContainer');
@@ -1832,8 +1832,8 @@ async function openManageTemplates() {
     openModal('manageTemplatesModal');
 }
 
-async function deleteTemplate(templateId) {
-    if (!confirm('Удалить этот шаблон?')) return;
+ async function deleteTemplate(templateId) {
+    if (!await uiConfirm('Удалить этот шаблон?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -2252,7 +2252,7 @@ function collectFormData() {
 }
 
 // Создание задачи из формы
-async function submitTaskFromTemplate() {
+ async function submitTaskFromTemplate() {
     const formData = collectFormData();
     if (!formData) return;
     
@@ -2391,8 +2391,8 @@ async function submitTaskFromTemplate() {
             renderDashboardTasks();
             
             // Предложение открыть созданную задачу
-            setTimeout(() => {
-                if (result.task && confirm('Задача создана. Открыть?')) {
+            setTimeout( async () => {
+                if (result.task && await uiConfirm('Задача создана. Открыть?')) {
                     openTaskView(result.task.id);
                 }
             }, 300);
@@ -2752,8 +2752,8 @@ function saveField() {
 }
 // - deleteField()
 // Удаление поля
-function deleteField() {
-    if (editingFieldIndex !== null && confirm('Удалить это поле?')) {
+ async function deleteField() {
+    if (editingFieldIndex !== null && await uiConfirm('Удалить это поле?')) {
         currentTemplateFields.splice(editingFieldIndex, 1);
         renderFieldsList();
         renderTemplatePreview();
@@ -2930,8 +2930,8 @@ function openFieldEditorForCustom(fieldIndex) {
 }
 // - deleteFieldFromList()
 // Удаление поля из списка
-function deleteFieldFromList(index) {
-    if (confirm('Удалить это поле?')) {
+ async function deleteFieldFromList(index) {
+    if (await uiConfirm('Удалить это поле?')) {
         currentTemplateFields.splice(index, 1);
         renderFieldsList();
         renderTemplatePreview();
@@ -3098,7 +3098,7 @@ function renderPreviewField(field) {
 }
 // - saveTemplateFromBuilder()
 // Сохранение шаблона из конструктора
-async function saveTemplateFromBuilder() {
+ async function saveTemplateFromBuilder() {
     const name = document.getElementById('builderTemplateName')?.value.trim();
     const description = document.getElementById('builderTemplateDesc')?.value;
     const isShared = document.getElementById('builderIsShared')?.checked || false;
@@ -3220,11 +3220,11 @@ function saveTemplateDraft() {
 }
 // - loadTemplateDraft()
 // Загрузка черновика шаблона
-function loadTemplateDraft() {
+ async function loadTemplateDraft() {
     const saved = localStorage.getItem('templateDraft');
     if (saved) {
         const draft = JSON.parse(saved);
-        if (confirm('Найден сохранённый черновик шаблона. Загрузить?')) {
+        if (await uiConfirm('Найден сохранённый черновик шаблона. Загрузить?')) {
             document.getElementById('builderTemplateName').value = draft.name || '';
             document.getElementById('builderTemplateDesc').value = draft.description || '';
             document.getElementById('builderIsShared').checked = draft.isShared || false;
@@ -3312,7 +3312,7 @@ let allTemplates = {
 };
 // - loadAllTemplates()
 // Загрузка всех шаблонов пользователя
-async function loadAllTemplates() {
+ async function loadAllTemplates() {
     try {
         const token = localStorage.getItem('token');
         
@@ -3422,7 +3422,7 @@ function createNewTemplate(type) {
 }
 // - editTemplate()
 // Редактирование шаблона
-async function editTemplate(templateId, type) {
+ async function editTemplate(templateId, type) {
     if (type === 'task') {
         // Загружаем данные шаблона перед открытием
         try {
@@ -3447,8 +3447,8 @@ async function editTemplate(templateId, type) {
 }
 // - deleteTemplate()
 // Удаление шаблона
-async function deleteTemplate(templateId, type) {
-    if (!confirm('Удалить этот шаблон?')) return;
+ async function deleteTemplate(templateId, type) {
+    if (!await uiConfirm('Удалить этот шаблон?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -3475,7 +3475,7 @@ async function deleteTemplate(templateId, type) {
 }
 // - useTemplate()
 // Использование шаблона
-async function useTemplate(type, templateId) {
+ async function useTemplate(type, templateId) {
     if (type === 'task') {
         try {
             const token = localStorage.getItem('token');
@@ -3599,7 +3599,7 @@ function initTemplatesSection() {
 let currentDocumentFieldKey = null;
 
 // Открытие селектора документов
-async function openDocumentSelector(fieldKey) {
+function openDocumentSelector(fieldKey) {
     currentDocumentFieldKey = fieldKey;
     
     // TODO: Загрузить список документов пользователя
@@ -3672,14 +3672,14 @@ async function openDocumentSelector(fieldKey) {
         });
     };
     
-    document.getElementById('confirmDocumentBtn').onclick = () => {
+    document.getElementById('confirmDocumentBtn').onclick =  async () => {
         const manualCheckbox = document.getElementById('createNewDocCheckbox');
         if (manualCheckbox.checked) {
             const manualUrl = document.getElementById('manualDocUrl').value;
             if (manualUrl) {
                 selectDocument(null, manualUrl);
             } else {
-                alert('Введите ссылку на документ');
+                await uiAlert('Введите ссылку на документ');
             }
         }
     };
@@ -3860,7 +3860,7 @@ function closeUserSelectorModal() {
 }
 
 // Загрузка пользователей для селектора
-async function loadUsersForSelector() {
+ async function loadUsersForSelector() {
     const container = document.getElementById('userSelectorList');
     container.innerHTML = '<div class="loading-users">Загрузка пользователей...</div>';
     
@@ -3889,7 +3889,7 @@ async function loadUsersForSelector() {
 }
 
 // Загрузка отделов для фильтра
-async function loadDepartmentsForSelector() {
+ async function loadDepartmentsForSelector() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/admin/departments/list', {
@@ -4056,7 +4056,7 @@ window.toggleUserSelection = toggleUserSelection;
 window.closeUserSelectorModal = closeUserSelectorModal;
 
 
-async function loadUsersList() {
+ async function loadUsersList() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/users', {
@@ -4276,7 +4276,7 @@ function updateTemplateButtons() {
 // =====================================================
 
 // Загрузка недавних задач (последние 10)
-async function loadRecentTasks() {
+ async function loadRecentTasks() {
     const tbody = document.getElementById('recentTasksBody');
     if (!tbody) return;
     
@@ -4300,7 +4300,7 @@ async function loadRecentTasks() {
 }
 
 // Загрузка задач в работе
-async function loadActiveTasks() {
+ async function loadActiveTasks() {
     const tbody = document.getElementById('activeTasksBody');
     if (!tbody) return;
     
@@ -4324,7 +4324,7 @@ async function loadActiveTasks() {
 }
 
 // Загрузка архивных задач (выполненные + отменённые)
-async function loadArchivedTasks() {
+ async function loadArchivedTasks() {
     const tbody = document.getElementById('archivedTasksBody');
     if (!tbody) return;
     
@@ -4706,7 +4706,7 @@ function clearSearch(mode) {
 }
 
 // Обновляем функции загрузки — сохраняем данные
-async function loadRecentTasks() {
+ async function loadRecentTasks() {
     const tbody = document.getElementById('recentTasksBody');
     if (!tbody) return;
     
@@ -4738,7 +4738,7 @@ async function loadRecentTasks() {
 
 // Аналогично для loadActiveTasks и loadArchivedTasks
 
-async function loadActiveTasks() {
+ async function loadActiveTasks() {
     const tbody = document.getElementById('activeTasksBody');
     if (!tbody) return;
     
@@ -4764,7 +4764,7 @@ async function loadActiveTasks() {
     }
 }
 
-async function loadArchivedTasks() {
+ async function loadArchivedTasks() {
     const tbody = document.getElementById('archivedTasksBody');
     if (!tbody) return;
     
@@ -5107,7 +5107,7 @@ function openUserSelectorForCustom(fieldId) {
 // ОТПРАВКА ЗАДАЧИ
 // =====================================================
 
-async function submitTaskCreate() {
+ async function submitTaskCreate() {
     const title = document.getElementById('taskCreateTitle').value.trim();
     const description = document.getElementById('taskCreateDescription').value;
     const startDate = document.getElementById('taskCreateStartDate').value;
@@ -5187,8 +5187,8 @@ async function submitTaskCreate() {
             renderDashboardTasks();
             
             // Предложение открыть созданную задачу
-            setTimeout(() => {
-                if (data.task && confirm('Задача создана. Открыть?')) {
+            setTimeout( async () => {
+                if (data.task && await uiConfirm('Задача создана. Открыть?')) {
                     openTaskEdit(data.task.id);
                 }
             }, 300);
@@ -5563,7 +5563,7 @@ function closeTaskEdit() {
     openWindow('base-section-task-last');
 }
 
-async function fetchTaskForEdit(taskId) {
+ async function fetchTaskForEdit(taskId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/tasks/${taskId}`, {
@@ -5660,7 +5660,7 @@ function updateEditStatusBadge(status) {
 }
 
 // ----- КОММЕНТАРИИ В РЕДАКТИРОВАНИИ -----
-async function loadCommentsEdit(taskId) {
+ async function loadCommentsEdit(taskId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/tasks/${taskId}/comments`, {
@@ -5699,7 +5699,7 @@ function renderCommentsEdit(comments) {
     `).join('');
 }
 
-async function addCommentEdit(taskId) {
+ async function addCommentEdit(taskId) {
     const content = document.getElementById('taskEditNewComment').value.trim();
     if (!content) {
         showToast('Введите текст комментария', 'error');
@@ -5729,7 +5729,7 @@ async function addCommentEdit(taskId) {
 }
 
 // ----- СОХРАНЕНИЕ И УДАЛЕНИЕ -----
-async function saveTaskEdit(taskId) {
+ async function saveTaskEdit(taskId) {
     const title = document.getElementById('taskEditTitle').value.trim();
     if (!title) {
         showToast('Введите название задачи', 'error');
@@ -5775,8 +5775,8 @@ async function saveTaskEdit(taskId) {
     }
 }
 
-async function deleteTaskEdit(taskId) {
-    if (!confirm('Удалить эту задачу?')) return;
+ async function deleteTaskEdit(taskId) {
+    if (!await uiConfirm('Удалить эту задачу?')) return;
     
     try {
         const token = localStorage.getItem('token');
@@ -5880,7 +5880,7 @@ function openUserSelectorForCustom(fieldId) {
 }
 
 // ----- ОТПРАВКА СОЗДАНИЯ -----
-async function submitTaskCreate() {
+ async function submitTaskCreate() {
     const title = document.getElementById('taskCreateTitle').value.trim();
     if (!title) {
         showToast('Введите название задачи', 'error');
@@ -5963,8 +5963,8 @@ async function submitTaskCreate() {
             loadArchivedTasks();
             renderDashboardTasks();
             
-            setTimeout(() => {
-                if (result.task && confirm('Задача создана. Открыть?')) {
+            setTimeout(async () => {
+                if (result.task && await uiConfirm('Задача создана. Открыть?')) {
                     openTaskEdit(result.task.id);
                 }
             }, 300);
@@ -5996,7 +5996,7 @@ function closeTaskView() {
     openWindow('base-section-task-last');
 }
 
-async function fetchTaskForView(taskId) {
+ async function fetchTaskForView(taskId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/tasks/${taskId}`, {
@@ -6155,7 +6155,7 @@ function renderViewCustomFields(task) {
         renderCustomFieldsWithUsers(container, customFields, {});
     }
 }
-async function loadUsersByIds(userIds, callback) {
+ async function loadUsersByIds(userIds, callback) {
     if (!userIds || userIds.length === 0) {
         if (callback) callback({});
         return;
@@ -6183,7 +6183,7 @@ async function loadUsersByIds(userIds, callback) {
             const data = await response.json();
             console.log('Users loaded:', data.users);
             const usersMap = {};
-            data.users.forEach(u => {
+            data.users.forEach( u => {
                 usersMap[u.id] = `${u.surname || ''} ${u.name || ''}`.trim() || u.username || 'Пользователь';
             });
             if (callback) callback(usersMap);
@@ -6198,7 +6198,7 @@ async function loadUsersByIds(userIds, callback) {
     }
 }
 // ----- КОММЕНТАРИИ В КАРТОЧКЕ -----
-async function loadViewComments(taskId) {
+ async function loadViewComments(taskId) {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/tasks/${taskId}/comments`, {
@@ -6237,7 +6237,7 @@ function renderViewComments(comments) {
     `).join('');
 }
 
-async function addViewComment(taskId) {
+ async function addViewComment(taskId) {
     const content = document.getElementById('taskViewNewComment').value.trim();
     if (!content) {
         showToast('Введите текст комментария', 'error');
@@ -6267,7 +6267,7 @@ async function addViewComment(taskId) {
 }
 
 // ----- СОХРАНЕНИЕ И УДАЛЕНИЕ -----
-async function saveTaskView(taskId) {
+ async function saveTaskView(taskId) {
     const status = document.getElementById('taskViewStatus').value;
     const priority = document.getElementById('taskViewPriority').value;
     const progress = parseInt(document.getElementById('taskViewProgress').value) || 0;
@@ -6304,8 +6304,8 @@ async function saveTaskView(taskId) {
     }
 }
 
-async function deleteTaskView(taskId) {
-    if (!confirm('Удалить эту задачу?')) return;
+ async function deleteTaskView(taskId) {
+    if (!await uiConfirm('Удалить эту задачу?')) return;
     
     try {
         const token = localStorage.getItem('token');

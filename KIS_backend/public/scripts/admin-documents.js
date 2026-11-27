@@ -1,7 +1,33 @@
 // Fallbacks when loaded outside full admin page
 if (typeof openAdminSection !== 'function') window.openAdminSection = function(id){ document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active')); document.getElementById(id)?.classList.add('active'); };
 if (typeof setActiveNavButton !== 'function') window.setActiveNavButton = function(btn){ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn?.classList.add('active'); };
-if (typeof showToast !== 'function') window.showToast =  async function(msg,type='info'){ console[type==='error'?'error':'log'](msg); await uiAlert(msg); };
+if (typeof showToast !== 'function') {
+    window.showToast = function(message, type = 'info') {
+        const normalizedType = ['success', 'error', 'warning'].includes(type) ? type : 'info';
+        const icons = {
+            success: '/materials/icons8-успех-96.png',
+            error: '/materials/icons8-ошибка-96.png',
+            warning: '/materials/icons8-предупреждение-96.png',
+            info: '/materials/icons8-информация-96.png'
+        };
+
+        document.querySelectorAll('.toast-notification').forEach(oldToast => oldToast.remove());
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${normalizedType}`;
+        toast.setAttribute('role', normalizedType === 'error' ? 'alert' : 'status');
+        toast.innerHTML = `
+            <span class="toast-icon-container ${normalizedType}">
+                <img src="${icons[normalizedType]}" class="toast-icon" alt="">
+            </span>
+            <span class="toast-message"></span>
+        `;
+        toast.querySelector('.toast-message').textContent = message;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    };
+}
 if (typeof debounce !== 'function') window.debounce = function(fn,ms=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
 if (typeof escapeHtml !== 'function') window.escapeHtml = function(str){ return String(str??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); };
 if (typeof openDocSingleModal !== 'function') window.openDocSingleModal = function(id){ const m=document.getElementById(id); if(!m) return; document.querySelectorAll('.admin-modal.active').forEach(x=>{ if(x.id!==id) x.classList.remove('active'); }); m.classList.add('active'); document.body.classList.add('modal-open'); };
@@ -33,6 +59,13 @@ let currentWorkflowSteps = [];
 let currentEditingWorkflowStepIndex = null;
 
 let counterpartiesPage = 1;
+let documentsRegistryPage = 1;
+let documentsRegistryData = [];
+const documentsRegistryPerPage = 20;
+let archivedDocsPage = 1;
+const archivedDocsPerPage = 20;
+let deadlineDocsPage = 1;
+const deadlineDocsPerPage = 20;
 let stepEditorPosts = [];
 let stepEditorRoles = [];
 let stepEditorDepartments = [];
@@ -56,6 +89,103 @@ function initDocumentAdmin() {
     document.getElementById('addDocumentTemplateBtn')?.addEventListener('click', () => openDocumentTemplateModal());
     document.getElementById('addCounterpartyBtn')?.addEventListener('click', () => openCounterpartyModal());
     document.getElementById('addWorkflowTemplateBtn')?.addEventListener('click', () => openWorkflowTemplateEditor());
+    document.getElementById('saveDocflowSettingsBtn')?.addEventListener('click', saveDocflowSettings);
+    document.getElementById('runAutoArchiveBtn')?.addEventListener('click', runAutoArchiveNow);
+    document.getElementById('refreshDocsRegistryBtn')?.addEventListener('click', () => loadDocumentsRegistry());
+    document.getElementById('refreshMyApprovalsBtn')?.addEventListener('click', () => loadMyApprovals());
+    document.getElementById('refreshArchiveBtn')?.addEventListener('click', () => loadArchivedDocuments());
+    document.getElementById('refreshDeadlineDocsBtn')?.addEventListener('click', () => loadDeadlineControlDocuments());
+    document.getElementById('refreshDocumentStatsBtn')?.addEventListener('click', () => loadDocumentStats());
+    document.getElementById('deadlineSearch')?.addEventListener('input', debounce(() => {
+        deadlineDocsPage = 1;
+        loadDeadlineControlDocuments();
+    }, 400));
+    ['deadlineTypeFilter', 'deadlineStatusFilter'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            deadlineDocsPage = 1;
+            loadDeadlineControlDocuments();
+        });
+    });
+    document.getElementById('deadlinePrevBtn')?.addEventListener('click', () => {
+        if (deadlineDocsPage > 1) { deadlineDocsPage--; loadDeadlineControlDocuments(); }
+    });
+    document.getElementById('deadlineNextBtn')?.addEventListener('click', () => {
+        deadlineDocsPage++;
+        loadDeadlineControlDocuments();
+    });
+    document.getElementById('saveDeadlineThresholdBtn')?.addEventListener('click', saveDeadlineThreshold);
+    document.getElementById('deadlineDocsTableBody')?.addEventListener('click', (e) => {
+        const openBtn = e.target.closest('[data-open-deadline-doc-id]');
+        if (openBtn) {
+            window.location.href = `/html/documents.html?docId=${openBtn.dataset.openDeadlineDocId}`;
+            return;
+        }
+
+        const historyBtn = e.target.closest('[data-history-deadline-doc-id]');
+        if (historyBtn) {
+            openDocumentHistory(Number(historyBtn.dataset.historyDeadlineDocId));
+            return;
+        }
+
+        const assignBtn = e.target.closest('[data-assign-deadline-doc-id]');
+        if (assignBtn) {
+            openDocumentAssign(Number(assignBtn.dataset.assignDeadlineDocId));
+        }
+    });
+    document.getElementById('refreshDocumentHistoryBtn')?.addEventListener('click', () => loadDocumentHistory());
+    document.getElementById('archiveSearch')?.addEventListener('input', debounce(() => {
+        archivedDocsPage = 1;
+        loadArchivedDocuments();
+    }, 400));
+    document.getElementById('archiveTypeFilter')?.addEventListener('change', () => {
+        archivedDocsPage = 1;
+        loadArchivedDocuments();
+    });
+    document.getElementById('archivePrevBtn')?.addEventListener('click', () => {
+        if (archivedDocsPage > 1) { archivedDocsPage--; loadArchivedDocuments(); }
+    });
+    document.getElementById('archiveNextBtn')?.addEventListener('click', () => {
+        archivedDocsPage++;
+        loadArchivedDocuments();
+    });
+    document.getElementById('confirmApprovalActionBtn')?.addEventListener('click', confirmApprovalAction);
+    document.getElementById('docsRegistrySearch')?.addEventListener('input', debounce(() => {
+        documentsRegistryPage = 1;
+        loadDocumentsRegistry();
+    }, 400));
+    ['docsRegistryTypeFilter', 'docsRegistryStatusFilter', 'docsRegistryMineOnly'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            documentsRegistryPage = 1;
+            loadDocumentsRegistry();
+        });
+    });
+    document.getElementById('docsRegistryPrevBtn')?.addEventListener('click', () => {
+        if (documentsRegistryPage > 1) { documentsRegistryPage--; loadDocumentsRegistry(); }
+    });
+    document.getElementById('docsRegistryNextBtn')?.addEventListener('click', () => {
+        documentsRegistryPage++;
+        loadDocumentsRegistry();
+    });
+    document.getElementById('documentsRegistryTableBody')?.addEventListener('click', (e) => {
+        const historyBtn = e.target.closest('[data-history-doc-id]');
+        if (historyBtn) { openDocumentHistory(Number(historyBtn.dataset.historyDocId)); return; }
+
+        const assignBtn = e.target.closest('[data-assign-doc-id]');
+        if (assignBtn) openDocumentAssign(Number(assignBtn.dataset.assignDocId));
+    });
+    document.getElementById('myApprovalsTableBody')?.addEventListener('click', (e) => {
+        const approveBtn = e.target.closest('[data-approve-doc-id]');
+        if (approveBtn) { openApprovalActionModal(Number(approveBtn.dataset.approveDocId), 'approve'); return; }
+
+        const rejectBtn = e.target.closest('[data-reject-doc-id]');
+        if (rejectBtn) { openApprovalActionModal(Number(rejectBtn.dataset.rejectDocId), 'reject'); return; }
+
+        const historyBtn = e.target.closest('[data-history-approval-doc-id]');
+        if (historyBtn) { openDocumentHistory(Number(historyBtn.dataset.historyApprovalDocId)); return; }
+
+        const openBtn = e.target.closest('[data-open-approval-doc-id]');
+        if (openBtn) window.location.href = `/html/documents.html?docId=${openBtn.dataset.openApprovalDocId}`;
+    });
 
     // Сохранение
     document.getElementById('saveDocumentTypeBtn')?.addEventListener('click', saveDocumentType);
@@ -107,14 +237,19 @@ function initDocumentAdmin() {
     loadPostsForStepEditor();
     loadRolesForStepEditor();
     loadDepartmentsForStepEditor();
+    loadDocumentsRegistry();
+    loadDocumentTypesForSelects();
 }
 
 function initDocumentAdminButton() {
     const btn = document.getElementById('nav-btn-documents');
     if (!btn) return;
     const perms = window.currentUser?.permissions?.documents || {};
+    const dp = window.currentUser?.permissions?.docflow_page;
+    const hasDocflowAccess = dp === true || dp === 'all' || dp?.access === true || dp?.access === 'all';
     const hasAccess =
         window.currentUser?.is_super_admin === true ||
+        hasDocflowAccess ||
         perms.manage_types === true ||
         perms.manage_templates === true ||
         perms.manage_counterparties === true;
@@ -146,10 +281,16 @@ function switchDocTab(tabName) {
     if (section) section.classList.add('active');
 
     // Загрузка данных при переключении
+    if (tabName === 'registry') loadDocumentsRegistry();
+    if (tabName === 'approvals') loadMyApprovals();
+    if (tabName === 'archive') { loadArchivedDocuments(); loadDocumentTypesForSelects(); }
+    if (tabName === 'deadlines') { loadDeadlineControlDocuments(); loadDocumentTypesForSelects(); }
+    if (tabName === 'stats') loadDocumentStats();
     if (tabName === 'types') loadDocumentTypes();
     if (tabName === 'templates') { loadDocumentTemplates(); loadDocumentTypesForSelects(); }
     if (tabName === 'counterparties') loadCounterparties();
     if (tabName === 'workflows') loadWorkflowTemplates();
+    if (tabName === 'settings') loadDocflowSettings();
 }
 
 // =====================================================
@@ -187,6 +328,657 @@ async function apiRequest(url, options = {}) {
     }
 
     return response.json();
+}
+
+
+
+// =====================================================
+// НА СОГЛАСОВАНИИ У МЕНЯ
+// =====================================================
+
+let approvalActionState = null;
+
+async function loadMyApprovals() {
+    const tbody = document.getElementById('myApprovalsTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Загрузка...</td></tr>';
+
+    try {
+        const data = await apiRequest('/api/documents/my-approvals');
+        const documents = data.documents || [];
+
+        tbody.innerHTML = documents.map(doc => {
+            const stage = doc.current_step_role || doc.current_step_type || 'Согласование';
+            const created = doc.route_created_at
+                ? String(doc.route_created_at).replace('T', ' ').slice(0, 16)
+                : '—';
+            return `
+                <tr>
+                    <td>${doc.id}</td>
+                    <td>${escapeHtml(doc.reg_number || '—')}</td>
+                    <td><a href="/html/documents.html?docId=${doc.id}" style="color: inherit;">${escapeHtml(doc.title)}</a></td>
+                    <td>${escapeHtml(doc.document_type_name || '—')}</td>
+                    <td><span class="status-badge">${escapeHtml(stage)}</span></td>
+                    <td>${escapeHtml(doc.created_by_name || '—')}</td>
+                    <td>${escapeHtml(created)}</td>
+                    <td>
+                        <button class="buttonbase btn-outline" data-open-approval-doc-id="${doc.id}"><img src="../materials/icons8-просмотр-96.png" class="ui-icon ui-icon-inline" alt=""> Открыть</button>
+                        <button class="buttonbase btn-outline" data-history-approval-doc-id="${doc.id}"><img src="../materials/icons8-история-96.png" class="ui-icon ui-icon-inline" alt=""> История</button>
+                        <button class="buttonbase" data-approve-doc-id="${doc.id}"><img src="../materials/icons8-успех-96.png" class="ui-icon ui-icon-inline" alt=""> Согласовать</button>
+                        <button class="buttonbase btn-outline" data-reject-doc-id="${doc.id}"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отклонить</button>
+                    </td>
+                </tr>`;
+        }).join('') || '<tr><td colspan="8" class="loading-row">Документов на согласовании нет</td></tr>';
+    } catch (error) {
+        console.error('Load my approvals error:', error);
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-row">Ошибка загрузки: ${escapeHtml(error.message)}</td></tr>`;
+        showToast('Не удалось загрузить согласования: ' + error.message, 'error');
+    }
+}
+
+function openApprovalActionModal(docId, action) {
+    approvalActionState = { docId, action };
+
+    const isApprove = action === 'approve';
+    const title = document.getElementById('docApprovalModalTitle');
+    const text = document.getElementById('docApprovalModalText');
+    const label = document.getElementById('docApprovalCommentLabel');
+    const textarea = document.getElementById('docApprovalComment');
+    const confirm = document.getElementById('confirmApprovalActionBtn');
+
+    if (title) {
+        title.innerHTML = `<img src="${isApprove ? '../materials/icons8-успех-96.png' : '../materials/icons8-cancel-96.png'}" class="ui-icon ui-icon-inline" alt=""> ${isApprove ? 'Согласовать документ' : 'Отклонить документ'}`;
+    }
+    if (text) text.textContent = isApprove
+        ? `Документ №${docId} будет передан на следующий этап согласования.`
+        : `Документ №${docId} вернётся автору на доработку.`;
+    if (label) label.textContent = isApprove ? 'Комментарий (необязательно)' : 'Причина отклонения *';
+    if (textarea) {
+        textarea.value = '';
+        textarea.placeholder = isApprove
+            ? 'Например: Согласовано, замечаний нет'
+            : 'Обязательно укажите, что нужно исправить...';
+    }
+    if (confirm) {
+        confirm.disabled = false;
+        confirm.innerHTML = `<img src="${isApprove ? '../materials/icons8-успех-96.png' : '../materials/icons8-cancel-96.png'}" class="ui-icon ui-icon-inline" alt=""> ${isApprove ? 'Согласовать' : 'Отклонить'}`;
+    }
+
+    openDocSingleModal('docApprovalModal');
+}
+
+function closeApprovalActionModal() {
+    closeDocModal('docApprovalModal');
+    approvalActionState = null;
+}
+
+async function confirmApprovalAction() {
+    if (!approvalActionState) return;
+
+    const { docId, action } = approvalActionState;
+    const comment = document.getElementById('docApprovalComment')?.value.trim() || '';
+    const confirm = document.getElementById('confirmApprovalActionBtn');
+
+    if (action === 'reject' && !comment) {
+        showToast('Укажите причину отклонения', 'error');
+        return;
+    }
+
+    if (confirm) { confirm.disabled = true; confirm.textContent = 'Отправка...'; }
+
+    const restoreButton = () => {
+        if (!confirm || !approvalActionState) return;
+        confirm.disabled = false;
+        const icon = approvalActionState.action === 'approve' ? 'icons8-успех-96.png' : 'icons8-cancel-96.png';
+        const label = approvalActionState.action === 'approve' ? 'Согласовать' : 'Отклонить';
+        confirm.innerHTML = `<img src="../materials/${icon}" class="ui-icon ui-icon-inline" alt=""> ${label}`;
+    };
+
+    try {
+        await apiRequest(`/api/documents/${docId}/${action}`, {
+            method: 'POST',
+            body: JSON.stringify({ comment: comment || null })
+        });
+        showToast(action === 'approve' ? 'Документ согласован' : 'Документ возвращён на доработку', 'success');
+        closeApprovalActionModal();
+        await Promise.all([loadMyApprovals(), loadDocumentsRegistry()]);
+    } catch (error) {
+        console.error('Approval action error:', error);
+        showToast(error.message, 'error');
+        restoreButton();
+    }
+}
+
+// =====================================================
+// ИСТОРИЯ ДОКУМЕНТА
+// =====================================================
+
+let currentHistoryDocId = null;
+
+const DOC_STEP_STATUS_LABELS = {
+    pending: 'Ожидает',
+    approved: 'Согласован',
+    rejected: 'Отклонён',
+    cancelled: 'Отменён',
+    skipped: 'Пропущен'
+};
+
+async function loadDocumentHistory() {
+    const tbody = document.getElementById('documentHistoryTableBody');
+    const info = document.getElementById('historyRouteInfo');
+    if (!tbody || !currentHistoryDocId) return;
+
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-row">Загрузка...</td></tr>';
+
+    try {
+        const data = await apiRequest(`/api/documents/${currentHistoryDocId}/route-history`);
+        const history = data.history || [];
+        const routeInfo = data.route_info || {};
+
+        if (info) {
+            const started = routeInfo.started_at
+                ? String(routeInfo.started_at).replace('T', ' ').slice(0, 16)
+                : null;
+            info.textContent = routeInfo.is_started
+                ? `Маршрут запущен${started ? ': ' + started : ''}`
+                : 'Маршрут не запущен';
+        }
+
+        tbody.innerHTML = history.map((step, index) => {
+            const statusLabel = DOC_STEP_STATUS_LABELS[step.status] || step.status || '—';
+            const assignee = step.user?.full_name
+                || (step.assignee_type ? String(step.assignee_type) : '—');
+            const completed = step.completed_at
+                ? String(step.completed_at).replace('T', ' ').slice(0, 16)
+                : '—';
+            return `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(step.type || 'approval')}</td>
+                    <td>${escapeHtml(step.role || step.type || '—')}</td>
+                    <td>${escapeHtml(assignee)}</td>
+                    <td><span class="status-badge">${escapeHtml(statusLabel)}</span></td>
+                    <td>${escapeHtml(step.comment || '—')}</td>
+                    <td>${escapeHtml(completed)}</td>
+                </tr>`;
+        }).join('') || '<tr><td colspan="7" class="loading-row">История маршрута пуста</td></tr>';
+    } catch (error) {
+        console.error('Load document history error:', error);
+        tbody.innerHTML = `<tr><td colspan="7" class="loading-row">Ошибка загрузки: ${escapeHtml(error.message)}</td></tr>`;
+        showToast('Не удалось загрузить историю: ' + error.message, 'error');
+    }
+}
+
+async function openDocumentHistory(docId) {
+    currentHistoryDocId = Number(docId);
+
+    const title = document.getElementById('docHistoryModalTitle');
+    if (title) {
+        const doc = documentsRegistryData.find(d => Number(d.id) === currentHistoryDocId);
+        const label = doc ? `${doc.reg_number ? doc.reg_number + ' — ' : ''}${doc.title}` : `№${currentHistoryDocId}`;
+        title.innerHTML = `<img src="../materials/icons8-история-96.png" class="ui-icon ui-icon-inline" alt=""> История: ${escapeHtml(label)}`;
+    }
+
+    const info = document.getElementById('historyRouteInfo');
+    if (info) info.textContent = '';
+    const tbody = document.getElementById('documentHistoryTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="loading-row">Загрузка...</td></tr>';
+
+    openDocSingleModal('docHistoryModal');
+    await loadDocumentHistory();
+}
+
+function closeDocumentHistoryModal() {
+    closeDocModal('docHistoryModal');
+    currentHistoryDocId = null;
+}
+
+// =====================================================
+// АРХИВ ДОКУМЕНТОВ
+// =====================================================
+
+async function loadArchivedDocuments() {
+    const tbody = document.getElementById('archivedDocsTableBody');
+    if (!tbody) return;
+
+    const params = new URLSearchParams({
+        status: 'archived',
+        limit: String(archivedDocsPerPage),
+        offset: String((archivedDocsPage - 1) * archivedDocsPerPage),
+        sort_by: 'updated_at',
+        sort_dir: 'desc'
+    });
+    const search = document.getElementById('archiveSearch')?.value.trim();
+    const typeId = document.getElementById('archiveTypeFilter')?.value;
+    if (search) params.set('search', search);
+    if (typeId) params.set('document_type_id', typeId);
+
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-row">Загрузка...</td></tr>';
+
+    try {
+        const data = await apiRequest(`/api/documents?${params.toString()}`);
+        const documents = data.documents || [];
+        const total = Number(data.total || 0);
+
+        if (!documents.length && archivedDocsPage > 1) {
+            archivedDocsPage--;
+            return loadArchivedDocuments();
+        }
+
+        tbody.innerHTML = documents.map(doc => {
+            const updated = doc.updated_at ? String(doc.updated_at).replace('T', ' ').slice(0, 16) : '—';
+            const assignees = Array.isArray(doc.assignees) && doc.assignees.length
+                ? doc.assignees.map(a => escapeHtml(a.full_name || String(a.user_id))).join(', ')
+                : '—';
+            return `
+                <tr>
+                    <td>${doc.id}</td>
+                    <td>${escapeHtml(doc.reg_number || '—')}</td>
+                    <td><a href="/html/documents.html?docId=${doc.id}" style="color: inherit;">${escapeHtml(doc.title)}</a></td>
+                    <td>${escapeHtml(doc.document_type_name || '—')}</td>
+                    <td>${escapeHtml(doc.created_by_name || '—')}</td>
+                    <td>${escapeHtml(updated)}</td>
+                    <td>${assignees}</td>
+                    <td><button class="buttonbase btn-outline" data-open-archive-doc-id="${doc.id}"><img src="../materials/icons8-просмотр-96.png" class="ui-icon ui-icon-inline" alt=""> Открыть</button></td>
+                </tr>`;
+        }).join('') || '<tr><td colspan="8" class="loading-row">Архив пуст</td></tr>';
+
+        const from = total ? ((archivedDocsPage - 1) * archivedDocsPerPage + 1) : 0;
+        const to = Math.min(archivedDocsPage * archivedDocsPerPage, total);
+        const info = document.getElementById('archiveDocsInfo');
+        if (info) info.textContent = `Показано ${from}-${to} из ${total}`;
+        const prev = document.getElementById('archivePrevBtn');
+        const next = document.getElementById('archiveNextBtn');
+        if (prev) prev.disabled = archivedDocsPage <= 1;
+        if (next) next.disabled = to >= total;
+    } catch (error) {
+        console.error('Load archive error:', error);
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-row">Ошибка загрузки: ${escapeHtml(error.message)}</td></tr>`;
+        showToast('Не удалось загрузить архив: ' + error.message, 'error');
+    }
+}
+
+// =====================================================
+// СТАТИСТИКА ДОКУМЕНТОВ
+// =====================================================
+
+function setStatValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(value ?? 0);
+}
+
+function renderStatRows(tbodyId, rows, renderRow, emptyText) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+
+    tbody.innerHTML = rows.length
+        ? rows.map(renderRow).join('')
+        : `<tr><td colspan="2" class="loading-row">${escapeHtml(emptyText)}</td></tr>`;
+}
+
+async function loadDocumentStats() {
+    const statusBody = document.getElementById('statsStatusBody');
+    if (!statusBody) return;
+
+    statusBody.innerHTML = '<tr><td colspan="2" class="loading-row">Загрузка...</td></tr>';
+
+    try {
+        const data = await apiRequest('/api/documents/stats');
+        const summary = data.summary || {};
+
+        setStatValue('statsTotal', summary.total);
+        setStatValue('statsOnApproval', summary.on_approval);
+        setStatValue('statsOverdue', summary.overdue);
+        setStatValue('statsArchived', summary.archived);
+        setStatValue('statsCreated30', summary.created_30_days);
+
+        const info = document.getElementById('statsUpdatedInfo');
+        if (info) {
+            const time = data.generated_at
+                ? new Date(data.generated_at).toLocaleString('ru-RU')
+                : new Date().toLocaleString('ru-RU');
+            info.textContent = `Обновлено: ${time}. Порог просрочки: ${data.threshold ?? 14} дней.`;
+        }
+
+        renderStatRows('statsStatusBody', data.by_status || [], row => `
+            <tr>
+                <td>${escapeHtml(DOC_STATUS_LABELS[row.status] || row.status || '—')}</td>
+                <td>${Number(row.count || 0)}</td>
+            </tr>
+        `, 'Нет данных');
+
+        renderStatRows('statsTypeBody', data.by_type || [], row => `
+            <tr>
+                <td>${escapeHtml(row.name || 'Без типа')}</td>
+                <td>${Number(row.count || 0)}</td>
+            </tr>
+        `, 'Нет данных');
+
+        renderStatRows('statsDepartmentBody', data.by_department || [], row => `
+            <tr>
+                <td>${escapeHtml(row.name || 'Без отдела')}</td>
+                <td>${Number(row.count || 0)}</td>
+            </tr>
+        `, 'Нет данных');
+
+        renderStatRows('statsAssigneeBody', data.by_assignee || [], row => `
+            <tr>
+                <td>${escapeHtml(row.full_name || 'Пользователь #' + row.user_id)}</td>
+                <td>${Number(row.count || 0)}</td>
+            </tr>
+        `, 'Исполнители не назначены');
+    } catch (error) {
+        console.error('Load document stats error:', error);
+        statusBody.innerHTML = `<tr><td colspan="2" class="loading-row">Ошибка загрузки: ${escapeHtml(error.message)}</td></tr>`;
+        showToast('Не удалось загрузить статистику: ' + error.message, 'error');
+    }
+}
+
+// =====================================================
+// КОНТРОЛЬ СРОКОВ
+// =====================================================
+
+async function loadDeadlineControlDocuments() {
+    const tbody = document.getElementById('deadlineDocsTableBody');
+    if (!tbody) return;
+
+    const params = new URLSearchParams({
+        limit: String(deadlineDocsPerPage),
+        offset: String((deadlineDocsPage - 1) * deadlineDocsPerPage)
+    });
+    const search = document.getElementById('deadlineSearch')?.value.trim();
+    const typeId = document.getElementById('deadlineTypeFilter')?.value;
+    const status = document.getElementById('deadlineStatusFilter')?.value;
+    const days = parseInt(document.getElementById('deadlineControlDays')?.value, 10);
+    if (search) params.set('search', search);
+    if (typeId) params.set('document_type_id', typeId);
+    if (status) params.set('status', status);
+    if (days) params.set('days', String(days));
+
+    tbody.innerHTML = '<tr><td colspan="9" class="loading-row">Загрузка...</td></tr>';
+
+    try {
+        const data = await apiRequest(`/api/documents/deadline-control?${params.toString()}`);
+        const documents = data.documents || [];
+        const total = Number(data.total || 0);
+        const threshold = Number(data.threshold || days || 14);
+
+        const thresholdInput = document.getElementById('deadlineControlDays');
+        if (thresholdInput && !thresholdInput.value) thresholdInput.value = String(threshold);
+
+        const info = document.getElementById('deadlineControlInfo');
+        if (info) info.textContent = `Порог: ${threshold} дней без движения. Учитываются также просроченные даты исполнения.`;
+
+        if (!documents.length && deadlineDocsPage > 1) {
+            deadlineDocsPage--;
+            return loadDeadlineControlDocuments();
+        }
+
+        tbody.innerHTML = documents.map(doc => {
+            const statusLabel = DOC_STATUS_LABELS[doc.status] || doc.status || '—';
+            const assignees = Array.isArray(doc.assignees) && doc.assignees.length
+                ? doc.assignees.map(a => escapeHtml(a.full_name || String(a.user_id))).join(', ')
+                : '—';
+            const reason = doc.overdue_reason === 'deadline' ? 'Срок исполнения' : 'Нет движения';
+            const dueDate = doc.due_date ? new Date(doc.due_date).toLocaleDateString('ru-RU') : '—';
+            const reasonText = reason === 'Срок исполнения'
+                ? `${reason} (${dueDate})`
+                : reason;
+            const overdue = Number(doc.overdue_days || 0);
+
+            return `
+                <tr>
+                    <td>${doc.id}</td>
+                    <td>${escapeHtml(doc.reg_number || '—')}</td>
+                    <td><a href="/html/documents.html?docId=${doc.id}" style="color: inherit;">${escapeHtml(doc.title)}</a></td>
+                    <td>${escapeHtml(doc.document_type_name || '—')}</td>
+                    <td><span class="status-badge">${escapeHtml(statusLabel)}</span></td>
+                    <td>${assignees}</td>
+                    <td>${escapeHtml(reasonText)}</td>
+                    <td><span class="status-badge">${overdue} дн.</span></td>
+                    <td>
+                        <button class="buttonbase btn-outline" data-open-deadline-doc-id="${doc.id}"><img src="../materials/icons8-просмотр-96.png" class="ui-icon ui-icon-inline" alt=""> Открыть</button>
+                        <button class="buttonbase btn-outline" data-history-deadline-doc-id="${doc.id}"><img src="../materials/icons8-история-96.png" class="ui-icon ui-icon-inline" alt=""> История</button>
+                        <button class="buttonbase btn-outline" data-assign-deadline-doc-id="${doc.id}" title="Назначить исполнителей"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Назначить</button>
+                    </td>
+                </tr>`;
+        }).join('') || '<tr><td colspan="9" class="loading-row">Просроченных документов нет</td></tr>';
+
+        const from = total ? ((deadlineDocsPage - 1) * deadlineDocsPerPage + 1) : 0;
+        const to = Math.min(deadlineDocsPage * deadlineDocsPerPage, total);
+        const pageInfo = document.getElementById('deadlineDocsInfo');
+        if (pageInfo) pageInfo.textContent = `Показано ${from}-${to} из ${total}`;
+        const prev = document.getElementById('deadlinePrevBtn');
+        const next = document.getElementById('deadlineNextBtn');
+        if (prev) prev.disabled = deadlineDocsPage <= 1;
+        if (next) next.disabled = to >= total;
+    } catch (error) {
+        console.error('Load deadline control error:', error);
+        tbody.innerHTML = `<tr><td colspan="9" class="loading-row">Ошибка загрузки: ${escapeHtml(error.message)}</td></tr>`;
+        showToast('Не удалось загрузить контроль сроков: ' + error.message, 'error');
+    }
+}
+
+async function saveDeadlineThreshold() {
+    const input = document.getElementById('deadlineControlDays');
+    const settingsInput = document.getElementById('dfDeadlineControlDays');
+    const days = parseInt(input?.value || settingsInput?.value, 10);
+
+    if (!Number.isFinite(days) || days < 1 || days > 365) {
+        showToast('Укажите порог от 1 до 365 дней', 'error');
+        return;
+    }
+
+    try {
+        await apiRequest('/api/admin/docflow/settings', {
+            method: 'PUT',
+            body: JSON.stringify({ deadline_control_days: days })
+        });
+        if (input) input.value = String(days);
+        if (settingsInput) settingsInput.value = String(days);
+        deadlineDocsPage = 1;
+        showToast('Порог контроля сроков сохранён', 'success');
+        await loadDeadlineControlDocuments();
+    } catch (error) {
+        console.error('Save deadline threshold error:', error);
+        showToast('Не удалось сохранить порог: ' + error.message, 'error');
+    }
+}
+
+// =====================================================
+// РЕЕСТР ДОКУМЕНТОВ
+// =====================================================
+
+const DOC_STATUS_LABELS = {
+    draft: 'Черновик',
+    on_approval: 'На согласовании',
+    revision: 'На доработке',
+    approved: 'Согласован',
+    signed: 'Подписан',
+    registered: 'Зарегистрирован',
+    archived: 'В архиве',
+    cancelled: 'Отменён'
+};
+
+async function loadDocumentsRegistry() {
+    const tbody = document.getElementById('documentsRegistryTableBody');
+    if (!tbody) return;
+
+    const params = new URLSearchParams({
+        limit: String(documentsRegistryPerPage),
+        offset: String((documentsRegistryPage - 1) * documentsRegistryPerPage),
+        sort_by: 'created_at',
+        sort_dir: 'desc'
+    });
+    const search = document.getElementById('docsRegistrySearch')?.value.trim();
+    const typeId = document.getElementById('docsRegistryTypeFilter')?.value;
+    const status = document.getElementById('docsRegistryStatusFilter')?.value;
+    const mineOnly = document.getElementById('docsRegistryMineOnly')?.checked;
+    if (search) params.set('search', search);
+    if (typeId) params.set('document_type_id', typeId);
+    if (status) params.set('status', status);
+    if (mineOnly) params.set('created_by_me', 'true');
+
+    tbody.innerHTML = '<tr><td colspan="9" class="loading-row">Загрузка...</td></tr>';
+    try {
+        const data = await apiRequest(`/api/documents?${params.toString()}`);
+        const documents = data.documents || [];
+        const total = Number(data.total || 0);
+        documentsRegistryData = documents;
+
+        if (!documents.length && documentsRegistryPage > 1) {
+            documentsRegistryPage--;
+            return loadDocumentsRegistry();
+        }
+
+        tbody.innerHTML = documents.map(doc => {
+            const statusLabel = DOC_STATUS_LABELS[doc.status] || doc.status || '—';
+            const created = doc.created_at ? String(doc.created_at).replace('T', ' ').slice(0, 16) : '—';
+            const assignees = Array.isArray(doc.assignees) && doc.assignees.length
+                ? doc.assignees.map(a => escapeHtml(a.full_name || a.name || String(a.user_id))).join(', ')
+                : '—';
+            return `
+                <tr>
+                    <td>${doc.id}</td>
+                    <td>${escapeHtml(doc.reg_number || '—')}</td>
+                    <td><a href="/html/documents.html?docId=${doc.id}" style="color: inherit;">${escapeHtml(doc.title)}</a></td>
+                    <td>${escapeHtml(doc.document_type_name || '—')}</td>
+                    <td><span class="status-badge">${escapeHtml(statusLabel)}</span></td>
+                    <td>${escapeHtml(doc.created_by_name || '—')}</td>
+                    <td>${escapeHtml(created)}</td>
+                    <td data-assignees-for="${doc.id}">${assignees}</td>
+                    <td>
+                        <button class="buttonbase btn-outline" data-history-doc-id="${doc.id}" title="История документа">
+                            <img src="../materials/icons8-история-96.png" class="ui-icon ui-icon-inline" alt=""> История
+                        </button>
+                        <button class="buttonbase btn-outline" data-assign-doc-id="${doc.id}" title="Назначить исполнителей">
+                            <img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Назначить
+                        </button>
+                    </td>
+                </tr>`;
+        }).join('') || '<tr><td colspan="9" class="loading-row">Документы не найдены</td></tr>';
+
+        const from = total ? ((documentsRegistryPage - 1) * documentsRegistryPerPage + 1) : 0;
+        const to = Math.min(documentsRegistryPage * documentsRegistryPerPage, total);
+        const info = document.getElementById('docsRegistryInfo');
+        if (info) info.textContent = `Показано ${from}-${to} из ${total}`;
+        const prev = document.getElementById('docsRegistryPrevBtn');
+        const next = document.getElementById('docsRegistryNextBtn');
+        if (prev) prev.disabled = documentsRegistryPage <= 1;
+        if (next) next.disabled = to >= total;
+    } catch (error) {
+        console.error('Load documents registry error:', error);
+        tbody.innerHTML = `<tr><td colspan="9" class="loading-row">Ошибка загрузки: ${escapeHtml(error.message)}</td></tr>`;
+        showToast('Не удалось загрузить реестр документов: ' + error.message, 'error');
+    }
+}
+
+async function openDocumentAssign(docId) {
+    let currentIds = [];
+    try {
+        const data = await apiRequest(`/api/documents/${docId}/assignees`);
+        currentIds = (data.assignees || []).map(a => a.user_id);
+    } catch (error) {
+        console.error('Load assignees error:', error);
+    }
+
+    openUserSelector({
+        mode: 'multiple',
+        preselectedIds: currentIds,
+        title: 'Назначить исполнителей документа',
+        onConfirm: async (users, ids) => {
+            try {
+                await apiRequest(`/api/documents/${docId}/assignees`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ user_ids: ids })
+                });
+                const cell = document.querySelector(`[data-assignees-for="${docId}"]`);
+                if (cell) {
+                    cell.textContent = users.length
+                        ? users.map(u => `${u.surname || ''} ${u.name || ''}`.trim() || u.username).join(', ')
+                        : '—';
+                }
+                showToast(users.length ? 'Исполнители назначены' : 'Назначение снято', 'success');
+            } catch (error) {
+                console.error('Assign document error:', error);
+                showToast('Не удалось назначить исполнителей: ' + error.message, 'error');
+            }
+        }
+    });
+}
+
+// =====================================================
+// НАСТРОЙКИ ДОКУМЕНТООБОРОТА
+// =====================================================
+
+async function loadDocflowSettings() {
+    try {
+        const data = await apiRequest('/api/admin/docflow/settings');
+        const s = data.settings || {};
+        const enabled = document.getElementById('dfAutoArchiveEnabled');
+        const days = document.getElementById('dfAutoArchiveDays');
+        const size = document.getElementById('dfMaxFileSize');
+        const types = document.getElementById('dfAllowedFileTypes');
+        const deadlineDays = document.getElementById('dfDeadlineControlDays');
+        const tabDeadlineDays = document.getElementById('deadlineControlDays');
+        if (enabled) enabled.checked = s.auto_archive_enabled !== false;
+        if (days) days.value = s.auto_archive_days ?? 365;
+        if (size) size.value = s.max_file_size ?? 50;
+        if (deadlineDays) deadlineDays.value = s.deadline_control_days ?? 14;
+        if (tabDeadlineDays) tabDeadlineDays.value = s.deadline_control_days ?? 14;
+        if (types) {
+            const selected = Array.isArray(s.allowed_file_types) ? s.allowed_file_types : [];
+            Array.from(types.options).forEach(opt => {
+                opt.selected = selected.includes(opt.value);
+            });
+        }
+    } catch (error) {
+        console.error('Load docflow settings error:', error);
+        showToast('Не удалось загрузить настройки документооборота: ' + error.message, 'error');
+    }
+}
+
+async function saveDocflowSettings() {
+    const body = {
+        auto_archive_enabled: document.getElementById('dfAutoArchiveEnabled')?.checked ?? true,
+        auto_archive_days: parseInt(document.getElementById('dfAutoArchiveDays')?.value, 10) || 365,
+        max_file_size: parseInt(document.getElementById('dfMaxFileSize')?.value, 10) || 50,
+        allowed_file_types: Array.from(document.getElementById('dfAllowedFileTypes')?.selectedOptions || []).map(opt => opt.value),
+        deadline_control_days: parseInt(document.getElementById('dfDeadlineControlDays')?.value, 10)
+            || parseInt(document.getElementById('deadlineControlDays')?.value, 10)
+            || 14
+    };
+    try {
+        await apiRequest('/api/admin/docflow/settings', {
+            method: 'PUT',
+            body: JSON.stringify(body)
+        });
+        showToast('Настройки документооборота сохранены', 'success');
+        await loadDocflowSettings();
+    } catch (error) {
+        console.error('Save docflow settings error:', error);
+        showToast('Не удалось сохранить настройки: ' + error.message, 'error');
+    }
+}
+
+async function runAutoArchiveNow() {
+    try {
+        const btn = document.getElementById('runAutoArchiveBtn');
+        if (btn) btn.disabled = true;
+        const result = await apiRequest('/api/admin/docflow/auto-archive/run', { method: 'POST' });
+        if (!result.enabled) {
+            showToast('Автоархивация отключена — включите её и сохраните настройки', 'info');
+        } else {
+            showToast(`В архив перемещено документов: ${result.archived ?? 0}`, 'success');
+        }
+    } catch (error) {
+        console.error('Manual auto archive error:', error);
+        showToast('Не удалось выполнить архивацию: ' + error.message, 'error');
+    } finally {
+        const btn = document.getElementById('runAutoArchiveBtn');
+        if (btn) btn.disabled = false;
+    }
 }
 
 // =====================================================
@@ -451,6 +1243,39 @@ async function loadDocumentTypesForSelects() {
                     `<option value="${t.id}">${escapeHtml(t.name)}</option>`
                 ).join('');
             filter.value = currentValue;
+        }
+
+        // Фильтр в реестре документов
+        const registryFilter = document.getElementById('docsRegistryTypeFilter');
+        if (registryFilter) {
+            const currentValue = registryFilter.value;
+            registryFilter.innerHTML = '<option value="">— Все типы —</option>' +
+                documentTypesList.map(t =>
+                    `<option value="${t.id}">${escapeHtml(t.name)}</option>`
+                ).join('');
+            registryFilter.value = currentValue;
+        }
+
+        // Фильтр в архиве документов
+        const archiveFilter = document.getElementById('archiveTypeFilter');
+        if (archiveFilter) {
+            const currentValue = archiveFilter.value;
+            archiveFilter.innerHTML = '<option value="">— Все типы —</option>' +
+                documentTypesList.map(t =>
+                    `<option value="${t.id}">${escapeHtml(t.name)}</option>`
+                ).join('');
+            archiveFilter.value = currentValue;
+        }
+
+        // Фильтр в контроле сроков
+        const deadlineFilter = document.getElementById('deadlineTypeFilter');
+        if (deadlineFilter) {
+            const currentValue = deadlineFilter.value;
+            deadlineFilter.innerHTML = '<option value="">— Все типы —</option>' +
+                documentTypesList.map(t =>
+                    `<option value="${t.id}">${escapeHtml(t.name)}</option>`
+                ).join('');
+            deadlineFilter.value = currentValue;
         }
 
         // Селект "шаблон документа по умолчанию" в модалке типа документа

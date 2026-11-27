@@ -592,6 +592,15 @@ input:checked + .slider:hover:before {
     color: white;
     transform: translateY(-2px);
 }
+/* На странице настроек .btn-outline — не акцентная кнопка */
+.buttonbase.btn-outline img.ui-icon,
+.buttonbase.btn-outline img[src*="materials/icons8"] {
+    filter: var(--icon-filter-content) !important;
+}
+.buttonbase.btn-outline:hover img.ui-icon,
+.buttonbase.btn-outline:hover img[src*="materials/icons8"] {
+    filter: brightness(0) invert(1) !important;
+}
 
 /* ========== ПРОФИЛЬ (вкладка Личные настройки) ========== */
 .profile-content {

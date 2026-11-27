@@ -461,20 +461,27 @@ document.getElementById('confirmActionBtn').onclick = () => {
     closeConfirmActionModal();
 };
 function showToast(message, type = 'info') {
+    const normalizedType = ['success', 'error', 'warning'].includes(type) ? type : 'info';
+    const icons = {
+        success: '/materials/icons8-успех-96.png',
+        error: '/materials/icons8-ошибка-96.png',
+        warning: '/materials/icons8-предупреждение-96.png',
+        info: '/materials/icons8-информация-96.png'
+    };
+
+    document.querySelectorAll('.toast-notification').forEach(oldToast => oldToast.remove());
+
     const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 24px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#5194ff'};
-        color: white;
-        border-radius: 8px;
-        z-index: 10000;
-        animation: fadeInOut 3s ease;
+    toast.className = `toast-notification ${normalizedType}`;
+    toast.setAttribute('role', normalizedType === 'error' ? 'alert' : 'status');
+    toast.innerHTML = `
+        <span class="toast-icon-container ${normalizedType}">
+            <img src="${icons[normalizedType]}" class="toast-icon" alt="">
+        </span>
+        <span class="toast-message"></span>
     `;
+    toast.querySelector('.toast-message').textContent = message;
+
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }

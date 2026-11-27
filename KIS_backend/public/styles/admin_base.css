@@ -291,7 +291,7 @@
     justify-content: space-between;
     align-items: center;
     padding-top: 12px;
-    border-top: 1px solid #eef2f6;
+    border-top: 1px solid var(--c_border);
     margin-top: 8px;
 }
 
@@ -439,7 +439,7 @@
 .settings-card-actions {
     margin-top: 20px;
     padding-top: 16px;
-    border-top: 1px solid #eef2f6;
+    border-top: 1px solid var(--c_border);
     display: flex;
     gap: 10px;
     justify-content: flex-end;
@@ -739,9 +739,11 @@
 /* Формы в модалках */
 .modal-form .form-section {
     background: var(--c_acchalf);
+    border: 1px solid var(--ui-border);
     border-radius: var(--border-radius-md);
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: none;
 }
 
 .modal-form .form-section h3 {
@@ -1260,7 +1262,8 @@
 }
 
 .user-history-section {
-    background: white;
+    background: var(--c_surf);
+    color: var(--c_bg_txt);
     border-radius: 10px;
     padding: 20px;
     border: 1px solid var(--c_acchalf);
@@ -1525,7 +1528,7 @@
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 12px;
     padding-top: 16px;
-    border-top: 1px solid #eef2f6;
+    border-top: 1px solid var(--c_border);
 }
 
 .detail-item {
@@ -1656,6 +1659,29 @@
 }
 
 
+/* История действий: единый вид с остальными модалками */
+.user-history-section .section-header { gap: 12px; }
+.user-history-section .section-header h3 { display: flex; align-items: center; }
+.user-history-section .section-header h3 .ui-icon { width: 20px; height: 20px; }
+.history-count {
+    font-size: 12px;
+    color: var(--c_surf_txt);
+    background: var(--c_acchalf);
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+.history-item { align-items: flex-start; }
+.history-action { align-items: flex-start; }
+.history-action-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.action-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.action-icon { display: inline-flex; flex-shrink: 0; }
+.action-icon img { width: 18px; height: 18px; }
+.history-detail { font-size: 12px; color: var(--c_surf_txt); line-height: 1.5; word-break: break-word; }
+.history-detail-label { color: var(--c_acc); font-weight: 600; }
+.history-meta { font-size: 11px; color: var(--c_surf_txt); opacity: .85; }
+.history-empty { text-align: center; padding: 20px; color: var(--c_surf_txt); }
+
 /* Головное подразделение (корневое) */
 .root-department .structure-group-name {
     color: var(--c_acc);
@@ -1711,7 +1737,7 @@
 .stats-section {
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #eef2f6;
+    border-top: 1px solid var(--c_border);
 }
 
 .stats-section h4 {
@@ -1865,7 +1891,7 @@
 }
 
 .logs-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--c_surf_alt);
     border-radius: 3px;
 }
 

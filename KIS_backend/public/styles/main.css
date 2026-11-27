@@ -760,7 +760,8 @@ fieldset legend {
    ===================================================== */
 
 [data-theme="dark"] select {
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b9b9b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-image: none;
+    padding-right: 14px;
 }
 
 [data-theme="dark"] input[type="file"]::file-selector-button {
@@ -1781,29 +1782,56 @@ table.data-table tbody tr:hover td {
     border-top: 1px solid var(--c_surf_txt, #eee);
     flex-shrink: 0;
 }
-.toast-notification{
+.toast-notification {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 24px;
-    background: var(--c_surf);
-    color: var(--c_surf_txt);
-    border-radius: 8px;
+    bottom: 24px;
+    right: 24px;
     z-index: 10000;
-    animation: fadeInOut 3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 280px;
+    max-width: min(420px, calc(100vw - 48px));
+    padding: 12px 16px;
+    background: var(--c_surf);
+    color: var(--c_bg_txt);
+    border: 1px solid var(--c_border);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    animation: toastIn .24s ease, toastOut .24s ease 2.76s forwards;
 }
-.toast-icon-container .success{
-    background-color: var(--c_success);
-}
-.toast-icon-container .error{
-    background-color: var(--c_error);
-}
-.toast-icon-container .info{
-    background-color: var(--c_acc);
-}
-.toast-icon{
+.toast-icon-container {
+    flex: 0 0 40px;
     width: 40px;
     height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.toast-icon-container.success { background: var(--c_success); }
+.toast-icon-container.error { background: var(--c_error); }
+.toast-icon-container.warning { background: var(--c_warning); }
+.toast-icon-container.info { background: var(--c_acc); }
+.toast-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    filter: brightness(0) invert(1) !important;
+}
+.toast-message {
+    flex: 1 1 auto;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--c_bg_txt);
+    overflow-wrap: anywhere;
+}
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateY(8px); }
 }
 /* Unified modal aliases */
 .base-sec-modal .modal-content, .admin-modal .modal-content, .modal-container, .modal-content { background: var(--ui-modal-bg); border: 1px solid var(--ui-border); box-shadow: var(--ui-modal-shadow); border-radius: var(--ui-modal-radius); }
@@ -1859,6 +1887,11 @@ img[src*="Focused"],
 .nav-btn.active img {
     filter: brightness(0) invert(1) !important;
 }
+/* Accent buttons keep white icons even when the button uses .btn-outline */
+.buttonbase.btn-outline img.ui-icon,
+.buttonbase.btn-outline img[src*="materials/icons8"] {
+    filter: brightness(0) invert(1) !important;
+}
 /* Dropdown is on surface */
 .user-dropdown img[src*="materials/icons8"],
 .user-dropdown .ui-icon {
@@ -1867,6 +1900,18 @@ img[src*="Focused"],
 .user-dropdown .dropdown-avatar img,
 .user-avatar img,
 img[src*="avatar_for_profile"] {
+    filter: none !important;
+}
+
+/* Аватар — фотография пользователя, а не иконка: не белим даже в акцентном меню */
+.left-menu .user-avatar img,
+.left-menu img[src*="avatar_for_profile"] {
+    filter: none !important;
+}
+
+/* Логотип — не иконка: сохраняем новый лого+фон в любом меню */
+.left-menu .logo-img,
+.left-menu img[src*="logo+fon"] {
     filter: none !important;
 }
 

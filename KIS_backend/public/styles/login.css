@@ -341,15 +341,15 @@ body {
     filter: drop-shadow(0 0 15px rgba(81, 148, 255, 0.35));
 }
 
-/* Material icons in carousel are white; adapt for light banner */
+/* Карусель: иконки материал белые в любой теме, логотип остаётся оригинальным */
 .carousel-icon[src*="icons8"] {
-    filter: brightness(0) opacity(0.82) drop-shadow(0 0 12px rgba(37, 99, 235, 0.18));
+    filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(37, 99, 235, 0.45));
 }
 [data-theme="dark"] .carousel-icon {
     filter: drop-shadow(0 0 15px rgba(81, 148, 255, 0.5));
 }
 [data-theme="dark"] .carousel-icon[src*="icons8"] {
-    filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(81, 148, 255, 0.5));
+    filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(37, 99, 235, 0.45));
 }
 
 .carousel-icon:nth-child(1) { animation-delay: 0s; }

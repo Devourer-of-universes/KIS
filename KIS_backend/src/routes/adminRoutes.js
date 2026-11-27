@@ -4,6 +4,8 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { query } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const { checkPermission, adminPanelAccess } = require('../middleware/permissions');
+const { getSystemSettings, upsertSystemSettings, resetSystemSettings } = require('../utils/systemSettings');
+const { runAutoArchive } = require('../utils/documentArchiveScheduler');
 
 
 // ========== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ==========
@@ -102,14 +104,14 @@ router.get('/users/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-// Получение истории действий пользователя
-router.get('/users/:id/history', authMiddleware, async (req, res) => {
+// Получение истории действий пользователя (только для админпанели)
+router.get('/users/:id/history', authMiddleware, adminPanelAccess, checkPermission('users', 'view'), async (req, res) => {
     try {
         const { id } = req.params;
         const { limit = 50, offset = 0 } = req.query;
         
         const result = await query(
-            `SELECT id, action, entity_type, entity_id, 
+            `SELECT id, action, entity_type, entity_id, old_data, new_data,
                     to_char(created_at, 'DD.MM.YYYY HH24:MI:SS') as created_at,
                     ip_address, user_agent
              FROM audit_logs
@@ -958,29 +960,10 @@ router.get('/posts/department/:departmentId', authMiddleware, async (req, res) =
 // ========== СИСТЕМНЫЕ НАСТРОЙКИ ==========
 
 // Получение всех настроек
-router.get('/settings', authMiddleware, async (req, res) => {
+// Получение всех настроек (только для админпанели)
+router.get('/settings', authMiddleware, adminPanelAccess, async (req, res) => {
     try {
-        const result = await query(`SELECT * FROM system_settings ORDER BY setting_key`);
-        
-        // Преобразуем массив в объект { key: value }
-        const settings = {};
-        for (const row of result.rows) {
-            let value = row.setting_value;
-            if (row.setting_type === 'boolean') {
-                value = value === 'true';
-            } else if (row.setting_type === 'number') {
-                value = parseInt(value);
-            } else if (row.setting_type === 'json') {
-                try {
-                    value = JSON.parse(value);
-                } catch (e) {
-                    value = {};
-                }
-            }
-            settings[row.setting_key] = value;
-        }
-        
-        console.log('📦 Settings loaded:', Object.keys(settings));
+        const settings = await getSystemSettings();
         res.json({ settings });
     } catch (error) {
         console.error('Get settings error:', error);
@@ -988,65 +971,23 @@ router.get('/settings', authMiddleware, async (req, res) => {
     }
 });
 
-// Обновление настроек
-router.put('/settings', authMiddleware, async (req, res) => {
+// Обновление настроек (только известные ключи)
+router.put('/settings', authMiddleware, adminPanelAccess, async (req, res) => {
     try {
-        const updates = req.body;
-        const userId = req.userId;
-        
-        console.log('💾 Saving settings:', Object.keys(updates));
-        
-        for (const [key, value] of Object.entries(updates)) {
-            // Определяем тип значения
-            let settingType = 'string';
-            let settingValue = value;
-            
-            if (typeof value === 'boolean') {
-                settingType = 'boolean';
-                settingValue = value ? 'true' : 'false';
-            } else if (typeof value === 'number') {
-                settingType = 'number';
-                settingValue = String(value);
-            } else if (typeof value === 'object' && !Array.isArray(value)) {
-                settingType = 'json';
-                settingValue = JSON.stringify(value);
-            } else if (Array.isArray(value)) {
-                settingType = 'json';
-                settingValue = JSON.stringify(value);
-            }
-            
-            // Обновляем или вставляем настройку
-            await query(
-                `INSERT INTO system_settings (setting_key, setting_value, setting_type, updated_at, updated_by)
-                 VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)
-                 ON CONFLICT (setting_key) 
-                 DO UPDATE SET setting_value = EXCLUDED.setting_value, 
-                               setting_type = EXCLUDED.setting_type,
-                               updated_at = CURRENT_TIMESTAMP,
-                               updated_by = EXCLUDED.updated_by`,
-                [key, settingValue, settingType, userId]
-            );
-        }
-        
-        // Логируем изменение настроек
-        await query(
-            `INSERT INTO audit_logs (user_id, action, entity_type, new_data, ip_address, user_agent)
-             VALUES ($1, 'UPDATE settings', 'system', $2, $3, $4)`,
-            [userId, JSON.stringify(updates), req.ip, req.headers['user-agent']]
-        );
-        
-        console.log('✅ Settings saved successfully');
-        res.json({ success: true, message: 'Настройки сохранены' });
+        const updates = await upsertSystemSettings(req.body, req.userId);
+        req.audit = { action: 'UPDATE settings', entityType: 'settings', newData: updates };
+        res.json({ success: true, message: 'Настройки сохранены', updated: Object.keys(updates) });
     } catch (error) {
-        console.error('Update settings error:', error);
+        console.error('Save settings error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Сброс настроек по умолчанию
-router.post('/settings/reset', authMiddleware, async (req, res) => {
+// Сброс настроек к значениям по умолчанию
+router.post('/settings/reset', authMiddleware, adminPanelAccess, async (req, res) => {
     try {
-        await query(`UPDATE system_settings SET setting_value = DEFAULT`);
+        await resetSystemSettings(req.userId);
+        req.audit = { action: 'RESET settings', entityType: 'settings' };
         res.json({ success: true, message: 'Настройки сброшены' });
     } catch (error) {
         console.error('Reset settings error:', error);
@@ -1054,24 +995,89 @@ router.post('/settings/reset', authMiddleware, async (req, res) => {
     }
 });
 
+// ========== НАСТРОЙКИ ДОКУМЕНТООБОРОТА (СТРАНИЦА ДЕЛОПРОИЗВОДСТВА) ==========
 
+const docflowAccess = checkPermission('docflow_page', 'access');
 
+router.get('/docflow/settings', authMiddleware, docflowAccess, async (req, res) => {
+    try {
+        const settings = await getSystemSettings();
+        res.json({ settings: {
+            auto_archive_enabled: settings.auto_archive_enabled,
+            auto_archive_days: settings.auto_archive_days,
+            deadline_control_days: settings.deadline_control_days,
+            max_file_size: settings.max_file_size,
+            allowed_file_types: settings.allowed_file_types
+        } });
+    } catch (error) {
+        console.error('Get docflow settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
+router.put('/docflow/settings', authMiddleware, docflowAccess, async (req, res) => {
+    try {
+        const updates = {};
+        const body = req.body || {};
+        if ('auto_archive_enabled' in body) updates.auto_archive_enabled = Boolean(body.auto_archive_enabled);
+        if ('auto_archive_days' in body) {
+            const days = Number(body.auto_archive_days);
+            if (!Number.isFinite(days)) return res.status(400).json({ error: 'Некорректный срок архивации' });
+            updates.auto_archive_days = Math.min(3650, Math.max(30, Math.trunc(days)));
+        }
+        if ('deadline_control_days' in body) {
+            const days = Number(body.deadline_control_days);
+            if (!Number.isFinite(days)) return res.status(400).json({ error: 'Некорректный порог контроля сроков' });
+            updates.deadline_control_days = Math.min(365, Math.max(1, Math.trunc(days)));
+        }
+        if ('max_file_size' in body) {
+            const size = Number(body.max_file_size);
+            if (!Number.isFinite(size)) return res.status(400).json({ error: 'Некорректный размер файла' });
+            updates.max_file_size = Math.min(500, Math.max(1, Math.trunc(size)));
+        }
+        if ('allowed_file_types' in body) {
+            updates.allowed_file_types = Array.isArray(body.allowed_file_types)
+                ? body.allowed_file_types.map(x => String(x).toLowerCase())
+                : [];
+        }
+        const saved = await upsertSystemSettings(updates, req.userId);
+        req.audit = { action: 'UPDATE docflow settings', entityType: 'settings', newData: saved };
+        res.json({ success: true, message: 'Настройки документооборота сохранены', settings: saved });
+    } catch (error) {
+        console.error('Save docflow settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
-
-
+router.post('/docflow/auto-archive/run', authMiddleware, docflowAccess, async (req, res) => {
+    try {
+        const result = await runAutoArchive();
+        req.audit = { action: 'RUN auto archive', entityType: 'settings', newData: result };
+        res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('Manual auto archive error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 
 // ========== ЛОГИ И СТАТИСТИКА ==========
 
-// Получение логов
-router.get('/logs', authMiddleware, async (req, res) => {
+// Получение логов (только для админпанели)
+router.get('/logs', authMiddleware, adminPanelAccess, checkPermission('users', 'view'), async (req, res) => {
     try {
-        const { limit = 100, offset = 0 } = req.query;
+        const { limit = 100, offset = 0, filter = '' } = req.query;
+        const pattern = filter ? `%${String(filter).slice(0, 100)}%` : null;
         
         const result = await query(
-            `SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
-            [parseInt(limit), parseInt(offset)]
+            `SELECT id, user_id, action, entity_type, entity_id, old_data, new_data,
+                    to_char(created_at, 'DD.MM.YYYY HH24:MI:SS') as created_at,
+                    ip_address, user_agent
+             FROM audit_logs
+             WHERE ($3::text IS NULL OR action ILIKE $3)
+             ORDER BY created_at DESC
+             LIMIT $1 OFFSET $2`,
+            [parseInt(limit), parseInt(offset), pattern]
         );
         
         res.json({ logs: result.rows });
@@ -1585,12 +1591,12 @@ router.post('/notifications/send', authMiddleware, adminPanelAccess, async (req,
             createdCount++;
         }
         
-        // Логируем
-        await query(
-            `INSERT INTO audit_logs (user_id, action, entity_type, new_data, ip_address)
-             VALUES ($1, 'SEND notification', 'notification', $2, $3)`,
-            [senderId, JSON.stringify({ category, title, count: createdCount }), req.ip]
-        );
+        // Централизованный логгер запишет действие после ответа
+        req.audit = {
+            action: 'SEND notification',
+            entityType: 'notifications',
+            newData: { category, title, count: createdCount }
+        };
         
         res.status(201).json({ 
             success: true, 

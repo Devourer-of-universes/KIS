@@ -8,20 +8,20 @@ const btn_roles = document.querySelector('#nav-btn-roles');
 const btn_moderation = document.querySelector('#nav-btn-moderation');
 const btn_addUser = document.querySelector('#addUserBtn');
 
-btn_users.addEventListener('click', function(e){
+btn_users?.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('users-section');
     setActiveNavButton(this);
 })
 
-btn_templates.addEventListener('click', function(e){
+btn_templates?.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('templates-section');
     setActiveNavButton(this);
 })
 
 
-btn_system.addEventListener('click', function(e){
+btn_system?.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('system-section');
     setActiveNavButton(this);
@@ -29,7 +29,7 @@ btn_system.addEventListener('click', function(e){
     initSystemSettingsHandlers();
 });
 
-btn_reports.addEventListener('click', function(e){ 
+btn_reports?.addEventListener('click', function(e){ 
     e.stopPropagation();
     openAdminSection('reports-section');
     setActiveNavButton(this);
@@ -44,14 +44,14 @@ if (btn_moderation) btn_moderation.addEventListener('click', function(e){
     loadModerationReports();
 });
 
-btn_structure.addEventListener('click', function(e){
+btn_structure?.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('structure-section');
     setActiveNavButton(this);
     loadStructure();
 })
 
-btn_roles.addEventListener('click', function(e){
+btn_roles?.addEventListener('click', function(e){
     e.stopPropagation();
     openAdminSection('roles-section');
     setActiveNavButton(this);
@@ -91,6 +91,9 @@ function openAdminSection(sectionId) {
 // ========== ЕДИНЫЙ ОБРАБОТЧИК ИНИЦИАЛИЗАЦИИ ==========
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Admin page initializing...');
+    
+    // Скрипт подключён и на других страницах: ограничения админки применяем только в админ-панели
+    if (!document.getElementById('users-section') && !document.getElementById('rolesGrid')) return;
     
     // 1. Проверка авторизации и загрузка пользователя
     try {
@@ -326,8 +329,8 @@ class OrganizationStructure {
     
     initEventListeners() {
         
-        document.getElementById('collapseAllBtn').addEventListener('click', () => this.collapseAll());
-        document.getElementById('expandAllBtn').addEventListener('click', () => this.expandAll());
+        document.getElementById('collapseAllBtn')?.addEventListener('click', () => this.collapseAll());
+        document.getElementById('expandAllBtn')?.addEventListener('click', () => this.expandAll());
         
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('toggle-btn') || 
@@ -449,7 +452,9 @@ class OrganizationStructure {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    const orgStructure = new OrganizationStructure();
+    if (document.querySelector('.structure-group-item') || document.getElementById('collapseAllBtn')) {
+        const orgStructure = new OrganizationStructure();
+    }
 });
 
 
@@ -742,7 +747,7 @@ function validateUserForm(data) {
 }
 
 // Сохранение пользователя
-document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+document.getElementById('addUserForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = getUserFormData();
@@ -973,12 +978,15 @@ let isLoadingHistory = false;
             
             <!-- ИСТОРИЯ ДЕЙСТВИЙ -->
             <div class="user-history-section">
-                <h3>История действий</h3>
+                <div class="section-header">
+                    <h3><img src="../materials/icons8-история-96.png" class="ui-icon ui-icon-inline" alt=""> История действий</h3>
+                    <span class="history-count" id="userHistoryCount">Загрузка…</span>
+                </div>
                 <div class="history-timeline" id="userHistoryTimeline">
                     <div style="text-align: center; padding: 20px;">Загрузка истории...</div>
                 </div>
                 <div class="history-load-more" id="historyLoadMoreBtn" style="display: none;">
-                    <button class="buttonbase" onclick="loadMoreHistory()">Загрузить ещё</button>
+                    <button class="buttonbase" onclick="loadMoreHistory()"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Загрузить ещё</button>
                 </div>
             </div>
         `;
@@ -993,65 +1001,71 @@ let isLoadingHistory = false;
 }
 
 // Загрузка истории пользователя
- async function loadUserHistory(userId, page) {
+async function loadUserHistory(userId, page) {
     if (isLoadingHistory) return;
     isLoadingHistory = true;
-    
+
     const limit = 20;
     const offset = (page - 1) * limit;
-    
+
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/admin/users/${userId}/history?limit=${limit}&offset=${offset}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (!response.ok) throw new Error('Failed to load history');
-        
+
         const data = await response.json();
         historyTotal = data.total;
-        
+
         const timeline = document.getElementById('userHistoryTimeline');
         const loadMoreBtn = document.getElementById('historyLoadMoreBtn');
-        
-        if (page === 1) {
-            timeline.innerHTML = '';
-        }
-        
-        if (data.history.length === 0 && page === 1) {
-            timeline.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Нет действий</div>';
+        const countEl = document.getElementById('userHistoryCount');
+        if (countEl) countEl.textContent = `Всего: ${historyTotal}`;
+
+        if (page === 1) timeline.innerHTML = '';
+
+        if (!data.history || data.history.length === 0) {
+            if (page === 1) timeline.innerHTML = '<div class="history-empty">Нет действий</div>';
             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             return;
         }
-        
+
         for (const item of data.history) {
             const historyItem = document.createElement('div');
             historyItem.className = 'history-item';
+            const details = formatHistoryDetails(item);
+            const hasId = item.entity_id !== null && item.entity_id !== undefined;
             historyItem.innerHTML = `
-                <div class="history-time">${item.created_at}</div>
                 <div class="history-action">
-                    <span class="action-icon">${getActionIcon(item.action)}</span>
-                    <span class="action-text">${formatActionText(item.action, item.entity_type)}</span>
-                    ${item.entity_id ? `<span class="action-doc">ID: ${item.entity_id}</span>` : ''}
+                    <span class="action-icon">${getActionIcon(item.action, item.entity_type)}</span>
+                    <div class="history-action-main">
+                        <div class="action-line">
+                            <span class="action-text">${escapeHtml(formatActionText(item.action, item))}</span>
+                            ${hasId ? `<span class="action-doc">ID: ${escapeHtml(String(item.entity_id))}</span>` : ''}
+                        </div>
+                        ${details ? `<div class="history-detail">${details}</div>` : ''}
+                        <div class="history-meta">${escapeHtml(item.created_at || '')}${item.ip_address ? ` · ${escapeHtml(String(item.ip_address))}` : ''}</div>
+                    </div>
                 </div>
             `;
             timeline.appendChild(historyItem);
         }
-        
-        // Показываем кнопку "Загрузить ещё", если есть ещё записи
-        if (offset + limit < historyTotal) {
+
+        if (offset + data.history.length < historyTotal) {
             if (loadMoreBtn) loadMoreBtn.style.display = 'block';
         } else {
             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         }
-        
+
         currentHistoryPage = page;
-        
+
     } catch (error) {
         console.error('Error loading history:', error);
         const timeline = document.getElementById('userHistoryTimeline');
-        if (timeline && timeline.innerHTML === '') {
-            timeline.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Ошибка загрузки истории</div>';
+        if (timeline && timeline.innerHTML.trim() === '') {
+            timeline.innerHTML = '<div class="history-empty">Ошибка загрузки истории</div>';
         }
     } finally {
         isLoadingHistory = false;
@@ -1060,58 +1074,115 @@ let isLoadingHistory = false;
 
 // Загрузка следующей страницы истории
 function loadMoreHistory() {
-    if (!isLoadingHistory && currentHistoryPage * 20 < historyTotal) {
+    if (!isLoadingHistory && currentUserId && currentHistoryPage * 20 < historyTotal) {
         loadUserHistory(currentUserId, currentHistoryPage + 1);
     }
 }
 
-// Иконка для действия
-function getActionIcon(action) {
-    if (action.includes('POST')) return '';
-    if (action.includes('PUT')) return '';
-    if (action.includes('DELETE')) return '';
-    if (action.includes('login')) return '';
-    if (action.includes('logout')) return '';
-    return '';
+// Иконка для действия в истории
+function getActionIcon(action, entityType) {
+    const a = String(action || '').toUpperCase();
+    const icon = name => `<img src="../materials/${name}" class="ui-icon ui-icon-sm" alt="">`;
+
+    if (a.includes('LOGIN') || a.startsWith('REGISTER') && !a.includes('DOCUMENT')) return icon('icons8-идентифицированный-пользователь-мужчина-96.png');
+    if (a.includes('LOGOUT')) return icon('icons8-выход-96.png');
+    if (a.includes('WARN') || a.includes('REPORT')) return icon('icons8-предупреждение-96.png');
+    if (a.includes('APPROVE') || a.includes('RESOLVE') || a.includes('SIGN') || a.includes('SUCCESS')) return icon('icons8-успех-96.png');
+    if (a.includes('REJECT') || a.includes('DISMISS') || a.includes('CANCEL') || a.includes('DELETE')) return icon('icons8-удалить-96.png');
+    if (a.includes('SEND')) return icon('icons8-отправить-80.png');
+    if (a.includes('UPLOAD')) return icon('icons8-загрузить-96.png');
+    if (a.includes('DOWNLOAD')) return icon('icons8-скачать-96.png');
+    if (a.includes('MOVE')) return icon('icons8-перемещение-96.png');
+    if (a.startsWith('CREATE') || a.includes('GENERATE') || a.includes('DUPLICATE') || a.includes('REGISTER')) return icon('icons8-добавить-96.png');
+    if (a.startsWith('UPDATE') || a.includes('CHANGE') || a.includes('RESTORE')) return icon('icons8-карандаш-96.png');
+    if (a.includes('NOTIFICATION')) return icon('icons8-уведомление-100.png');
+    if (a.includes('SETTING')) return icon('icons8-настройки-96.png');
+    return icon('icons8-история-96.png');
 }
 
 // Форматирование текста действия
-function formatActionText(action, entityType) {
-    const map = {
-        'users': 'пользователь',
-        'departments': 'подразделение',
-        'roles': 'роль',
-        'chats': 'чат',
-        'messages': 'сообщение'
+function formatActionText(action, item) {
+    const a = String(action || '').toUpperCase();
+    const entityMap = {
+        users: 'пользователя', user: 'пользователя', employees: 'сотрудника',
+        roles: 'роль', departments: 'подразделение', structure: 'структуру',
+        posts: 'должность', documents: 'документ', document: 'документ',
+        document_types: 'тип документа', document_templates: 'шаблон документа',
+        workflow_templates: 'шаблон маршрута', tasks: 'задачу', task: 'задачу',
+        task_templates: 'шаблон задачи', chats: 'чат', chat: 'чат',
+        messages: 'сообщение', message: 'сообщение', moderation: 'жалобу',
+        notes: 'заметку', note: 'заметку', contacts: 'контакт',
+        counterparties: 'контрагента', notifications: 'уведомление',
+        files: 'файл', file: 'файл', folders: 'папку', folder: 'папку',
+        settings: 'настройки', backups: 'резервную копию', backup: 'резервную копию',
+        notification: 'уведомление', notifications: 'уведомление',
+        auth: 'вход в систему', admin: 'администрирование', system: 'систему'
     };
-    
-    const entity = map[entityType] || entityType;
-    
-    if (action.includes('POST')) return `Создал ${entity}`;
-    if (action.includes('PUT')) return `Изменил ${entity}`;
-    if (action.includes('DELETE')) return `Удал��л ${entity}`;
-    return action;
-}
+    const entity = entityMap[item && item.entity_type] || (item && item.entity_type) || 'объект';
 
-// Вспомогательная функция для отрисовки истории
-function renderHistoryItems(history) {
-    if (!history || history.length === 0) {
-        return '<div style="text-align: center; padding: 20px; color: #999;">Нет действий</div>';
+    const rules = [
+        [() => a.startsWith('LOGIN'), 'Вошёл в систему'],
+        [() => a.startsWith('LOGOUT'), 'Вышел из системы'],
+        [() => a.startsWith('REGISTER') && !a.includes('DOCUMENT'), 'Зарегистрировался'],
+        [() => a.startsWith('REGISTER'), 'Зарегистрировал документ'],
+        [() => a.includes('CHANGE_PASSWORD'), 'Изменил пароль'],
+        [() => a.includes('RESET_PASSWORD'), 'Сбросил пароль'],
+        [() => a.includes('AVATAR') && a.includes('DELETE'), 'Удалил аватар'],
+        [() => a.includes('AVATAR'), 'Обновил аватар'],
+        [() => a.includes('REVIEW'), 'Рассмотрел жалобу'],
+        [() => a.includes('RESOLVE'), 'Решил жалобу'],
+        [() => a.includes('DISMISS'), 'Отклонил жалобу'],
+        [() => a.includes('WARN'), 'Выдал предупреждение'],
+        [() => a.includes('REPORT'), 'Пожаловался на сообщение'],
+        [() => a.startsWith('APPROVE'), `Согласовал ${entity}`],
+        [() => a.startsWith('REJECT'), `Отклонил ${entity}`],
+        [() => a.startsWith('SIGN'), `Подписал ${entity}`],
+        [() => a.startsWith('SUBMIT'), `Отправил ${entity} на согласование`],
+        [() => a.startsWith('SEND'), `Отправил ${entity}`],
+        [() => a.startsWith('UPLOAD'), `Загрузил ${entity}`],
+        [() => a.startsWith('DOWNLOAD'), `Скачал ${entity}`],
+        [() => a.startsWith('MOVE'), `Переместил ${entity}`],
+        [() => a.startsWith('GENERATE'), `Создал ${entity}`],
+        [() => a.startsWith('DUPLICATE'), `Дублировал ${entity}`],
+        [() => a.startsWith('RESTORE'), `Восстановил ${entity}`],
+        [() => a.startsWith('CREATE'), `Создал ${entity}`],
+        [() => a.startsWith('UPDATE'), `Изменил ${entity}`],
+        [() => a.startsWith('DELETE'), `Удалил ${entity}`]
+    ];
+
+    for (const [test, text] of rules) {
+        if (test()) return text;
     }
-    
-    return history.map(item => `
-        <div class="history-item">
-            <div class="history-time">${item.time}</div>
-            <div class="history-action">
-                <span class="action-icon">${item.icon}</span>
-                <span class="action-text">${escapeHtml(item.text)}</span>
-                ${item.doc ? `<span class="action-doc">${escapeHtml(item.doc)}</span>` : ''}
-            </div>
-        </div>
-    `).join('');
+    return String(action);
 }
 
+// Подробности действия (без чувствительных полей — они маскируются на бэкенде)
+function formatHistoryDetails(item) {
+    const format = value => {
+        if (value === null || value === undefined) return '';
+        let text = typeof value === 'string' ? value : JSON.stringify(value);
+        if (!text) return '';
+        try {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed === 'object') {
+                text = Object.entries(parsed)
+                    .filter(([, val]) => val !== null && val !== undefined && typeof val !== 'object')
+                    .map(([key, val]) => `${key}: ${String(val)}`)
+                    .join(' · ');
+            }
+        } catch (_) { /* обычная строка */ }
+        text = String(text).replace(/\s+/g, ' ').trim();
+        return text.length > 260 ? text.slice(0, 260) + '…' : text;
+    };
 
+    const parts = [];
+    const newText = format(item.new_data);
+    if (newText) parts.push(`<span class="history-detail-label">Изменения:</span> ${escapeHtml(newText)}`);
+    const oldText = format(item.old_data);
+    if (oldText && oldText !== newText) parts.push(`<span class="history-detail-label">Было:</span> ${escapeHtml(oldText)}`);
+    if (item.user_agent) parts.push(`<span class="history-detail-label">Устройство:</span> ${escapeHtml(String(item.user_agent).slice(0, 120))}`);
+    return parts.join('<br>');
+}
 
 function formatDateTime(date) {
     return date.toLocaleString('ru-RU', {
@@ -1122,10 +1193,6 @@ function formatDateTime(date) {
     });
 }
 
-function loadMoreHistory() {
-    console.log('Загрузка дополнительной истории...');
-    // TODO: загрузка следующих страниц истории
-}
 
 function generateUserReport() {
     console.log('Генерация отчёта для пользователя:', currentViewedUserId);
@@ -1736,6 +1803,8 @@ let currentSearchTerm = '';
     currentPage = page;
     currentSearchTerm = search;
     
+    if (!rolesList.length) await loadRoles();
+    
     try {
         const token = localStorage.getItem('token');
         const offset = (page - 1) * usersPerPage;
@@ -1829,6 +1898,13 @@ function renderUsersTable(users) {
         const canDeleteThisUser = canDelete && !isSuperAdminUser && !isCurrentUser;
         const canResetPasswordUser = (hasPermission('users', 'reset_password') || isSuperAdmin) && !isSuperAdminUser;
         
+        const availableRoles = rolesList.slice();
+        if (!availableRoles.some(r => Number(r.id) === Number(user.role_id))) {
+            availableRoles.unshift({ id: user.role_id, name: user.role_name || 'Пользователь' });
+        }
+        const roleOptionsHtml = availableRoles.map(role => `
+                        <option value="${role.id}" ${Number(user.role_id) === Number(role.id) ? 'selected' : ''}>${escapeHtml(role.name)}</option>`).join('');
+        
         return `
             <tr ${isSuperAdminUser ? 'style="background: rgba(255, 215, 0, 0.1);"' : ''}>
                 <td>${user.id}</td>
@@ -1844,8 +1920,7 @@ function renderUsersTable(users) {
                     <select class="role-select" data-user-id="${user.id}" 
                         onchange="updateUserRole(${user.id}, this.value)" 
                         ${!canChangeRole || isSuperAdminUser ? 'disabled' : ''}>
-                        <option value="1" ${user.role_id === 1 ? 'selected' : ''}>Администратор</option>
-                        <option value="2" ${user.role_id === 2 ? 'selected' : ''}>Пользователь</option>
+                        ${roleOptionsHtml}
                     </select>
                 </td>
                 <td>${getStatusBadge(user.status)}</td>
@@ -2035,20 +2110,27 @@ function openBlockUserModal(userId, userName, currentStatus) {
 
 // Всплывающие уведомления
 function showToast(message, type = 'info') {
+    const normalizedType = ['success', 'error', 'warning'].includes(type) ? type : 'info';
+    const icons = {
+        success: '/materials/icons8-успех-96.png',
+        error: '/materials/icons8-ошибка-96.png',
+        warning: '/materials/icons8-предупреждение-96.png',
+        info: '/materials/icons8-информация-96.png'
+    };
+
+    document.querySelectorAll('.toast-notification').forEach(oldToast => oldToast.remove());
+
     const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 24px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#5194ff'};
-        color: white;
-        border-radius: 8px;
-        z-index: 10000;
-        animation: fadeInOut 3s ease;
+    toast.className = `toast-notification ${normalizedType}`;
+    toast.setAttribute('role', normalizedType === 'error' ? 'alert' : 'status');
+    toast.innerHTML = `
+        <span class="toast-icon-container ${normalizedType}">
+            <img src="${icons[normalizedType]}" class="toast-icon" alt="">
+        </span>
+        <span class="toast-message"></span>
     `;
+    toast.querySelector('.toast-message').textContent = message;
+
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
@@ -2287,6 +2369,16 @@ function getRoleDescription(roleName, permissions) {
 
 let currentEditingRoleId = null;
 
+// Часть полей роли отсутствует в текущей разметке — работаем с ними безопасно
+function setRoleField(id, property, value) {
+    const el = document.getElementById(id);
+    if (el) el[property] = value;
+}
+function getRoleCheckbox(id, fallback = false) {
+    const el = document.getElementById(id);
+    return el ? el.checked === true : fallback;
+}
+
 // Открытие модалки создания/редактирования роли
 function openRoleModal(roleId = null) {
     currentEditingRoleId = roleId;
@@ -2332,10 +2424,10 @@ function openRoleModal(roleId = null) {
             document.getElementById('roleCode').disabled = true;
             document.getElementById('roleDescription').disabled = true;
             document.querySelectorAll('.permission-select').forEach(select => select.disabled = true);
-            document.getElementById('roleIsDefault').disabled = true;
-            document.getElementById('roleCanDelegate').disabled = true;
-            document.getElementById('roleIsSystem').disabled = true;
-            document.getElementById('rolePriority').disabled = true;
+            setRoleField('roleIsDefault', 'disabled', true);
+            setRoleField('roleCanDelegate', 'disabled', true);
+            setRoleField('roleIsSystem', 'disabled', true);
+            setRoleField('rolePriority', 'disabled', true);
             document.querySelectorAll('.preset-btn').forEach(btn => btn.disabled = true);
         } else {
             // Разблокируем
@@ -2343,10 +2435,10 @@ function openRoleModal(roleId = null) {
             document.getElementById('roleCode').disabled = false;
             document.getElementById('roleDescription').disabled = false;
             document.querySelectorAll('.permission-select').forEach(select => select.disabled = false);
-            document.getElementById('roleIsDefault').disabled = false;
-            document.getElementById('roleCanDelegate').disabled = false;
-            document.getElementById('roleIsSystem').disabled = false;
-            document.getElementById('rolePriority').disabled = false;
+            setRoleField('roleIsDefault', 'disabled', false);
+            setRoleField('roleCanDelegate', 'disabled', false);
+            setRoleField('roleIsSystem', 'disabled', false);
+            setRoleField('rolePriority', 'disabled', false);
             document.querySelectorAll('.preset-btn').forEach(btn => btn.disabled = false);
         }
         
@@ -2356,10 +2448,10 @@ function openRoleModal(roleId = null) {
         }
         
         // Дополнительные настройки
-        document.getElementById('roleIsDefault').checked = role.is_default || false;
-        document.getElementById('roleCanDelegate').checked = role.can_delegate !== false;
-        document.getElementById('roleIsSystem').checked = role.is_system || false;
-        document.getElementById('rolePriority').value = role.priority || 'medium';
+        setRoleField('roleIsDefault', 'checked', role.is_default || false);
+        setRoleField('roleCanDelegate', 'checked', role.can_delegate !== false);
+        setRoleField('roleIsSystem', 'checked', role.is_system || false);
+        setRoleField('rolePriority', 'value', role.priority || 'medium');
         
         // Для системных ролей скрываем кнопку сохранения
         const saveBtn = document.querySelector('#roleEditorForm button[type="submit"]');
@@ -2437,9 +2529,9 @@ function getRoleFormData() {
         code: document.getElementById('roleCode').value,
         description: document.getElementById('roleDescription').value,
         permissions: permissions,
-        admin_panel: document.getElementById('adminPanelAccess').checked,
-        is_default: document.getElementById('roleIsDefault').checked,
-        is_system: document.getElementById('roleIsSystem').checked
+        admin_panel: getRoleCheckbox('adminPanelAccess', permissions.admin_panel?.access === true || permissions.admin_panel === true),
+        is_default: getRoleCheckbox('roleIsDefault'),
+        is_system: getRoleCheckbox('roleIsSystem')
     };
 }
 
@@ -2448,9 +2540,9 @@ function loadRoleToForm(role) {
     document.getElementById('roleName').value = role.name;
     document.getElementById('roleCode').value = role.code || '';
     document.getElementById('roleDescription').value = role.description || '';
-    document.getElementById('adminPanelAccess').checked = role.permissions?.admin_panel === true;
-    document.getElementById('roleIsDefault').checked = role.is_default || false;
-    document.getElementById('roleIsSystem').checked = role.is_system || false;
+    setRoleField('adminPanelAccess', 'checked', role.permissions?.admin_panel === true || role.permissions?.admin_panel?.access === true);
+    setRoleField('roleIsDefault', 'checked', role.is_default || false);
+    setRoleField('roleIsSystem', 'checked', role.is_system || false);
     
     // Загружаем права
     const permissions = role.permissions || {};
@@ -2669,7 +2761,7 @@ function renderStructureTree(departments, unassignedEmployees = []) {
                                     </span>
                                 </div>
                                 <div class="employee-actions">
-                                    <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить"><img src="../materials/icons8-переместить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                    <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить"><img src="../materials/icons8-перемещение-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                                     <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                                 </div>
                             </div>
@@ -2719,7 +2811,7 @@ function renderStructureTree(departments, unassignedEmployees = []) {
                             </span>
                         </div>
                         <div class="employee-actions">
-                            <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, null)" title="Переместить"><img src="../materials/icons8-переместить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                            <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, null)" title="Переместить"><img src="../materials/icons8-перемещение-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                             <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                         </div>
                     </div>
@@ -2798,7 +2890,7 @@ function renderSubtree(children) {
                                 </span>
                             </div>
                             <div class="employee-actions">
-                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить"><img src="../materials/icons8-переместить-96.png" class="ui-icon ui-icon-inline" alt=""></button>
+                                <button class="btn-icon buttonbase" onclick="openMoveEmployeeModal(${emp.id}, ${dept.id})" title="Переместить"><img src="../materials/icons8-перемещение-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                                 <button class="btn-icon buttonbase" onclick="openEditEmployeeModal(${emp.id})" title="Редактировать"><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""></button>
                             </div>
                         </div>
@@ -3631,63 +3723,6 @@ function renderSettingsForm() {
             </div>
         </div>
 
-        <!-- Документооборот -->
-        <div class="settings-card">
-            <div class="settings-card-header">
-                <div class="settings-card-icon"></div>
-                <div>
-                    <h3 class="settings-card-title">Документооборот</h3>
-                    <p class="settings-card-description">Настройки работы с документами и файлами</p>
-                </div>
-            </div>
-            <div class="settings-card-content">
-                <div class="settings-card-item">
-                    <div class="settings-card-info">
-                        <span class="settings-card-label">Автоархивация документов</span>
-                        <span class="settings-card-hint">Документы автоматически архивируются через указанное количество дней</span>
-                    </div>
-                    <div class="settings-card-control">
-                        <input type="number" id="auto_archive_days" class="setting-input" value="${currentSettings.auto_archive_days || 365}" min="30" max="3650" style="width: 100px;">
-                        <span class="setting-unit">дней</span>
-                    </div>
-                </div>
-                <div class="settings-card-item">
-                    <div class="settings-card-info">
-                        <span class="settings-card-label">Максимальный размер файла</span>
-                        <span class="settings-card-hint">Ограничение размера загружаемых файлов</span>
-                    </div>
-                    <div class="settings-card-control">
-                        <input type="number" id="max_file_size" class="setting-input" value="${currentSettings.max_file_size || 50}" min="1" max="500" style="width: 100px;">
-                        <span class="setting-unit">МБ</span>
-                    </div>
-                </div>
-                <div class="settings-card-item">
-                    <div class="settings-card-info">
-                        <span class="settings-card-label">Разрешенные типы файлов</span>
-                        <span class="settings-card-hint">Форматы файлов, разрешенные для загрузки</span>
-                    </div>
-                    <div class="settings-card-control">
-                        <select id="allowed_file_types" class="setting-select" multiple size="5" style="width: 200px;">
-                            <option value="pdf" ${currentSettings.allowed_file_types?.includes('pdf') ? 'selected' : ''}>PDF</option>
-                            <option value="doc" ${currentSettings.allowed_file_types?.includes('doc') ? 'selected' : ''}>Word</option>
-                            <option value="xls" ${currentSettings.allowed_file_types?.includes('xls') ? 'selected' : ''}>Excel</option>
-                            <option value="jpg" ${currentSettings.allowed_file_types?.includes('jpg') ? 'selected' : ''}>Изображения</option>
-                            <option value="txt" ${currentSettings.allowed_file_types?.includes('txt') ? 'selected' : ''}>Текстовые файлы</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="settings-card-item">
-                    <div class="settings-card-info">
-                        <span class="settings-card-label">Хранилище</span>
-                        <span class="settings-card-hint">Путь к хранилищу файлов</span>
-                    </div>
-                    <div class="settings-card-control">
-                        <input type="text" id="storage_path" class="setting-input" value="${escapeHtml(currentSettings.storage_path || './uploads')}" style="width: 250px;">
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Безопасность -->
         <div class="settings-card">
             <div class="settings-card-header">
@@ -3913,32 +3948,33 @@ function renderSettingsForm() {
  async function saveSystemSettings() {
     const settings = {
         // Общие
-        org_name: document.getElementById('org_name')?.value || '',
-        auto_numbering: document.getElementById('auto_numbering')?.value || 'auto',
-        org_email: document.getElementById('org_email')?.value || '',
-        org_phone: document.getElementById('org_phone')?.value || '',
+        org_name: document.getElementById('org_name')?.value ?? currentSettings.org_name ?? '',
+        auto_numbering: document.getElementById('auto_numbering')?.value ?? currentSettings.auto_numbering ?? 'auto',
+        org_email: document.getElementById('org_email')?.value ?? currentSettings.org_email ?? 'info@company.ru',
+        org_phone: document.getElementById('org_phone')?.value ?? currentSettings.org_phone ?? '',
         
-        // Документооборот
-        auto_archive_days: parseInt(document.getElementById('auto_archive_days')?.value) || 365,
-        max_file_size: parseInt(document.getElementById('max_file_size')?.value) || 50,
-        allowed_file_types: Array.from(document.getElementById('allowed_file_types')?.selectedOptions || []).map(opt => opt.value),
-        storage_path: document.getElementById('storage_path')?.value || './uploads',
+        // Документооборот (редактируется на странице делопроизводства — сохраняем текущие значения)
+        auto_archive_enabled: currentSettings.auto_archive_enabled ?? true,
+        auto_archive_days: currentSettings.auto_archive_days ?? 365,
+        max_file_size: currentSettings.max_file_size ?? 50,
+        allowed_file_types: currentSettings.allowed_file_types ?? [],
+        storage_path: currentSettings.storage_path ?? './uploads',
         
         // Безопасность
         session_timeout: parseInt(document.getElementById('session_timeout')?.value) || 8,
         password_min_length: parseInt(document.getElementById('password_min_length')?.value) || 6,
-        password_require_special: document.getElementById('password_require_special')?.checked || false,
-        enable_2fa: document.getElementById('enable_2fa')?.checked || false,
+        password_require_special: document.getElementById('password_require_special')?.checked ?? currentSettings.password_require_special ?? true,
+        enable_2fa: document.getElementById('enable_2fa')?.checked ?? currentSettings.enable_2fa ?? false,
         
         // Резервное копирование
-        backup_schedule: document.getElementById('backup_schedule')?.value || 'disabled',
+        backup_schedule: document.getElementById('backup_schedule')?.value ?? currentSettings.backup_schedule ?? 'daily',
         backup_time: document.getElementById('backup_time')?.value || '02:00',
         backup_retention_days: parseInt(document.getElementById('backup_retention_days')?.value) || 30,
         
         // Уведомления
-        notify_email: document.getElementById('notify_email')?.value || '',
-        notify_critical_errors: document.getElementById('notify_critical_errors')?.checked || false,
-        notify_suspicious: document.getElementById('notify_suspicious')?.checked || false,
+        notify_email: document.getElementById('notify_email')?.value ?? currentSettings.notify_email ?? 'admin@company.ru',
+        notify_critical_errors: document.getElementById('notify_critical_errors')?.checked ?? currentSettings.notify_critical_errors ?? true,
+        notify_suspicious: document.getElementById('notify_suspicious')?.checked ?? currentSettings.notify_suspicious ?? true,
         
         // Логи
         log_level: document.getElementById('log_level')?.value || 'info',

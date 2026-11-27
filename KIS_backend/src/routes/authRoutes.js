@@ -11,8 +11,7 @@ const useragent = require('useragent');
 
 // Регистрация
 router.post('/register', async (req, res) => {
-    console.log('📝 Headers:', req.headers);
-    console.log('📝 Body:', req.body);
+    console.log('📝 Register request');
     
     try {
         const { username, surname, name, patronymic, birthday, postId, departmentId, email, telNum, password } = req.body;
@@ -65,6 +64,14 @@ router.post('/register', async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        req.audit = {
+            userId: user.id,
+            action: 'REGISTER',
+            entityType: 'users',
+            entityId: user.id,
+            newData: { username: user.username, email: user.email }
+        };
+
         res.status(201).json({ success: true, user, token });
 
     } catch (error) {
@@ -75,7 +82,7 @@ router.post('/register', async (req, res) => {
 
 // Логин
 router.post('/login', async (req, res) => {
-    console.log('🔐 Login body:', req.body);
+    console.log('🔐 Login request');
     
     try {
         const { emailOrUsername, password } = req.body;
@@ -133,6 +140,14 @@ router.post('/login', async (req, res) => {
         
         delete foundUser.password_hash;
 
+        req.audit = {
+            userId: foundUser.id,
+            action: 'LOGIN',
+            entityType: 'auth',
+            entityId: foundUser.id,
+            newData: { username: foundUser.username, device: deviceInfo.device, location }
+        };
+
         res.json({ success: true, user: foundUser, token });
 
     } catch (error) {
@@ -161,6 +176,7 @@ router.post('/logout', authMiddleware, async (req, res) => {
             }
         }
         
+        req.audit = { action: 'LOGOUT', entityType: 'auth', entityId: req.userId, newData: {} };
         res.json({ success: true, message: 'Выход выполнен' });
     } catch (error) {
         console.error('Logout error:', error);

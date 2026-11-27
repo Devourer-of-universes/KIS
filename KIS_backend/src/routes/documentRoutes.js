@@ -10,6 +10,7 @@ const { query, transaction } = require('../config/database');
 const docxService = require('../services/docxService');
 const { formatNumber, getPeriodKey } = require('./documentTypeRoutes');
 const { resolveAllSteps } = require('../services/assigneeResolver');
+const { getDocflowSettings } = require('../utils/systemSettings');
 // =====================================================
 // ПАПКИ
 // =====================================================
@@ -25,7 +26,7 @@ const attachmentsDir = path.join(__dirname, '../../public/uploads/doc-attachment
 // MULTER ДЛЯ ВЛОЖЕНИЙ
 // =====================================================
 
-const attachmentStorage = multer.diskStorage({
+const createAttachmentStorage = () => multer.diskStorage({
     destination: (req, file, cb) => cb(null, attachmentsDir),
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
@@ -33,10 +34,29 @@ const attachmentStorage = multer.diskStorage({
     }
 });
 
-const uploadAttachment = multer({
-    storage: attachmentStorage,
-    limits: { fileSize: 20 * 1024 * 1024 }
-});
+// Ограничения берутся из настроек документооборота (страница делопроизводства)
+const uploadAttachment = (req, res, next) => {
+    getDocflowSettings().then(settings => {
+        const allowed = settings.allowed_file_types;
+        const aliases = { jpeg: 'jpg', docx: 'doc', xlsx: 'xls' };
+        multer({
+            storage: createAttachmentStorage(),
+            limits: { fileSize: settings.max_file_size * 1024 * 1024 },
+            fileFilter: (req, file, cb) => {
+                if (!allowed.length) return cb(null, true);
+                const rawExt = path.extname(file.originalname).slice(1).toLowerCase();
+                const ext = aliases[rawExt] || rawExt;
+                if (!allowed.includes(ext) && !allowed.includes(rawExt)) {
+                    return cb(new Error(`Формат .${rawExt} не разрешён для вложений документов`));
+                }
+                cb(null, true);
+            }
+        }).single('file')(req, res, (err) => {
+            if (err) return res.status(400).json({ error: err.message });
+            next();
+        });
+    }).catch(next);
+};
 
 // =====================================================
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -310,7 +330,21 @@ router.get('/documents', authMiddleware, async (req, res) => {
                 dt.icon as document_type_icon,
                 u.surname as created_by_surname,
                 u.name as created_by_name,
-                dpt.name as department_name
+                dpt.name as department_name,
+                COALESCE(
+                    (
+                        SELECT jsonb_agg(
+                                   jsonb_build_object(
+                                       'user_id', da.user_id,
+                                       'full_name', TRIM(CONCAT_WS(' ', ua.surname, ua.name, ua.patronymic))
+                                   )
+                                   ORDER BY da.assigned_at, da.user_id
+                               )
+                        FROM document_assignees da
+                        JOIN users ua ON ua.id = da.user_id
+                        WHERE da.document_id = d.id
+                    ), '[]'::jsonb
+                ) as assignees
             FROM documents d
             LEFT JOIN document_types dt ON d.document_type_id = dt.id
             LEFT JOIN users u ON d.created_by = u.id
@@ -327,9 +361,14 @@ router.get('/documents', authMiddleware, async (req, res) => {
                 `SELECT permissions FROM roles WHERE id = (SELECT role_id FROM users WHERE id = $1)`,
                 [req.userId]
             );
-            const perms = permResult.rows[0]?.permissions?.documents || {};
-            
-            if (perms.view !== 'all') {
+            const rolePermissions = permResult.rows[0]?.permissions || {};
+            const perms = rolePermissions.documents || {};
+            const docflowPerm = rolePermissions.docflow_page;
+            const hasDocflowAccess =
+                docflowPerm === true || docflowPerm === 'all' ||
+                docflowPerm?.access === true || docflowPerm?.access === 'all';
+
+            if (perms.view !== 'all' && !hasDocflowAccess) {
                 // Показываем: свои + где есть явный доступ + где участник маршрута
                 sql += ` AND (
                     d.created_by = $${idx}
@@ -370,10 +409,13 @@ router.get('/documents', authMiddleware, async (req, res) => {
             idx++;
         }
         
+        const filterParams = [...params];
+        const wherePart = sql.slice(sql.indexOf(' WHERE d.deleted_at IS NULL'));
+
         sql += ` ORDER BY d.${safeSortBy} ${safeSortDir}`;
         sql += ` LIMIT $${idx++} OFFSET $${idx++}`;
         params.push(parseInt(limit), parseInt(offset));
-        
+
         const result = await query(sql, params);
         
         const documents = result.rows.map(d => ({
@@ -383,9 +425,9 @@ router.get('/documents', authMiddleware, async (req, res) => {
                 : null
         }));
         
-        // Считаем total (упрощённо, без учёта прав)
         const countResult = await query(
-            `SELECT COUNT(*) FROM documents WHERE deleted_at IS NULL`
+            `SELECT COUNT(*) FROM documents d ${wherePart}`,
+            filterParams
         );
         
         res.json({ 
@@ -394,6 +436,317 @@ router.get('/documents', authMiddleware, async (req, res) => {
         });
     } catch (error) {
         console.error('Get documents error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// =====================================================
+// СТАТИСТИКА ДОКУМЕНТОВ
+// =====================================================
+
+router.get('/documents/stats', authMiddleware, async (req, res) => {
+    try {
+        const settings = await getDocflowSettings();
+        const days = settings.deadline_control_days;
+
+        const params = [];
+        let idx = 2;
+        const whereParts = ['d.deleted_at IS NULL'];
+
+        if (!req.user?.is_super_admin) {
+            const permResult = await query(
+                `SELECT permissions FROM roles WHERE id = (SELECT role_id FROM users WHERE id = $1)`,
+                [req.userId]
+            );
+            const rolePermissions = permResult.rows[0]?.permissions || {};
+            const perms = rolePermissions.documents || {};
+            const docflowPerm = rolePermissions.docflow_page;
+            const hasDocflowAccess =
+                docflowPerm === true || docflowPerm === 'all' ||
+                docflowPerm?.access === true || docflowPerm?.access === 'all';
+
+            if (perms.view !== 'all' && !hasDocflowAccess) {
+                whereParts.push(`(
+                    d.created_by = $${idx}
+                    OR EXISTS (SELECT 1 FROM document_access da
+                               WHERE da.document_id = d.id AND da.user_id = $${idx})
+                    OR EXISTS (SELECT 1 FROM document_access da
+                               JOIN users u2 ON u2.department_id = da.department_id
+                               WHERE da.document_id = d.id AND u2.id = $${idx})
+                    OR EXISTS (SELECT 1 FROM document_routes dr
+                               WHERE dr.document_id = d.id
+                               AND dr.route_data::text LIKE '%"user_id":' || $${idx} || '%')
+                )`);
+                params.push(req.userId);
+                idx++;
+            }
+        }
+
+        const whereSql = whereParts.join(' AND ');
+
+        const dueDateExpr = `COALESCE(
+            CASE WHEN d.field_values ? 'deadline' AND NULLIF(d.field_values->>'deadline', '') IS NOT NULL
+                 THEN (d.field_values->>'deadline')::date END,
+            CASE WHEN d.field_values ? 'due_date' AND NULLIF(d.field_values->>'due_date', '') IS NOT NULL
+                 THEN (d.field_values->>'due_date')::date END,
+            CASE WHEN d.field_values ? 'control_date' AND NULLIF(d.field_values->>'control_date', '') IS NOT NULL
+                 THEN (d.field_values->>'control_date')::date END,
+            CASE WHEN d.field_values ? 'execution_date' AND NULLIF(d.field_values->>'execution_date', '') IS NOT NULL
+                 THEN (d.field_values->>'execution_date')::date END,
+            CASE WHEN d.field_values ? 'term' AND NULLIF(d.field_values->>'term', '') IS NOT NULL
+                 THEN (d.field_values->>'term')::date END
+        )`;
+
+        const baseCte = `
+            WITH visible_docs AS (
+                SELECT
+                    d.*,
+                    ${dueDateExpr} AS due_date,
+                    COALESCE(d.reg_date::timestamp, d.updated_at::timestamp) AS last_activity_at,
+                    FLOOR(EXTRACT(EPOCH FROM (
+                        NOW()::timestamp - COALESCE(d.reg_date::timestamp, d.updated_at::timestamp)
+                    )) / 86400)::int AS inactivity_days
+                FROM documents d
+                WHERE ${whereSql}
+            ),
+            stats_docs AS (
+                SELECT
+                    visible_docs.*,
+                    CASE
+                        WHEN visible_docs.due_date IS NOT NULL AND visible_docs.due_date < CURRENT_DATE
+                            THEN (CURRENT_DATE - visible_docs.due_date)
+                        ELSE GREATEST(0, visible_docs.inactivity_days - $1)
+                    END AS overdue_days
+                FROM visible_docs
+            )
+        `;
+
+        const statsParams = [days, ...params];
+
+        const [summaryResult, statusResult, typeResult, departmentResult, assigneeResult] = await Promise.all([
+            query(
+                `${baseCte}
+                 SELECT
+                     COUNT(*)::int AS total,
+                     COUNT(*) FILTER (WHERE status = 'on_approval')::int AS on_approval,
+                     COUNT(*) FILTER (WHERE status = 'archived')::int AS archived,
+                     COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int AS created_30_days,
+                     COUNT(*) FILTER (WHERE status = 'registered'
+                                        AND reg_date >= CURRENT_DATE - 30)::int AS registered_30_days,
+                     COUNT(*) FILTER (WHERE overdue_days > 0)::int AS overdue
+                 FROM stats_docs`,
+                statsParams
+            ),
+            query(
+                `${baseCte}
+                 SELECT status, COUNT(*)::int AS count
+                 FROM stats_docs
+                 GROUP BY status
+                 ORDER BY count DESC, status ASC`,
+                statsParams
+            ),
+            query(
+                `${baseCte}
+                 SELECT dt.id, dt.name, COUNT(*)::int AS count
+                 FROM stats_docs d
+                 LEFT JOIN document_types dt ON dt.id = d.document_type_id
+                 GROUP BY dt.id, dt.name
+                 ORDER BY count DESC, dt.name ASC`,
+                statsParams
+            ),
+            query(
+                `${baseCte}
+                 SELECT dep.id, dep.name, COUNT(*)::int AS count
+                 FROM stats_docs d
+                 LEFT JOIN departments dep ON dep.id = d.department_id
+                 GROUP BY dep.id, dep.name
+                 ORDER BY count DESC, dep.name ASC`,
+                statsParams
+            ),
+            query(
+                `${baseCte}
+                 SELECT u.id,
+                        TRIM(CONCAT_WS(' ', u.surname, u.name, u.patronymic)) AS full_name,
+                        COUNT(DISTINCT d.id)::int AS count
+                 FROM stats_docs d
+                 JOIN document_assignees da ON da.document_id = d.id
+                 JOIN users u ON u.id = da.user_id
+                 GROUP BY u.id, full_name
+                 ORDER BY count DESC, full_name ASC
+                 LIMIT 10`,
+                statsParams
+            )
+        ]);
+
+        res.json({
+            summary: summaryResult.rows[0] || {},
+            by_status: statusResult.rows,
+            by_type: typeResult.rows,
+            by_department: departmentResult.rows,
+            by_assignee: assigneeResult.rows,
+            threshold: days,
+            generated_at: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Get document stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// =====================================================
+// КОНТРОЛЬ СРОКОВ ДОКУМЕНТОВ
+// =====================================================
+
+router.get('/documents/deadline-control', authMiddleware, async (req, res) => {
+    try {
+        const { search = '', status = '', limit = 50, offset = 0 } = req.query;
+        const settings = await getDocflowSettings();
+        const requestedDays = Number(req.query.days);
+        const days = Number.isFinite(requestedDays) && requestedDays > 0
+            ? Math.min(365, Math.max(1, Math.trunc(requestedDays)))
+            : settings.deadline_control_days;
+
+        const activeStatuses = ['on_approval', 'revision', 'signed', 'registered'];
+        const params = [days];
+        let idx = 2;
+        const statusPlaceholders = activeStatuses.map(() => `$${idx++}`).join(', ');
+        params.push(...activeStatuses);
+
+        const dueDateExpr = `COALESCE(
+            CASE WHEN d.field_values ? 'deadline' AND NULLIF(d.field_values->>'deadline', '') IS NOT NULL
+                 THEN (d.field_values->>'deadline')::date END,
+            CASE WHEN d.field_values ? 'due_date' AND NULLIF(d.field_values->>'due_date', '') IS NOT NULL
+                 THEN (d.field_values->>'due_date')::date END,
+            CASE WHEN d.field_values ? 'control_date' AND NULLIF(d.field_values->>'control_date', '') IS NOT NULL
+                 THEN (d.field_values->>'control_date')::date END,
+            CASE WHEN d.field_values ? 'execution_date' AND NULLIF(d.field_values->>'execution_date', '') IS NOT NULL
+                 THEN (d.field_values->>'execution_date')::date END,
+            CASE WHEN d.field_values ? 'term' AND NULLIF(d.field_values->>'term', '') IS NOT NULL
+                 THEN (d.field_values->>'term')::date END
+        )`;
+
+        const baseCte = `
+            WITH raw_docs AS (
+                SELECT
+                    d.id, d.title, d.reg_number, d.status, d.priority,
+                    d.document_type_id, d.created_by, d.created_at, d.updated_at,
+                    dt.name AS document_type_name,
+                    u.surname AS created_by_surname,
+                    u.name AS created_by_name,
+                    ${dueDateExpr} AS due_date,
+                    COALESCE(d.reg_date::timestamp, d.updated_at::timestamp) AS last_activity_at,
+                    FLOOR(EXTRACT(EPOCH FROM (
+                        NOW()::timestamp - COALESCE(d.reg_date::timestamp, d.updated_at::timestamp)
+                    )) / 86400)::int AS inactivity_days
+                FROM documents d
+                LEFT JOIN document_types dt ON d.document_type_id = dt.id
+                LEFT JOIN users u ON d.created_by = u.id
+                WHERE d.deleted_at IS NULL
+                  AND d.status IN (${statusPlaceholders})
+            ),
+            docs AS (
+                SELECT
+                    raw_docs.*,
+                    CASE
+                        WHEN raw_docs.due_date IS NOT NULL AND raw_docs.due_date < CURRENT_DATE
+                            THEN (CURRENT_DATE - raw_docs.due_date)
+                        ELSE GREATEST(0, raw_docs.inactivity_days - $1)
+                    END AS overdue_days,
+                    CASE
+                        WHEN raw_docs.due_date IS NOT NULL AND raw_docs.due_date < CURRENT_DATE THEN 'deadline'
+                        ELSE 'inactivity'
+                    END AS overdue_reason
+                FROM raw_docs
+            )
+        `;
+
+        let whereSql = `WHERE ((d.due_date IS NOT NULL AND d.due_date < CURRENT_DATE) OR d.inactivity_days >= $1)`;
+
+        if (!req.user?.is_super_admin) {
+            const permResult = await query(
+                `SELECT permissions FROM roles WHERE id = (SELECT role_id FROM users WHERE id = $1)`,
+                [req.userId]
+            );
+            const rolePermissions = permResult.rows[0]?.permissions || {};
+            const perms = rolePermissions.documents || {};
+            const docflowPerm = rolePermissions.docflow_page;
+            const hasDocflowAccess =
+                docflowPerm === true || docflowPerm === 'all' ||
+                docflowPerm?.access === true || docflowPerm?.access === 'all';
+
+            if (perms.view !== 'all' && !hasDocflowAccess) {
+                whereSql += ` AND (
+                    d.created_by = $${idx}
+                    OR EXISTS (SELECT 1 FROM document_access da
+                               WHERE da.document_id = d.id AND da.user_id = $${idx})
+                    OR EXISTS (SELECT 1 FROM document_access da
+                               JOIN users u2 ON u2.department_id = da.department_id
+                               WHERE da.document_id = d.id AND u2.id = $${idx})
+                    OR EXISTS (SELECT 1 FROM document_routes dr
+                               WHERE dr.document_id = d.id
+                               AND dr.route_data::text LIKE '%"user_id":' || $${idx} || '%')
+                )`;
+                params.push(req.userId);
+                idx++;
+            }
+        }
+
+        if (status && activeStatuses.includes(status)) {
+            whereSql += ` AND d.status = $${idx++}`;
+            params.push(status);
+        }
+
+        if (search) {
+            whereSql += ` AND (d.title ILIKE $${idx} OR d.reg_number ILIKE $${idx})`;
+            params.push(`%${search}%`);
+            idx++;
+        }
+
+        const safeLimit = Math.min(200, Math.max(1, Math.trunc(Number(limit)) || 50));
+        const safeOffset = Math.max(0, Math.trunc(Number(offset)) || 0);
+
+        const countResult = await query(
+            `${baseCte} SELECT COUNT(*)::int AS total FROM docs d ${whereSql}`,
+            params
+        );
+
+        const dataParams = [...params, safeLimit, safeOffset];
+        const result = await query(
+            `${baseCte}
+             SELECT
+                 d.*,
+                 CASE WHEN d.created_by_surname IS NOT NULL
+                     THEN TRIM(CONCAT_WS(' ', d.created_by_surname, d.created_by_name))
+                     ELSE NULL END AS created_by_name,
+                 COALESCE(
+                     (
+                         SELECT jsonb_agg(
+                                    jsonb_build_object(
+                                        'user_id', da.user_id,
+                                        'full_name', TRIM(CONCAT_WS(' ', ua.surname, ua.name, ua.patronymic))
+                                    )
+                                    ORDER BY da.assigned_at, da.user_id
+                                )
+                         FROM document_assignees da
+                         JOIN users ua ON ua.id = da.user_id
+                         WHERE da.document_id = d.id
+                     ), '[]'::jsonb
+                 ) AS assignees
+             FROM docs d
+             ${whereSql}
+             ORDER BY d.overdue_days DESC, d.last_activity_at ASC
+             LIMIT $${idx++} OFFSET $${idx++}`,
+            dataParams
+        );
+
+        res.json({
+            documents: result.rows,
+            total: countResult.rows[0]?.total || 0,
+            threshold: days,
+            settings: { deadline_control_days: days }
+        });
+    } catch (error) {
+        console.error('Get deadline control error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -1171,7 +1524,7 @@ router.get('/documents/:id/versions', authMiddleware, async (req, res) => {
 
 router.post('/documents/:id/attachments', 
     authMiddleware, 
-    uploadAttachment.single('file'),
+    uploadAttachment,
     async (req, res) => {
     try {
         const { id } = req.params;

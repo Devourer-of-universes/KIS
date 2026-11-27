@@ -108,6 +108,15 @@ router.put('/reports/:id', ...modManage, async (req, res) => {
     const note = isFinalStatus ? String(resolutionNote || '').trim() : '';
     if (isFinalStatus && !note) return res.status(400).json({ error: 'Укажите комментарий к решению' });
 
+    req.audit = {
+        action: status === 'resolved' ? 'RESOLVE report'
+            : status === 'dismissed' ? 'DISMISS report'
+            : status === 'reviewed' ? 'REVIEW report' : 'REOPEN report',
+        entityType: 'moderation',
+        entityId: id,
+        newData: { status, resolutionNote: note }
+    };
+
     const markResolved = status !== 'open';
     const result = await query(`
       UPDATE message_reports
@@ -130,6 +139,12 @@ router.post('/warnings', ...modManage, async (req, res) => {
   try {
     const { userId, messageId, reportId, reason } = req.body;
     if (!userId || !reason?.trim()) return res.status(400).json({ error: 'Укажите пользователя и причину' });
+
+    req.audit = {
+        action: 'WARN user',
+        entityType: 'moderation',
+        newData: { userId, reason: reason.trim(), reportId: reportId || null, messageId: messageId || null }
+    };
 
     const user = await query('SELECT id FROM users WHERE id = $1 AND deleted_at IS NULL', [userId]);
     if (user.rows.length === 0) return res.status(404).json({ error: 'Пользователь не найден' });
@@ -167,6 +182,13 @@ router.delete('/messages/:id', ...modManage, async (req, res) => {
     if (msgResult.rows.length === 0) return res.status(404).json({ error: 'Сообщение не найдено' });
     const message = msgResult.rows[0];
     if (message.is_deleted) return res.json({ success: true, alreadyDeleted: true });
+
+    req.audit = {
+        action: 'DELETE message',
+        entityType: 'moderation',
+        entityId: messageId,
+        newData: { chatId: message.chat_id, reason: reason || '', reportId: reportId || null }
+    };
 
     const attachments = await query(`SELECT * FROM message_attachments WHERE message_id = $1`, [messageId]);
     for (const att of attachments.rows) {

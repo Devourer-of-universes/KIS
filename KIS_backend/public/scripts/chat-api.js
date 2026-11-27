@@ -2,6 +2,7 @@
 class ChatManager {
     constructor() {
         this.currentChatId = null;
+        this.currentFolderId = 'all';
         this.chats = [];
         this.messages = [];
         this.files = [];      // Добавляем
@@ -11,6 +12,13 @@ class ChatManager {
         this.editingMessageId = null;
         this.editingOriginalContent = '';
         this.pendingAttachments = [];
+        this.chatSettings = null;
+        this.chatSettingsInitial = null;
+        this.chatSettingsPending = this.emptyChatSettingsPending();
+        this.chatSettingsUsers = [];
+        this.chatSettingsView = 'main';
+        this.chatSearchQuery = '';
+        this.searchMatches = new Map();
 
     }
     
@@ -223,8 +231,14 @@ class ChatManager {
             case 'new-message':
                 if (data.message) {
                     const msg = data.message;
-                    
-                    // Если сообщение в текущем открытом чате
+
+                    // Обновляем последнее сообщение в объекте чата — список перерисуется без перезагрузки
+                    const chat = this.chats.find(c => c.id === msg.chat_id);
+                    if (chat) {
+                        chat.last_message = msg;
+                        chat.last_message_at = msg.created_at;
+                    }
+
                     if (msg.chat_id === this.currentChatId) {
                         const exists = this.messages.some(m => m.id === msg.id);
                         if (!exists) {
@@ -232,23 +246,21 @@ class ChatManager {
                             this.renderMessages();
                             this.scrollToBottom();
                         }
-                        
+
                         // Если это НЕ наше собственное сообщение — сразу помечаем как прочитанное
                         if (msg.user_id !== window.currentUser?.id) {
                             this.markAsRead(msg.chat_id);
                         }
-                    } else {
-                        // Если это сообщение в другом чате — увеличиваем счетчик в списке
-                        const chat = this.chats.find(c => c.id === msg.chat_id);
-                        if (chat && msg.user_id !== window.currentUser?.id) {
-                            chat.unread_count = (chat.unread_count || 0) + 1;
-                            chat.last_message = msg;
-                            chat.last_message_at = msg.created_at;
-                            this.renderChatList();
-                        }
+                    } else if (chat && msg.user_id !== window.currentUser?.id) {
+                        // Сообщение в другом чате — увеличиваем счётчик непрочитанных
+                        chat.unread_count = Number(chat.unread_count || 0) + 1;
                     }
+
+                    // Перерисовываем список: последнее сообщение и счётчики обновятся сразу
+                    this.renderChatList();
                 }
                 break;
+
             case 'message-edited':
                 if (data.messageId) {
                     const msg = this.messages.find(m => m.id === data.messageId);
@@ -391,13 +403,22 @@ class ChatManager {
     renderChatList() {
         const chatListContainer = document.querySelector('.chat-list-elements');
         if (!chatListContainer) return;
+        this.updateSearchCount();
         
         if (this.chats.length === 0) {
             chatListContainer.innerHTML = '<div class="empty-chats">У вас пока нет чатов</div>';
             return;
         }
+
+        const visibleChats = this.chatSearchQuery
+            ? this.chats.filter(chat => this.searchMatches.has(chat.id))
+            : this.chats;
+        if (visibleChats.length === 0) {
+            chatListContainer.innerHTML = `<div class="empty-chats">Ничего не найдено по запросу «${this.escapeHtml(this.chatSearchQuery)}»</div>`;
+            return;
+        }
         
-        chatListContainer.innerHTML = this.chats.map(chat => {
+        chatListContainer.innerHTML = visibleChats.map(chat => {
             // Для личного чата - берем имя собеседника
             let avatarHtml;
             let displayName = chat.name || 'Чат';
@@ -439,27 +460,168 @@ class ChatManager {
             }
             
             return `
-                        <div class="chat-list-element" 
+                        <div class="chat-list-element${chat.id === this.currentChatId ? ' active' : ''}" 
                             data-chat-id="${chat.id}" 
-                            onclick="chatManager.openChat(${chat.id}, '${this.escapeHtml(displayName)}')"
-                            oncontextmenu="chatManager.showChatContextMenu(event, ${chat.id}, '${this.escapeHtml(displayName)}')">
+                            data-name="${this.escapeHtml(displayName)}"
+                            data-search-message-id="${this.chatSearchQuery ? (this.searchMatches.get(chat.id)?.id || '') : ''}"
+                            onclick="chatManager.openChat(${chat.id}, this.dataset.name, this.dataset.searchMessageId)"
+                            oncontextmenu="chatManager.showChatContextMenu(event, ${chat.id}, this.dataset.name)">
                             <div class="chat-list-element-icon">
                                 ${avatarHtml}
                             </div>
                             <div class="chat-list-element-info">
-                                <div class="chat-list-element-header">${this.escapeHtml(displayName)}</div>
-                                <div class="chat-list-element-lasttxt">${this.formatLastMessage(chat.last_message)}</div>
+                                <div class="chat-list-element-header">${this.highlightMatch(displayName, this.chatSearchQuery)}</div>
+                                <div class="chat-list-element-lasttxt">${this.highlightMatch(this.searchMatches.get(chat.id)?.text || this.getLastMessageText(chat.last_message), this.chatSearchQuery)}</div>
                             </div>
                             ${chat.unread_count > 0 ? `<div class="chat-list-element-notifications">${chat.unread_count}</div>` : ''}
                         </div>
                     `;
                 }).join('');
     }
-    formatLastMessage(message) {
+    getLastMessageText(message) {
         if (!message) return 'Нет сообщений';
+        if (message.attachments?.length) return '📎 Файл';
         if (message.content && message.content.startsWith('📷')) return '📷 Фото';
         if (message.content && message.content.startsWith('📎')) return '📎 Файл';
-        return this.escapeHtml(message.content.substring(0, 40));
+        if (message.content && (message.content.startsWith('[FORWARDED_FROM:') || message.content.startsWith('↪️ Переслано от:'))) {
+            try {
+                let data;
+                if (message.content.startsWith('↪️ Переслано от:')) {
+                    const lines = message.content.split('\n');
+                    data = {
+                        from: lines[0].replace('↪️ Переслано от:', '').trim(),
+                        text: lines.slice(1).join('\n').trim()
+                    };
+                } else {
+                    data = JSON.parse(message.content.substring(16, message.content.length - 1));
+                }
+                const from = data.from || 'неизвестного';
+                const text = (data.text || '').trim();
+                const preview = text && !text.startsWith('📷') && !text.startsWith('📎')
+                    ? `: ${text.substring(0, 30)}`
+                    : '';
+                return `Переслано от: ${from}${preview}`;
+            } catch (e) {
+                return 'Пересланное сообщение';
+            }
+        }
+        return String(message.content || '').substring(0, 40);
+    }
+    formatLastMessage(message) {
+        return this.escapeHtml(this.getLastMessageText(message));
+    }
+
+    updateSearchCount() {
+        const el = document.getElementById('chatSearchCount');
+        if (!el) return;
+        if (!this.chatSearchQuery) {
+            el.textContent = '';
+            el.classList.remove('visible');
+            return;
+        }
+        el.textContent = `Найдено: ${this.searchMatches.size}`;
+        el.classList.add('visible');
+    }
+
+    parseForwardedContent(content) {
+        if (!content) return null;
+        if (content.startsWith('[FORWARDED_FROM:')) {
+            try {
+                return JSON.parse(content.substring(16, content.length - 1));
+            } catch (e) {
+                return null;
+            }
+        }
+        if (content.startsWith('↪️ Переслано от:')) {
+            const lines = content.split('\n');
+            return {
+                from: lines[0].replace('↪️ Переслано от:', '').trim(),
+                text: lines.slice(1).join('\n').trim()
+            };
+        }
+        return null;
+    }
+
+    highlightMatch(text, query) {
+        const source = String(text || '');
+        const q = String(query || '');
+        if (!q) return this.escapeHtml(source);
+        const lowerSource = source.toLocaleLowerCase('ru');
+        const lowerQ = q.toLocaleLowerCase('ru');
+        let out = '';
+        let from = 0;
+        let idx;
+        while ((idx = lowerSource.indexOf(lowerQ, from)) !== -1) {
+            out += this.escapeHtml(source.slice(from, idx));
+            out += `<mark class="search-highlight">${this.escapeHtml(source.slice(idx, idx + q.length))}</mark>`;
+            from = idx + q.length;
+        }
+        out += this.escapeHtml(source.slice(from));
+        return out;
+    }
+
+    messageSearchText(message) {
+        const forwarded = this.parseForwardedContent(message.content);
+        return [
+            message.content,
+            forwarded && forwarded.text,
+            forwarded && forwarded.from,
+            message.name,
+            message.surname
+        ].filter(Boolean).join(' ');
+    }
+
+    getMessageSnippet(message) {
+        if (this.parseForwardedContent(message.content)) {
+            return this.getLastMessageText({ content: message.content });
+        }
+        const content = String(message.content || '');
+        if (content.startsWith('📎')) return `${content.split('\n')[0]} — файл`;
+        if (content.startsWith('📷')) return '📷 Фото';
+        return content;
+    }
+
+    async searchChats(query) {
+        const q = String(query || '').trim();
+        this.chatSearchQuery = q;
+        this.searchMatches = new Map();
+        if (!q) {
+            this.renderChatList();
+            return;
+        }
+
+        const lowerQ = q.toLocaleLowerCase('ru');
+        for (const chat of this.chats) {
+            const haystack = [
+                chat.name,
+                this.getLastMessageText(chat.last_message),
+                ...(chat.participants || []).flatMap(p => [p.surname, p.name, p.username])
+            ].filter(Boolean).join(' ').toLocaleLowerCase('ru');
+            if (haystack.includes(lowerQ)) {
+                this.searchMatches.set(chat.id, { text: null, id: null });
+            }
+        }
+        this.renderChatList();
+
+        try {
+            const token = localStorage.getItem('token');
+            await Promise.all(this.chats.map(async chat => {
+                const response = await fetch(`/api/chats/${chat.id}/messages?limit=500&offset=0`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                for (const msg of data.messages || []) {
+                    if (this.messageSearchText(msg).toLocaleLowerCase('ru').includes(lowerQ)) {
+                        this.searchMatches.set(chat.id, { text: this.getMessageSnippet(msg).substring(0, 80), id: msg.id });
+                        break;
+                    }
+                }
+            }));
+            this.renderChatList();
+        } catch (error) {
+            console.error('Search failed:', error);
+        }
     }
     downloadFile(url, fileName) {
         const a = document.createElement('a');
@@ -506,12 +668,22 @@ class ChatManager {
             
                         let contentHtml = '';
             
-            // Проверяем, не пересланное ли это сообщение
-            if (msg.content && msg.content.startsWith('[FORWARDED_FROM:')) {
+            // Проверяем, не пересланное ли это сообщение (новый формат или старый текст с эмодзи)
+            const legacyForward = msg.content && msg.content.startsWith('↪️ Переслано от:');
+            if ((msg.content && msg.content.startsWith('[FORWARDED_FROM:')) || legacyForward) {
                 try {
-                    // Извлекаем JSON
-                    const jsonStr = msg.content.substring(16, msg.content.length - 1); // 16 = длина '[FORWARDED_FROM:'
-                    const forwardData = JSON.parse(jsonStr);
+                    let forwardData;
+                    if (legacyForward) {
+                        const lines = msg.content.split('\n');
+                        forwardData = {
+                            from: lines[0].replace('↪️ Переслано от:', '').trim(),
+                            text: lines.slice(1).join('\n').trim()
+                        };
+                    } else {
+                        // Извлекаем JSON
+                        const jsonStr = msg.content.substring(16, msg.content.length - 1); // 16 = длина '[FORWARDED_FROM:'
+                        forwardData = JSON.parse(jsonStr);
+                    }
                     
                     // Рендерим оригинальный контент (текст или картинку)
                     let originalHtml = '';
@@ -520,16 +692,20 @@ class ChatManager {
                     if (origText.startsWith('📷')) {
                         const imageUrl = origText.split('\n')[1];
                         if (imageUrl) {
-                            originalHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 8px; cursor: pointer;">`;
+                            originalHtml = `<img src="${this.escapeHtml(imageUrl)}" class="message-image" data-url="${this.escapeHtml(imageUrl)}" onclick="chatManager.openImageViewerFromElement(this)" loading="lazy" alt="Пересланное изображение">`;
                         }
                     } else if (origText.startsWith('📎')) {
                         const lines = origText.split('\n');
                         const fileName = lines[0].replace('📎 ', '');
                         const fileUrl = lines[1] || '';
                         originalHtml = `
-                            <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; margin-top: 8px;">
-                                <span>📎</span>
-                                <span style="font-size: 13px;">${fileName}</span>
+                            <div class="message-file" data-url="${this.escapeHtml(fileUrl)}" data-name="${this.escapeHtml(fileName)}" onclick="chatManager.downloadFileFromElement(this)">
+                                <span class="message-file-icon"><img src="../materials/icons8-документ-96.png" alt=""></span>
+                                <span class="message-file-body">
+                                    <span class="message-file-name">${this.escapeHtml(fileName)}</span>
+                                    <span class="message-file-hint">Документ · нажмите, чтобы скачать</span>
+                                </span>
+                                <img class="message-file-action" src="../materials/icons8-скачать-96.png" alt="">
                             </div>
                         `;
                     } else {
@@ -537,9 +713,10 @@ class ChatManager {
                     }
                     
                     contentHtml = `
-                        <div class="forwarded-message" style="border-left: 3px solid var(--c_acc); padding-left: 10px; margin-bottom: 4px;">
-                            <div style="font-size: 11px; color: var(--c_acc); font-weight: 600; margin-bottom: 4px;">
-                                ↪️ Переслано от: ${this.escapeHtml(forwardData.from)}
+                        <div class="forwarded-message">
+                            <div class="forwarded-label">
+                                <img src="../materials/icons8-поделиться-96.png" alt="">
+                                <span>Переслано от: ${this.escapeHtml(forwardData.from)}</span>
                             </div>
                             ${originalHtml}
                         </div>
@@ -556,15 +733,19 @@ class ChatManager {
                 if (isImage) {
                     const lines = msg.content.split('\n');
                     const imageUrl = lines[1] || '';
-                    contentHtml = `<img src="${imageUrl}" class="message-image" onclick="chatManager.openImageViewer('${imageUrl}')" loading="lazy" style="max-width: 300px; max-height: 200px; border-radius: 12px; cursor: pointer; margin-top: 4px;">`;
+                    contentHtml = `<img src="${this.escapeHtml(imageUrl)}" class="message-image" data-url="${this.escapeHtml(imageUrl)}" onclick="chatManager.openImageViewerFromElement(this)" loading="lazy" alt="Изображение">`;
                 } else if (isFile) {
                     const lines = msg.content.split('\n');
                     const fileName = lines[0].replace('📎 ', '');
                     const fileUrl = lines[1] || '';
                     contentHtml = `
-                        <div class="message-file" onclick="chatManager.downloadFile('${fileUrl}', '${fileName}')" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; margin-top: 4px;">
-                            <span style="font-size: 20px;">📎</span>
-                            <span style="font-size: 13px; font-weight: 500; word-break: break-all;">${fileName}</span>
+                        <div class="message-file" data-url="${this.escapeHtml(fileUrl)}" data-name="${this.escapeHtml(fileName)}" onclick="chatManager.downloadFileFromElement(this)">
+                            <span class="message-file-icon"><img src="../materials/icons8-документ-96.png" alt=""></span>
+                            <span class="message-file-body">
+                                <span class="message-file-name">${this.escapeHtml(fileName)}</span>
+                                <span class="message-file-hint">Документ · нажмите, чтобы скачать</span>
+                            </span>
+                            <img class="message-file-action" src="../materials/icons8-скачать-96.png" alt="">
                         </div>
                     `;
                 } else {
@@ -575,13 +756,14 @@ class ChatManager {
             
             // Аватар для чужих сообщений
             const avatarHtml = !isOwn ? this.getAvatar(msg.avatar_uri, msg.name, msg.surname) : '';
+            const isMediaOnly = contentHtml.includes('class="message-image"') && !contentHtml.includes('forwarded-message');
             
             html += `
                 <div class="message ${isOwn ? 'sent' : 'received'}" data-message-id="${msg.id}" data-message-user="${msg.user_id}" data-message-content="${this.escapeHtml(msg.content)}">
-                    <div class="message-content">
+                    <div class="message-content${isMediaOnly ? ' message-media-only' : ''}">
                         ${!isOwn ? `
                             <div class="message-av-container">
-                                <div class="message-avatar" style="width: 50px; height: 50px;">${avatarHtml}</div>
+                                <div class="message-avatar">${avatarHtml}</div>
                             </div>
                         ` : ''}
                         <div class="message-maincontent">
@@ -626,7 +808,7 @@ class ChatManager {
         
         let menuItems = `
             <div class="context-menu-item" onclick="chatManager.forwardMessage(${messageId})">
-                ↪️ Переслать
+                <img src="../materials/icons8-поделиться-96.png" class="ui-icon ui-icon-inline" alt=""> Переслать
             </div>
             <div class="context-menu-item" onclick="chatManager.reportMessage(${messageId})">
                 <img src="../materials/icons8-предупреждение-96.png" class="ui-icon ui-icon-inline" alt=""> Пожаловаться
@@ -636,10 +818,10 @@ class ChatManager {
         if (isOwn) {
             menuItems += `
                 <div class="context-menu-item" onclick="chatManager.startEditing(${messageId})">
-                    ✏️ Редактировать
+                    <img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Редактировать
                 </div>
                 <div class="context-menu-item" onclick="chatManager.deleteMessage(${messageId})">
-                    🗑️ Удалить
+                    <img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить
                 </div>
             `;
         }
@@ -1014,6 +1196,24 @@ class ChatManager {
 
 
 
+    focusMessage(messageId) {
+        const container = document.getElementById('messagesContainer');
+        if (!container || !messageId) return;
+        const target = [...container.querySelectorAll('.message')].find(
+            el => String(el.dataset.messageId) === String(messageId)
+        );
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('message-search-hit');
+    }
+
+    openImageViewerFromElement(el) {
+        this.openImageViewer(el.dataset.url || el.src);
+    }
+    downloadFileFromElement(el) {
+        this.downloadFile(el.dataset.url || '', el.dataset.name || 'file');
+    }
+
     // Метод для открытия просмотра изображения
     openImageViewer(url) {
         const modal = document.createElement('div');
@@ -1086,6 +1286,17 @@ class ChatManager {
         const cancelEditBtn = document.querySelector('.cancel-edit-btn');
         if (cancelEditBtn) {
             cancelEditBtn.addEventListener('click', () => this.cancelEditing());
+        }
+
+        // Полнотекстовый поиск по чатам и сообщениям (по подстроке)
+        const chatSearchInput = document.getElementById('chatSearchInput');
+        if (chatSearchInput) {
+            let searchTimer;
+            chatSearchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimer);
+                const value = e.target.value;
+                searchTimer = setTimeout(() => this.searchChats(value), 180);
+            });
         }
 
         // Плавающая кнопка создания чата
@@ -1231,10 +1442,13 @@ class ChatManager {
     }
     
     escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
     // Показать модальное окно создания чата
     async showCreateChatModal() {
@@ -1494,13 +1708,24 @@ class ChatManager {
         }
     }
     // Получение аватара пользователя или чата (с буквой если нет картинки)
+    getAvatarInitial(name, surname = '') {
+        if (name) return String(name).charAt(0);
+        if (surname) return String(surname).charAt(0);
+        return '?';
+    }
+
+    avatarError(img) {
+        if (!img || !img.parentElement) return;
+        const fallback = document.createElement('div');
+        fallback.className = 'avatar-letter';
+        fallback.textContent = img.dataset.letter || '?';
+        img.replaceWith(fallback);
+    }
+
     getAvatar(source, name, surname = '') {
-        // Если есть URL аватара - используем его
         if (source && source !== 'null' && source !== 'undefined' && source !== '') {
-            return `<img src="${source}" alt="avatar" onerror="this.onerror=null; this.parentElement.innerHTML = this.parentElement.getAvatarFallback('${name}', '${surname}')">`;
+            return `<img src="${this.escapeHtml(source)}" alt="avatar" data-letter="${this.escapeHtml(this.getAvatarInitial(name, surname))}" onerror="chatManager.avatarError(this)">`;
         }
-        
-        // Если нет - генерируем букву
         return this.getAvatarFallback(name, surname);
     }
 
@@ -1515,50 +1740,46 @@ class ChatManager {
             letter = '?';
         }
         
-        return `<div class="avatar-letter">${letter.toUpperCase()}</div>`;
+        return `<div class="avatar-letter">${this.escapeHtml(letter.toUpperCase())}</div>`;
     }
 
     // Для групповых чатов
     getGroupAvatar(chat) {
         if (chat.avatar_uri && chat.avatar_uri !== 'null' && chat.avatar_uri !== '') {
-            return `<img src="${chat.avatar_uri}" alt="group" onerror="this.onerror=null; this.parentElement.innerHTML = '<div class=\"avatar-letter\">👥</div>'">`;
+            return `<img src="${this.escapeHtml(chat.avatar_uri)}" alt="group" data-letter="👥" onerror="chatManager.avatarError(this)">`;
         }
         return `<div class="avatar-letter">👥</div>`;
     }
-   // Сброс состояния (когда чат не выбран)
+
     resetChatView() {
         const chatContent = document.querySelector('.chat-content');
         if (chatContent) {
             chatContent.classList.add('no-chat-selected');
         }
-        
-        // Скрываем кнопку "Назад"
+
         const backBtn = document.getElementById('backToChatsBtn');
         if (backBtn) {
             backBtn.style.display = 'none';
         }
-        
-        // СКРЫВАЕМ САЙДБАР ПОЛНОСТЬЮ (вместе с медиа)
+
         const chatSidebar = document.getElementById('chatSidebar');
         if (chatSidebar) {
             chatSidebar.style.display = 'none';
         }
-        
-        // Сбрасываем заголовок
+
         const chatNameHeader = document.querySelector('.chat-name');
         if (chatNameHeader) chatNameHeader.textContent = 'Выберите чат';
-        
-        // Сбрасываем аватары
+
         const chatAvatar = document.querySelector('.chat-avatar');
         if (chatAvatar) {
             chatAvatar.outerHTML = '<div class="chat-avatar" style="width: 50px; height: 50px;"></div>';
         }
-        
+
         const sidebarAvatar = document.querySelector('.sidebar-avatar');
         if (sidebarAvatar) {
             sidebarAvatar.outerHTML = '<div class="sidebar-avatar" style="width: 170px; height: 170px;"></div>';
         }
-        
+
         const sidebarChatName = document.querySelector('.sidebar-chatname');
         if (sidebarChatName) {
             sidebarChatName.textContent = '';
@@ -1567,22 +1788,19 @@ class ChatManager {
             sidebarChatName.style.marginTop = '';
             sidebarChatName.style.textAlign = '';
         }
-        
-        // Показываем заголовок участников (восстанавливаем для групп)
+
         const participantsHeader = document.querySelector('.sidebar-section h3');
         if (participantsHeader) {
             participantsHeader.textContent = 'Участники (0)';
             participantsHeader.style.display = 'block';
         }
-        
-        // Восстанавливаем список участников
+
         const userList = document.getElementById('userList');
         if (userList) {
             userList.innerHTML = '';
-            userList.style.display = 'block';
+            userList.style.display = 'none';
         }
-        
-        // Очищаем сообщения и показываем заглушку
+
         const messagesContainer = document.getElementById('messagesContainer');
         if (messagesContainer) {
             messagesContainer.innerHTML = `
@@ -1593,59 +1811,56 @@ class ChatManager {
                 </div>
             `;
         }
-        
-        // Скрываем поле ввода
+
         const chatInput = document.querySelector('.chat-input');
         if (chatInput) chatInput.style.display = 'none';
-        
+
+        document.querySelectorAll('.chat-list-element').forEach(el => el.classList.remove('active'));
         this.currentChatId = null;
     }
 
     // Открытие чата и загрузка сообщений
-    async openChat(chatId, chatName) {
-        console.log('Opening chat:', chatId, chatName);
+    async openChat(chatId, chatName, targetMessageId = null) {
+        console.log('Opening chat:', chatId, chatName, targetMessageId);
+        document.querySelectorAll('.message-search-hit').forEach(el => el.classList.remove('message-search-hit'));
         this.lastOpenedChatId = chatId;
         this.lastOpenedChatName = chatName;
-        // === ОЧИЩАЕМ ПЕРЕД ЗАГРУЗКОЙ НОВОГО ЧАТА ===
-        // Очищаем список участников
+
+        document.querySelectorAll('.chat-list-element').forEach(el => {
+            el.classList.toggle('active', Number(el.dataset.chatId) === Number(chatId));
+        });
+
         const userListContainer = document.getElementById('userList');
         if (userListContainer) {
             userListContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Загрузка...</div>';
             userListContainer.style.display = 'block';
         }
-        
-        // Сбрасываем счетчик участников
+
         const participantsCountSpan = document.getElementById('participantsCount');
         if (participantsCountSpan) {
             participantsCountSpan.textContent = '0';
         }
-        
-        // Показываем заголовок участников (по умолчанию)
+
         const participantsHeader = document.querySelector('.sidebar-section h3');
         if (participantsHeader) {
             participantsHeader.style.display = 'block';
         }
-        // === КОНЕЦ ОЧИСТКИ ===
-        
-        // Показываем контент чата
+
         const chatContent = document.querySelector('.chat-content');
         if (chatContent) {
             chatContent.classList.remove('no-chat-selected');
         }
-        
-        // Показываем кнопку "Назад"
+
         const backBtn = document.getElementById('backToChatsBtn');
         if (backBtn) {
             backBtn.style.display = 'flex';
         }
-        
-        // Показываем сайдбар
+
         const chatSidebar = document.getElementById('chatSidebar');
         if (chatSidebar) {
             chatSidebar.style.display = 'block';
         }
-        
-        // Загружаем информацию о чате
+
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/chats/${chatId}`, {
@@ -1653,17 +1868,14 @@ class ChatManager {
             });
             const data = await response.json();
             const chat = data.chat;
-            
             const isGroup = chat.is_group;
-            
-            // Обновляем заголовок и аватар в шапке
+
             const chatNameHeader = document.querySelector('.chat-name');
             const chatAvatar = document.querySelector('.chat-avatar');
             const sidebarAvatar = document.querySelector('.sidebar-avatar');
             const sidebarChatName = document.querySelector('.sidebar-chatname');
-            
+
             if (isGroup) {
-                // === ГРУППОВОЙ ЧАТ ===
                 chatNameHeader.textContent = chat.name || 'Групповой чат';
                 if (chatAvatar) {
                     chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${this.getGroupAvatar(chat)}</div>`;
@@ -1678,104 +1890,70 @@ class ChatManager {
                     sidebarChatName.style.marginTop = '15px';
                     sidebarChatName.style.textAlign = 'center';
                 }
-                
-                // Показываем и заполняем список участников
-                if (participantsHeader) {
-                    participantsHeader.style.display = 'block';
-                }
-                if (userListContainer) {
-                    userListContainer.style.display = 'block';
-                }
-                
-                // Загружаем участников
+
+                if (participantsHeader) participantsHeader.style.display = 'block';
+                if (userListContainer) userListContainer.style.display = 'block';
                 await this.loadChatParticipants(chatId);
-                
             } else {
-                // === ЛИЧНЫЙ ЧАТ ===
-                const otherUser = chat.participants?.find(p => p.id !== window.currentUser?.id);
-                if (otherUser) {
-                    const displayName = `${otherUser.surname} ${otherUser.name}`;
-                    chatNameHeader.textContent = displayName;
-                    
-                    const avatarHtml = this.getAvatar(otherUser.avatar_uri, otherUser.name, otherUser.surname);
-                    if (chatAvatar) {
-                        chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${avatarHtml}</div>`;
-                    }
-                    
-                    // Заполняем сайдбар для личного чата
-                    if (sidebarAvatar) {
-                        sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${avatarHtml}</div>`;
-                    }
-                    if (sidebarChatName) {
-                        sidebarChatName.textContent = displayName;
-                        sidebarChatName.style.fontSize = '24px';
-                        sidebarChatName.style.fontWeight = 'bold';
-                        sidebarChatName.style.marginTop = '15px';
-                        sidebarChatName.style.textAlign = 'center';
-                    }
+                const participants = chat.participants || [];
+                const isSaved = !chat.is_group && participants.length === 1 && participants[0].id === window.currentUser?.id;
+                const otherUser = participants.find(p => p.id !== window.currentUser?.id);
+
+                let displayName = chatName || chat.name || '';
+                let avatarHtml = '';
+
+                if (isSaved || (!otherUser && !displayName)) {
+                    displayName = chat.name || chatName || 'Избранное';
+                    avatarHtml = '<img src="../materials/icons8-избранное-96.png" class="saved-chat-icon" alt="">';
+                } else if (otherUser) {
+                    displayName = `${otherUser.surname} ${otherUser.name}`.trim() || displayName;
+                    avatarHtml = this.getAvatar(otherUser.avatar_uri, otherUser.name, otherUser.surname);
+                } else if (chat.avatar_uri) {
+                    avatarHtml = this.getAvatar(chat.avatar_uri, displayName);
                 }
-                
-                // Скрываем заголовок и список участников для личного чата
-                if (participantsHeader) {
-                    participantsHeader.style.display = 'none';
+
+                if (chatNameHeader) chatNameHeader.textContent = displayName || 'Чат';
+                if (chatAvatar && avatarHtml) {
+                    chatAvatar.outerHTML = `<div class="chat-avatar" style="width: 50px; height: 50px;">${avatarHtml}</div>`;
                 }
+                if (sidebarAvatar && avatarHtml) {
+                    sidebarAvatar.outerHTML = `<div class="sidebar-avatar" style="width: 170px; height: 170px;">${avatarHtml}</div>`;
+                }
+                if (sidebarChatName) {
+                    sidebarChatName.textContent = displayName || 'Чат';
+                    sidebarChatName.style.fontSize = '';
+                    sidebarChatName.style.fontWeight = '';
+                    sidebarChatName.style.marginTop = '';
+                    sidebarChatName.style.textAlign = '';
+                }
+
+                if (participantsHeader) participantsHeader.style.display = 'none';
                 if (userListContainer) {
                     userListContainer.innerHTML = '';
                     userListContainer.style.display = 'none';
                 }
             }
-            
         } catch (error) {
             console.error('Failed to load chat info:', error);
         }
-        
-        // Показываем индикатор загрузки
+
         const messagesContainer = document.getElementById('messagesContainer');
         if (messagesContainer) {
             messagesContainer.innerHTML = '<div style="text-align: center; padding: 40px;">Загрузка сообщений...</div>';
         }
-        
-        // Загружаем сообщения
+
         await this.loadMessages(chatId);
         await this.markAsRead(chatId);
-        // После загрузки сообщений и участников
         await this.loadChatMedia(chatId);
-        
-        // Показываем поле ввода
+
+        if (targetMessageId) {
+            this.focusMessage(targetMessageId);
+        }
+
         const chatInput = document.querySelector('.chat-input');
         if (chatInput) chatInput.style.display = 'flex';
     }
 
-    // Отрисовка списка участников (только для групп)
-    renderParticipants(participants) {
-        const userList = document.getElementById('userList');
-        if (!userList) return;
-        
-        const participantsCountSpan = document.getElementById('participantsCount');
-        if (participantsCountSpan) {
-            participantsCountSpan.textContent = participants.length;
-        }
-        
-        if (participants.length === 0) {
-            userList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет участников</div>';
-            return;
-        }
-        
-        const currentUserId = window.currentUser?.id;
-        
-        userList.innerHTML = participants.map(user => {
-            const avatarHtml = this.getAvatar(user.avatar_uri, user.name, user.surname);
-            
-            return `
-                <div class="user-item ${user.is_online ? 'online' : 'offline'}">
-                    <div class="user-avatar" style="width: 40px; height: 40px;">${avatarHtml}</div>
-                    <span class="user-name">${this.escapeHtml(user.surname)} ${this.escapeHtml(user.name)}</span>
-                    ${user.id === currentUserId ? '<span class="user-badge">(Вы)</span>' : ''}
-                    <span class="user-status"></span>
-                </div>
-            `;
-        }).join('');
-    }
     async sendFile(chatId, file) {
         const formData = new FormData();
         formData.append('file', file);
@@ -1788,6 +1966,7 @@ class ChatManager {
         return response.json();
     }
     // Загрузка медиа чата
+
     async loadChatMedia(chatId) {
         try {
             const token = localStorage.getItem('token');
@@ -1807,6 +1986,7 @@ class ChatManager {
             // Сохраняем файлы и изображения
             this.files = data.files || [];
             this.images = data.images || [];
+            this.addForwardedMedia(this.messages);
             
             // === НОВЫЙ КОД: Собираем ссылки из сообщений ===
             const links = [];
@@ -1841,7 +2021,50 @@ class ChatManager {
         }
     }
 
+    addForwardedMedia(messages) {
+        for (const msg of messages || []) {
+            const data = this.parseForwardedContent(msg.content);
+            const text = (data && data.text) || '';
+            if (text.startsWith('📷')) {
+                const url = text.split('\n')[1];
+                if (url) {
+                    this.images.push({
+                        url,
+                        name: `Переслано от ${data.from || 'неизвестного'}`,
+                        created_at: msg.created_at,
+                        message_id: msg.id
+                    });
+                }
+            } else if (text.startsWith('📎')) {
+                const lines = text.split('\n');
+                const name = lines[0].replace('📎 ', '');
+                const url = lines[1] || '';
+                if (url) {
+                    this.files.push({
+                        url,
+                        name,
+                        size: '—',
+                        created_at: msg.created_at,
+                        message_id: msg.id
+                    });
+                }
+            }
+        }
+        const unique = items => {
+            const seen = new Set();
+            return items.filter(item => {
+                const key = item.url || item.file_uri || item.name;
+                if (!key || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        };
+        this.images = unique(this.images);
+        this.files = unique(this.files);
+    }
+
     // Отрисовка изображений в сайдбаре
+
     renderImages(images) {
         console.log('🖼️ Rendering images, count:', images.length);
         
@@ -1861,8 +2084,8 @@ class ChatManager {
             const imageUrl = img.url || img.file_uri;
             const imageName = img.name || img.file_name;
             html += `
-                <div class="grid-image-item" onclick="chatManager.openImageViewer('${imageUrl}')">
-                    <img src="${imageUrl}" alt="${imageName}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                <div class="grid-image-item" data-url="${this.escapeHtml(imageUrl)}" onclick="chatManager.openImageViewerFromElement(this)">
+                    <img src="${this.escapeHtml(imageUrl)}" alt="${this.escapeHtml(imageName)}" loading="lazy">
                 </div>
             `;
         }
@@ -1873,6 +2096,7 @@ class ChatManager {
     }
 
     // Отрисовка файлов в сайдбаре
+
     renderFiles(files) {
         console.log('📄 Rendering files, count:', files.length);
         
@@ -1890,7 +2114,7 @@ class ChatManager {
         filesContainer.innerHTML = files.map(file => `
             <tr class="media-files-element" onclick="chatManager.downloadFile('${file.url || file.file_uri}', '${file.name || file.file_name}')">
                 <td class="media-files-element-name">
-                    <span class="file-icon">📄</span> ${this.escapeHtml(file.name || file.file_name)}
+                    <span class="file-icon"><img src="../materials/icons8-документ-96.png" alt=""></span> ${this.escapeHtml(file.name || file.file_name)}
                 </td>
                 <td class="media-files-element-size">${file.size || '—'}</td>
                 <td class="media-files-element-senddate">${this.formatDate(file.created_at || file.uploaded_at)}</td>
@@ -1899,10 +2123,12 @@ class ChatManager {
     }
 
     // Открытие изображения
+
     openImage(url) {
         window.open(url, '_blank');
     }
     // Форматирование времени
+
     formatTime(dateString) {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -1910,12 +2136,14 @@ class ChatManager {
     }
 
     // Форматирование даты для медиа
+
     formatDate(dateString) {
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
     }
     // Функция для преобразования ссылок в HTML
+
     formatLinks(text) {
         if (!text) return '';
         // Регулярное выражение для поиска URL
@@ -1925,34 +2153,6 @@ class ChatManager {
         });
     }
     // Получение аватара (если нет метода)
-    getAvatar(avatarUri, name, surname) {
-        if (avatarUri && avatarUri !== 'null' && avatarUri !== '') {
-            return `<img src="${avatarUri}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.onerror=null; this.parentElement.innerHTML = this.parentElement.getAvatarFallback('${name}', '${surname}')">`;
-        }
-        return this.getAvatarFallback(name, surname);
-    }
-
-    // Заглушка аватара с буквой
-    getAvatarFallback(name, surname) {
-        let letter = '';
-        if (name && name.length > 0) {
-            letter = name.charAt(0);
-        } else if (surname && surname.length > 0) {
-            letter = surname.charAt(0);
-        } else {
-            letter = '?';
-        }
-        return `<div class="avatar-letter" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--c_acc, #5194ff);text-transform:uppercase;">${letter.toUpperCase()}</div>`;
-    }
-
-    // Для групповых чатов
-    getGroupAvatar(chat) {
-        if (chat.avatar_uri && chat.avatar_uri !== 'null' && chat.avatar_uri !== '') {
-            return `<img src="${chat.avatar_uri}" alt="group"  onerror="this.onerror=null; this.parentElement.innerHTML = '<div class=\"avatar-letter\">👥</div>'">`;
-        }
-        return `<div class="avatar-letter" >👥</div>`;
-    }
-
 
     // Скачивание файла из сообщения (ищем файл в медиа)
     async downloadFileFromMessage(fileName) {
@@ -2405,11 +2605,11 @@ class ChatManager {
         `;
         
         menu.innerHTML = `
-            <div class="context-menu-item" onclick="chatManager.showEditFolderModal(${folderId}, '${this.escapeHtml(folderName)}')">
-                ✏️ Переименовать
+            <div class="context-menu-item" data-name="${this.escapeHtml(folderName)}" onclick="chatManager.showEditFolderModal(${folderId}, this.dataset.name)">
+                <img src="../materials/icons8-карандаш-96.png" class="ui-icon ui-icon-inline" alt=""> Переименовать
             </div>
             <div class="context-menu-item" onclick="chatManager.showDeleteFolderModal(${folderId})">
-                🗑️ Удалить
+                <img src="../materials/icons8-удалить-96.png" class="ui-icon ui-icon-inline" alt=""> Удалить
             </div>
         `;
         
@@ -2451,14 +2651,14 @@ class ChatManager {
         
         let menuItems = `
             <div class="context-menu-item" style="font-weight: 600; border-bottom: 1px solid #eee;">
-                📁 Переместить в папку
+                <img src="../materials/icons8-перемещение-96.png" class="ui-icon ui-icon-inline" alt=""> Переместить в папку
             </div>
         `;
         
         // Добавляем пункт "Все чаты" (убрать из папки)
         menuItems += `
             <div class="context-menu-item" onclick="chatManager.moveChatToFolder(${chatId}, null)">
-                📬 Все чаты
+                <img src="../materials/icons8-чат-96.png" class="ui-icon ui-icon-inline" alt=""> Все чаты
             </div>
         `;
         
@@ -2466,7 +2666,7 @@ class ChatManager {
         for (const folder of folders) {
             menuItems += `
                 <div class="context-menu-item" onclick="chatManager.moveChatToFolder(${chatId}, ${folder.id})">
-                    📁 ${this.escapeHtml(folder.name)}
+                    <img src="../materials/icons8-папка-96.png" class="ui-icon ui-icon-inline" alt=""> ${this.escapeHtml(folder.name)}
                 </div>
             `;
         }
@@ -2783,21 +2983,421 @@ class ChatManager {
             showToast(e.message, 'error');
         }
     }
+    // ================= Настройки чата =================
+    emptyChatSettingsPending() {
+        return { name: null, avatarFile: null, avatarPreview: null, removeAvatar: false };
+    }
+
+    async openChatSettings() {
+        if (!this.currentChatId) {
+            await uiAlert('Сначала выберите чат');
+            return;
+        }
+        const modal = document.getElementById('chatSettingsModal');
+        if (!modal) return;
+        this.chatSettingsView = 'main';
+        try {
+            await this.refreshChatSettings();
+            this.chatSettingsInitial = JSON.parse(JSON.stringify(this.chatSettings));
+            this.chatSettingsPending = this.emptyChatSettingsPending();
+            this.renderChatSettings();
+            modal.style.display = 'flex';
+        } catch (e) {
+            await uiAlert('Не удалось загрузить настройки чата: ' + e.message);
+        }
+    }
+
+    closeChatSettings() {
+        const modal = document.getElementById('chatSettingsModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async refreshChatSettings() {
+        this.chatSettings = await api.chats.getSettings(this.currentChatId);
+        this.renderChatSettings();
+        this.applyChatSettingsToView(this.chatSettings);
+    }
+
+    applyChatSettingsToView(settings) {
+        if (!settings || !settings.chat) return;
+        const chatInfo = settings.chat;
+        const participants = settings.participants || [];
+        const chatId = Number(chatInfo.id || this.currentChatId);
+
+        const idx = this.chats.findIndex(c => Number(c.id) === chatId);
+        if (idx >= 0) {
+            const current = this.chats[idx];
+            const has = (key) => Object.prototype.hasOwnProperty.call(chatInfo, key);
+            this.chats[idx] = {
+                ...current,
+                name: has('name') ? chatInfo.name : current.name,
+                avatar_uri: has('avatar_uri') ? chatInfo.avatar_uri : current.avatar_uri,
+                is_group: has('is_group') ? chatInfo.is_group : current.is_group,
+                created_by: has('created_by') ? chatInfo.created_by : current.created_by,
+                participants: participants.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    surname: p.surname,
+                    avatar_uri: p.avatar_uri,
+                    status: p.status,
+                    role: p.role
+                }))
+            };
+        }
+
+        this.renderChatList();
+        document.querySelectorAll('.chat-list-element').forEach(el => {
+            el.classList.toggle('active', Number(el.dataset.chatId) === Number(this.currentChatId));
+        });
+
+        if (Number(this.currentChatId) === chatId) {
+            this.renderCurrentChatHeader(settings);
+        }
+    }
+
+    renderCurrentChatHeader(settings) {
+        const chat = settings.chat || {};
+        const participants = settings.participants || [];
+        const isGroup = !!chat.is_group;
+        const isSaved = !isGroup && (chat.name === 'Избранное' || (participants.length === 1 && participants.some(p => p.is_me)));
+        const other = participants.find(p => !p.is_me);
+
+        let displayName = chat.name || 'Чат';
+        let avatarHtml = '';
+
+        if (isGroup) {
+            avatarHtml = this.getGroupAvatar(chat);
+        } else if (isSaved) {
+            displayName = chat.name || 'Избранное';
+            avatarHtml = '<img src="../materials/icons8-избранное-96.png" class="saved-chat-icon" alt="">';
+        } else if (other) {
+            displayName = `${other.surname || ''} ${other.name || ''}`.trim() || displayName;
+            avatarHtml = this.getAvatar(other.avatar_uri, other.name, other.surname);
+        } else if (chat.avatar_uri) {
+            avatarHtml = this.getAvatar(chat.avatar_uri, displayName);
+        }
+
+        this.lastOpenedChatName = displayName;
+        const chatNameHeader = document.querySelector('.chat-name');
+        const chatAvatar = document.querySelector('.chat-avatar');
+        const sidebarAvatar = document.querySelector('.sidebar-avatar');
+        const sidebarChatName = document.querySelector('.sidebar-chatname');
+
+        if (chatNameHeader) chatNameHeader.textContent = displayName;
+        if (chatAvatar && avatarHtml) chatAvatar.innerHTML = avatarHtml;
+        if (sidebarAvatar && avatarHtml) sidebarAvatar.innerHTML = avatarHtml;
+        if (sidebarChatName) {
+            sidebarChatName.textContent = displayName;
+            sidebarChatName.style.fontSize = isGroup ? '24px' : '';
+            sidebarChatName.style.fontWeight = isGroup ? 'bold' : '';
+            sidebarChatName.style.marginTop = isGroup ? '15px' : '';
+            sidebarChatName.style.textAlign = isGroup ? 'center' : '';
+        }
+    }
+
+    renderChatSettings() {
+        const body = document.getElementById('chatSettingsBody');
+        const footer = document.getElementById('chatSettingsFooter');
+        const data = this.chatSettings;
+        if (!body || !footer || !data) return;
+
+        if (this.chatSettingsView === 'add') {
+            body.innerHTML = `
+                <div class="chat-settings-section">
+                    <h4>Добавить пользователей</h4>
+                    <input type="text" class="chat-settings-search" id="chatSettingsUserSearch" placeholder="Поиск по имени или логину..." oninput="chatManager.filterSettingsUsers(this.value)">
+                    <div id="chatSettingsUserPicker"></div>
+                </div>`;
+            footer.innerHTML = `
+                <button class="buttonbase btn-secondary" onclick="chatManager.cancelAddParticipants()">Отмена</button>
+                <button class="buttonbase" onclick="chatManager.confirmAddParticipants()">Добавить</button>`;
+            this.filterSettingsUsers('');
+            return;
+        }
+
+        const chat = data.chat || {};
+        const pending = this.chatSettingsPending || this.emptyChatSettingsPending();
+        const me = (data.participants || []).find(p => p.is_me) || {};
+        const isOwner = me.role === 'owner';
+        const isAdmin = me.role === 'admin';
+        const canManage = isOwner || isAdmin;
+        const isSaved = chat.name === 'Избранное';
+        const avatarSrc = pending.avatarPreview || (pending.removeAvatar ? null : chat.avatar_uri);
+        const avatarHtml = avatarSrc
+            ? `<img src="${this.escapeHtml(avatarSrc)}" class="chat-settings-avatar" alt="">`
+            : `<div class="chat-settings-avatar"><div class="avatar-letter">${this.escapeHtml((chat.name || 'Ч')[0])}</div></div>`;
+        const nameValue = pending.name !== null ? pending.name : (chat.name || '');
+
+        body.innerHTML = `
+            <div class="chat-settings-section">
+                <h4>О чате</h4>
+                <div class="chat-settings-avatar-row">
+                    ${avatarHtml}
+                    ${isOwner && !isSaved ? `
+                        <div class="chat-settings-avatar-actions">
+                            <label class="buttonbase btn-secondary"><input type="file" id="chatAvatarInput" accept="image/*" style="display:none;" onchange="chatManager.stageChatAvatar(this.files[0])">Изменить аватар</label>
+                            ${avatarSrc ? `<button class="buttonbase btn-secondary" onclick="chatManager.removeChatAvatar()">Удалить</button>` : ''}
+                        </div>` : ''}
+                </div>
+                ${isOwner && !isSaved ? `
+                    <label class="chat-settings-field"><span>Название чата</span>
+                        <input type="text" id="chatSettingsName" value="${this.escapeHtml(nameValue)}" maxlength="100" oninput="chatManager.stageChatName(this.value)">
+                    </label>
+                ` : `<div class="chat-settings-hint">Название: ${this.escapeHtml(chat.name || '—')}<br>Ваша роль: ${isOwner ? 'Владелец' : isAdmin ? 'Администратор' : 'Участник'}</div>`}
+            </div>
+
+            <div class="chat-settings-section">
+                <h4>Участники (${(data.participants || []).length})</h4>
+                ${canManage ? `<button class="buttonbase btn-secondary" onclick="chatManager.showAddParticipants()">+ Добавить пользователей</button>` : ''}
+                <div style="margin-top:10px;">
+                    ${(data.participants || []).map(p => this.renderSettingsParticipant(p)).join('')}
+                </div>
+            </div>
+
+            <div class="chat-settings-section chat-settings-actions">
+                <h4>Действия</h4>
+                <button class="buttonbase btn-secondary" onclick="chatManager.${isOwner ? 'deleteChat' : 'leaveChat'}()">
+                    ${isOwner ? 'Удалить чат' : 'Покинуть чат'}
+                </button>
+            </div>`;
+
+        footer.innerHTML = `
+            <button class="buttonbase btn-secondary" onclick="chatManager.cancelChatSettings()">Отменить</button>
+            <button class="buttonbase" onclick="chatManager.saveChatSettings()">Сохранить</button>`;
+    }
+
+    renderSettingsParticipant(p) {
+        const roleLabel = p.is_owner ? 'Владелец' : p.role === 'admin' ? 'Администратор' : 'Участник';
+        const avatar = p.avatar_uri
+            ? `<img src="${this.escapeHtml(p.avatar_uri)}" class="participant-avatar" alt="">`
+            : `<div class="participant-avatar avatar-letter">${this.escapeHtml((p.name || '?')[0])}</div>`;
+        let actions = '';
+        const isOwner = this.chatSettings?.participants?.find(x => x.is_me)?.role === 'owner';
+        if (p.is_me) {
+            actions = `<span class="chat-settings-role-badge">Вы</span>`;
+        } else if (!p.is_owner) {
+            actions = `${isOwner ? `
+                <button class="buttonbase btn-secondary" onclick="chatManager.toggleParticipantRole(${p.id}, '${p.role === 'admin' ? 'member' : 'admin'}')">${p.role === 'admin' ? 'Разжаловать' : 'Администратор'}</button>
+                <button class="buttonbase btn-secondary" onclick="chatManager.transferOwnership(${p.id})">Передать чат</button>` : ''}
+                <button class="buttonbase btn-secondary" onclick="chatManager.removeParticipantFromChat(${p.id})">Удалить</button>`;
+        }
+        return `<div class="chat-settings-participant">
+            ${avatar}
+            <div class="participant-info"><span class="participant-name">${this.escapeHtml(p.display_name)}</span><span class="participant-role">${roleLabel}</span></div>
+            ${actions}
+        </div>`;
+    }
+
+    stageChatName(value) {
+        if (!this.chatSettingsPending) this.chatSettingsPending = this.emptyChatSettingsPending();
+        this.chatSettingsPending.name = value;
+    }
+
+    stageChatAvatar(file) {
+        if (!file || !this.chatSettingsPending) return;
+        if (!String(file.type || '').startsWith('image/')) {
+            uiAlert('Можно выбрать только изображение');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.chatSettingsPending.avatarFile = file;
+            this.chatSettingsPending.avatarPreview = String(reader.result);
+            this.chatSettingsPending.removeAvatar = false;
+            this.renderChatSettings();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeChatAvatar() {
+        if (!this.chatSettingsPending) this.chatSettingsPending = this.emptyChatSettingsPending();
+        this.chatSettingsPending.avatarFile = null;
+        this.chatSettingsPending.avatarPreview = null;
+        this.chatSettingsPending.removeAvatar = true;
+        this.renderChatSettings();
+    }
+
+    async sendChatAvatar(file) {
+        const fd = new FormData();
+        fd.append('avatar', file);
+        const token = localStorage.getItem('token');
+        const r = await fetch(`/api/chats/${this.currentChatId}/avatar`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Ошибка загрузки аватара');
+        return data;
+    }
+
+    async saveChatSettings() {
+        const pending = this.chatSettingsPending || this.emptyChatSettingsPending();
+        const initial = this.chatSettingsInitial || this.chatSettings;
+        const me = (this.chatSettings?.participants || []).find(p => p.is_me) || {};
+        const isOwner = me.role === 'owner';
+        const isSaved = initial?.chat?.name === 'Избранное';
+
+        try {
+            if (isOwner && !isSaved && pending.name !== null) {
+                const name = pending.name.trim();
+                if (name && name !== initial.chat.name) {
+                    await api.chats.updateSettings(this.currentChatId, { name });
+                }
+            }
+            if (isOwner && !isSaved) {
+                if (pending.avatarFile) {
+                    await this.sendChatAvatar(pending.avatarFile);
+                } else if (pending.removeAvatar && initial.chat.avatar_uri) {
+                    await api.chats.updateSettings(this.currentChatId, { avatar_uri: null });
+                }
+            }
+            await this.loadChats();
+            await this.refreshChatSettings();
+            this.chatSettingsInitial = JSON.parse(JSON.stringify(this.chatSettings));
+            this.chatSettingsPending = this.emptyChatSettingsPending();
+            this.renderChatSettings();
+            if (typeof showToast === 'function') showToast('Изменения сохранены', 'success');
+        } catch (e) {
+            await uiAlert('Не удалось сохранить изменения: ' + e.message);
+        }
+    }
+
+    cancelChatSettings() {
+        this.chatSettings = JSON.parse(JSON.stringify(this.chatSettingsInitial || this.chatSettings));
+        this.chatSettingsPending = this.emptyChatSettingsPending();
+        this.chatSettingsView = 'main';
+        this.renderChatSettings();
+    }
+
+    async toggleParticipantRole(userId, role) {
+        try {
+            await api.chats.setParticipantRole(this.currentChatId, userId, role);
+            await this.refreshChatSettings();
+        } catch (e) { await uiAlert(e.message); }
+    }
+
+    async transferOwnership(userId) {
+        if (!await uiConfirm('Передать владение чатом этому участнику? Ваша роль станет «Участник».')) return;
+        try {
+            await api.chats.setOwner(this.currentChatId, userId);
+            await this.refreshChatSettings();
+        } catch (e) { await uiAlert(e.message); }
+    }
+
+    async removeParticipantFromChat(userId) {
+        if (!await uiConfirm('Удалить пользователя из чата?')) return;
+        try {
+            await api.chats.removeParticipant(this.currentChatId, userId);
+            await this.refreshChatSettings();
+            await this.loadChats();
+        } catch (e) { await uiAlert(e.message); }
+    }
+
+    async showAddParticipants() {
+        try {
+            const result = await api.users.getAll();
+            const users = result.users || result || [];
+            const existing = new Set((this.chatSettings?.participants || []).map(p => p.id));
+            this.chatSettingsUsers = users.filter(u => !existing.has(u.id));
+        } catch (e) {
+            await uiAlert(e.message);
+            return;
+        }
+        this.chatSettingsView = 'add';
+        this.renderChatSettings();
+    }
+
+    cancelAddParticipants() {
+        this.chatSettingsView = 'main';
+        this.renderChatSettings();
+    }
+
+    filterSettingsUsers(query) {
+        const container = document.getElementById('chatSettingsUserPicker');
+        if (!container) return;
+        const q = String(query || '').toLowerCase().trim();
+        const users = (this.chatSettingsUsers || []).filter(u =>
+            !q || `${u.surname} ${u.name} ${u.username} ${u.email}`.toLowerCase().includes(q)
+        );
+        container.innerHTML = users.length
+            ? users.map(u => `<label class="chat-settings-user-row">
+                <input type="checkbox" value="${u.id}">
+                <span>${this.escapeHtml(`${u.surname || ''} ${u.name || ''}`.trim())} <span class="chat-settings-hint">(${this.escapeHtml(u.username || '')})</span></span>
+              </label>`).join('')
+            : `<div class="chat-settings-hint">Пользователи не найдены</div>`;
+    }
+
+    async confirmAddParticipants() {
+        const ids = [...document.querySelectorAll('#chatSettingsUserPicker input:checked')].map(i => Number(i.value));
+        if (!ids.length) {
+            await uiAlert('Выберите хотя бы одного пользователя');
+            return;
+        }
+        try {
+            await api.chats.addParticipants(this.currentChatId, ids);
+            this.chatSettingsView = 'main';
+            await this.refreshChatSettings();
+            await this.loadChats();
+        } catch (e) { await uiAlert(e.message); }
+    }
+
+    async leaveChat() {
+        if (!await uiConfirm('Покинуть чат?')) return;
+        try {
+            await api.chats.removeParticipant(this.currentChatId, window.currentUser.id);
+            this.closeChatSettings();
+            this.resetChatView();
+            await this.loadChats();
+        } catch (e) { await uiAlert(e.message); }
+    }
+
+    async deleteChat() {
+        if (!await uiConfirm('Удалить чат? Сообщения и участники будут удалены.')) return;
+        try {
+            await api.chats.deleteChat(this.currentChatId);
+            this.closeChatSettings();
+            this.resetChatView();
+            await this.loadChats();
+        } catch (e) { await uiAlert(e.message); }
+    }
+
 }
 function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 // На странице чата base.js не подключён — создаём локальный showToast, если его нет
 if (typeof window.showToast !== 'function') {
     window.showToast = function(message, type = 'info') {
+        const normalizedType = ['success', 'error', 'warning'].includes(type) ? type : 'info';
+        const icons = {
+            success: '/materials/icons8-успех-96.png',
+            error: '/materials/icons8-ошибка-96.png',
+            warning: '/materials/icons8-предупреждение-96.png',
+            info: '/materials/icons8-информация-96.png'
+        };
+    
+        document.querySelectorAll('.toast-notification').forEach(oldToast => oldToast.remove());
+    
         const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
-        toast.textContent = message;
+        toast.className = `toast-notification ${normalizedType}`;
+        toast.setAttribute('role', normalizedType === 'error' ? 'alert' : 'status');
+        toast.innerHTML = `
+            <span class="toast-icon-container ${normalizedType}">
+                <img src="${icons[normalizedType]}" class="toast-icon" alt="">
+            </span>
+            <span class="toast-message"></span>
+        `;
+        toast.querySelector('.toast-message').textContent = message;
+    
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3200);
+        setTimeout(() => toast.remove(), 3000);
     };
 }
 
@@ -2810,4 +3410,3 @@ document.addEventListener('DOMContentLoaded', () => {
 function closeConfirmDeleteModal() {
         if (chatManager) chatManager.closeConfirmDeleteModal();
     }
-

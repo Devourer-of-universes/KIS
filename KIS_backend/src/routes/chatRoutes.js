@@ -995,3 +995,265 @@ router.post('/:id/read', authMiddleware, async (req, res) => {
 
 
 module.exports = router;
+
+
+// =====================================================
+// Настройки чата и права участников (аналог телеграма)
+// =====================================================
+
+const chatRoleExpression = `CASE WHEN c.created_by = $2 THEN 'owner' ELSE COALESCE(cp.role, 'member') END`;
+
+const getChatRole = async (chatId, userId) => {
+    const r = await query(
+        `SELECT ${chatRoleExpression} AS role
+         FROM chats c
+         JOIN chat_participants cp ON cp.chat_id = c.id AND cp.user_id = $2
+         WHERE c.id = $1`,
+        [chatId, userId]
+    );
+    return r.rows[0]?.role || null;
+};
+
+const isChatParticipant = async (chatId, userId) => {
+    const r = await query(
+        `SELECT 1 FROM chat_participants WHERE chat_id = $1 AND user_id = $2`,
+        [chatId, userId]
+    );
+    return r.rows.length > 0;
+};
+
+router.get('/:id/settings', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        if (!await isChatParticipant(chatId, req.userId)) {
+            return res.status(403).json({ error: 'Нет доступа к этому чату' });
+        }
+        const chatResult = await query(
+            `SELECT c.id, c.name, c.avatar_uri, c.is_group, c.created_by,
+                    ${chatRoleExpression} AS my_role
+             FROM chats c
+             JOIN chat_participants cp ON cp.chat_id = c.id AND cp.user_id = $2
+             WHERE c.id = $1`,
+            [chatId, req.userId]
+        );
+        const participantsResult = await query(
+            `SELECT u.id, u.surname, u.name, u.avatar_uri, u.status,
+                    CASE WHEN c.created_by = u.id THEN 'owner' ELSE COALESCE(cp.role, 'member') END AS role,
+                    c.created_by
+             FROM chat_participants cp
+             JOIN chats c ON c.id = cp.chat_id
+             JOIN users u ON u.id = cp.user_id
+             WHERE cp.chat_id = $1
+             ORDER BY CASE WHEN c.created_by = u.id THEN 0 WHEN cp.role = 'admin' THEN 1 ELSE 2 END,
+                      u.surname, u.name`,
+            [chatId]
+        );
+        res.json({
+            chat: chatResult.rows[0],
+            participants: participantsResult.rows.map(p => ({
+                ...p,
+                display_name: `${p.surname} ${p.name}`.trim(),
+                is_owner: p.id === p.created_by,
+                is_me: p.id === req.userId
+            }))
+        });
+    } catch (error) {
+        console.error('Get chat settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.patch('/:id/settings', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const role = await getChatRole(chatId, req.userId);
+        if (role !== 'owner') {
+            return res.status(403).json({ error: 'Название и аватар чата может менять только владелец' });
+        }
+        const { name, avatar_uri } = req.body;
+        if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
+            return res.status(400).json({ error: 'Укажите название чата' });
+        }
+        if (avatar_uri !== undefined && avatar_uri !== null && typeof avatar_uri !== 'string') {
+            return res.status(400).json({ error: 'Некорректный аватар чата' });
+        }
+        const before = await query(`SELECT name, avatar_uri FROM chats WHERE id = $1`, [chatId]);
+        await query(
+            `UPDATE chats SET
+                name = COALESCE($2, name),
+                avatar_uri = CASE WHEN $3::boolean THEN $4 ELSE avatar_uri END
+             WHERE id = $1`,
+            [chatId, name?.trim() || null, avatar_uri !== undefined, avatar_uri]
+        );
+        req.audit.action = 'UPDATE chat settings';
+        req.audit.oldData = before.rows[0] || null;
+        req.audit.newData = { name: name?.trim() || before.rows[0]?.name, avatar_uri };
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update chat settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/:id/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const role = await getChatRole(chatId, req.userId);
+        if (role !== 'owner') {
+            return res.status(403).json({ error: 'Аватар чата может менять только владелец' });
+        }
+        if (!req.file) return res.status(400).json({ error: 'Выберите изображение' });
+        if (!String(req.file.mimetype || '').startsWith('image/')) {
+            return res.status(400).json({ error: 'Можно загрузить только изображение' });
+        }
+        const avatarUri = `/uploads/chat-files/${req.file.filename}`;
+        const before = await query(`SELECT avatar_uri FROM chats WHERE id = $1`, [chatId]);
+        await query(`UPDATE chats SET avatar_uri = $2 WHERE id = $1`, [chatId, avatarUri]);
+        req.audit.action = 'UPDATE chat avatar';
+        req.audit.oldData = before.rows[0] || null;
+        req.audit.newData = { avatar_uri: avatarUri };
+        res.json({ success: true, avatar_uri: avatarUri });
+    } catch (error) {
+        console.error('Upload chat avatar error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/:id/participants', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const role = await getChatRole(chatId, req.userId);
+        if (role !== 'owner' && role !== 'admin') {
+            return res.status(403).json({ error: 'Добавлять участников может только владелец или администратор чата' });
+        }
+        const { userIds } = req.body;
+        if (!Array.isArray(userIds) || !userIds.length) {
+            return res.status(400).json({ error: 'Выберите пользователей' });
+        }
+        const ids = [...new Set(userIds.map(Number))].filter(Boolean);
+        for (const uid of ids) {
+            await query(
+                `INSERT INTO chat_participants (chat_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+                [chatId, uid]
+            );
+        }
+        req.audit.action = 'ADD chat participants';
+        req.audit.newData = { chat_id: chatId, user_ids: ids };
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Add chat participants error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.patch('/:id/participants/:userId/role', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const targetId = parseInt(req.params.userId);
+        const { role } = req.body;
+        if (!['admin', 'member'].includes(role)) {
+            return res.status(400).json({ error: 'Некорректная роль' });
+        }
+        const myRole = await getChatRole(chatId, req.userId);
+        if (myRole !== 'owner') {
+            return res.status(403).json({ error: 'Роли участников назначает только владелец чата' });
+        }
+        const target = await query(
+            `SELECT c.created_by FROM chat_participants cp
+             JOIN chats c ON c.id = cp.chat_id
+             WHERE cp.chat_id = $1 AND cp.user_id = $2`,
+            [chatId, targetId]
+        );
+        if (!target.rows.length) return res.status(404).json({ error: 'Участник не найден' });
+        if (target.rows[0].created_by === targetId) {
+            return res.status(400).json({ error: 'Нельзя менять роль владельца чата' });
+        }
+        await query(
+            `UPDATE chat_participants SET role = $3 WHERE chat_id = $1 AND user_id = $2`,
+            [chatId, targetId, role]
+        );
+        req.audit.action = role === 'admin' ? 'PROMOTE chat participant' : 'DEMOTE chat participant';
+        req.audit.newData = { chat_id: chatId, user_id: targetId, role };
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Change participant role error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.patch('/:id/owner', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const targetId = parseInt(req.body.targetUserId);
+        const myRole = await getChatRole(chatId, req.userId);
+        if (myRole !== 'owner') {
+            return res.status(403).json({ error: 'Передать чат может только владелец' });
+        }
+        const target = await query(
+            `SELECT 1 FROM chat_participants WHERE chat_id = $1 AND user_id = $2`,
+            [chatId, targetId]
+        );
+        if (!target.rows.length) return res.status(404).json({ error: 'Участник не найден' });
+        await query(
+            `UPDATE chats SET created_by = $2 WHERE id = $1`,
+            [chatId, targetId]
+        );
+        await query(
+            `UPDATE chat_participants SET role = CASE WHEN user_id = $2 THEN 'owner' ELSE 'member' END
+             WHERE chat_id = $1 AND (user_id = $2 OR user_id = $3)`,
+            [chatId, targetId, req.userId]
+        );
+        req.audit.action = 'TRANSFER chat ownership';
+        req.audit.newData = { chat_id: chatId, new_owner_id: targetId };
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Transfer chat ownership error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/:id/participants/:userId', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const targetId = parseInt(req.params.userId);
+        if (targetId === req.userId) {
+            if (!await isChatParticipant(chatId, req.userId)) {
+                return res.status(403).json({ error: 'Нет доступа к этому чату' });
+            }
+        } else {
+            const role = await getChatRole(chatId, req.userId);
+            if (role !== 'owner' && role !== 'admin') {
+                return res.status(403).json({ error: 'Удалять участников может только владелец или администратор чата' });
+            }
+        }
+        const chat = await query(`SELECT created_by FROM chats WHERE id = $1`, [chatId]);
+        if (!chat.rows.length) return res.status(404).json({ error: 'Чат не найден' });
+        if (chat.rows[0].created_by === targetId) {
+            return res.status(400).json({ error: 'Владельца чата нельзя удалить. Сначала передайте чат другому участнику.' });
+        }
+        await query(`DELETE FROM chat_participants WHERE chat_id = $1 AND user_id = $2`, [chatId, targetId]);
+        req.audit.action = targetId === req.userId ? 'LEAVE chat' : 'REMOVE chat participant';
+        req.audit.newData = { chat_id: chatId, user_id: targetId };
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Remove chat participant error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/:id', authMiddleware, async (req, res) => {
+    try {
+        const chatId = parseInt(req.params.id);
+        const role = await getChatRole(chatId, req.userId);
+        if (role !== 'owner') {
+            return res.status(403).json({ error: 'Удалить чат может только его владелец' });
+        }
+        await query(`DELETE FROM chats WHERE id = $1`, [chatId]);
+        req.audit.action = 'DELETE chat';
+        req.audit.newData = { chat_id: chatId };
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete chat error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});

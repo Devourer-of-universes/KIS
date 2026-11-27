@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ИС</title>
+    <title>Чаты — ИС</title>
+    <link rel="icon" href="../materials/icons8-чат-96.png">
     <link rel="stylesheet" type="text/css" href="../styles/main.css" >
     <link rel="stylesheet" type="text/css" href="../styles/chat.css" >
     
@@ -12,7 +13,7 @@
 <body>
     <div class="left-menu">
         <div class="menu-logo">
-            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <img src="../materials/logo+fon.svg" alt="logo" class="logo-img">
             <span class="logo-text">КИС</span>
             <button class="toggle-btn" id="menuToggleBtn">
                 <img src="../materials/menu_stay.png" alt="toggle">
@@ -39,6 +40,7 @@
                 <span>Документы</span>
                 <span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span>
             </a>
+            <a href="../html/docflow.html" class="menu-item" data-page="docflow" id="menuDocflow" style="display:none;"><img src="../materials/icons8-документы-96.png" alt="docflow"><span>Делопроизводство</span></a>
             <a href="../html/chat.html" class="menu-item" data-page="chat">
                 <img src="../materials/icons8-чат-96.png" alt="chats">
                 <span>Чаты</span>
@@ -98,18 +100,18 @@
                     <h2 class="active-tab-title" id="activeTabTitle">Чаты</h2>
                     <div class="tab-switcher">
                         <button class="tab-btn active" id="tab-btn-chats" onclick="chatManager.switchTab('chats')" title="Чаты">
-                            <img src="../materials/icons8-чат-100.png" alt="Чаты" style="width: 20px; filter: brightness(0) invert(1);">
+                            <img src="../materials/icons8-чат-100.png" alt="Чаты">
                         </button>
                         <button class="tab-btn" id="tab-btn-contacts" onclick="chatManager.switchTab('contacts')" title="Контакты">
-                            <img src="../materials/icons8-контакты-96.png" alt="Контакты" style="width: 20px; filter: brightness(0) invert(1);">
+                            <img src="../materials/icons8-контакты-96.png" alt="Контакты">
                         </button>
                     </div>
                 </div>
 
                 <!-- Вкладка "Контакты" -->
                 <section class="list-tab contacts-tab" id="contactsTab" style="display: none;">
-                    <button class="btn-find-users" onclick="chatManager.openFindUsersModal()" style="width: 100%; padding: 10px; margin-bottom: 15px; background: var(--c_acc); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                        Найти людей
+                    <button class="btn-find-users buttonbase" onclick="chatManager.openFindUsersModal()">
+                        <img src="../materials/icons8-контакты-96.png" class="ui-icon ui-icon-inline" alt=""> Найти людей
                     </button>
 
                     <div id="incomingRequestsBlock" style="display: none; margin-bottom: 20px;">
@@ -131,7 +133,8 @@
                 <section class="list-tab chats-tab active" id="chatsTab">
                     <div class="chat-searching">
                         <div class="chat-searching-line">
-                            <input type="text" placeholder="Поиск...">
+                            <input type="text" id="chatSearchInput" placeholder="Поиск чатов и сообщений..." autocomplete="off">
+                            <span class="search-count" id="chatSearchCount"></span>
                             <img src="../materials/searching_icon.png" alt="search-icon">
                         </div>
                     </div>
@@ -167,8 +170,8 @@
                         </div>
                     </div>
                     <div class="chat-actions">
-                        <button class="chat-button" title="Настройки">
-                            <img src="/materials/chat-settings.png" alt="Настройки" class="chat-header-buttons">
+                        <button class="chat-button" id="chatSettingsBtn" title="Настройки чата" onclick="chatManager.openChatSettings()">
+                            <img src="/materials/chat-settings.png" alt="Настройки чата" class="chat-header-buttons">
                         </button>
                     </div>
                 </div>
@@ -494,5 +497,22 @@
     <script src="/scripts/chat-api.js"></script>
     <script src="../scripts/main.js"></script>
     <script src="../scripts/chat.js"></script>
+
+    <!-- Модальное окно настроек чата -->
+    <div id="chatSettingsModal" class="custom-modal chat-settings-modal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки чата</h3>
+                <button class="modal-close custom-modal-close" onclick="chatManager.closeChatSettings()" title="Закрыть">
+                    <img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть">
+                </button>
+            </div>
+            <div class="modal-body" id="chatSettingsBody">
+                <div class="chat-settings-hint">Загрузка...</div>
+            </div>
+            <div class="modal-footer" id="chatSettingsFooter"></div>
+        </div>
+    </div>
+
 </body>
 </html>

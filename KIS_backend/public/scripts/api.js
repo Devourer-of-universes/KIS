@@ -114,7 +114,28 @@ const api = {
         sendMessage: (chatId, content) => request(`/chats/${chatId}/messages`, {
             method: 'POST',
             body: JSON.stringify({ content })
-        })
+        }),
+        getSettings: (chatId) => request(`/chats/${chatId}/settings`),
+        updateSettings: (chatId, data) => request(`/chats/${chatId}/settings`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+        addParticipants: (chatId, userIds) => request(`/chats/${chatId}/participants`, {
+            method: 'POST',
+            body: JSON.stringify({ userIds })
+        }),
+        setParticipantRole: (chatId, userId, role) => request(`/chats/${chatId}/participants/${userId}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role })
+        }),
+        setOwner: (chatId, targetUserId) => request(`/chats/${chatId}/owner`, {
+            method: 'PATCH',
+            body: JSON.stringify({ targetUserId })
+        }),
+        removeParticipant: (chatId, userId) => request(`/chats/${chatId}/participants/${userId}`, {
+            method: 'DELETE'
+        }),
+        deleteChat: (chatId) => request(`/chats/${chatId}`, { method: 'DELETE' })
     }
 };
 

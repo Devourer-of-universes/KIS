@@ -285,10 +285,44 @@ function initAccentColorGlobal() {
             const data = await response.json();
             const user = data.user;
             
-            // Обновляем аватар
-            const avatarUrl = user.avatar_uri || '../materials/avatar_for_profile.png';
+            // Права и название роли доступны по authMiddleware
+            let userPermissions = user.permissions || user.role_permissions || {};
+            let roleName = user.is_super_admin ? 'Супер-админ' : (user.role_id === 1 ? 'Администратор' : 'Пользователь');
+            try {
+                if (user.role_id) {
+                    const permResp = await fetch(`/api/admin/roles/${user.role_id}/permissions`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (permResp.ok) userPermissions = (await permResp.json()).permissions || {};
+                    const roleResp = await fetch(`/api/admin/roles/${user.role_id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (roleResp.ok && !user.is_super_admin) {
+                        const fetchedName = (await roleResp.json()).role?.name;
+                        if (fetchedName) {
+                            const lower = fetchedName.toLowerCase();
+                            roleName = lower === 'admin' ? 'Администратор' : lower === 'user' ? 'Пользователь' : fetchedName;
+                        }
+                    }
+                }
+            } catch (e) {}
+            user.permissions = userPermissions;
+            window.currentUser = user;
+            
+            // Обновляем аватар; если файл не загрузился — запасное изображение
+            const defaultAvatar = '../materials/avatar_for_profile.png';
+            const fallbackAvatar = '../materials/default-avatar.png';
+            const rawAvatar = typeof user.avatar_uri === 'string' ? user.avatar_uri.trim() : '';
+            const avatarUrl = rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' ? rawAvatar : defaultAvatar;
             document.querySelectorAll('.user-avatar img, .dropdown-avatar img').forEach(img => {
-                if (img) img.src = avatarUrl;
+                if (!img) return;
+                img.onerror = function () {
+                    if (!this.dataset.avatarFallback) {
+                        this.dataset.avatarFallback = '1';
+                        this.src = fallbackAvatar;
+                    }
+                };
+                img.src = avatarUrl;
             });
             
             // Обновляем имя в левом меню
@@ -301,13 +335,7 @@ function initAccentColorGlobal() {
             // Обновляем роль в левом меню
             const userRoleSpan = document.getElementById('userRole');
             if (userRoleSpan) {
-                if (user.is_super_admin) {
-                    userRoleSpan.textContent = 'Супер-админ';
-                } else if (user.role_id === 1) {
-                    userRoleSpan.textContent = 'Администратор';
-                } else {
-                    userRoleSpan.textContent = 'Пользователь';
-                }
+                userRoleSpan.textContent = roleName;
             }
             
             // Обновляем имя в выпадающем меню
@@ -320,13 +348,7 @@ function initAccentColorGlobal() {
             // Обновляем роль в выпадающем меню
             const dropdownRole = document.getElementById('dropdownRole');
             if (dropdownRole) {
-                if (user.is_super_admin) {
-                    dropdownRole.textContent = 'Супер-администратор';
-                } else if (user.role_id === 1) {
-                    dropdownRole.textContent = 'Администратор';
-                } else {
-                    dropdownRole.textContent = 'Пользователь';
-                }
+                dropdownRole.textContent = roleName;
             }
             
             // Показываем/скрываем пункт администрирования
@@ -337,6 +359,15 @@ function initAccentColorGlobal() {
                 const hasAdminAccess = user.is_super_admin || user.role_id === 1 || ap === true || ap === 'all' || ap?.access === true || ap?.access === 'all' || perms.all === true;
                 adminMenuItem.style.display = hasAdminAccess ? 'flex' : 'none';
             }
+            
+            // Пункт "Делопроизводство" для роли с доступом к документообороту
+            const docflowMenuItem = document.getElementById('menuDocflow');
+            if (docflowMenuItem) {
+                const dp = userPermissions.docflow_page;
+                const hasDocflowAccess = user.is_super_admin === true || dp === true || dp === 'all' || dp?.access === true || dp?.access === 'all';
+                docflowMenuItem.style.display = hasDocflowAccess ? 'flex' : 'none';
+            }
+            
             // Пункт "Мой отдел" для руководителей
             const myDeptItem = document.getElementById('menuMyDepartment');
             if (myDeptItem) {

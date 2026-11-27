@@ -63,6 +63,10 @@ const documentRoutes = require('./routes/documentRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const moderationRoutes = require('./routes/moderationRoutes');
+const { auditMiddleware, writeAuditLog } = require('./middleware/audit');
+
+// Централизованное логгирование всех изменяющих API-запросов
+app.use(auditMiddleware);
 
 // Проверка статуса
 app.get('/api/status', (req, res) => {
@@ -114,39 +118,6 @@ const upload = multer({
 app.locals.upload = upload;
 
 // =====================================================
-// 5. LOGGING MIDDLEWARE
-// =====================================================
-app.use('/api', async (req, res, next) => {
-    const originalSend = res.send;
-    
-    res.send = function(data) {
-        if (res.statusCode >= 200 && res.statusCode < 300 && 
-            ['POST', 'PUT', 'DELETE'].includes(req.method)) {
-            
-            const logData = {
-                user_id: req.userId || null,
-                action: `${req.method} ${req.route?.path || req.path}`,
-                entity_type: req.path.split('/')[1],
-                old_data: req.body ? JSON.stringify(req.body).substring(0, 500) : null,
-                ip_address: req.ip,
-                user_agent: req.headers['user-agent']
-            };
-            
-            const { query } = require('./config/database');
-            query(
-                `INSERT INTO audit_logs (user_id, action, entity_type, old_data, ip_address, user_agent)
-                 VALUES ($1, $2, $3, $4, $5, $6)`,
-                [logData.user_id, logData.action, logData.entity_type, logData.old_data, logData.ip_address, logData.user_agent]
-            ).catch(err => console.error('Logging error:', err));
-        }
-        
-        originalSend.call(this, data);
-    };
-    
-    next();
-});
-
-// =====================================================
 // 6. ОБРАБОТЧИКИ ОШИБОК
 // =====================================================
 app.use((req, res) => {
@@ -194,6 +165,8 @@ wss.on('connection', async (ws, req) => {
         }
         
         ws.userId = userId;
+        ws.ip = req.ip || req.socket?.remoteAddress || null;
+        ws.userAgent = req.headers['user-agent'] || null;
         clients.set(userId, ws);
         // Уведомляем контакты, что пользователь онлайн
         broadcastUserStatus(userId, true);
@@ -266,6 +239,31 @@ async function handleWebSocketMessage(ws, userId, data) {
             );
             
             const message = result.rows[0];
+
+            // Сообщения отправляются через WebSocket, поэтому логируем их отдельно
+            try {
+                await writeAuditLog({
+                    audit: {
+                        userId,
+                        action: 'SEND message',
+                        entityType: 'messages',
+                        entityId: message.id,
+                        newData: {
+                            chatId: data.chatId,
+                            length: String(data.content || '').length,
+                            attachments: (data.attachments || []).length
+                        }
+                    },
+                    userId,
+                    method: 'POST',
+                    originalUrl: `/api/chats/${data.chatId}/messages`,
+                    body: {},
+                    ip: ws.ip,
+                    headers: { 'user-agent': ws.userAgent }
+                });
+            } catch (auditError) {
+                console.error('WebSocket audit log error:', auditError.message);
+            }
             
             // 2. Сохраняем вложения, если есть
             if (data.attachments && data.attachments.length > 0) {
@@ -395,10 +393,12 @@ async function broadcastUserStatus(userId, isOnline) {
 // =====================================================
 const { initSuperAdmin } = require('./utils/initAdmin');
 const { startBackupScheduler } = require('./utils/backupScheduler');
+const { startDocumentArchiveScheduler } = require('./utils/documentArchiveScheduler');
 
 (async () => {
     await initSuperAdmin();
     startBackupScheduler();
+    startDocumentArchiveScheduler();
 })();
 
 const PORT = process.env.PORT || 3000;

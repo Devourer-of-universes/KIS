@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
-const { query } = require('../config/database');
+const { query, transaction } = require('../config/database');
 
 // =====================================================
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -60,6 +60,216 @@ async function hasAccess(documentId, userId, isSuperAdmin = false) {
     
     return result.rows.length > 0;
 }
+
+// =====================================================
+// ИСПОЛНИТЕЛИ ДОКУМЕНТА
+// =====================================================
+
+/**
+ * Проверка: является ли пользователь руководителем отдела документа
+ * (или одного из родительских отделов).
+ */
+async function isDocumentDepartmentManager(documentId, userId) {
+    const result = await query(
+        `WITH RECURSIVE managed_departments AS (
+            SELECT id FROM departments WHERE manager_id = $2
+            UNION
+            SELECT d.id
+            FROM departments d
+            JOIN managed_departments m ON d.parent_department_id = m.id
+        )
+        SELECT 1
+        FROM documents d
+        LEFT JOIN users u ON u.id = d.created_by
+        WHERE d.id = $1
+          AND d.deleted_at IS NULL
+          AND (
+              d.department_id IN (SELECT id FROM managed_departments)
+              OR u.department_id IN (SELECT id FROM managed_departments)
+          )
+        LIMIT 1`,
+        [documentId, userId]
+    );
+    return result.rows.length > 0;
+}
+
+/**
+ * Назначать исполнителей могут только:
+ * - супер-администратор;
+ * - пользователь с доступом к делопроизводству (делопроизводитель);
+ * - руководитель отдела документа.
+ *
+ * Автор документа таким правом не обладает.
+ */
+async function canManageAssignees(documentId, userId, isSuperAdmin = false) {
+    if (isSuperAdmin) return true;
+
+    const docResult = await query(
+        `SELECT id FROM documents WHERE id = $1 AND deleted_at IS NULL`,
+        [documentId]
+    );
+    if (docResult.rows.length === 0) return false;
+
+    if (await isDocumentDepartmentManager(documentId, userId)) return true;
+
+    const permResult = await query(
+        `SELECT permissions FROM roles WHERE id = (SELECT role_id FROM users WHERE id = $1)`,
+        [userId]
+    );
+    const rolePermissions = permResult.rows[0]?.permissions || {};
+    const docflowPerm = rolePermissions.docflow_page;
+
+    return docflowPerm === true || docflowPerm === 'all' ||
+        docflowPerm?.access === true || docflowPerm?.access === 'all';
+}
+
+async function loadAssignees(documentId) {
+    const result = await query(
+        `SELECT da.user_id, da.assigned_at,
+                TRIM(CONCAT_WS(' ', u.surname, u.name, u.patronymic)) AS full_name,
+                u.username, u.email, u.avatar_uri, u.status
+         FROM document_assignees da
+         JOIN users u ON u.id = da.user_id
+         WHERE da.document_id = $1
+         ORDER BY da.assigned_at ASC, da.user_id ASC`,
+        [documentId]
+    );
+    return result.rows;
+}
+
+async function notifyAssignee(userId, document, senderId) {
+    await query(
+        `INSERT INTO notifications
+            (user_id, category, priority, title, content, link_type, link_id, sender_id)
+         VALUES ($1, 'document', 'normal', $2, $3, 'document', $4, $5)`,
+        [
+            userId,
+            `Вам назначен документ "${document.title}"`,
+            `Документ №${document.id} передан вам в работу.`,
+            document.id,
+            senderId
+        ]
+    );
+}
+
+// Список исполнителей документа
+router.get('/documents/:id/assignees', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const docResult = await query(
+            `SELECT id FROM documents WHERE id = $1 AND deleted_at IS NULL`,
+            [id]
+        );
+        if (docResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        const canManage = await canManageAssignees(id, req.userId, req.user?.is_super_admin);
+        const canView = canManage || await hasAccess(id, req.userId, req.user?.is_super_admin);
+        if (!canView) {
+            return res.status(403).json({ error: 'Нет доступа к документу' });
+        }
+
+        res.json({ assignees: await loadAssignees(id) });
+    } catch (error) {
+        console.error('Get document assignees error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Назначить документ одному или нескольким сотрудникам
+router.put('/documents/:id/assignees', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const rawIds = req.body?.user_ids;
+
+        if (!Array.isArray(rawIds)) {
+            return res.status(400).json({ error: 'Ожидается массив user_ids' });
+        }
+        if (rawIds.length > 100) {
+            return res.status(400).json({ error: 'Можно назначить не более 100 сотрудников' });
+        }
+
+        const userIds = [...new Set(
+            rawIds.map(Number).filter(value => Number.isInteger(value) && value > 0)
+        )];
+
+        const docResult = await query(
+            `SELECT id, title, created_by FROM documents WHERE id = $1 AND deleted_at IS NULL`,
+            [id]
+        );
+        if (docResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+        if (!await canManageAssignees(id, req.userId, req.user?.is_super_admin)) {
+            return res.status(403).json({ error: 'Недостаточно прав для назначения исполнителей' });
+        }
+
+        let validUserIds = [];
+        if (userIds.length > 0) {
+            const usersResult = await query(
+                `SELECT id FROM users
+                 WHERE id = ANY($1::int[]) AND status = 'active' AND deleted_at IS NULL`,
+                [userIds]
+            );
+            validUserIds = usersResult.rows.map(row => row.id);
+
+            if (validUserIds.length !== userIds.length) {
+                const invalid = userIds.filter(userId => !validUserIds.includes(userId));
+                return res.status(400).json({
+                    error: `Сотрудники не найдены или неактивны: ${invalid.join(', ')}`
+                });
+            }
+        }
+
+        let previousIds = [];
+        let addedIds = [];
+        await transaction(async client => {
+            const previousResult = await client.query(
+                `SELECT user_id FROM document_assignees WHERE document_id = $1 ORDER BY user_id`,
+                [id]
+            );
+            previousIds = previousResult.rows.map(row => row.user_id);
+
+            await client.query(`DELETE FROM document_assignees WHERE document_id = $1`, [id]);
+
+            for (const userId of validUserIds) {
+                await client.query(
+                    `INSERT INTO document_assignees (document_id, user_id, assigned_by)
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT (document_id, user_id) DO NOTHING`,
+                    [id, userId, req.userId]
+                );
+            }
+
+            const previousSet = new Set(previousIds);
+            addedIds = validUserIds.filter(userId => !previousSet.has(userId));
+        });
+
+        const document = docResult.rows[0];
+        for (const userId of addedIds) {
+            await notifyAssignee(userId, document, req.userId);
+        }
+
+        req.audit = {
+            action: 'UPDATE document assignees',
+            entityType: 'documents',
+            entityId: Number(id),
+            oldData: { user_ids: previousIds },
+            newData: { user_ids: validUserIds, notified: addedIds }
+        };
+
+        res.json({
+            assignees: await loadAssignees(id),
+            added: addedIds,
+            notified: addedIds.length
+        });
+    } catch (error) {
+        console.error('Assign document error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // =====================================================
 // СПИСОК ДОСТУПОВ ДОКУМЕНТА

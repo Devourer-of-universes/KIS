@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Делопроизводство - ИС</title>
+    <link rel="icon" href="../materials/icons8-документы-96.png">
     <link rel="stylesheet" type="text/css" href="../styles/main.css">
     <link rel="stylesheet" type="text/css" href="../styles/admin_base.css">
     <link rel="stylesheet" type="text/css" href="../styles/base.css">
@@ -11,7 +12,7 @@
 <body>
     <div class="left-menu">
         <div class="menu-logo">
-            <img src="../materials/logo.svg" alt="logo" class="logo-img">
+            <img src="../materials/logo+fon.svg" alt="logo" class="logo-img">
             <span class="logo-text">КИС</span>
             <button class="toggle-btn" id="menuToggleBtn"><img src="../materials/menu_stay.png" alt="toggle"></button>
         </div>
@@ -21,6 +22,7 @@
             <a href="../html/admin_base.html" class="menu-item admin-only" data-page="admin" style="display:none;"><img src="../materials/icons8-администрирование-96.png" alt="admin"><span>Администрирование</span></a>
             <a href="../html/tasks.html" class="menu-item" data-page="tasks"><img src="../materials/icons8-задачи-96.png" alt="tasks"><span>Задачи</span></a>
             <a href="../html/documents.html" class="menu-item" data-page="documents"><img src="../materials/icons8-документ-100.png" alt="documents"><span>Документы</span></a>
+            <a href="../html/docflow.html" class="menu-item" data-page="docflow" id="menuDocflow" style="display:none;"><img src="../materials/icons8-документы-96.png" alt="docflow"><span>Делопроизводство</span></a>
             <a href="../html/chat.html" class="menu-item" data-page="chat"><img src="../materials/icons8-чат-96.png" alt="chats"><span>Чаты</span><span class="menu-badge" id="chatUnreadBadge" style="display: none;">0</span></a>
             <a href="../html/disk.html" class="menu-item" data-page="disk"><img src="../materials/icons8-облако-96.png" alt="disk"><span>Облако</span></a>
         </nav>
@@ -41,21 +43,28 @@
     </div>
 
     <div class="base-container admin-container">
-        <header class="base-header"><h1><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Делопроизводство</h1></header>
+        <header class="base-header"><h1><img src="../materials/icons8-документы-96.png" class="ui-icon ui-icon-inline" alt=""> Делопроизводство</h1></header>
         <main class="admin-main">
-            <nav class="admin-nav">
-                <button class="nav-btn active" data-section="documents" id="nav-btn-documents"><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Документооборот</button>
-                <a class="nav-btn" href="../html/admin_base.html" style="text-decoration:none;"><img src="../materials/icons8-администрирование-96.png" class="ui-icon ui-icon-inline" alt=""> Админ-панель</a>
-            </nav>
             <div class="admin-content">
                 <section id="documents-section" class="admin-section active">
-                    <div class="section-header">
-                        <h2><img src="../materials/icons8-документ-96.png" class="ui-icon ui-icon-inline" alt=""> Управление документооборотом</h2>
-                    </div>
-
                     <!-- Вкладки внутри секции -->
                     <div class="doc-tabs">
-                        <button class="doc-tab active" data-doc-tab="types" id="doc-tab-types">
+                        <button class="doc-tab active" data-doc-tab="registry" id="doc-tab-registry">
+                            <img src="../materials/icons8-документы-96.png" class="ui-icon ui-icon-inline" alt=""> Реестр документов
+                        </button>
+                        <button class="doc-tab" data-doc-tab="approvals" id="doc-tab-approvals">
+                            <img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> На согласовании у меня
+                        </button>
+                        <button class="doc-tab" data-doc-tab="archive" id="doc-tab-archive">
+                            <img src="../materials/icons8-архив-96.png" class="ui-icon ui-icon-inline" alt=""> Архив
+                        </button>
+                        <button class="doc-tab" data-doc-tab="deadlines" id="doc-tab-deadlines">
+                            <img src="../materials/icons8-дедлайн-96.png" class="ui-icon ui-icon-inline" alt=""> Контроль сроков
+                        </button>
+                        <button class="doc-tab" data-doc-tab="stats" id="doc-tab-stats">
+                            <img src="../materials/icons8-статистика-96.png" class="ui-icon ui-icon-inline" alt=""> Статистика
+                        </button>
+                        <button class="doc-tab" data-doc-tab="types" id="doc-tab-types">
                              Типы документов
                         </button>
                         <button class="doc-tab" data-doc-tab="templates" id="doc-tab-templates">
@@ -67,12 +76,295 @@
                         <button class="doc-tab" data-doc-tab="workflows" id="doc-tab-workflows">
                             <img src="../materials/icons8-процесс-96.png" class="ui-icon ui-icon-inline" alt=""> Шаблоны процессов
                         </button>
+                        <button class="doc-tab" data-doc-tab="settings" id="doc-tab-settings">
+                            <img src="../materials/icons8-настройки-96.png" class="ui-icon ui-icon-inline" alt=""> Настройки
+                        </button>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: РЕЕСТР ДОКУМЕНТОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection active" id="doc-subsection-registry">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Реестр документов</h3>
+                            <button class="buttonbase btn-outline" id="refreshDocsRegistryBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                        </div>
+
+                        <div class="doc-templates-filters">
+                            <input type="text" id="docsRegistrySearch" class="form-input" placeholder="Поиск по названию или номеру...">
+                            <select id="docsRegistryTypeFilter" class="form-select">
+                                <option value="">— Все типы —</option>
+                            </select>
+                            <select id="docsRegistryStatusFilter" class="form-select">
+                                <option value="">— Все статусы —</option>
+                                <option value="draft">Черновик</option>
+                                <option value="on_approval">На согласовании</option>
+                                <option value="revision">На доработке</option>
+                                <option value="approved">Согласован</option>
+                                <option value="signed">Подписан</option>
+                                <option value="registered">Зарегистрирован</option>
+                                <option value="archived">В архиве</option>
+                                <option value="cancelled">Отменён</option>
+                            </select>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="docsRegistryMineOnly"> Только созданные мной
+                            </label>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Номер</th>
+                                        <th>Название</th>
+                                        <th>Тип</th>
+                                        <th>Статус</th>
+                                        <th>Создатель</th>
+                                        <th>Дата</th>
+                                        <th>Исполнители</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentsRegistryTableBody">
+                                    <tr><td colspan="9" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                            <div class="pagination-info" id="docsRegistryInfo">Показано 0 из 0</div>
+                            <div class="pagination-buttons">
+                                <button class="buttonbase btn-outline" id="docsRegistryPrevBtn">Назад</button>
+                                <button class="buttonbase btn-outline" id="docsRegistryNextBtn">Вперёд</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: НА СОГЛАСОВАНИИ У МЕНЯ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-approvals">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">На согласовании у меня</h3>
+                            <button class="buttonbase btn-outline" id="refreshMyApprovalsBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Номер</th>
+                                        <th>Название</th>
+                                        <th>Тип</th>
+                                        <th>Этап</th>
+                                        <th>Создатель</th>
+                                        <th>Дата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="myApprovalsTableBody">
+                                    <tr><td colspan="8" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: АРХИВ ДОКУМЕНТОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-archive">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Архив документов</h3>
+                            <button class="buttonbase btn-outline" id="refreshArchiveBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                        </div>
+
+                        <div class="doc-templates-filters">
+                            <input type="text" id="archiveSearch" class="form-input" placeholder="Поиск по названию или номеру...">
+                            <select id="archiveTypeFilter" class="form-select">
+                                <option value="">— Все типы —</option>
+                            </select>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Номер</th>
+                                        <th>Название</th>
+                                        <th>Тип</th>
+                                        <th>Создатель</th>
+                                        <th>Обновлён</th>
+                                        <th>Исполнители</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="archivedDocsTableBody">
+                                    <tr><td colspan="8" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                            <div class="pagination-info" id="archiveDocsInfo">Показано 0 из 0</div>
+                            <div class="pagination-buttons">
+                                <button class="buttonbase btn-outline" id="archivePrevBtn">Назад</button>
+                                <button class="buttonbase btn-outline" id="archiveNextBtn">Вперёд</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: КОНТРОЛЬ СРОКОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-deadlines">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Контроль сроков</h3>
+                            <button class="buttonbase btn-outline" id="refreshDeadlineDocsBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                        </div>
+
+                        <div class="doc-templates-filters">
+                            <input type="text" id="deadlineSearch" class="form-input" placeholder="Поиск по названию или номеру...">
+                            <select id="deadlineTypeFilter" class="form-select">
+                                <option value="">— Все типы —</option>
+                            </select>
+                            <select id="deadlineStatusFilter" class="form-select">
+                                <option value="">— Все активные статусы —</option>
+                                <option value="on_approval">На согласовании</option>
+                                <option value="revision">На доработке</option>
+                                <option value="signed">Подписан</option>
+                                <option value="registered">Зарегистрирован</option>
+                            </select>
+                            <label class="checkbox-label" style="display:flex; align-items:center; gap:8px;">
+                                Порог, дней
+                                <input type="number" id="deadlineControlDays" class="setting-input" min="1" max="365" style="width:90px;">
+                            </label>
+                            <button class="buttonbase btn-outline" id="saveDeadlineThresholdBtn"><img src="../materials/icons8-сохранить-96.png" class="ui-icon ui-icon-inline" alt=""> Сохранить порог</button>
+                        </div>
+
+                        <div id="deadlineControlInfo" class="pagination-info" style="margin-bottom: 12px;"></div>
+
+                        <div class="table-wrapper">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Номер</th>
+                                        <th>Название</th>
+                                        <th>Тип</th>
+                                        <th>Статус</th>
+                                        <th>Исполнители</th>
+                                        <th>Причина</th>
+                                        <th>Просрочено</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deadlineDocsTableBody">
+                                    <tr><td colspan="9" class="loading-row">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                            <div class="pagination-info" id="deadlineDocsInfo">Показано 0 из 0</div>
+                            <div class="pagination-buttons">
+                                <button class="buttonbase btn-outline" id="deadlinePrevBtn">Назад</button>
+                                <button class="buttonbase btn-outline" id="deadlineNextBtn">Вперёд</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: СТАТИСТИКА ДОКУМЕНТОВ -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-stats">
+                        <div class="section-header">
+                            <h3 style="margin: 0; font-size: 16px;">Статистика документов</h3>
+                            <button class="buttonbase btn-outline" id="refreshDocumentStatsBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+                        </div>
+
+                        <div class="admin-stats" style="flex-wrap: wrap; margin-bottom: 24px;">
+                            <div class="stat-card">
+                                <span class="stat-number" id="statsTotal">0</span>
+                                <span class="stat-label">Всего документов</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="statsOnApproval">0</span>
+                                <span class="stat-label">На согласовании</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="statsOverdue">0</span>
+                                <span class="stat-label">Просрочено</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="statsArchived">0</span>
+                                <span class="stat-label">В архиве</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-number" id="statsCreated30">0</span>
+                                <span class="stat-label">Создано за 30 дней</span>
+                            </div>
+                        </div>
+
+                        <div id="statsUpdatedInfo" class="pagination-info" style="margin-bottom: 16px;"></div>
+
+                        <div class="settings-cards-grid">
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <h3 class="settings-card-title">По статусам</h3>
+                                </div>
+                                <div class="settings-card-content">
+                                    <table class="admin-table">
+                                        <thead><tr><th>Статус</th><th>Количество</th></tr></thead>
+                                        <tbody id="statsStatusBody"><tr><td colspan="2" class="loading-row">Загрузка...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <h3 class="settings-card-title">По типам документов</h3>
+                                </div>
+                                <div class="settings-card-content">
+                                    <table class="admin-table">
+                                        <thead><tr><th>Тип</th><th>Количество</th></tr></thead>
+                                        <tbody id="statsTypeBody"><tr><td colspan="2" class="loading-row">Загрузка...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <h3 class="settings-card-title">По отделам</h3>
+                                </div>
+                                <div class="settings-card-content">
+                                    <table class="admin-table">
+                                        <thead><tr><th>Отдел</th><th>Количество</th></tr></thead>
+                                        <tbody id="statsDepartmentBody"><tr><td colspan="2" class="loading-row">Загрузка...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <h3 class="settings-card-title">Исполнители (топ-10)</h3>
+                                </div>
+                                <div class="settings-card-content">
+                                    <table class="admin-table">
+                                        <thead><tr><th>Исполнитель</th><th>Документов</th></tr></thead>
+                                        <tbody id="statsAssigneeBody"><tr><td colspan="2" class="loading-row">Загрузка...</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- ============================================ -->
                     <!-- ПОДСЕКЦИЯ: ТИПЫ ДОКУМЕНТОВ -->
                     <!-- ============================================ -->
-                    <div class="doc-subsection active" id="doc-subsection-types">
+                    <div class="doc-subsection" id="doc-subsection-types">
                         <div class="section-header">
                             <h3 style="margin: 0; font-size: 16px;">Типы документов</h3>
                             <button class="buttonbase" id="addDocumentTypeBtn">+ Создать тип</button>
@@ -175,6 +467,83 @@
 
                         <div class="doc-templates-grid" id="workflowTemplatesGrid">
                             <div class="loading-templates">Загрузка шаблонов...</div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- ПОДСЕКЦИЯ: НАСТРОЙКИ ДОКУМЕНТООБОРОТА -->
+                    <!-- ============================================ -->
+                    <div class="doc-subsection" id="doc-subsection-settings">
+                        <div class="settings-cards-grid">
+                            <div class="settings-card">
+                                <div class="settings-card-header">
+                                    <div class="settings-card-icon"></div>
+                                    <div>
+                                        <h3 class="settings-card-title">Документооборот</h3>
+                                        <p class="settings-card-description">Правила работы с документами и вложениями</p>
+                                    </div>
+                                </div>
+                                <div class="settings-card-content">
+                                    <div class="settings-card-item">
+                                        <div class="settings-card-info">
+                                            <span class="settings-card-label">Автоархивация документов</span>
+                                            <span class="settings-card-hint">Подписанные и зарегистрированные документы старше указанного срока автоматически переводятся в архив. Проверка выполняется раз в час.</span>
+                                        </div>
+                                        <div class="settings-card-control">
+                                            <label class="checkbox-label"><input type="checkbox" id="dfAutoArchiveEnabled"> Включено</label>
+                                        </div>
+                                    </div>
+                                    <div class="settings-card-item">
+                                        <div class="settings-card-info">
+                                            <span class="settings-card-label">Срок до архивации</span>
+                                            <span class="settings-card-hint">Количество дней с даты регистрации документа (или последнего обновления)</span>
+                                        </div>
+                                        <div class="settings-card-control">
+                                            <input type="number" id="dfAutoArchiveDays" class="setting-input" min="30" max="3650" style="width: 100px;">
+                                            <span class="setting-unit">дней</span>
+                                        </div>
+                                    </div>
+                                    <div class="settings-card-item">
+                                        <div class="settings-card-info">
+                                            <span class="settings-card-label">Порог контроля сроков</span>
+                                            <span class="settings-card-hint">Активные документы без движения дольше этого срока попадают в раздел «Контроль сроков». Также учитывается дата исполнения из полей документа.</span>
+                                        </div>
+                                        <div class="settings-card-control">
+                                            <input type="number" id="dfDeadlineControlDays" class="setting-input" min="1" max="365" style="width: 100px;">
+                                            <span class="setting-unit">дней</span>
+                                        </div>
+                                    </div>
+                                    <div class="settings-card-item">
+                                        <div class="settings-card-info">
+                                            <span class="settings-card-label">Максимальный размер вложения</span>
+                                            <span class="settings-card-hint">Ограничение применяется при загрузке вложений к документам</span>
+                                        </div>
+                                        <div class="settings-card-control">
+                                            <input type="number" id="dfMaxFileSize" class="setting-input" min="1" max="500" style="width: 100px;">
+                                            <span class="setting-unit">МБ</span>
+                                        </div>
+                                    </div>
+                                    <div class="settings-card-item">
+                                        <div class="settings-card-info">
+                                            <span class="settings-card-label">Разрешённые форматы вложений</span>
+                                            <span class="settings-card-hint">Если ничего не выбрано, разрешены все форматы</span>
+                                        </div>
+                                        <div class="settings-card-control">
+                                            <select id="dfAllowedFileTypes" class="setting-select" multiple size="5" style="width: 200px;">
+                                                <option value="pdf">PDF</option>
+                                                <option value="doc">Word</option>
+                                                <option value="xls">Excel</option>
+                                                <option value="jpg">Изображения</option>
+                                                <option value="txt">Текстовые файлы</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="settings-card-actions">
+                                    <button class="buttonbase" id="saveDocflowSettingsBtn"><img src="../materials/icons8-сохранить-96.png" class="ui-icon ui-icon-inline" alt=""> Сохранить</button>
+                                    <button class="buttonbase btn-outline" id="runAutoArchiveBtn"><img src="../materials/icons8-архив-96.png" class="ui-icon ui-icon-inline" alt=""> Архивировать сейчас</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -726,6 +1095,60 @@
         </div>
     </div>
 
+    <div id="docHistoryModal" class="admin-modal doc-modal">
+        <div class="modal-content" style="max-width: 960px; max-height: 82vh;">
+            <div class="modal-header">
+                <h2 id="docHistoryModalTitle"><img src="../materials/icons8-история-96.png" class="ui-icon ui-icon-inline" alt=""> История документа</h2>
+                <button class="modal-close" onclick="closeDocumentHistoryModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
+            </div>
+            <div class="modal-body" style="padding: 20px; overflow: auto;">
+                <div id="historyRouteInfo" class="pagination-info" style="margin-bottom: 12px;"></div>
+                <div class="table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Тип</th>
+                                <th>Этап</th>
+                                <th>Исполнитель</th>
+                                <th>Статус</th>
+                                <th>Комментарий</th>
+                                <th>Завершён</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentHistoryTableBody">
+                            <tr><td colspan="7" class="loading-row">Загрузка...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase btn-outline" onclick="closeDocumentHistoryModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Закрыть</button>
+                <button class="buttonbase btn-outline" id="refreshDocumentHistoryBtn"><img src="../materials/icons8-обновить-96.png" class="ui-icon ui-icon-inline" alt=""> Обновить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="docApprovalModal" class="admin-modal doc-modal">
+        <div class="modal-content" style="max-width: 640px;">
+            <div class="modal-header">
+                <h2 id="docApprovalModalTitle"><img src="../materials/icons8-галочка-96.png" class="ui-icon ui-icon-inline" alt=""> Согласование документа</h2>
+                <button class="modal-close" onclick="closeApprovalActionModal()"><img src="../materials/icons8-закрыть-96.png" class="ui-icon ui-icon-sm" alt="Закрыть"></button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p id="docApprovalModalText" style="margin: 0 0 12px 0; color: var(--c_bg_txt);"></p>
+                <div class="sa-field">
+                    <label class="sa-label" id="docApprovalCommentLabel">Комментарий</label>
+                    <textarea id="docApprovalComment" class="sa-textarea" rows="4" placeholder="Комментарий для автора документа..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="buttonbase btn-outline" onclick="closeApprovalActionModal()"><img src="../materials/icons8-cancel-96.png" class="ui-icon ui-icon-inline" alt=""> Отмена</button>
+                <button class="buttonbase" id="confirmApprovalActionBtn"><img src="../materials/icons8-успех-96.png" class="ui-icon ui-icon-inline" alt=""> Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
     <div id="userSelectorModal" class="admin-modal doc-modal">
         <div class="modal-content" style="max-width: 860px; max-height: 80vh;">
             <div class="modal-header">
@@ -779,15 +1202,26 @@
     <script>
     (async () => {
         try {
-            const user = await api.auth.getMe();
+            const me = await api.auth.getMe();
+            const user = me?.user || me;
             if (!user) { window.location.href = '../html/login.html'; return; }
             window.currentUser = user;
-            const hasAccess = user.is_super_admin || user.permissions?.documents?.manage_types || user.permissions?.documents?.manage_templates || user.permissions?.documents?.manage_counterparties;
+            let perms = user.permissions || {};
+            try {
+                const pr = await fetch(`/api/admin/roles/${user.role_id}/permissions`, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+                if (pr.ok) perms = (await pr.json()).permissions || {};
+            } catch (e) {}
+            user.permissions = perms;
+            const dp = perms.docflow_page;
+            const hasAccess = user.is_super_admin === true || dp === true || dp === 'all' || dp?.access === true || dp?.access === 'all' ||
+                perms.documents?.manage_types === true || perms.documents?.manage_templates === true || perms.documents?.manage_counterparties === true;
             if (!hasAccess) {
                 document.querySelector('.admin-content').innerHTML = '<div style="padding:32px"><h2>Доступ ограничен</h2><p>Недостаточно прав для раздела делопроизводства.</p></div>';
                 return;
             }
             if (typeof initDocumentAdmin === 'function') initDocumentAdmin();
+            const menuDocflow = document.getElementById('menuDocflow');
+            if (menuDocflow && hasAccess) menuDocflow.style.display = 'flex';
             // show admin menu
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
             const myDept = document.getElementById('menuMyDepartment');

@@ -519,7 +519,7 @@ table td{
 }
 .modal-body-bottom {
     padding: 20px 30px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--c_border);
     background: var(--is-bg-light);
     display: flex;
     justify-content: center;
@@ -553,10 +553,10 @@ table td{
 
 
 .editor-container {
-    background: white;
+    background: var(--c_surf);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
-    border: 1px solid #e0e0e0;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--c_border);
     overflow: hidden;
     margin: 20px;
     min-height: 80vh;
@@ -621,12 +621,12 @@ table td{
 }
 
 .form-section {
-    background: white;
+    background: var(--c_surf);
     border-radius: 10px;
     padding: 25px;
     margin-bottom: 25px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid #f0f0f0;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--c_border);
 }
 
 .form-section h3 {
@@ -669,18 +669,19 @@ table td{
 
 .form-input, .form-select, .form-textarea {
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--c_border);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;
-    background: white;
+    background: var(--c_surf);
+    color: var(--c_bg_txt);
     font-family: inherit;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
     outline: none;
-    border-color: var(--c_bg_txt);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    border-color: var(--c_acc);
+    box-shadow: 0 0 0 3px var(--c_acchalf);
 }
 
 .form-textarea {
@@ -691,12 +692,12 @@ table td{
 }
 
 .file-upload-area {
-    border: 2px dashed #e0e0e0;
+    border: 2px dashed var(--c_border);
     border-radius: 10px;
     padding: 30px;
     text-align: center;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--c_surf);
 }
 
 .file-upload-area:hover {
@@ -726,10 +727,10 @@ table td{
     align-items: center;
     justify-content: space-between;
     padding: 10px;
-    background: white;
+    background: var(--c_surf);
     border-radius: 6px;
     margin-bottom: 8px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--c_border);
 }
 
 .file-info {
@@ -763,8 +764,8 @@ table td{
 
 .editor-sidebar {
     padding: 30px;
-    background: white;
-    border-left: 1px solid #f0f0f0;
+    background: var(--c_surf);
+    border-left: 1px solid var(--c_border);
 }
 
 .sidebar-section {
